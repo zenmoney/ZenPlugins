@@ -21,14 +21,45 @@ export function convertTransactionNew (apiTransaction, account) {
   console.assert(account.instrument === apiTransaction.Amount.currency, 'unexpected currency transaction', apiTransaction, account)
 
   const dc = apiTransaction.creditDebitIndicator === 'Debit' ? -1.0 : 1.0
+
+  // Parse date and invoice from description (similar to convertTransaction)
+  let date = new Date(apiTransaction.documentProcessDate)
+  let invoice = null
+  const match = apiTransaction.description.match(/дата операции:(.+),на сумму:(.+),карт/)
+  if (match) {
+    // Parse date
+    const [, day, month, year, time] = match[1].match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}:\d{2})/)
+    date = new Date(`${year}-${month}-${day}T${time}:00+03:00`)
+
+    // Parse invoice
+    const invoiceStr = match[2].trim()
+    ;[
+      /^([.\d]+)\s*([A-Z]{3})$/,
+      /^([.\d]+)\s*\((.*)\)$/,
+      /^([.\d]+)\s*(\d{3})$/
+    ].some(regexp => {
+      const invoiceMatch = invoiceStr.match(regexp)
+      if (invoiceMatch) {
+        const invoiceCurrency = codeToCurrencyLookup[invoiceMatch[2]] || invoiceMatch[2]
+        if (invoiceCurrency !== account.instrument) {
+          invoice = {
+            sum: dc * Math.abs(parseFloat(invoiceMatch[1])),
+            instrument: invoiceCurrency
+          }
+        }
+      }
+      return invoiceMatch
+    })
+  }
+
   const transaction = {
     hold: null,
-    date: new Date(apiTransaction.documentProcessDate),
+    date,
     movements: [
       {
         id: apiTransaction.transactionId,
         account: { id: account.id },
-        invoice: null,
+        invoice,
         sum: dc * apiTransaction.Amount.amount,
         fee: 0
       }

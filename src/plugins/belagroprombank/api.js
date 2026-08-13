@@ -44,7 +44,7 @@ async function fetchLogin (login, password, auth, smsCode) {
       password,
       deviceUDID: auth.deviceUDID,
       gibCookie: auth.gibCookie,
-      applicID: '4.3.1',
+      applicID: '4.4.4',
       clientKind: '0',
       deviceConfirmationType: '0',
       pushId: '',

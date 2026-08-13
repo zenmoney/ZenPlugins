@@ -21,6 +21,17 @@
         summary="||***********"
     />
     <EditTextPreference
+        key="appPin"
+        obligatory="false"
+        inputType="textPassword"
+        title="PIN токена для выписок"
+        dialogTitle="PIN токена BGPB"
+        dialogMessage="Необязательный 6-значный PIN локального устройства. Нужен для загрузки операций по вкладам и полных выписок. Это не PIN банковской карты. При первом запуске с PIN банк зарегистрирует новое устройство."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||***********"
+    />
+    <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"

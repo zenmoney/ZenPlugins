@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>bybit</id>
-    <company>0</company>
+    <company>16190</company>
     <description>
         Bybit Card synchronization via the public Bybit V5 REST API.
         Requires a read-only API Key + Secret minted in Bybit Dashboard → API

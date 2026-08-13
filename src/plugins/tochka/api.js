@@ -265,6 +265,9 @@ export async function fetchAccounts ({ accessToken } = {}) {
     ignoreErrors: true,
     method: 'GET'
   })
+  if (!response) {
+    return null
+  }
   if (response.status === 403) {
     // message: 'Forbidden by consent'
     console.log('>>> !!! Нет прав получить список счетов')
@@ -300,8 +303,8 @@ export async function fetchTransactions ({ accessToken } = {}, apiAccount, fromD
     }
   })
   let statement = {}
-  const statementId = response.body.Data?.Statement?.statementId
-  const status = response.body.Data?.Statement?.status
+  const statementId = response.body?.Data?.Statement?.statementId
+  const status = response.body?.Data?.Statement?.status
   console.assert(statementId && status, 'unexpected statement response')
 
   const iMax = 5
@@ -311,7 +314,7 @@ export async function fetchTransactions ({ accessToken } = {}, apiAccount, fromD
       ignoreErrors: true,
       method: 'GET'
     })
-    if (!response.body.Errors) {
+    if (response?.body && !response.body.Errors) {
       statement = response.body.Data?.Statement?.[0]
       console.assert(statement, 'unexpected statement data')
       if (statement.status === 'Ready') {
@@ -361,8 +364,14 @@ async function callGate (url, accessToken, options = {}) {
         throw e
       }
     } else {
-      return response
+      return null
     }
+  }
+  if (!response) {
+    if (options.ignoreErrors) {
+      return null
+    }
+    throw new TemporaryUnavailableError()
   }
   if (!options.ignoreErrors && response.body?.Errors) {
     const message = response.body?.Errors.message || response.body?.Errors[0]?.message

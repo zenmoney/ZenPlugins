@@ -1,4 +1,4 @@
-import { parseHeaderParameters } from './network'
+import { ParseError, fetch, parseHeaderParameters } from './network'
 import { parseXml } from './xmlUtils'
 
 describe('parseXml', () => {
@@ -405,4 +405,65 @@ test('parseHeaderParameters', () => {
     ['boundary', '12345'],
     ['param2', 'He']
   ])
+})
+
+describe('fetch error sanitization', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it('sanitizes the request URL when the network fails before a response', async () => {
+    const networkError = new Error('network failed')
+    global.fetch = jest.fn().mockRejectedValue(networkError)
+    const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
+
+    await expect(fetch('https://example.com/data?token=secret', {
+      sanitizeRequestLog: {
+        url: {
+          query: {
+            token: true
+          }
+        }
+      }
+    })).rejects.toBe(networkError)
+
+    const failureLog = debug.mock.calls.find(([label]) => label === 'response')
+    expect(failureLog).toEqual([
+      'response',
+      expect.objectContaining({
+        url: 'https://example.com/data?token=<string[6]>'
+      }),
+      'failed to receive due to error',
+      networkError
+    ])
+  })
+
+  it('keeps a parse response accessible but non-enumerable', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      statusText: 'Forbidden',
+      url: 'https://example.com/data?token=secret',
+      headers: {
+        forEach: () => {}
+      },
+      text: async () => '<html>sensitive response</html>'
+    })
+    jest.spyOn(console, 'debug').mockImplementation(() => {})
+
+    let error
+    try {
+      await fetch('https://example.com/data?token=secret', {
+        parse: JSON.parse,
+        sanitizeResponseLog: true
+      })
+    } catch (e) {
+      error = e
+    }
+
+    expect(error).toBeInstanceOf(ParseError)
+    expect(error.response.body).toBe('<html>sensitive response</html>')
+    expect(Object.keys(error)).not.toContain('response')
+    expect(Object.keys(error)).toContain('cause')
+  })
 })

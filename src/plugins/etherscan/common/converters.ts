@@ -1,5 +1,14 @@
 import { Transaction } from '../../../types/zenmoney'
 
+export function appendTransactions (
+  target: Transaction[],
+  transactions: Transaction[]
+): void {
+  for (const transaction of transactions) {
+    target.push(transaction)
+  }
+}
+
 function canBeMergedAsTransfer (left: Transaction, right: Transaction): boolean {
   const leftMovement = left.movements[0]
   const rightMovement = right.movements[0]

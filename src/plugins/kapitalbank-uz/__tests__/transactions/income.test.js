@@ -1,5 +1,5 @@
 import {
-  convertCardOrAccountTransaction
+  convertTransaction
 } from '../../converters'
 
 describe('convertTransaction', () => {
@@ -26,6 +26,9 @@ describe('convertTransaction', () => {
         date: new Date('2025-02-25 18:02:04Z'),
         hold: false,
         comment: null,
+        groupKeys: [
+          'HUMO-f8aa2d32-0000-0000-0000-40222a0a2659'
+        ],
         merchant: {
           fullTitle: 'YANGIBANK ON VKLAD SPISANIE',
           mcc: null,
@@ -44,6 +47,6 @@ describe('convertTransaction', () => {
     ]
   ])('converts income UZS', (rawTransaction, transaction) => {
     const card = { id: 'card', instrument: 'UZS' }
-    expect(convertCardOrAccountTransaction(card, rawTransaction)).toEqual(transaction)
+    expect(convertTransaction({ type: 'cardOrAccount', data: rawTransaction }, card)).toEqual(transaction)
   })
 })

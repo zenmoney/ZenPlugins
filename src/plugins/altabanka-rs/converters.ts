@@ -1,6 +1,6 @@
-import { AccountOrCard, AccountType, ExtendedTransaction } from '../../types/zenmoney'
-import { AccountInfo, AccountTransaction } from './types'
-import { toISODateString, dateInTimezone } from '../../common/dateUtils'
+import { AccountOrCard, AccountType, ExtendedTransaction, Transaction } from '../../types/zenmoney'
+import { AccountInfo, AccountTransaction } from './models'
+import { getOptNumber, getOptString } from '../../types/get'
 
 export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
   return apiAccounts.map(apiAccount => {
@@ -18,24 +18,31 @@ export function convertAccounts (apiAccounts: AccountInfo[]): AccountOrCard[] {
 }
 
 export function convertTransaction (accountTransaction: AccountTransaction, account: AccountInfo, hold = false): ExtendedTransaction | null {
-  accountTransaction.currency = accountTransaction.currency === undefined
-    ? 'RSD'
-    : accountTransaction.currency
+  const currency = accountTransaction.currency ?? 'RSD'
 
   if (accountTransaction.amount === 0) {
     return null
   }
+
+  const match = accountTransaction.description.match(/^([\d.]+)\s(\w{3})/)
+
   let invoice = {
     sum: accountTransaction.amount,
-    instrument: accountTransaction.currency
+    instrument: currency
   }
-  const match = accountTransaction.description.match(/^([\d.]+)\s(\w{3})/)
-  if (match != null) {
+  if (accountTransaction.invoice != null) {
+    // Card transaction: domestic `amount` plus the original-currency invoice.
+    invoice = accountTransaction.invoice
+  } else if (match != null) {
     invoice = {
       sum: accountTransaction.amount < 0 ? -parseFloat(match[1]) : parseFloat(match[1]),
       instrument: match[2]
     }
   }
+
+  const foreign = invoice.instrument !== account.currency
+  // Card transactions carry the domestic amount, so we keep `sum` even for foreign currency.
+  const sum = accountTransaction.invoice != null ? accountTransaction.amount : (foreign ? null : accountTransaction.amount)
 
   const transaction: ExtendedTransaction = {
     hold,
@@ -44,9 +51,9 @@ export function convertTransaction (accountTransaction: AccountTransaction, acco
       {
         id: accountTransaction.id,
         account: { id: account.id },
-        sum: invoice?.instrument !== account.currency ? null : accountTransaction.amount,
+        sum,
         fee: 0,
-        invoice: invoice?.instrument === account.currency ? null : invoice
+        invoice: foreign ? invoice : null
       }
     ],
     merchant: null,
@@ -86,11 +93,6 @@ function parseInnerTransfer (transaction: ExtendedTransaction, accountTransactio
     /Interni transfer/i,
     /Kupovina deviza/i
   ].some(regex => regex.test(accountTransaction.address))) {
-    const idCurrency = accountTransaction.id.split('%')[0]
-    transaction.groupKeys = [
-      `${toISODateString(dateInTimezone(transaction.date, 180)).slice(0, 10)}_${invoice.instrument}_${Math.abs(invoice.sum)}`,
-      `${idCurrency}`
-    ]
     transaction.merchant = null
     transaction.comment = accountTransaction.address
 
@@ -113,4 +115,62 @@ function parsePayeeAndComment (transaction: ExtendedTransaction, accountTransact
     transaction.comment = accountTransaction.address
   }
   return false
+}
+
+export function deduplicateTransactions (transactions: Transaction[]): Transaction[] {
+  // Prefer posted when hold and posted share the same movement id (canonical card reference).
+  const byId = new Map<string, Transaction>()
+  const withoutId: Transaction[] = []
+
+  for (const transaction of transactions) {
+    const id = transaction.movements[0]?.id
+    if (typeof id !== 'string') {
+      withoutId.push(transaction)
+      continue
+    }
+    const existing = byId.get(id)
+    if (existing == null) {
+      byId.set(id, transaction)
+      continue
+    }
+    if (existing.hold === true && transaction.hold !== true) {
+      byId.set(id, transaction)
+    }
+  }
+
+  const result = [...byId.values(), ...withoutId]
+  // Soft fallback for pairs that still use different movement ids.
+  for (let i = 0; i < result.length; ++i) {
+    for (let j = i + 1; j < result.length; ++j) {
+      const leftKey = getDeduplicationKey(result[i])
+      const rightKey = getDeduplicationKey(result[j])
+      if (leftKey !== null && leftKey === rightKey) {
+        result[i].hold = false
+        result.splice(j--, 1)
+      }
+    }
+  }
+  return result
+}
+
+function getDeduplicationKey (transaction: Transaction): string | null {
+  if (transaction.movements.length !== 1) {
+    return null
+  }
+  const movement = transaction.movements[0]
+  const accountId = getOptString(movement.account, 'id')
+  const sum = getOptNumber(movement, 'sum')
+  if (accountId === undefined || sum === undefined) {
+    return null
+  }
+  return JSON.stringify({
+    year: transaction.date.getFullYear(),
+    month: transaction.date.getMonth(),
+    day: transaction.date.getDate(),
+    hour: transaction.date.getHours(),
+    accountId,
+    sum,
+    merchant: transaction.merchant,
+    comment: transaction.comment
+  })
 }

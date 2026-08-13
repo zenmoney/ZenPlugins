@@ -35,9 +35,8 @@ function extractAuthTokenCookies (response) {
   return parts.length ? parts.join('; ') + ';' : ''
 }
 
-async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
-  const fp = getOrCreateDeviceFingerprint()
-  options = defaultsDeep(
+function buildMobileApiOptions (fp, options) {
+  return defaultsDeep(
     options,
     {
       headers: mobileHeaders(fp, options?.headers?.Cookie),
@@ -49,6 +48,11 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
       stringify
     }
   )
+}
+
+async function fetchApiJson (url, options, predicate = () => true, error = (message) => console.assert(false, message)) {
+  const fp = getOrCreateDeviceFingerprint()
+  options = buildMobileApiOptions(fp, options)
 
   const response = await fetchJson(url, options)
   if (predicate) {
@@ -121,24 +125,26 @@ export async function login (login, password) {
   }
 
   const fp = getOrCreateDeviceFingerprint()
+  let recoveredIbankSessionId = null
 
   // Try reusing saved session
   const savedCookies = ZenMoney.getData('sessionCookies', null)
   if (savedCookies) {
     try {
-      const testRes = await fetchApiJson(dataUrl, {
+      const testRes = await fetchJson(dataUrl, buildMobileApiOptions(fp, {
         method: 'POST',
         headers: { Cookie: savedCookies },
         body: {
           section: 'payments',
           method: 'index'
         }
-      }, response => response.ok && response.body?.status === 'OK',
-      () => { throw new Error('Session invalid') })
+      }))
+      recoveredIbankSessionId = extractPhpSessionId(testRes)
       if (testRes.body.status === 'OK') return savedCookies
     } catch (e) {
       ZenMoney.setData('sessionCookies', null)
     }
+    ZenMoney.setData('sessionCookies', null)
   }
 
   // Step 1: Pre-login to ibank — establish PHPSESSID
@@ -150,7 +156,7 @@ export async function login (login, password) {
       versionApp: APP_VERSION
     }
   }, () => true, () => null)
-  const ibankSessionId = extractPhpSessionId(preLoginRes)
+  const ibankSessionId = extractPhpSessionId(preLoginRes) || recoveredIbankSessionId
   if (!ibankSessionId) throw new TemporaryError('Не удалось получить сессию ibank')
 
   // Step 2: Sign in via mobile API
@@ -299,13 +305,28 @@ function formatDate (date) {
   return ('0' + date.getDate()).slice(-2) + '.' + ('0' + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear()
 }
 
+function getStartOfDay (date) {
+  const normalizedDate = new Date(date)
+  normalizedDate.setHours(0, 0, 0, 0)
+  return normalizedDate
+}
+
+function getEndOfDay (date) {
+  const normalizedDate = getStartOfDay(date)
+  normalizedDate.setDate(normalizedDate.getDate() + 1)
+  normalizedDate.setMilliseconds(-1)
+  return normalizedDate
+}
+
 export function createDateIntervals (fromDate, toDate) {
-  const interval = 10 * 24 * 60 * 60 * 1000 // 10 days interval for fetching data
+  const firstDay = getStartOfDay(fromDate)
+  const lastDay = getEndOfDay(toDate)
+  const intervalDays = 10
   const gapMs = 1
   return commonCreateDateIntervals({
-    fromDate,
-    toDate,
-    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
+    fromDate: firstDay,
+    toDate: lastDay,
+    addIntervalToDate: date => getEndOfDay(new Date(date.getFullYear(), date.getMonth(), date.getDate() + intervalDays - 1)),
     gapMs
   })
 }

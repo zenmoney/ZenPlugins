@@ -1,4 +1,4 @@
-import { AccountInfo } from '../../../types'
+import { AccountInfo } from '../../../models'
 import { convertAccounts } from '../../../converters'
 
 describe('convertAccounts', () => {

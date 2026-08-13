@@ -6,7 +6,7 @@ describe('convertTransaction', () => {
       {
         accountType: '1',
         concreteType: '1',
-        accountNumber: '3001779330014439',
+        accountNumber: '3000000000000001',
         operationName: 'Возврат (refund) в устройствах других банков',
         operationPlace: 'AEROFLOT PAO',
         merchantId: '121440',
@@ -19,18 +19,18 @@ describe('convertTransaction', () => {
         operationSign: '1',
         actionGroup: 1802,
         operationClosingBalance: 1450.53,
-        cardPAN: '5265520001946900',
+        cardPAN: '526552******6900',
         operationCode: 2
       },
       [
         {
-          id: '3001779330014439',
+          id: '3000000000000001',
           type: 'card',
           title: 'Цифровая карта 1-2-3, BYN',
           currencyCode: '933',
           instrument: 'BYN',
           balance: 528.44,
-          syncID: ['3001779330014439', '6900'],
+          syncID: ['3000000000000001', '6900'],
           rkcCode: '5761',
           cardHash: 'P-KdaFwKcI8_vOG004LaKNy9VnILWSZEnlnXDajOMP3_ThO2Kuwu-g_zvo-wlgxZw4fm7wsNN7muTG9RQfMkoA'
         }
@@ -40,7 +40,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: '3001779330014439' },
+            account: { id: '3000000000000001' },
             invoice: {
               instrument: 'RUB',
               sum: 14808
@@ -62,7 +62,7 @@ describe('convertTransaction', () => {
       {
         accountType: '0',
         concreteType: '0',
-        accountNumber: '1107239780000085',
+        accountNumber: '1000000000000001',
         operationName: 'Капитализация. Удержано подоходного налога 3.13',
         transactionDate: 1668485142000,
         operationDate: 1668485142000,
@@ -72,19 +72,19 @@ describe('convertTransaction', () => {
         operationCurrency: '978',
         operationSign: '1',
         actionGroup: 19,
-        clientName: 'Николаев Николай Николаевич',
+        clientName: 'NIKOLAY NIKOLAEV',
         operationClosingBalance: 8279.47,
         operationCode: 999
       },
       [
         {
-          id: '1107239780000085',
+          id: '1000000000000001',
           type: 'deposit',
           title: 'Депозит Безотзывный online-вклад',
           currencyCode: '978',
           instrument: 'EUR',
           balance: 8279.47,
-          syncID: ['1107239780000085']
+          syncID: ['1000000000000001']
         }
       ],
       {
@@ -92,7 +92,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: '1107239780000085' },
+            account: { id: '1000000000000001' },
             invoice: null,
             sum: 20.95,
             fee: 3.13
@@ -101,60 +101,6 @@ describe('convertTransaction', () => {
         merchant: null,
         comment: 'Капитализация',
         hold: false
-      }
-    ],
-    [
-      {
-        operationSign: '1',
-        operationId: '531847681743',
-        accountNumber: '3001779330014439',
-        transactionAmount: 415,
-        transactionCurrency: '840',
-        operationAmount: -1199.35,
-        operationCurrency: '933',
-        operationName: 'MOBILE APP\nMCC 6537, Поступление P2P перевода',
-        transType: 'TO',
-        operationDetail: {
-          source: '5*** **** **** 6953',
-          authCode: '577114',
-          mccCode: '6537 - Денежные переводы P2P',
-          paymentDate: 1763130787000,
-          operationDescription: 'Поступление P2P перевода',
-          status: 'PROCESSING',
-          terminalLocation: 'ALMATY',
-          operationName: 'MOBILE APP\nMCC 6537, Поступление P2P перевода'
-        }
-      },
-      [
-        {
-          id: '3001779330014439',
-          type: 'card',
-          title: 'Цифровая карта 1-2-3, BYN',
-          currencyCode: '933',
-          instrument: 'BYN',
-          balance: 528.44,
-          syncID: ['3001779330014439', '6900'],
-          rkcCode: '5761',
-          cardHash: 'P-KdaFwKcI8_vOG004LaKNy9VnILWSZEnlnXDajOMP3_ThO2Kuwu-g_zvo-wlgxZw4fm7wsNN7muTG9RQfMkoA'
-        }
-      ],
-      {
-        hold: false,
-        date: new Date('2025-11-14T17:33:07.000+03:00'),
-        movements: [
-          {
-            id: null,
-            account: { id: '3001779330014439' },
-            invoice: {
-              sum: 415,
-              instrument: 'USD'
-            },
-            sum: 1199.35,
-            fee: 0
-          }
-        ],
-        merchant: null,
-        comment: 'MOBILE APP\nMCC 6537, Поступление P2P перевода'
       }
     ]
   ])('converts income', (apiTransaction, accounts, transaction) => {

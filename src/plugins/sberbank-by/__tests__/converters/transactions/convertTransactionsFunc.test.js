@@ -1,3 +1,4 @@
+import { adjustTransactions } from '../../../../../common/transactionGroupHandler.js'
 import { convertTransactions } from '../../../converters.js'
 
 describe('convertTransactions', () => {
@@ -388,8 +389,7 @@ describe('convertTransactions', () => {
               sum: -92.82
             }
           ],
-          comment: null,
-          groupKeys: ['2023-09-12_BYN_92.82']
+          comment: null
         },
         {
           date: new Date('2023-09-12T07:37:13.000Z'),
@@ -410,12 +410,221 @@ describe('convertTransactions', () => {
               sum: 92.82
             }
           ],
-          comment: null,
-          groupKeys: ['2023-09-12_BYN_92.82']
+          comment: null
         }
       ]
     ]
   ])('converts transactions', (apiTransactions, accountsByNumber, transactions) => {
     expect(convertTransactions(apiTransactions, accountsByNumber)).toEqual(transactions)
+  })
+
+  it('does not merge received P2P SOU Sber Bank money with a matching debit', () => {
+    const apiTransactions = [
+      {
+        sourceSystem: 4,
+        eventId: 'debit-event',
+        contractId: 'credit-contract',
+        cardPAN: '111111******1111',
+        cardId: 'credit-card',
+        eventDate: 1770000000000,
+        transactionCode: '01000F',
+        transactionName: 'P2P SOU Sber Bank > Minsk BLR Терминал: W2P90008 RRN:600000000001 AuthCode:111111',
+        merchantId: '0822061',
+        merchantPlace: 'P2P SOU Sber Bank > Minsk BLR',
+        transactionSum: -30,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        commissionCurrency: '933',
+        rnnCode: '600000000001',
+        authorizationCode: '111111',
+        eventStatus: 0,
+        payAvailable: false
+      },
+      {
+        sourceSystem: 4,
+        eventId: 'income-event',
+        contractId: 'income-contract',
+        cardPAN: '222222******4370',
+        cardId: 'income-card',
+        eventDate: 1770000000000,
+        transactionCode: '01000P',
+        transactionName: 'P2P SOU Sber Bank > Minsk BLR Терминал: W2P90008 RRN:600000000002 AuthCode:222222',
+        merchantId: '0822061',
+        merchantPlace: 'P2P SOU Sber Bank > Minsk BLR',
+        transactionSum: 30,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        commissionCurrency: '933',
+        rnnCode: '600000000002',
+        authorizationCode: '222222',
+        eventStatus: 0,
+        payAvailable: false
+      }
+    ]
+    const accountsByNumber = {
+      'credit-contract': {
+        id: 'credit-account',
+        instrument: 'BYN'
+      },
+      'income-contract': {
+        id: 'card-4370',
+        instrument: 'BYN'
+      }
+    }
+
+    const transactions = adjustTransactions({
+      transactions: convertTransactions(apiTransactions, accountsByNumber)
+    })
+
+    expect(transactions).toEqual([
+      {
+        date: new Date(1770000000000),
+        hold: true,
+        merchant: {
+          city: 'Minsk',
+          country: 'BLR',
+          location: null,
+          mcc: null,
+          title: 'P2P SOU Sber Bank'
+        },
+        movements: [
+          {
+            account: { id: 'credit-account' },
+            fee: 0,
+            id: 'debit-event',
+            invoice: null,
+            sum: -30
+          }
+        ],
+        comment: null
+      },
+      {
+        date: new Date(1770000000000),
+        hold: true,
+        merchant: {
+          city: 'Minsk',
+          country: 'BLR',
+          location: null,
+          mcc: null,
+          title: 'P2P SOU Sber Bank'
+        },
+        movements: [
+          {
+            account: { id: 'card-4370' },
+            fee: 0,
+            id: 'income-event',
+            invoice: null,
+            sum: 30
+          }
+        ],
+        comment: null
+      }
+    ])
+  })
+
+  it('merges online deposit top-up card outcome with target account income', () => {
+    const apiTransactions = [
+      {
+        sourceSystem: 8,
+        eventId: 'moneybox-income-event',
+        contractId: 'moneybox-contract',
+        eventDate: 1770003603000,
+        processingDate: 1770000000000,
+        transactionType: 1,
+        transactionCode: 'D_ZACH_BEZN',
+        transactionName: 'On-line пополнение договора с использованием сервиса Мобильный банкинг',
+        transactionSum: 75,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        eventStatus: 1
+      },
+      {
+        sourceSystem: 3,
+        eventId: 'card-outcome-event',
+        souEventId: 'card-outcome-event',
+        contractId: 'card-contract',
+        cardPAN: '123456******0001',
+        cardId: 'card-0001',
+        eventDate: 1770003600000,
+        processingDate: null,
+        transactionType: -1,
+        transactionCode: '1455',
+        transactionName: 'Пополнение вклада в BYN (on-line) TESTDEPOSIT001',
+        transactionSum: 75,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        rnnCode: '000000000001',
+        authorizationCode: '123456',
+        eventStatus: 0
+      },
+      {
+        sourceSystem: 8,
+        eventId: 'card-income-event',
+        contractId: 'card-contract',
+        eventDate: 1770000000000,
+        processingDate: 1769996400000,
+        transactionType: 1,
+        transactionCode: 'TRAN_ERIP',
+        transactionName: 'Пополнение счета через ЕРИП онлайн',
+        transactionSum: 75,
+        transactionCurrency: '933',
+        commissionSum: 0,
+        eventStatus: 1
+      }
+    ]
+    const accountsByNumber = {
+      'moneybox-contract': {
+        id: 'moneybox-account',
+        instrument: 'BYN'
+      },
+      'card-contract': {
+        id: 'card-account',
+        instrument: 'BYN'
+      }
+    }
+
+    const transactions = adjustTransactions({
+      transactions: convertTransactions(apiTransactions, accountsByNumber)
+    })
+
+    expect(transactions).toEqual([
+      {
+        movements: [
+          {
+            id: 'card-outcome-event',
+            account: { id: 'card-account' },
+            invoice: null,
+            sum: -75,
+            fee: 0
+          },
+          {
+            id: 'moneybox-income-event',
+            account: { id: 'moneybox-account' },
+            invoice: null,
+            sum: 75,
+            fee: 0
+          }
+        ],
+        date: new Date(1770003600000),
+        hold: null,
+        merchant: null,
+        comment: 'Пополнение вклада в BYN (on-line) TESTDEPOSIT001'
+      },
+      {
+        hold: false,
+        date: new Date(1770000000000),
+        movements: [
+          {
+            id: 'card-income-event',
+            account: { id: 'card-account' },
+            invoice: null,
+            sum: 75,
+            fee: 0
+          }
+        ],
+        merchant: null,
+        comment: 'Пополнение счета через ЕРИП онлайн'
+      }
+    ])
   })
 })

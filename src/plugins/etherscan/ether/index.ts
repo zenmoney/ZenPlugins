@@ -1,7 +1,7 @@
 import { Account, Transaction } from '../../../types/zenmoney'
 import { Scrape } from '../types'
 import { fetchAccounts, fetchAccountTransactions } from './api'
-import { mergeTransferTransactions } from '../common/converters'
+import { appendTransactions, mergeTransferTransactions } from '../common/converters'
 import { convertAccounts, convertTransactions } from './converters'
 import { Instruments } from '../common/config'
 
@@ -20,7 +20,10 @@ export const scrape: Scrape = async ({ preferences, startBlock, endBlock }) => {
       endBlock
     })
 
-    transactions.push(...convertTransactions(account.id, accountTransactions))
+    appendTransactions(
+      transactions,
+      convertTransactions(account.id, accountTransactions)
+    )
   }
 
   return {

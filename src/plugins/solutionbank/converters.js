@@ -1,30 +1,56 @@
+import { MD5 } from 'jshashes'
 import codeToCurrencyLookup from '../../common/codeToCurrencyLookup'
-const MS_PER_DAY = 1000 * 60 * 60 * 24
+const BANK_TIMEZONE_OFFSET_MS = 3 * 60 * 60 * 1000
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+const MERCHANT_ID_PREFIX_LENGTH = 25
+const SAFE_MERCHANT_PREFIX_MIN_LENGTH = 16
+const CANONICAL_TRANSACTION_ID_SOURCE_FIELD = 'transactionIdSource'
+const GENERIC_ACCOUNT_INCOME_ID_NAME = 'Зачисление на счет'
+const GENERIC_ACCOUNT_INCOME_NAME = GENERIC_ACCOUNT_INCOME_ID_NAME.toUpperCase()
+const CAPITALIZATION_OPERATION_NAME_PREFIX = 'КАПИТАЛИЗАЦИЯ '
+const MONEY_BACK_OPERATION_NAME_PREFIX = 'НАЧИСЛЕНИЕ MONEY-BACK'
+const CARD_SERVICE_FEE_HOLD_ID_NAME = 'Ежемесячная плата за обслуживание карточки'
+const CARD_SERVICE_FEE_HOLD_NAME = CARD_SERVICE_FEE_HOLD_ID_NAME.toUpperCase()
+const CARD_SERVICE_FEE_POSTED_NAME = 'АБОНЕНТСКАЯ ПЛАТА'
+const md5 = new MD5()
 
 export function convertAccount (json) {
+  const card = json.cards[0]
+  const cardLast4 = card.cardNumberMasked.slice(-4)
+  const retailCardId = card.retailCardId ? String(card.retailCardId) : null
   const account = {
-    id: json.cardAccountNumber,
+    id: retailCardId ? `${json.cardAccountNumber}-${retailCardId}` : card.cardHash,
     type: 'card',
-    instrument: codeToCurrencyLookup[json.currency],
-    instrumentCode: json.currency,
-    balance: Number.parseFloat(json.balance.replace(',', '.').replace(/\s/g, '')),
-    syncID: [],
+    instrument: codeToCurrencyLookup[card.currency || json.currency],
+    instrumentCode: card.currency || json.currency,
+    balance: parseAmount(json.balance),
+    syncID: [retailCardId, cardLast4].filter(Boolean),
     productType: json.productName,
-    cardHash: json.cards[0].cardHash,
+    cardHash: card.cardHash,
+    cardLast4,
+    internalAccountId: json.internalAccountId,
+    cardAccountNumber: json.cardAccountNumber,
     bankCode: json.bankCode,
     accountType: json.accountType,
     rkcCode: json.rkcCode
   }
 
-  for (const el of json.cards) {
-    account.syncID.push(el.cardNumberMasked.slice(-4))
-  }
-
   if (!account.title) {
-    account.title = json.productName + '*' + account.syncID[0]
+    account.title = json.productName + '*' + cardLast4
   }
 
   return account
+}
+
+function parseAmount (value) {
+  if (typeof value === 'number') {
+    return value
+  }
+  if (value === undefined || value === null || value === '') {
+    return 0
+  }
+  const parsedValue = Number.parseFloat(String(value).replace(',', '.').replace(/\s/g, ''))
+  return Number.isFinite(parsedValue) ? parsedValue : 0
 }
 
 export function convertTransaction (json) {
@@ -37,7 +63,7 @@ export function convertTransaction (json) {
     date: json.transactionDate || json.date,
     movements: [
       {
-        id: json.id || null,
+        id: getTransactionId(json),
         account: { id: json.account_id },
         invoice: null,
         sum,
@@ -54,6 +80,115 @@ export function convertTransaction (json) {
   return transaction
 }
 
+function getTransactionId (json) {
+  const source = getTransactionIdSource(json)
+  console.log('SolutionBank transaction id source', source)
+  return md5.hex(source)
+}
+
+function getTransactionIdSource (json) {
+  if (json[CANONICAL_TRANSACTION_ID_SOURCE_FIELD]) {
+    return json[CANONICAL_TRANSACTION_ID_SOURCE_FIELD]
+  }
+  return [
+    getTransactionIdentitySource(json),
+    getDuplicateIndex(json)
+  ].map(getIdValue).join('|')
+}
+
+function getTransactionIdentity (json) {
+  return md5.hex(getTransactionIdentitySource(json))
+}
+
+function getTransactionIdentitySource (json) {
+  return [
+    json.account_id,
+    getDateIdValue(getFirstPresent(json.transactionDate, json.date, json.operationDate)),
+    getAmountIdValue(getTransactionAmountIdValue(json)),
+    getTransactionCurrencyIdValue(json),
+    getMerchantIdValue(json.merchant) || getCanonicalOperationNameIdValue(json)
+  ].map(getIdValue).join('|')
+}
+
+function getCanonicalOperationNameIdValue (json) {
+  const value = getFirstPresent(json.operationName, json.transactionName)
+  const normalizedValue = normalizeOperationName(value)
+  if (isGenericAccountIncomeName(normalizedValue) || isKnownGenericAccountIncomePeerName(normalizedValue)) {
+    return GENERIC_ACCOUNT_INCOME_ID_NAME
+  }
+  if (normalizedValue === CARD_SERVICE_FEE_HOLD_NAME || normalizedValue === CARD_SERVICE_FEE_POSTED_NAME) {
+    return CARD_SERVICE_FEE_HOLD_ID_NAME
+  }
+  return value
+}
+
+function getDuplicateIndex (json) {
+  return json.duplicateIndex || 1
+}
+
+function getFirstPresent (...values) {
+  return values.find(value => value !== undefined && value !== null && value !== '')
+}
+
+function getDateIdValue (value) {
+  if (!(value instanceof Date)) {
+    return value
+  }
+  return new Date(value.getTime() + BANK_TIMEZONE_OFFSET_MS).toISOString().slice(0, 10)
+}
+
+function getAmountIdValue (value) {
+  if (value === undefined || value === null || value === '') {
+    return ''
+  }
+  return parseAmount(value).toFixed(2)
+}
+
+function getTransactionAmountIdValue (json) {
+  const transactionAmount = getFirstPresent(json.transactionAmount)
+  const operationAmount = getFirstPresent(json.operationAmount, json.sum)
+  if (isZeroAmount(transactionAmount) && !isZeroAmount(operationAmount)) {
+    return operationAmount
+  }
+  return getFirstPresent(json.transactionAmount, json.operationAmount, json.sum)
+}
+
+function getTransactionCurrencyIdValue (json) {
+  const transactionAmount = getFirstPresent(json.transactionAmount)
+  const operationAmount = getFirstPresent(json.operationAmount, json.sum)
+  if (isZeroAmount(transactionAmount) && !isZeroAmount(operationAmount)) {
+    return getFirstPresent(json.operationCurrencyCode, json.accountCurrencyCode, json.currencyCode, json.currency, json.transactionCurrencyCode)
+  }
+  return getFirstPresent(json.transactionCurrencyCode, json.operationCurrencyCode, json.accountCurrencyCode, json.currencyCode, json.currency)
+}
+
+function isZeroAmount (value) {
+  return value !== undefined && value !== null && value !== '' && parseAmount(value) === 0
+}
+
+function getMerchantIdValue (value) {
+  return normalizeMerchant(value).slice(0, MERCHANT_ID_PREFIX_LENGTH)
+}
+
+function normalizeMerchant (value) {
+  if (value === undefined || value === null) {
+    return ''
+  }
+  return String(value)
+    .replace(/&quot;/g, '"')
+    .replace(/"/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase()
+}
+
+function getIdValue (value) {
+  if (value instanceof Date) {
+    return value.getTime()
+  }
+  return value === undefined || value === null ? '' : String(value)
+}
+
 function getComment (json) {
   const operationCurrencyCode = (json.operationCurrencyCode || json.accountCurrencyCode)
   if (json.transactionCurrencyCode !== operationCurrencyCode) {
@@ -68,13 +203,11 @@ function getComment (json) {
 }
 
 function parsePayee (transaction, json) {
-  // интернет-платежи отображаем без получателя
-  if (!json.merchant ||
-    json.merchant.indexOf('BANK RESHENIE- OPLATA USLUG') >= 0) {
+  if (!json.merchant) {
     return false
   }
   transaction.merchant = {
-    mcc: null,
+    mcc: parseMcc(json.mcc),
     location: null
   }
   const merchant = json.merchant.replace(/&quot;/g, '"').split(';').map(str => str.trim())
@@ -95,23 +228,207 @@ function parsePayee (transaction, json) {
   }
 }
 
+function parseMcc (mcc) {
+  const parsedMcc = Number.parseInt(mcc)
+  return Number.isFinite(parsedMcc) ? parsedMcc : null
+}
+
 export function getDate (str) {
   const [year, month, day, hour, minute, second] = str.match(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/).slice(1)
   return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
 }
 
 export function merge (transactions, operations) {
-  const merged = operations
-  for (const tr of transactions) {
-    tr.hold = !operations.some((operation) => {
-      return Math.abs(operation.transactionDate - tr.transactionDate) < MS_PER_DAY &&
-      operation.transactionAmount === tr.transactionAmount &&
-      operation.transactionCurrencyCode === tr.transactionCurrencyCode &&
-      operation.account_id === tr.account_id
+  const indexedOperations = assignDuplicateIndexes(operations.map(operation => ({
+    ...operation,
+    hold: false
+  })))
+  const indexedTransactions = assignDuplicateIndexes(transactions.map(transaction => ({
+    ...transaction,
+    hold: true
+  })))
+  const unmatchedTransactionIndexes = new Set(indexedTransactions.map((_, index) => index))
+  const matchedOperations = indexedOperations.map(operation => {
+    const matchedTransactionIndex = findMatchingTransactionIndex(operation, indexedTransactions, unmatchedTransactionIndexes)
+    if (matchedTransactionIndex === null) {
+      return operation
+    }
+    unmatchedTransactionIndexes.delete(matchedTransactionIndex)
+    return {
+      ...operation,
+      [CANONICAL_TRANSACTION_ID_SOURCE_FIELD]: getTransactionIdSource(indexedTransactions[matchedTransactionIndex])
+    }
+  })
+  return [
+    ...matchedOperations,
+    ...indexedTransactions.filter((_, index) => unmatchedTransactionIndexes.has(index))
+  ]
+}
+
+function assignDuplicateIndexes (transactions) {
+  const items = transactions.map((transaction, index) => ({ transaction, index }))
+  const groups = new Map()
+  for (const item of items) {
+    const key = getTransactionIdentity(item.transaction)
+    const group = groups.get(key) || []
+    group.push(item)
+    groups.set(key, group)
+  }
+  for (const group of groups.values()) {
+    group.sort(compareDuplicateOrder)
+    group.forEach((item, index) => {
+      item.transaction.duplicateIndex = index + 1
     })
-    if (tr.hold) {
-      merged.push(tr)
+  }
+  return items.map(item => item.transaction)
+}
+
+function compareDuplicateOrder (left, right) {
+  return getDuplicateOrderTime(left.transaction) - getDuplicateOrderTime(right.transaction) ||
+    left.index - right.index
+}
+
+function getDuplicateOrderTime (json) {
+  const value = json.hold
+    ? getFirstPresent(json.transactionDate, json.date, json.operationDate)
+    : getFirstPresent(json.operationDate, json.transactionDate, json.date)
+  return value instanceof Date ? value.getTime() : 0
+}
+
+function getTransactionMatchKey (json) {
+  return `${getTransactionIdentity(json)}|${getDuplicateIndex(json)}`
+}
+
+function findMatchingTransactionIndex (operation, transactions, transactionIndexes) {
+  const candidates = [...transactionIndexes].filter(index => {
+    return areTransactionsCompatible(operation, transactions[index])
+  })
+  const exactMatch = candidates.find(index => getTransactionMatchKey(operation) === getTransactionMatchKey(transactions[index]))
+  return exactMatch === undefined ? candidates[0] ?? null : exactMatch
+}
+
+function areTransactionsCompatible (left, right) {
+  const leftBaseValues = getTransactionBaseValues(left)
+  const rightBaseValues = getTransactionBaseValues(right)
+  const leftMerchantValue = getTransactionMerchantMatchValue(left)
+  const rightMerchantValue = getTransactionMerchantMatchValue(right)
+  return leftBaseValues.accountId === rightBaseValues.accountId &&
+    areTransactionDatesCompatible(left, right, leftBaseValues.date, rightBaseValues.date, leftMerchantValue, rightMerchantValue) &&
+    leftBaseValues.amount === rightBaseValues.amount &&
+    leftBaseValues.currency === rightBaseValues.currency &&
+    getDuplicateIndex(left) === getDuplicateIndex(right) &&
+    areMerchantValuesCompatible(leftMerchantValue, rightMerchantValue)
+}
+
+function getTransactionBaseValues (json) {
+  return {
+    accountId: getIdValue(json.account_id),
+    date: getIdValue(getDateIdValue(getTransactionDateValue(json))),
+    amount: getIdValue(getAmountIdValue(getTransactionAmountIdValue(json))),
+    currency: getIdValue(getTransactionCurrencyIdValue(json))
+  }
+}
+
+function getTransactionDateValue (json) {
+  return getFirstPresent(json.transactionDate, json.date, json.operationDate)
+}
+
+function areTransactionDatesCompatible (left, right, leftDate, rightDate, leftMerchantValue, rightMerchantValue) {
+  if (leftDate === rightDate) {
+    return true
+  }
+  return arePostedHoldAdjacentDatesCompatible(left, right, leftMerchantValue, rightMerchantValue)
+}
+
+function arePostedHoldAdjacentDatesCompatible (left, right, leftMerchantValue, rightMerchantValue) {
+  const posted = left.hold ? right : left
+  const hold = left.hold ? left : right
+  const postedMerchantValue = left.hold ? rightMerchantValue : leftMerchantValue
+  const holdMerchantValue = left.hold ? leftMerchantValue : rightMerchantValue
+  const postedDate = getTransactionDateValue(posted)
+  const holdDate = getTransactionDateValue(hold)
+  if (posted.hold || !hold.hold || !(postedDate instanceof Date) || !(holdDate instanceof Date)) {
+    return false
+  }
+  if (postedMerchantValue.type !== 'merchant' || postedMerchantValue.value !== holdMerchantValue.value) {
+    return false
+  }
+  return isBankLocalMidnight(postedDate) &&
+    getBankLocalDayNumber(postedDate) - getBankLocalDayNumber(holdDate) === 1
+}
+
+function getBankLocalDayNumber (date) {
+  return Math.floor((date.getTime() + BANK_TIMEZONE_OFFSET_MS) / MS_PER_DAY)
+}
+
+function isBankLocalMidnight (date) {
+  return (date.getTime() + BANK_TIMEZONE_OFFSET_MS) % MS_PER_DAY === 0
+}
+
+function getTransactionMerchantMatchValue (json) {
+  const merchant = normalizeMerchant(json.merchant)
+  if (merchant) {
+    return {
+      value: merchant,
+      type: 'merchant',
+      allowPrefixMatch: true
     }
   }
-  return merged
+  return {
+    value: normalizeOperationName(getFirstPresent(json.operationName, json.transactionName)),
+    type: 'operationName',
+    allowPrefixMatch: false
+  }
+}
+
+function areMerchantValuesCompatible (left, right) {
+  if (left.value === right.value) {
+    return true
+  }
+  if (left.type === 'operationName' && right.type === 'operationName') {
+    return areOperationNamesCompatible(left.value, right.value)
+  }
+  if (!left.allowPrefixMatch || !right.allowPrefixMatch || !left.value || !right.value) {
+    return false
+  }
+  const leftPrefix = left.value.slice(0, MERCHANT_ID_PREFIX_LENGTH)
+  const rightPrefix = right.value.slice(0, MERCHANT_ID_PREFIX_LENGTH)
+  if (leftPrefix === rightPrefix) {
+    return true
+  }
+  return Math.min(left.value.length, right.value.length) >= SAFE_MERCHANT_PREFIX_MIN_LENGTH &&
+    (left.value.startsWith(right.value) || right.value.startsWith(left.value))
+}
+
+function normalizeOperationName (value) {
+  return value
+    ? String(value).replace(/\s+/g, ' ').trim().toUpperCase()
+    : ''
+}
+
+function areOperationNamesCompatible (left, right) {
+  return (isGenericAccountIncomeName(left) && isKnownGenericAccountIncomePeerName(right)) ||
+    (isGenericAccountIncomeName(right) && isKnownGenericAccountIncomePeerName(left)) ||
+    isCardServiceFeePair(left, right)
+}
+
+function isCardServiceFeePair (left, right) {
+  return (left === CARD_SERVICE_FEE_HOLD_NAME && right === CARD_SERVICE_FEE_POSTED_NAME) ||
+    (left === CARD_SERVICE_FEE_POSTED_NAME && right === CARD_SERVICE_FEE_HOLD_NAME)
+}
+
+function isGenericAccountIncomeName (value) {
+  return value === GENERIC_ACCOUNT_INCOME_NAME
+}
+
+function isCapitalizationOperationName (value) {
+  return value.indexOf(CAPITALIZATION_OPERATION_NAME_PREFIX) === 0
+}
+
+function isMoneyBackOperationName (value) {
+  return value.indexOf(MONEY_BACK_OPERATION_NAME_PREFIX) === 0
+}
+
+function isKnownGenericAccountIncomePeerName (value) {
+  return isCapitalizationOperationName(value) || isMoneyBackOperationName(value)
 }

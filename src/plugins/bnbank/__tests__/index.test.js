@@ -1,535 +1,274 @@
 import fetchMock from 'fetch-mock'
 import { scrape } from '..'
 import { makePluginDataApi } from '../../../ZPAPI.pluginData'
-import { generateDeviceID } from '../api'
+
+const BASE_URL = 'https://bnb-mobile.bnb.by/'
 
 describe('scrape', () => {
-  it('should hit the mocks and return results', async () => {
-    const deviceId = generateDeviceID()
-    global.ZenMoney = {
-      device_id: deviceId,
-      device: {
-        manufacturer: 'Zenmoney',
-        model: 'Sync'
-      },
-      ...makePluginDataApi({
-        deviceId
-      }).methods
-    }
-    mockLogin()
-    mockFetchAccount()
-    mockCardAccountStatement()
-    mockCardLastTransactions()
-    mockDepositAccountStatement()
+  afterEach(() => fetchMock.restore())
 
-    const result = await scrape(
-      {
-        preferences: { phone: '123456789', password: 'pass' },
-        fromDate: new Date('2018-12-27T00:00:00.000+03:00'),
-        toDate: new Date('2019-01-02T00:00:00.000+03:00')
+  it('authenticates through Iskra and converts products and operations', async () => {
+    const pluginData = makePluginDataApi({})
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', model: 'Sync' },
+      isAccountSkipped: jest.fn().mockReturnValue(false),
+      readLine: jest.fn()
+        .mockResolvedValueOnce('123456')
+        .mockResolvedValueOnce('112233')
+        .mockResolvedValueOnce('654321'),
+      ...pluginData.methods
+    }
+
+    fetchMock.once(`${BASE_URL}user/v1/auth/otp`, {
+      status: 200,
+      body: { secret: 'otp-request-secret', expiredTime: 60, otpLength: 6 }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/auth/otp/validation`, {
+      status: 200,
+      body: { secret: 'validated-secret' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/auth`, {
+      status: 200,
+      body: {
+        actionType: 'SUCCESS_AUTHENTICATION',
+        authData: {
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+          deviceTrustStatus: 'NOT_TRUSTED_WITH_OTHER_TRUSTED'
+        }
       }
-    )
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/devices/verification`, {
+      status: 200,
+      body: {
+        steps: [{ type: 'PHONE', status: 'ENABLED' }],
+        policy: 'ALL_SUCCESS',
+        status: 'IN_PROGRESS'
+      }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/devices/verification/phone/otp`, {
+      status: 200,
+      body: {
+        secret: 'device-verification-secret',
+        validationType: 'OTP',
+        expiredTime: 60,
+        otpLength: 6
+      }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/devices/verification/phone`, {
+      status: 200,
+      body: {
+        steps: [{ type: 'PHONE', status: 'SUCCESS' }],
+        policy: 'ALL_SUCCESS',
+        status: 'SUCCESS'
+      }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
+      status: 200,
+      body: { referenceState: 'NEED_CREATE_UPDATE', fingerprintId: 'fingerprint-id' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/fingerprint/reference/verification`, {
+      status: 200,
+      body: {
+        secret: 'device-otp-secret',
+        validationType: 'OTP',
+        expiredTime: 60,
+        otpLength: 6
+      }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/users/otp/validation`, {
+      status: 200,
+      body: { secret: 'device-task-id' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/fingerprint/reference`, {
+      status: 204
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations/products`, {
+      status: 200,
+      body: {
+        cards: [{
+          id: 'card-1',
+          name: '1-2-3',
+          balance: { amount: '125.40', currency: 'BYN', sign: 'PLUS' },
+          pan: '5355********1234'
+        }],
+        accounts: [],
+        credits: [],
+        deposits: [{
+          id: 'deposit-1',
+          name: 'Верное решение',
+          balance: { amount: '1000.00', currency: 'USD', sign: 'PLUS' }
+        }]
+      }
+    })
+    fetchMock.once(`${BASE_URL}deposit/v1/deposits/sync`, {
+      status: 200,
+      body: {
+        deposits: [{
+          id: 'deposit-1',
+          name: 'Верное решение',
+          balance: { amount: '1000.00', currency: 'USD', sign: 'PLUS' },
+          contractOpenDate: '2025-06-01',
+          contractEndDate: '2026-06-01',
+          interestRateType: 'FIXED',
+          currentInterestRate: '5.25',
+          maxInterestRate: null,
+          isIrrevocable: false
+        }]
+      }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
+      body: {
+        operations: [{
+          id: 'operation-1',
+          idType: 'OPERATION',
+          productId: 'card-1',
+          productType: 'CARD',
+          paymentDate: '2026-07-28T12:30:00+03:00',
+          operationName: 'Оплата товаров и услуг',
+          operationDetail: {
+            operationDate: '2026-07-28T12:29:00+03:00',
+            merchantName: 'COFFEE SHOP',
+            mccCode: '5814',
+            terminalLocation: 'BLR MINSK',
+            authorizationCode: '654321',
+            statusCode: 'EXECUTED'
+          },
+          operationSum: { amount: '12.50', currency: 'BYN', sign: 'MINUS' },
+          transactionSum: { amount: '12.50', currency: 'BYN', sign: 'MINUS' }
+        }],
+        totalCount: 1
+      }
+    }, { method: 'POST' })
+
+    const result = await scrape({
+      preferences: {
+        phone: '+375000000000',
+        identificationNumber: 'TEST123',
+        isResident: 'true'
+      },
+      fromDate: new Date('2026-07-01T00:00:00Z'),
+      toDate: new Date('2026-07-29T00:00:00Z')
+    })
 
     expect(result.accounts).toEqual([{
-      balance: 7.4,
-      cardHash: '8dkwk_a5l1A0nOffbenDdrrv14VyBN2YY1PeYsU8d2c5ZSpRKcZoj-dDd6aUt-TVBvIYmbwzA2l7Dv6aT1aFqL',
-      currencyCode: '933',
-      id: '2007500000000000',
+      id: 'card-1',
+      type: 'card',
+      title: '1-2-3',
+      currencyCode: 'BYN',
       instrument: 'BYN',
-      rkcCode: '004',
-      syncID: ['2007500000000000', '0000'],
-      title: 'Личные, BYN - Maxima Plus',
-      type: 'card'
+      balance: 125.4,
+      syncID: ['card-1', '1234']
     }, {
-      balance: 865.23,
-      capitalization: true,
-      currencyCode: '840',
-      endDateOffset: 182,
-      endDateOffsetInterval: 'day',
-      id: '1100000000000000',
-      instrument: 'USD',
-      payoffInterval: 'month',
-      payoffStep: 1,
-      percent: 2.25,
-      rkcCode: '765',
-      startDate: new Date('2018-12-13T21:00:00.000Z'),
-      syncID: ['1100000000000000'],
+      id: 'deposit-1',
+      type: 'deposit',
       title: 'Депозит Верное решение',
-      type: 'deposit'
+      currencyCode: 'USD',
+      instrument: 'USD',
+      balance: 1000,
+      syncID: ['deposit-1'],
+      startDate: new Date('2025-06-01'),
+      startBalance: 1000,
+      capitalization: true,
+      percent: 5.25,
+      endDateOffsetInterval: 'day',
+      endDateOffset: 365,
+      payoffInterval: 'month',
+      payoffStep: 1
     }])
-
-    expect(result.transactions).toEqual([
-      {
-        comment: null,
-        date: new Date('2019-01-02T21:00:00.000Z'),
-        hold: false,
-        merchant: {
-          fullTitle: 'AWS EMEA',
-          location: null,
-          mcc: null
-        },
-        movements: [{
-          account: {
-            id: '2007500000000000'
-          },
-          fee: 0,
-          id: '939000',
-          invoice: {
-            instrument: 'USD',
-            sum: -0.64
-          },
-          sum: -1.4
-        }]
+    expect(result.transactions).toEqual([{
+      date: new Date('2026-07-28T09:29:00Z'),
+      movements: [{
+        id: 'OPERATION:operation-1',
+        account: { id: 'card-1' },
+        invoice: null,
+        sum: -12.5,
+        fee: 0
+      }],
+      merchant: {
+        title: 'COFFEE SHOP',
+        mcc: 5814,
+        city: 'MINSK',
+        country: 'BLR',
+        location: null
       },
-      {
-        comment: 'Списание по операции ПЦ \'Оплата услуг в ИБ\' ',
-        date: new Date('2019-01-06T21:00:00.000Z'),
-        hold: false,
-        merchant: null,
-        movements: [{
-          account: {
-            id: '2007500000000000'
-          },
-          fee: 0,
-          id: '161000',
-          invoice: null,
-          sum: -2.17
-        }]
-      },
-      {
-        comment: 'Списание по операции ПЦ \'Оплата услуг в ИБ\' ',
-        date: new Date('2019-01-08T21:00:00.000Z'),
-        hold: false,
-        merchant: null,
-        movements: [{
-          account: {
-            id: '2007500000000000'
-          },
-          fee: 0,
-          id: '163000',
-          invoice: null,
-          sum: -2.16
-        }]
-      },
-      {
-        comment: 'Списание по операции ПЦ \'Оплата услуг в ИБ\' ',
-        date: new Date('2019-01-08T21:00:00.000Z'),
-        hold: false,
-        merchant: null,
-        movements: [{
-          account: {
-            id: '2007500000000000'
-          },
-          fee: 0,
-          id: '957000',
-          invoice:
-            {
-              instrument: 'USD',
-              sum: -200
-            },
-          sum: -437
-        }]
-      },
-      {
-        comment: null,
-        date: new Date('2019-01-08T21:00:00.000Z'),
-        hold: false,
-        merchant: null,
-        movements: [{
-          account: {
-            id: '1100000000000000'
-          },
-          fee: 0,
-          id: null,
-          invoice: null,
-          sum: 200
-        }]
-      },
-      {
-        comment: null,
-        date: new Date('2019-01-08T21:00:00.000Z'),
-        hold: false,
-        merchant: null,
-        movements: [{
-          account: {
-            id: '1100000000000000'
-          },
-          fee: 0,
-          id: null,
-          invoice: null,
-          sum: 206
-        }]
-      },
-      {
-        comment: 'Зачисление дохода от предпринимательской деятельности',
-        date: new Date('2019-01-09T07:38:00.000Z'),
-        hold: false,
-        merchant: null,
-        movements: [{
-          account: {
-            id: '2007500000000000'
-          },
-          fee: 0,
-          id: null,
-          invoice: null,
-          sum: 3000
-        }]
-      },
-      {
-        comment: null,
-        date: new Date('2019-01-09T21:00:00.000Z'),
-        hold: false,
-        merchant: null,
-        movements: [{
-          account: {
-            id: '1100000000000000'
-          },
-          fee: 0,
-          id: null,
-          invoice: null,
-          sum: 0.02
-        }]
+      comment: 'Оплата товаров и услуг',
+      hold: false
+    }])
+    expect(pluginData.currentData.auth).toEqual({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      deviceTrustStatus: 'TRUSTED'
+    })
+    expect(pluginData.currentData.device).toMatchObject({
+      uuid: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      fingerprint: {
+        deviceModel: 'samsung SM-S948B',
+        deviceName: 'SM-S948B',
+        locale: 'ru-RU'
       }
+    })
+    expect(global.ZenMoney.readLine).toHaveBeenCalledTimes(3)
+    expect(fetchMock.calls(`${BASE_URL}user/v1/fingerprint`)).toHaveLength(1)
+    expect(pluginData.saveDataRequested).toBe(true)
+  })
+
+  it('returns skipped accounts without requesting their operations', async () => {
+    const pluginData = makePluginDataApi({
+      auth: {
+        accessToken: 'old-access-token',
+        refreshToken: 'refresh-token',
+        deviceTrustStatus: 'TRUSTED'
+      }
+    })
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', model: 'Sync' },
+      isAccountSkipped: jest.fn(id => id === 'card-skipped'),
+      readLine: jest.fn(),
+      ...pluginData.methods
+    }
+
+    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
+      status: 200,
+      body: { accessToken: 'access-token', refreshToken: 'refresh-token' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
+      status: 200,
+      body: { referenceState: 'CONFIRMED', fingerprintId: 'fingerprint-id' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations/products`, {
+      status: 200,
+      body: {
+        cards: [{
+          id: 'card-active',
+          name: 'Активная карта',
+          balance: { amount: '10.00', currency: 'BYN', sign: 'PLUS' }
+        }, {
+          id: 'card-skipped',
+          name: 'Пропущенная карта',
+          balance: { amount: '20.00', currency: 'BYN', sign: 'PLUS' }
+        }],
+        accounts: [],
+        deposits: []
+      }
+    })
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
+      body: { operations: [], totalCount: 0 }
+    }, { method: 'POST' })
+
+    const result = await scrape({
+      preferences: {},
+      fromDate: new Date('2026-07-01T00:00:00Z'),
+      toDate: new Date('2026-07-29T00:00:00Z')
+    })
+
+    expect(result.accounts.map(account => account.id)).toEqual(['card-active', 'card-skipped'])
+    const [, operationsRequest] = fetchMock.lastCall(`${BASE_URL}product-transaction/v1/operations`)
+    expect(JSON.parse(operationsRequest.body).filter.productTypes).toEqual([
+      { id: 'card-active', type: 'CARD' }
     ])
+    expect(global.ZenMoney.readLine).not.toHaveBeenCalled()
   })
 })
-
-function mockDepositAccountStatement () {
-  fetchMock.once('https://mb.bnb.by/services/v2/products/getDepositAccountStatement', {
-    status: 200,
-    body: JSON.stringify({
-      errorInfo: {
-        error: '0',
-        errorText: 'Успешно'
-      },
-      accountType: 'Верное решение',
-      concreteType: '0',
-      operations: [
-        {
-          accountType: '0',
-          concreteType: '0',
-          accountNumber: '1100000000000000',
-          operationName: 'On-line пополнение договора (списание с БПК)',
-          transactionDate: 1547051340000,
-          operationDate: 1546981200000,
-          transactionAmount: 200.0,
-          transactionCurrency: '840',
-          operationAmount: 200.0,
-          operationCurrency: '840',
-          operationSign: '1',
-          actionGroup: 2,
-          clientName: 'Вася Пупкин',
-          operationClosingBalance: 655.6,
-          operationCode: 2
-        },
-        {
-          accountType: '0',
-          concreteType: '0',
-          accountNumber: '1100000000000000',
-          operationName: 'On-line пополнение договора (списание с БПК)',
-          transactionDate: 1547060220000,
-          operationDate: 1546981200000,
-          transactionAmount: 206.0,
-          transactionCurrency: '840',
-          operationAmount: 206.0,
-          operationCurrency: '840',
-          operationSign: '1',
-          actionGroup: 2,
-          clientName: 'Вася Пупкин',
-          operationClosingBalance: 861.6,
-          operationCode: 2
-        },
-        {
-          accountType: '0',
-          concreteType: '0',
-          accountNumber: '1100000000000000',
-          operationName: 'On-line пополнение договора (списание с БПК)',
-          transactionDate: 1547095560000,
-          operationDate: 1547067600000,
-          transactionAmount: 0.02,
-          transactionCurrency: '840',
-          operationAmount: 0.02,
-          operationCurrency: '840',
-          operationSign: '1',
-          actionGroup: 2,
-          clientName: 'Вася Пупкин',
-          operationClosingBalance: 861.62,
-          operationCode: 2
-        }
-      ],
-      accountNumber: '1100000000000000',
-      accountCurrency: 'USD'
-    }),
-    statusText: 'OK',
-    headers: { session_token: '6af71bdf-69f8-4f62-8e59-4c26ce68add1' },
-    sendAsJson: false
-  }, { method: 'POST' })
-}
-
-function mockCardLastTransactions () {
-  fetchMock.once('https://mb.bnb.by/services/v2/products/getCardTransactions', {
-    status: 200,
-    body: JSON.stringify({
-      errorInfo:
-    {
-      error: '0',
-      errorText: 'Успешно'
-    },
-      transactions:
-    [
-      {
-        identifier: '_aabb',
-        operations:
-            [
-              {
-                operationSign: '1',
-                operationId: '-',
-                transactionAmount: 0.0,
-                transactionCurrency: '840',
-                operationAmount: 0.0,
-                operationCurrency: '840',
-                operationName: 'Капитализация',
-                transType: '-',
-                operationDetail:
-                    {
-                      source: '5*** **** **** 1111',
-                      authCode: '-',
-                      mccCode: '-',
-                      paymentDate: 1547051340000,
-                      operationDescription: '-',
-                      status: 'DONE',
-                      terminalLocation: '-',
-                      operationName: '-'
-                    }
-              }
-            ]
-      }
-    ]
-    }),
-    statusText: 'OK',
-    headers: { session_token: '6af71bdf-69f8-4f62-8e59-4c26ce68add1' },
-    sendAsJson: false
-  }, { method: 'POST' })
-}
-
-function mockCardAccountStatement () {
-  fetchMock.once('https://mb.bnb.by/services/v2/products/getCardAccountFullStatement', {
-    status: 200,
-    body: JSON.stringify({
-      errorInfo: {
-        error: '0',
-        errorText: 'Успешно'
-      },
-      accountType: '1',
-      concreteType: '1',
-      operations: [
-        {
-          accountType: '1',
-          concreteType: '1',
-          accountNumber: '2007500000000000',
-          operationName: 'Зачисление дохода от предпринимательской деятельности',
-          transactionDate: 1547019480000,
-          operationDate: 1547019480000,
-          transactionAmount: 3000.0,
-          transactionCurrency: '933',
-          operationAmount: 3000.0,
-          operationCurrency: '933',
-          operationSign: '1',
-          actionGroup: 2,
-          salaryOrganizationUNP: '100123456',
-          salaryOrganizationName: 'СБОРНЫЕ СЧЕТА С БПК ФИЗИЧЕСКИХ ЛИЦ (РЕЗИДЕНТЫ)',
-          operationCode: 2
-        },
-        {
-          accountType: '1',
-          concreteType: '1',
-          accountNumber: '2007500000000000',
-          operationName: 'Покупка товаров и услуг',
-          operationPlace: 'AWS EMEA',
-          merchantId: '323670000150000',
-          transactionAuthCode: '939000',
-          transactionDate: 1546940640000,
-          operationDate: 1546462800000,
-          rrn: '892',
-          transactionAmount: 0.64,
-          transactionCurrency: '840',
-          operationAmount: 1.4,
-          operationCurrency: '933',
-          operationSign: '-1',
-          actionGroup: 1802,
-          cardPAN: '4500000040120000',
-          operationCode: 3
-        },
-        {
-          accountType: '1',
-          concreteType: '1',
-          accountNumber: '2007500000000000',
-          operationName: 'Списание по операции ПЦ \'Оплата услуг в ИБ\' ',
-          operationPlace: 'BNB - OPLATA USLUG',
-          merchantId: '1600000',
-          transactionAuthCode: '161000',
-          transactionDate: 1546938780000,
-          operationDate: 1546808400000,
-          rrn: '4321000',
-          transactionAmount: 2.17,
-          transactionCurrency: '933',
-          operationAmount: 2.17,
-          operationCurrency: '933',
-          operationSign: '-1',
-          actionGroup: 1802,
-          cardPAN: '4500000040120000',
-          operationCode: 3
-        },
-        {
-          accountType: '1',
-          concreteType: '1',
-          accountNumber: '2007500000000000',
-          operationName: 'Списание по операции ПЦ \'Оплата услуг в ИБ\' ',
-          operationPlace: 'BNB - OPLATA USLUG',
-          merchantId: '1600000',
-          transactionAuthCode: '163000',
-          transactionDate: 1547109960000,
-          operationDate: 1546981200000,
-          rrn: '9267000',
-          transactionAmount: 2.16,
-          transactionCurrency: '933',
-          operationAmount: 2.16,
-          operationCurrency: '933',
-          operationSign: '-1',
-          actionGroup: 1802,
-          cardPAN: '4500000040120000',
-          operationCode: 3
-        },
-        {
-          accountType: '1',
-          concreteType: '1',
-          accountNumber: '2007500000000000',
-          operationName: 'Списание по операции ПЦ \'Оплата услуг в ИБ\' ',
-          operationPlace: 'OPLATA USLUG - KOMPLAT BNB',
-          merchantId: '1600000',
-          transactionAuthCode: '957000',
-          transactionDate: 1547110200000,
-          operationDate: 1546981200000,
-          rrn: '9249000',
-          transactionAmount: 200.0,
-          transactionCurrency: '840',
-          operationAmount: 437.0,
-          operationCurrency: '933',
-          operationSign: '-1',
-          actionGroup: 1802,
-          cardPAN: '4500000040120000',
-          operationCode: 3
-        }
-      ],
-      incomingBalance: 122.88,
-      closingBalance: 2230.04,
-      accountNumber: '2007500000000000',
-      accountName: '200754 - Личные, BYN - \'Maxima Plus\'',
-      accountCurrency: 'BYN'
-    }),
-    statusText: 'OK',
-    headers: { session_token: '6af71bdf-69f8-4f62-8e59-4c26ce68add1' },
-    sendAsJson: false
-  }, { method: 'POST' })
-}
-
-function mockFetchAccount () {
-  fetchMock.once('https://mb.bnb.by/services/v2/products/getUserAccountsOverview', {
-    status: 200,
-    body: JSON.stringify({
-      errorInfo: { error: '0', errorText: 'Успешно' },
-      overviewResponse:
-        {
-          status: { totalStatus: 0 },
-          cardAccount: [
-            {
-              internalAccountId: '2007500000000000',
-              currency: '933',
-              agreementDate: 1458853200000,
-              openDate: 1458853200000,
-              accountNumber: 'BY41BLNB00000000000000000933',
-              cardAccountNumber: '765754000000',
-              productCode: '200754',
-              productName: 'Личные, BYN - Maxima Plus',
-              availableAmount: 108.84,
-              contractId: '18684000',
-              interestRate: 2.5,
-              accountStatus: 'OPEN',
-              cards: [
-                {
-                  cardNumberMasked: '4*** **** **** 0000',
-                  cardHash: '8dkwk_a5l1A0nOffbenDdrrv14VyBN2YY1PeYsU8d2c5ZSpRKcZoj-dDd6aUt-TVBvIYmbwzA2l7Dv6aT1aFqL',
-                  cardType: { value: 25, name: 'Visa Gold (EMV)', imageUri: 'https://alseda.by/media/public/bnb_g.png', paySysImageUri: 'https://alseda.by/media/public/credit_card_str_visa.png', textColor: 'ffffffff', paySystemName: 'Visa' },
-                  cardStatus: 'OPEN',
-                  expireDate: 1585602000000,
-                  owner: 'Vasia Pupkin',
-                  tariffName: '754 Visa Gold (EMV)',
-                  balance: 7.40,
-                  payment: '0',
-                  currency: '933',
-                  status: { code: '00' },
-                  numberDaysBeforeCardExpiry: 366,
-                  additionalCardType: 2,
-                  canChange3D: true,
-                  cardDepartmentAddress: 'г. Минск;пр. Дзержинского 104',
-                  retailCardId: 19200000
-                }],
-              bankCode: '288',
-              rkcCode: '004',
-              rkcName: 'ЦБУ №4 г.Минск',
-              percentsLeft: '2.5',
-              accountType: '1',
-              ibanNum: 'BY92BLNB30142007549330000248',
-              url: 'https://alseda.by/media/public/orange_dream.jpg',
-              canSell: false,
-              canCloseSameCurrency: false,
-              canCloseOtherCurrency: false,
-              canClose: false,
-              canRefillSameCurrency: false,
-              canRefillOtherCurrency: false,
-              canRefill: false
-            }],
-          depositAccount: [{
-            internalAccountId: '1100000000000000',
-            currency: '840',
-            openDate: 1544734800000,
-            endDate: 1560459600000,
-            accountNumber: 'BY89BLNB00000000009100000840',
-            productCode: '10062',
-            productName: 'Верное решение',
-            balanceAmount: 865.23,
-            contractId: '22092000',
-            interestRate: 2.25,
-            accountStatus: 'OPEN',
-            bankCode: '288',
-            rkcCode: '765',
-            rkcName: 'Белорусский народный банк',
-            accountType: '0',
-            ibanNum: 'BY37BLNB34141100628400000043',
-            url: 'https://alseda.by/media/public/deposit_vernoe_reshenie.png',
-            canSell: false,
-            canCloseSameCurrency: true,
-            canCloseOtherCurrency: false,
-            canClose: true,
-            canRefillSameCurrency: false,
-            canRefillOtherCurrency: true,
-            canRefill: true,
-            plannedEndDate: 1560459600000,
-            bare: false
-          }]
-        }
-    }),
-    statusText: 'OK',
-    headers: { session_token: '6af71bdf-69f8-4f62-8e59-4c26ce68add1' },
-    sendAsJson: false
-  }, { method: 'POST' })
-}
-
-function mockLogin () {
-  fetchMock.once('https://mb.bnb.by/services/v2/session/login', {
-    status: 200,
-    body: JSON.stringify({ errorInfo: { error: '0', errorText: 'Успешно' }, sessionToken: '6af71bdf-69f8-4f62-8e59-4c26ce68add1' }),
-    statusText: 'OK',
-    sendAsJson: false
-  }, { method: 'POST' })
-}

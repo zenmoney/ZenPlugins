@@ -13,7 +13,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const WebsocketServer = require('./debugServers/wsServer')
 const { setupProxyServer } = require('./debugServers/proxyServer')
 const { setupWebServer } = require('./debugServers/webServer')
-const os = require('os')
+const { BOOTLOADER_PORT, setupBootloaderServer } = require('./bootloaderServer')
+const path = require('path')
 
 const readLogPrivateKey = () => {
   try {
@@ -23,19 +24,28 @@ const readLogPrivateKey = () => {
   }
 }
 
+const resolveWebpackCacheDirectory = () => {
+  return process.env.WEBPACK_CACHE_DIR
+    ? path.resolve(process.env.WEBPACK_CACHE_DIR)
+    : resolveFromRoot('node_modules/.cache/webpack')
+}
+
 function generatePluginConfig (production, server, pluginName, outputPath) {
   const paths = resolveCommonFiles()
   const pluginPaths = resolvePlugin(pluginName)
   if (!pluginPaths) {
     throw new Error(`cant resolve plugin "${pluginName}"`)
   }
-
   return {
     mode: production ? 'production' : 'development',
+    target: ['webworker', 'es2020'],
     devtool: production ? false : 'eval',
     cache: {
       type: production ? 'filesystem' : 'memory',
-      ...production && { name: pluginName }
+      ...production && {
+        name: pluginName,
+        cacheDirectory: resolveWebpackCacheDirectory()
+      }
     },
     entry: production
       ? { index: pluginPaths.js }
@@ -45,16 +55,18 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         },
     output: {
       path: outputPath,
-      filename: '[name].js',
+      filename: production && !server ? `${pluginName}.js` : '[name].js',
       chunkFilename: '[name].chunk.js',
       globalObject: 'this',
+      chunkFormat: false,
+      chunkLoading: false,
+      workerChunkLoading: false,
       ...production && {
         asyncChunks: false
       }
     },
     resolve: {
       alias: {
-        'asap/raw$': resolveFromRoot('src/asapRawMock'),
         polyfills$: resolveFromRoot('src/polyfills'),
         injectErrorsGlobally$: resolveFromRoot('src/injectErrorsGlobally'),
         adapters$: resolveFromRoot('src/common/adapters'),
@@ -94,7 +106,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
           include: paths.appSrc,
           loader: require.resolve('esbuild-loader'),
           options: {
-            target: 'es2015'
+            target: 'es2020'
           }
         }
       ],
@@ -152,13 +164,22 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         },
         host: 'localhost',
         ...production && {
-          host: 'local-ip',
+          host: '0.0.0.0',
+          port: BOOTLOADER_PORT,
+          allowedHosts: 'all',
           client: false,
           hot: false,
           liveReload: false
         },
-        port: 'auto',
+        ...!production && { port: 'auto' },
         webSocketServer: WebsocketServer,
+
+        onListening (devServer) {
+          if (production) {
+            const address = devServer.server.address()
+            console.log(`Bootloader UI: http://localhost:${address.port}`)
+          }
+        },
 
         setupMiddlewares (middlewares, devServer) {
           const state = {
@@ -171,6 +192,13 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
           app.disable('x-powered-by')
 
           const proxy = setupProxyServer(state)
+          if (production) {
+            setupBootloaderServer({
+              app,
+              pluginPaths,
+              storageDirectory: resolveFromRoot('.local/bootloader')
+            })
+          }
           setupWebServer({
             state,
             app,
@@ -190,7 +218,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       minimizer: production
         ? [
             new EsbuildPlugin({
-              target: 'es2015'
+              target: 'es2020'
             })
           ]
         : []
@@ -208,12 +236,11 @@ module.exports = (env, argv) => {
   if (server && pluginsNames.length > 1) {
     throw new Error('Cant debug multiple plugins!')
   }
-  const genPath = (pluginName) => pluginsNames.length === 1 ? resolveFromRoot('build') : resolveFromRoot(`build/${pluginName}`)
+  const genPath = () => resolveFromRoot('build')
 
   const plugins = pluginsNames.map(x => generatePluginConfig(production, server, x, genPath(x)))
   if (plugins.length === 1) {
     return plugins[0]
   }
-  plugins.parallelism = os.cpus().length
   return plugins
 }

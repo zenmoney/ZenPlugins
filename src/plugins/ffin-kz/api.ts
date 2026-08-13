@@ -83,17 +83,26 @@ function extractCardTransactionDescription (tail: string): string | null {
   }
 
   const operationPrefix = cardStatementOperationPrefixes.find((prefix) =>
-    new RegExp(`^${prefix}(?:\\s|$)`, 'i').test(normalizedTail)
+    new RegExp(`^${prefix}(?:[.:]|\\s|$)`, 'i').test(normalizedTail)
   )
 
   if (operationPrefix == null) {
     return normalizedTail
+      .replace(/\s*Дата Сумма Валюта Операция Детали\s*$/i, '')
+      .trim()
   }
 
-  const description = normalizedTail.slice(operationPrefix.length).trim()
+  const description = normalizedTail
+    .slice(operationPrefix.length)
+    .replace(/^[.:]\s*/, '')
+    .trim()
   const cleanedDescription = description
     .replace(/\s*Сумма в обработке\.\s*Банк ожидает подтверждения от платежной системы\s*$/i, '')
+    .replace(/\s*Дата Сумма Валюта Операция Детали\s*$/i, '')
     .trim()
+  if (cleanedDescription === `${operationPrefix}.`) {
+    return operationPrefix
+  }
   return cleanedDescription === '' ? operationPrefix : cleanedDescription
 }
 
@@ -148,6 +157,9 @@ function moveMisplacedTailToNextLine (currentLine: string, nextLine: string): { 
 
   const tail = currentLine.slice(misplacedIndex).trim()
   const cleanedCurrentLine = currentLine.slice(0, misplacedIndex).trim()
+  if (tail.startsWith('Прием вклада по договору') && /\sДругое\s*$/i.test(cleanedCurrentLine)) {
+    return { currentLine, nextLine }
+  }
   const nextLineMatch = nextLine.match(/^(.*?\s[A-Z]{3}\s+(?:Пополнение|Другое|Перевод|Вознаграждение))(?:\s+(.*))?$/)
   if (nextLineMatch == null) {
     return { currentLine, nextLine }
@@ -338,6 +350,7 @@ export function prepareCardStatementText (text: string): string {
     .replace(/\n(?=(Плательщик:|Получатель:|Назначение:|Вкладчик:))/g, ' ')
     .replace(/\n/g, ' ')
     .replace(/\s{2,}/g, ' ')
+    .replace(/\s*Дата\s+Сумма\s+Валюта\s+Операция\s+Детали\s*/g, ' ')
     .trim()
 
   const operationPattern = escapedCardStatementOperationPrefixes.join('|')

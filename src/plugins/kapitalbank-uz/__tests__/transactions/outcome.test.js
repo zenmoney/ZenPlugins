@@ -1,5 +1,5 @@
 import {
-  convertCardOrAccountTransaction
+  convertTransaction
 } from '../../converters'
 
 describe('convertTransaction', () => {
@@ -26,6 +26,9 @@ describe('convertTransaction', () => {
         date: new Date('2025-01-30T02:03:03.000Z'),
         hold: false,
         comment: null,
+        groupKeys: [
+          'VISA-702ce307-0000-0000-0000-8517b4c9c677'
+        ],
         merchant: {
           fullTitle: 'APPLE.COM/BILL',
           mcc: null,
@@ -47,6 +50,6 @@ describe('convertTransaction', () => {
       id: 'card',
       instrument: 'USD'
     }
-    expect(convertCardOrAccountTransaction(card, rawTransaction)).toEqual(transaction)
+    expect(convertTransaction({ type: 'cardOrAccount', data: rawTransaction }, card)).toEqual(transaction)
   })
 })

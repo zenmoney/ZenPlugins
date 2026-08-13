@@ -33,7 +33,7 @@ describe('convertAccounts', () => {
           title: 'GE12CD0360000027070426GEL',
           type: 'ccard',
           instrument: 'GEL',
-          syncIds: ['GE12CD0360000027070426GEL', '27070426'],
+          syncIds: ['GE12CD0360000027070426GEL-27070426', '27070426', 'GE12CD0360000027070426GEL'],
           balance: 31.4,
           available: 31.4,
           savings: false
@@ -106,8 +106,9 @@ describe('convertAccounts', () => {
           instrument: 'GEL',
           savings: false,
           syncIds: [
-            'GE62CD0360000037554441GEL',
+            'GE62CD0360000037554441GEL-37554441',
             '37554441',
+            'GE62CD0360000037554441GEL',
             '410180******1211'
           ],
           title: 'GE62CD0360000037554441GEL',
@@ -174,5 +175,37 @@ describe('convertAccounts', () => {
     [[], [], [], [], []]
   ])('converts current account', (apiAccounts, cards, deposits, loans, accounts) => {
     expect(convertAccounts(apiAccounts, cards, deposits as Deposit[], loans)).toEqual(accounts)
+  })
+
+  it('keeps a stable account-id sync id before the legacy account-number sync id', () => {
+    const accounts = convertAccounts([
+      {
+        accountId: 27070426,
+        accountNumber: 'GE12CD0360000027070426',
+        account: 'ალეკსეი ლუკომსკი',
+        currency: 'GEL',
+        categoryId: 1001,
+        category: 'მიმდინარე',
+        hasCard: true,
+        status: 'გახსნილი',
+        type: 'CURRENT',
+        availableBalance: 31.4,
+        currencyPriority: 0,
+        availableBalanceEqu: 31.4,
+        isDefault: false,
+        isHidden: true,
+        cssAccountId: 1015155
+      }
+    ], [], [], [])
+
+    expect(accounts[0].syncIds).toEqual([
+      'GE12CD0360000027070426GEL-27070426',
+      '27070426',
+      'GE12CD0360000027070426GEL'
+    ])
+  })
+
+  it('skips unsupported loans instead of failing the whole account conversion', () => {
+    expect(convertAccounts([], [], [], [{ openingDate: new Date('2026-01-01') }])).toEqual([])
   })
 })

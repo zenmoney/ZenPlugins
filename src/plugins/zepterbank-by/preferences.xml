@@ -30,4 +30,10 @@
         negativeButtonText="Отмена"
         summary="|startDate|{@s}"
     />
+    <CheckBoxPreference
+        key="includeMccInComment"
+        title="Включать ли MCC в комментарий"
+        defaultValue="false"
+        summary="||{@s}">
+    </CheckBoxPreference>
 </PreferenceScreen>

@@ -67,6 +67,33 @@ class TransactionsPane extends React.PureComponent {
     }
 }
 
+class UserInputRequest extends React.PureComponent {
+    state = {value: ""};
+
+    handleSubmit = (event) => {
+        event.preventDefault();
+        this.props.request.submit(this.state.value);
+    };
+
+    render() {
+        const {request} = this.props;
+        const inputType = request.options && request.options.inputType === "number" ? "number" : "text";
+        return (
+            <form onSubmit={this.handleSubmit} style={{marginTop: 12}}>
+                <div>{request.message}</div>
+                <input
+                    autoFocus
+                    type={inputType}
+                    value={this.state.value}
+                    onChange={(event) => this.setState({value: event.target.value})}
+                    style={{marginTop: 8, marginRight: 8}}
+                />
+                <button type="submit">Submit</button>
+            </form>
+        );
+    }
+}
+
 export class UI extends React.PureComponent {
     state = {};
 
@@ -94,7 +121,7 @@ export class UI extends React.PureComponent {
         const {
             waitingForDevtools, onManualStartPress,
             scrapeState, workflowState,
-            scrapeResult, scrapeError,
+            scrapeResult, scrapeError, userInputRequest,
             persistPluginDataState, persistPluginDataError, onPersistPluginDataConfirm,
         } = this.props;
         const {resolveAccount} = this.state;
@@ -117,6 +144,7 @@ export class UI extends React.PureComponent {
                     {workflowState === ":workflow-state/filling-preferences" && <div>Filling preferences…</div>}
                     {scrapeState === ":scrape-state/starting" && <div>Scraping starting</div>}
                     {scrapeState === ":scrape-state/started" && <div>Scraping…</div>}
+                    {userInputRequest && <UserInputRequest request={userInputRequest} />}
                     {scrapeState === ":scrape-state/success" &&
                     <div>Scraped {scrapeResult.accounts.length} account(s), {scrapeResult.transactions.length} transaction(s)</div>}
                     {scrapeState === ":scrape-state/success" && scrapeResult.pluginDataChange && (

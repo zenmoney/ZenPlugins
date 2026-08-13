@@ -1,20 +1,228 @@
-import { createDateIntervals, parseFullTransactionsMail, parseDepositsMail } from '../api'
+import { createDateIntervals, fetchAccounts, fetchFullTransactions, parseAccountTransactionsHtml, parseFullTransactionsHtml, parseLatestOperations, parseLatestOperationsHtml } from '../api'
+
+function makeNetworkResponse (body, url = 'https://stb24.by/api/sou/admin/xml') {
+  return {
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    url,
+    headers: {
+      forEach: () => {}
+    },
+    text: async () => body
+  }
+}
 
 describe('createDateIntervals', () => {
   it('should convert date period', () => {
     expect(
-      createDateIntervals(new Date('2018-01-01T20:45+03:00'), new Date('2018-03-05T09:00+03:00'))
+      createDateIntervals(new Date(2018, 0, 1, 20, 45), new Date(2018, 2, 5, 9))
     ).toEqual(
       [
-        [new Date('2018-01-01T20:45:00+03:00'), new Date('2018-02-01T20:44:59.999+03:00')],
-        [new Date('2018-02-01T20:45:00+03:00'), new Date('2018-03-04T20:44:59.999+03:00')],
-        [new Date('2018-03-04T20:45:00+03:00'), new Date('2018-03-05T09:00:00.000+03:00')]
+        [new Date(2018, 0, 1), new Date(2018, 0, 31, 23, 59, 59, 999)],
+        [new Date(2018, 1, 1), new Date(2018, 2, 3, 23, 59, 59, 999)],
+        [new Date(2018, 2, 4), new Date(2018, 2, 5, 23, 59, 59, 999)]
       ]
     )
   })
+
+  it('does not overlap formatted calendar dates', () => {
+    expect(
+      createDateIntervals(
+        new Date(2026, 3, 4),
+        new Date(2026, 5, 5)
+      ).map(([from, to]) => [transactionDateForTest(from), transactionDateForTest(to)])
+    ).toEqual([
+      ['04.04.2026', '04.05.2026'],
+      ['05.05.2026', '04.06.2026'],
+      ['05.06.2026', '05.06.2026']
+    ])
+  })
 })
 
-describe('deposits parsing', () => {
+function transactionDateForTest (date) {
+  return [
+    String(date.getDate()).padStart(2, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    date.getFullYear()
+  ].join('.')
+}
+
+describe('fetchAccounts', () => {
+  it('loads ACCOUNT products and extracts their statement action', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><GetProducts/></BS_Response>'))
+      .mockResolvedValueOnce(makeNetworkResponse(`
+        <BS_Response>
+          <GetProducts>
+            <Product Id="73124567-a1b2c3" ProductType="ACCOUNT" ProductTypeName="Счёт без карты" No="договор N 307451928" Currency="840" Balance="12,34">
+              <Action Id="73129901-a1b2c3-account-2048571-b735-getordering-1" Type="B735:GetOrdering" Name="Выписка по счёту"/>
+            </Product>
+          </GetProducts>
+        </BS_Response>
+      `))
+      .mockResolvedValueOnce(makeNetworkResponse(`
+        <BS_Response>
+          <GetProductTypes>
+            <ProductType Type="MS">
+              <Product Id="73120042-d4e5f6" ProductType="MS" LinkedProductId="73124567-a1b2c3" LinkedProductType="ACCOUNT"/>
+            </ProductType>
+          </GetProductTypes>
+        </BS_Response>
+      `))
+
+    await expect(fetchAccounts('session-id')).resolves.toEqual([
+      expect.objectContaining({
+        Id: ['73124567-a1b2c3'],
+        LinkedProductId: ['73120042-d4e5f6'],
+        LinkedProductType: ['MS'],
+        statementExecutionId: '73129901-a1b2c3-account-2048571-b735-getordering-1',
+        lastTrxExecutionId: null
+      })
+    ])
+
+    expect(global.fetch).toHaveBeenCalledTimes(3)
+    expect(global.fetch.mock.calls[0][1].body).toContain('ProductType="MS"')
+    expect(global.fetch.mock.calls[1][1].body).toContain('ProductType="ACCOUNT"')
+    expect(global.fetch.mock.calls[2][1].body).toContain('<GetProductTypes GetProducts="Y"')
+  })
+})
+
+describe('fetchFullTransactions', () => {
+  it('fetches a statement returned as ExecuteAction.URL', async () => {
+    const statementUrl = 'https://stb24.by/sou/file/temp/CardStatment-test.html'
+    const html = '<html><body>statement</body></html>'
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse(
+        `<BS_Response><ExecuteAction><URL>${statementUrl}</URL></ExecuteAction></BS_Response>`
+      ))
+      .mockResolvedValueOnce(makeNetworkResponse(html, statementUrl))
+
+    await expect(fetchFullTransactions(
+      'session-id',
+      { transactionsAccId: 'statement-action-id' },
+      new Date('2026-05-05T00:00:00Z'),
+      new Date('2026-05-06T00:00:00Z')
+    )).resolves.toEqual([html])
+
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+    expect(global.fetch.mock.calls[1][0]).toBe(statementUrl)
+  })
+
+  it('fetches each statement body before requesting the next interval', async () => {
+    const statementUrl = 'https://stb24.by/sou/file/temp/CardStatment-test.html'
+    let resolveFirstStatement
+    const firstStatement = new Promise(resolve => {
+      resolveFirstStatement = resolve
+    })
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse(
+        `<BS_Response><ExecuteAction><URL>${statementUrl}</URL></ExecuteAction></BS_Response>`
+      ))
+      .mockReturnValueOnce(firstStatement)
+      .mockResolvedValueOnce(makeNetworkResponse(
+        `<BS_Response><ExecuteAction><URL>${statementUrl}</URL></ExecuteAction></BS_Response>`
+      ))
+      .mockResolvedValueOnce(makeNetworkResponse('second statement', statementUrl))
+
+    const result = fetchFullTransactions(
+      'session-id',
+      { transactionsAccId: 'statement-action-id' },
+      new Date('2026-05-01T00:00:00Z'),
+      new Date('2026-06-01T00:00:00Z')
+    )
+
+    await new Promise(resolve => setImmediate(resolve))
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+
+    resolveFirstStatement(makeNetworkResponse('first statement', statementUrl))
+
+    await expect(result).resolves.toEqual(['first statement', 'second statement'])
+    expect(global.fetch).toHaveBeenCalledTimes(4)
+  })
+
+  it('skips intervals without card operations', async () => {
+    global.fetch = jest.fn().mockResolvedValueOnce(makeNetworkResponse(`
+      <BS_Response>
+        <ExecuteAction>
+          <Message>За указанный период (с 04.03.2026 00:00:00 по 03.04.2026 00:00:00) в системе не зарегистрировано операций по карточке </Message>
+        </ExecuteAction>
+      </BS_Response>
+    `))
+
+    await expect(fetchFullTransactions(
+      'session-id',
+      { transactionsAccId: 'statement-action-id' },
+      new Date('2026-06-05T00:00:00Z'),
+      new Date('2026-06-05T00:00:00Z')
+    )).resolves.toEqual([])
+  })
+
+  it('rejects an unexpected ExecuteAction message', async () => {
+    global.fetch = jest.fn().mockResolvedValueOnce(makeNetworkResponse(`
+      <BS_Response>
+        <ExecuteAction>
+          <Message>Не удалось сформировать выписку</Message>
+        </ExecuteAction>
+      </BS_Response>
+    `))
+
+    await expect(fetchFullTransactions(
+      'session-id',
+      { transactionsAccId: 'statement-action-id' },
+      new Date('2026-06-05T00:00:00Z'),
+      new Date('2026-06-05T00:00:00Z')
+    )).rejects.toThrow('Unexpected statement response: Не удалось сформировать выписку')
+  })
+})
+
+describe('account statement parsing', () => {
+  it('parses standalone-account transfers and currency exchanges', () => {
+    const html = `
+      <div class="head"><h3>Выписка по счёту</h3><p>Счёт BY86IRJS3014ZZ00000012345678</p></div>
+      <div class="head"></div>
+      <table class="table-schet">
+        <thead><tr>
+          <th>Дата отражения операции по счёту</th>
+          <th>Дата совершения операции</th>
+          <th>Назначение платежа</th>
+          <th>Валюта счёта</th>
+          <th>Сумма операции в валюте счёта</th>
+          <th>Остаток по счёту</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>02.02.2035 10:00:00</td><td>01.02.2035 10:00:00</td><td>Перевод денежных средств со счета №BY86IRJS3014ZZ00000012345678.</td><td>USD</td><td>-12,34</td><td>50,00</td></tr>
+          <tr><td>02.02.2035 11:00:00</td><td>01.02.2035 11:00:00</td><td>Продажа валюты банком с текущего счета №BY41IRJS3014ZZ00000087654321 с переводом на текущий счет №BY86IRJS3014ZZ00000012345678</td><td>USD</td><td>9,87</td><td>59,87</td></tr>
+        </tbody>
+      </table>
+    `
+
+    expect(parseAccountTransactionsHtml(html)).toEqual([
+      expect.objectContaining({
+        statementType: 'account',
+        date: '01.02.2035 10:00:00',
+        reflectedDate: '02.02.2035 10:00:00',
+        description: 'Перевод денежных средств со счета №BY86IRJS3014ZZ00000012345678.',
+        amount: -12.34,
+        amountReal: -12.34,
+        currency: 'USD',
+        currencyReal: 'USD'
+      }),
+      expect.objectContaining({
+        statementType: 'account',
+        date: '01.02.2035 11:00:00',
+        reflectedDate: '02.02.2035 11:00:00',
+        description: 'Продажа валюты банком с текущего счета №BY41IRJS3014ZZ00000087654321 с переводом на текущий счет №BY86IRJS3014ZZ00000012345678',
+        amount: 9.87,
+        amountReal: 9.87,
+        currency: 'USD',
+        currencyReal: 'USD'
+      })
+    ])
+  })
+})
+
+describe('latest operations parsing', () => {
   const tt = [
     {
       name: 'deposit',
@@ -23,7 +231,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -10,
-          authCode: null,
+          authCode: '580048',
           cardNum: '521058******2222',
           currency: null,
           currencyReal: 'BYN',
@@ -42,7 +250,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -31.96,
-          authCode: null,
+          authCode: '723375',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -81,7 +289,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -80,
-          authCode: null,
+          authCode: '632609',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -94,7 +302,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -50.14,
-          authCode: null,
+          authCode: '579052',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -107,7 +315,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -46.6,
-          authCode: null,
+          authCode: '595988',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -120,7 +328,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 200,
-          authCode: null,
+          authCode: '494656',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -133,7 +341,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -8.65,
-          authCode: null,
+          authCode: '532613',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -146,7 +354,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 10.7,
-          authCode: null,
+          authCode: '531339',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -159,7 +367,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -4.27,
-          authCode: null,
+          authCode: '075329',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -172,7 +380,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 0.85,
-          authCode: null,
+          authCode: '694788',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -185,7 +393,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -7.9,
-          authCode: null,
+          authCode: '389546',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -198,7 +406,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -2.75,
-          authCode: null,
+          authCode: '387580',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -211,7 +419,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 12.5,
-          authCode: null,
+          authCode: '346089',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -224,7 +432,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -1.98,
-          authCode: null,
+          authCode: '102497',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -237,7 +445,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -5.36,
-          authCode: null,
+          authCode: '089015',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -250,7 +458,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 15,
-          authCode: null,
+          authCode: '072452',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -263,7 +471,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 0.56,
-          authCode: null,
+          authCode: '244232',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -276,7 +484,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -82.95,
-          authCode: null,
+          authCode: '770809',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -289,7 +497,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -16.13,
-          authCode: null,
+          authCode: '935056',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -302,7 +510,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 99.08,
-          authCode: null,
+          authCode: '928977',
           cardNum: '521058******2883',
           currency: null,
           currencyReal: 'BYN',
@@ -321,7 +529,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: -6.14,
-          authCode: null,
+          authCode: '954615',
           cardNum: '521058******8691',
           currency: null,
           currencyReal: 'BYN',
@@ -334,7 +542,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 7,
-          authCode: null,
+          authCode: '809351',
           cardNum: '521058******8691',
           currency: null,
           currencyReal: 'BYN',
@@ -347,7 +555,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 53.79,
-          authCode: null,
+          authCode: '807517',
           cardNum: '521058******8691',
           currency: null,
           currencyReal: 'BYN',
@@ -360,7 +568,7 @@ describe('deposits parsing', () => {
         {
           amount: null,
           amountReal: 0,
-          authCode: null,
+          authCode: '436517',
           cardNum: '521058******8691',
           currency: null,
           currencyReal: 'BYN',
@@ -377,9 +585,113 @@ describe('deposits parsing', () => {
   // run all tests
   for (const tc of tt) {
     it(tc.name, () => {
-      expect(parseDepositsMail(tc.html)).toEqual(tc.expectedTransactions)
+      expect(parseLatestOperationsHtml(tc.html)).toEqual(tc.expectedTransactions)
     })
   }
+
+  it('skips service operations without a currency', () => {
+    const html = `
+      <p style="margin-right:auto;text-align:center;">
+        <b>Список операций<br>по карточке 400000******0002</b><br>
+      </p>
+      <table class="section_1">
+        <tbody><tr>
+          <td>27.05.2026 14:42:57</td><td></td><td>GET SOU ID</td>
+          <td>0,00 0</td><td></td><td>100000000001</td>
+          <td>100001, EPOS, ACS 3ds 2 0</td>
+        </tr></tbody>
+        <tbody><tr>
+          <td>27.05.2026 14:18:01</td><td></td><td>Перевод (зачисление)</td>
+          <td>30,00 USD</td><td>123456</td><td>100000000002</td>
+          <td>100002, EPOS, STATUSBANK SDBO P2P</td>
+        </tr></tbody>
+      </table>
+    `
+
+    expect(parseLatestOperationsHtml(html)).toEqual([
+      expect.objectContaining({
+        authCode: '123456',
+        cardNum: '400000******0002',
+        amountReal: 30,
+        currencyReal: 'USD'
+      })
+    ])
+  })
+
+  it('keeps payments, skips reversals and duplicate transfer bookkeeping rows', () => {
+    const html = `
+      <p style="margin-right:auto;text-align:center;">
+        <b>Список операций<br>по карточке 400000******0002</b><br>
+      </p>
+      <table class="section_1">
+        <tbody><tr>
+          <td>30.05.2026 20:59:08</td><td></td><td>Оплата в сети Интернет</td>
+          <td>-123,45 RSD</td><td>111111</td><td>100000000001</td>
+          <td>100001, EPOS, Test merchant</td>
+        </tr></tbody>
+        <tbody><tr>
+          <td>29.05.2026 10:00:00</td><td>да</td><td>Оплата</td>
+          <td>-20,00 USD</td><td>222222</td><td>100000000002</td>
+          <td>100002, POS, Reversed merchant</td>
+        </tr></tbody>
+        <tbody><tr>
+          <td>28.05.2026 09:00:00</td><td></td><td>Перевод (списание)</td>
+          <td>-10,00 USD</td><td>333333</td><td>100000000003</td>
+          <td>100003, EPOS, STATUSBANK SDBO P2P</td>
+        </tr></tbody>
+        <tbody><tr>
+          <td>28.05.2026 09:00:00</td><td></td><td>Перевод</td>
+          <td>-10,00 USD</td><td>333333</td><td>100000000004</td>
+          <td>100003, EPOS, STATUSBANK SDBO P2P</td>
+        </tr></tbody>
+        <tbody><tr>
+          <td>27.05.2026 08:00:00</td><td></td><td>Оплата</td>
+          <td>-10,00 USD</td><td></td><td>100000000005</td>
+          <td>100004, POS, Failed merchant</td>
+        </tr></tbody>
+      </table>
+    `
+
+    expect(parseLatestOperations(html, new Date('2026-05-01'))).toEqual([
+      expect.objectContaining({
+        type: 'Оплата в сети Интернет',
+        amountReal: -123.45,
+        authCode: '111111'
+      }),
+      expect.objectContaining({
+        type: 'Перевод (списание)',
+        amountReal: -10,
+        authCode: '333333'
+      })
+    ])
+  })
+
+  it('skips unsuccessful cash withdrawals without an authorization code', () => {
+    const html = `
+      <p style="margin-right:auto;text-align:center;">
+        <b>Список операций<br>по карточке 400000******0010</b><br>
+      </p>
+      <table class="section_1">
+        <tbody><tr>
+          <td>10.06.2026 12:05:00</td><td></td><td>Снятие наличных</td>
+          <td>-100,00 BAM</td><td>444444</td><td>100000000001</td>
+          <td>100001, ATM, TEST LOCATION</td>
+        </tr></tbody>
+        <tbody><tr>
+          <td>10.06.2026 12:00:00</td><td></td><td>Снятие наличных</td>
+          <td>-100,00 BAM</td><td></td><td>100000000002</td>
+          <td>100001, ATM, TEST LOCATION</td>
+        </tr></tbody>
+      </table>
+    `
+
+    expect(parseLatestOperations(html, new Date('2026-05-01'))).toEqual([
+      expect.objectContaining({
+        date: '10.06.2026 12:05:00',
+        authCode: '444444'
+      })
+    ])
+  })
 })
 
 describe('transactions parsing', () => {
@@ -408,7 +720,7 @@ describe('transactions parsing', () => {
   // run all tests
   for (const tc of tt) {
     it(tc.name, () => {
-      expect(parseFullTransactionsMail(tc.html)).toEqual(tc.expectedTransactions)
+      expect(parseFullTransactionsHtml(tc.html)).toEqual(tc.expectedTransactions)
     })
   }
 })

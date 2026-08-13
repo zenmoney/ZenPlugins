@@ -2,9 +2,14 @@ import crypto from 'crypto-js'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { InvalidPreferencesError, TemporaryError } from '../../errors'
 import { getArray, getOptNumber, getOptString, getString } from '../../types/get'
-import { CardTransaction, CardTransactionQueryType, CoinBalance, Credentials } from './models'
+import {
+  CardTransaction,
+  CardTransactionQueryType,
+  CoinBalance,
+  Credentials,
+  FlexibleEarnPosition
+} from './models'
 
-const BASE_URL = 'https://api.bybit.com'
 const RECV_WINDOW = '20000'
 const MIN_REQUEST_INTERVAL_MS = 1500
 let lastRequestAt = 0
@@ -73,7 +78,7 @@ export function signRequest (apiSecret: string, timestamp: string, apiKey: strin
 async function callApi (creds: Credentials, request: BybitRequest): Promise<FetchResponse> {
   await waitForRequestSlot()
 
-  const { apiKey, apiSecret } = creds
+  const { apiKey, apiSecret, baseUrl } = creds
   const timestamp = Date.now().toString()
 
   let url: string
@@ -88,11 +93,11 @@ async function callApi (creds: Credentials, request: BybitRequest): Promise<Fetc
   if (request.method === 'GET') {
     const queryString = buildQueryString(request.query)
     payload = queryString
-    url = `${BASE_URL}${request.path}${queryString.length > 0 ? `?${queryString}` : ''}`
+    url = `${baseUrl}${request.path}${queryString.length > 0 ? `?${queryString}` : ''}`
   } else {
     const bodyObject = stripEmpty(request.body)
     payload = JSON.stringify(bodyObject)
-    url = `${BASE_URL}${request.path}`
+    url = `${baseUrl}${request.path}`
     options.body = bodyObject
   }
 
@@ -119,7 +124,7 @@ async function callApi (creds: Credentials, request: BybitRequest): Promise<Fetc
     const retMsg = getOptString(response.body, 'retMsg') ?? 'unknown error'
     // 10003 invalid api key, 10004 invalid sign, 33004 api key expired, 10005 permission denied
     if (retCode === 10003 || retCode === 10004 || retCode === 33004 || retCode === 10005) {
-      throw new InvalidPreferencesError(`Bybit: ${retMsg} (retCode=${retCode}). Recreate a read-only API key in Bybit Dashboard → API with Bybit Card permissions enabled.`)
+      throw new InvalidPreferencesError(`Bybit: ${retMsg} (retCode=${retCode}). Recreate a read-only API key in Bybit Dashboard → API with Bybit Card, Earn, Wallet, and Exchange History permissions enabled.`)
     }
     // 10006 / 10018 rate-limit / ip ban
     if (retCode === 10006 || retCode === 10018) {
@@ -195,6 +200,25 @@ export async function fetchConvertCoinUsdtValues (creds: Credentials): Promise<M
   return values
 }
 
+export async function fetchFlexibleEarnPositions (creds: Credentials): Promise<FlexibleEarnPosition[]> {
+  const response = await callApi(creds, {
+    method: 'GET',
+    path: '/v5/earn/position',
+    query: { category: 'FlexibleSaving' }
+  })
+
+  return getArray(response.body, 'result.list').map(item => {
+    return {
+      coin: getString(item, 'coin').toUpperCase(),
+      amount: parseAmountString(item, 'amount'),
+      // availableAmount is the redeemable portion and therefore the amount that
+      // Auto-Deduction can use for card spending. Do not fall back to the total
+      // amount: it can contain frozen funds.
+      availableAmount: parseAmountString(item, 'availableAmount')
+    }
+  })
+}
+
 function parseCardTransaction (item: unknown): CardTransaction {
   return {
     txnId: getString(item, 'txnId'),
@@ -216,7 +240,8 @@ function parseCardTransaction (item: unknown): CardTransaction {
     mccCode: parseOptIntString(item, 'mccCode'),
     merchCategoryDesc: nullIfEmpty(getOptString(item, 'merchCategoryDesc')),
     pan4: nullIfEmpty(getOptString(item, 'pan4')),
-    declinedReason: nullIfEmpty(getOptString(item, 'declinedReason'))
+    declinedReason: nullIfEmpty(getOptString(item, 'declinedReason')),
+    totalFees: parseAmountString(item, 'totalFees')
   }
 }
 

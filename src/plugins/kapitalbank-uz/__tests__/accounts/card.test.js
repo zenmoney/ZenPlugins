@@ -1,4 +1,5 @@
 import {
+  convertAccounts,
   convertCard
 } from '../../converters'
 
@@ -65,5 +66,41 @@ describe('converCard', () => {
         '986010******9424'
       ]
     })
+  })
+
+  it('prepares a converted account and product for transaction fetching', () => {
+    expect(convertAccounts([{
+      type: 'card',
+      data: {
+        guid: 'CP-42e7c669-0000-0000-0000-ef3445e40682',
+        cardName: 'KS Humo',
+        maskedPan: '986010******9424',
+        processingType: 'HUMO',
+        currency: {
+          name: 'UZS',
+          scale: 2
+        }
+      },
+      balance: {
+        balance: 123456,
+        currency: {
+          name: 'UZS',
+          scale: 2
+        }
+      }
+    }])).toEqual([{
+      account: {
+        id: 'CP-42e7c669-0000-0000-0000-ef3445e40682',
+        type: 'ccard',
+        title: 'KS Humo',
+        instrument: 'UZS',
+        syncIds: ['986010******9424'],
+        balance: 1234.56
+      },
+      products: [{
+        id: 'CP-42e7c669-0000-0000-0000-ef3445e40682',
+        type: 'cardOrAccount'
+      }]
+    }])
   })
 })

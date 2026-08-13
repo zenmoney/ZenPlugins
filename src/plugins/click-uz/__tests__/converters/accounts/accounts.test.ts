@@ -1,5 +1,6 @@
 import { convertAccounts } from '../../../converters'
 import { FetchedAccounts } from '../../../models'
+import { getString } from '../../../../../types/get'
 
 describe('convertAccount', () => {
   it.each([
@@ -720,6 +721,12 @@ describe('convertAccount', () => {
       ]
     ]
   ])('convert accounts', (apiAccounts: FetchedAccounts, accounts) => {
-    expect(convertAccounts(apiAccounts)).toEqual(accounts)
+    expect(convertAccounts(apiAccounts)).toEqual(accounts.map((account: { id: string }, index: number) => ({
+      account,
+      products: [{
+        id: account.id,
+        cardType: getString(apiAccounts.cards[index], 'card_type')
+      }]
+    })))
   })
 })

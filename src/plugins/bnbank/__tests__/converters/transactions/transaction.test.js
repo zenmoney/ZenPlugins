@@ -4,13 +4,13 @@ import { card, convertTransaction } from '../../../converters'
 describe('convertTransaction', () => {
   const accounts = [
     {
-      id: '2007549330000000',
+      id: '2000000000000000',
       type: card,
       title: 'Личные, BYN - "Maxima Plus"',
       currencyCode: '933',
       instrument: codeToCurrencyLookup[933],
       balance: 99.9,
-      syncID: ['2007549330000000'],
+      syncID: ['2000000000000000'],
       rkcCode: '004'
     }
   ]
@@ -19,10 +19,10 @@ describe('convertTransaction', () => {
     {
       name: 'no operation name',
       transaction: {
-        accountNumber: '2007549330000000',
+        accountNumber: '2000000000000000',
         accountType: '1',
         actionGroup: 1802,
-        cardPAN: '4500000040120000',
+        cardPAN: '450000******0000',
         concreteType: '1',
         merchantId: '1600000',
         operationAmount: 3900,
@@ -44,7 +44,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '791000',
-            account: { id: '2007549330000000' },
+            account: { id: '2000000000000000' },
             sum: -3900,
             fee: 0,
             invoice: null
@@ -61,10 +61,10 @@ describe('convertTransaction', () => {
     {
       name: 'payment in internet banking',
       transaction: {
-        accountNumber: '2007549330000000',
+        accountNumber: '2000000000000000',
         accountType: '1',
         actionGroup: 1802,
-        cardPAN: '4500000040120000',
+        cardPAN: '450000******0000',
         concreteType: '1',
         merchantId: '1600000',
         operationAmount: 3900,
@@ -86,7 +86,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '791000',
-            account: { id: '2007549330000000' },
+            account: { id: '2000000000000000' },
             sum: -3900,
             fee: 0,
             invoice: null
@@ -99,7 +99,7 @@ describe('convertTransaction', () => {
     {
       name: 'capitalization',
       transaction: {
-        accountNumber: '2007549330000000',
+        accountNumber: '2000000000000000',
         accountType: '1',
         actionGroup: 1802,
         clientName: 'Vasia Pupkin',
@@ -121,7 +121,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: '2007549330000000' },
+            account: { id: '2000000000000000' },
             sum: 2,
             fee: 0,
             invoice: null
@@ -136,7 +136,7 @@ describe('convertTransaction', () => {
       transaction: {
         accountType: '1',
         concreteType: '1',
-        accountNumber: '2007549330000000',
+        accountNumber: '2000000000000000',
         operationName: 'Капитализация (%% тек.периода ко вкладу)',
         transactionDate: 1593532140000,
         operationDate: 1593532140000,
@@ -146,7 +146,7 @@ describe('convertTransaction', () => {
         operationCurrency: '933',
         operationSign: '1',
         actionGroup: 19,
-        clientName: 'Николаев Николай Николаевич',
+        clientName: 'NIKOLAY NIKOLAEV',
         operationClosingBalance: 422.79,
         operationCode: 999
       },
@@ -157,7 +157,7 @@ describe('convertTransaction', () => {
       transaction: {
         accountType: '0',
         concreteType: '0',
-        accountNumber: '2007549330000000',
+        accountNumber: '2000000000000000',
         operationName: 'Капитализация. Удержано подоходного налога 0.21',
         transactionDate: 1553158380000,
         operationDate: 1553158380000,
@@ -177,7 +177,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: '2007549330000000' },
+            account: { id: '2000000000000000' },
             sum: 1.39,
             fee: 0.21,
             invoice: null
@@ -190,7 +190,7 @@ describe('convertTransaction', () => {
     {
       name: 'add money to deposit',
       transaction: {
-        accountNumber: '2007549330000000',
+        accountNumber: '2000000000000000',
         accountType: '0',
         actionGroup: 2,
         clientName: 'Vasia Pupkin',
@@ -212,7 +212,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: null,
-            account: { id: '2007549330000000' },
+            account: { id: '2000000000000000' },
             sum: 200,
             fee: 0,
             invoice: null
@@ -225,7 +225,7 @@ describe('convertTransaction', () => {
     {
       name: 'add money to deposit',
       transaction: {
-        accountNumber: '2007549330000000',
+        accountNumber: '2000000000000000',
         operationPlace: 'BNB PAY 2',
         merchantId: '6012',
         transactionAuthCode: '927182',
@@ -236,7 +236,7 @@ describe('convertTransaction', () => {
         operationCurrency: '933',
         operationSign: '-1',
         operationType: 6,
-        cardPAN: '4500000040120000'
+        cardPAN: '450000******0000'
       },
       expectedTransaction: {
         hold: false,
@@ -244,7 +244,7 @@ describe('convertTransaction', () => {
         movements: [
           {
             id: '927182',
-            account: { id: '2007549330000000' },
+            account: { id: '2000000000000000' },
             sum: -10,
             fee: 0,
             invoice: null

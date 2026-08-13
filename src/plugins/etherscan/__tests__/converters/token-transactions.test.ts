@@ -12,6 +12,7 @@ const baseTransaction: TokenTransaction = {
   blockNumber: '1',
   timeStamp: '1658608646',
   hash: '0x90bb0dcbe8fa38387145aa17d6ad99f57da91d4c6d4b65b5f7cf56454f73234b',
+  logIndex: '1',
   nonce: '1',
   blockHash: '0x1',
   from: '0x1111111111111111111111111111111111111111',

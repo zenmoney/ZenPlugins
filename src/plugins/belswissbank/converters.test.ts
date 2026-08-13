@@ -577,4 +577,39 @@ describe('convertTransactions', () => {
       }
     ])
   })
+
+  test('skips transaction with transactionType otkaz', () => {
+    const apiTransactions = [
+      {
+        id: 135510240,
+        userId: 10083664,
+        cardId: 123456,
+        paymentDate: '10/04/2026 04:41:31',
+        last4namePayer: '1903, DZMITRY FAMIANOK',
+        currCode: 'USD',
+        target: 'FISHBRAIN',
+        paymentTypeId: null,
+        status: 51,
+        paymentName: 'Отказ',
+        paymentType: 'TRANSACTION',
+        isEnrollment: false,
+        summa: 79.99,
+        balanceBefore: null,
+        balanceAfter: null,
+        currencyTypePayer: 'USD',
+        statusSignature: 'Недостаточно средств',
+        cardRetailIdRecipient: null,
+        commentText: null,
+        favoriteId: null,
+        brandIcon: null,
+        brandName: null,
+        transactionType: 'OTKAZ51',
+        terminal: null
+      }
+    ]
+
+    const transactions = uut(apiTransactions)
+
+    expect(transactions).toEqual([])
+  })
 })

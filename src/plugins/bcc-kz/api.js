@@ -321,8 +321,24 @@ export async function fetchAccounts (auth) {
 export async function fetchTransactions (auth, product, fromDate, toDate) {
   const fromKzTime = dateInTimezone(fromDate, 6 * 60)
   const toKzTime = dateInTimezone(toDate, 6 * 60)
+
+  // A multi-currency card keeps its actual transactions on per-currency sub-accounts
+  // (`multiaccs`), each queried by its own account_id. The card's own id holds only the
+  // main-currency operations, so we must pull a statement for every sub-account.
+  const statementAccountIds = product.statementAccountIds?.length
+    ? product.statementAccountIds
+    : [product.productId]
+
+  const transactions = []
+  for (const accountId of statementAccountIds) {
+    transactions.push(...await fetchAccountStatement(auth, product, accountId, fromKzTime, toKzTime))
+  }
+  return transactions
+}
+
+async function fetchAccountStatement (auth, product, accountId, fromKzTime, toKzTime) {
   try {
-    return await fetchTransactionsChunk(auth, product.productId, fromKzTime, toKzTime)
+    return await fetchTransactionsChunk(auth, product, accountId, fromKzTime, toKzTime)
   } catch (error) {
     if (!shouldFallbackToChunkedFetch(error, fromKzTime, toKzTime)) {
       throw error
@@ -331,7 +347,7 @@ export async function fetchTransactions (auth, product, fromDate, toDate) {
     const transactions = []
     for (const [intervalFrom, intervalTo] of createDateIntervals(fromKzTime, toKzTime, 31)) {
       try {
-        const chunkTransactions = await fetchTransactionsChunk(auth, product.productId, intervalFrom, intervalTo)
+        const chunkTransactions = await fetchTransactionsChunk(auth, product, accountId, intervalFrom, intervalTo)
         transactions.push(...chunkTransactions)
       } catch (chunkError) {
         if (isHtmlGatewayError(chunkError)) {
@@ -344,19 +360,20 @@ export async function fetchTransactions (auth, product, fromDate, toDate) {
   }
 }
 
-async function fetchTransactionsChunk (auth, productId, fromDate, toDate) {
+async function fetchTransactionsChunk (auth, product, accountId, fromDate, toDate) {
   const response = await fetchMainApi(auth, {
-    account_id: productId,
+    account_id: accountId,
     action: 'GET_EXT_STATEMENT',
     date_begin: formatDate(fromDate),
-    date_end: formatDate(toDate)
+    date_end: formatDate(toDate),
+    ...(product.productType === 'ccard' && { cardacc: '1' })
   })
   if (response.body.reason === 'Вы не являетесь владельцем счета') {
     return []
   }
   assertSuccessResponse(response)
 
-  return response.body.stmt
+  return response.body.stmt ?? []
 }
 
 function shouldFallbackToChunkedFetch (error, fromDate, toDate) {

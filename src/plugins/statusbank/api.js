@@ -2,7 +2,7 @@ import { createDateIntervals as commonCreateDateIntervals } from '../../common/d
 import { generateRandomString } from '../../common/utils'
 import { parseXml } from '../../common/xmlUtils'
 import { flatMap } from 'lodash'
-import { fetch } from '../../common/network'
+import { fetchRateLimitedWithRetry as fetch } from './fetch'
 import cheerio from 'cheerio'
 import xml2js from 'xml2js'
 
@@ -93,22 +93,17 @@ export async function login (login, password) {
 
 export async function fetchAccounts (sid) {
   console.log('>>> Загрузка списка счетов...')
-  const rawResponse = await fetchApi(BASE_URL,
-    '<BS_Request>\r\n' +
-    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-    '   <GetProducts ProductType="MS" GetActions="Y" GetBalance="Y"/>\r\n' +
-    '   <RequestType>GetProducts</RequestType>\r\n' +
-    '   <Session SID="' + sid + '"/>\r\n' +
-    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
-    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'), true)
-  let resp = null
-  xml2js.parseString(rawResponse, { mergeAttrs: true }, (err, result) => {
-    resp = err ? null : result
-  })
+
+  const [cardProducts, accountProducts, productTypes] = await Promise.all([
+    fetchProducts(sid, 'MS'),
+    fetchProducts(sid, 'ACCOUNT'),
+    fetchProductTypes(sid)
+  ])
+  const productTypeProducts = productTypes.flatMap(productType => productType.Product || [])
+  const linkedCardByAccountId = buildLinkedCardByAccountId(productTypeProducts)
   const accounts = []
-  if (resp) {
-    for (const account of resp.BS_Response.GetProducts[0].Product) {
+  if (cardProducts.length > 0) {
+    for (const account of cardProducts) {
       const accountOperationsExecutionId = account.Action.filter((action) => action !== null).filter((action) => action.Type[0] === 'Group$MS$4')[0].Id[0]
       const [statementResp, lastTrxResp] = await Promise.all([
         // To receive transactions as statement for days up to last working day
@@ -143,18 +138,85 @@ export async function fetchAccounts (sid) {
       })
     }
   }
+  for (const account of accountProducts) {
+    const linkedCardId = linkedCardByAccountId.get(account.Id?.[0]) ||
+      (account.LinkedProductType?.[0] === 'MS' ? account.LinkedProductId?.[0] : null)
+    const statementAction = account.Action
+      ?.filter(action => action !== null)
+      .find(action => action.Type?.[0] === 'B735:GetOrdering')
+    accounts.push({
+      ...account,
+      LinkedProductId: linkedCardId ? [linkedCardId] : account.LinkedProductId,
+      LinkedProductType: linkedCardId ? ['MS'] : account.LinkedProductType,
+      statementExecutionId: statementAction?.Id?.[0] || null,
+      lastTrxExecutionId: null
+    })
+  }
   console.log(`>>> Загружено ${accounts.length} счетов.`)
   return accounts
 }
 
+async function fetchProducts (sid, productType) {
+  const rawResponse = await fetchApi(BASE_URL,
+    '<BS_Request>\r\n' +
+    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    '   <GetProducts ProductType="' + productType + '" GetActions="Y" GetBalance="Y"/>\r\n' +
+    '   <RequestType>GetProducts</RequestType>\r\n' +
+    '   <Session SID="' + sid + '"/>\r\n' +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'), true)
+  const response = await xml2js.parseStringPromise(rawResponse, { mergeAttrs: true })
+  return response?.BS_Response?.GetProducts?.[0]?.Product || []
+}
+
+async function fetchProductTypes (sid) {
+  const rawResponse = await fetchApi(BASE_URL,
+    '<BS_Request>\r\n' +
+    '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+    '   <GetProductTypes GetProducts="Y" GetActions="N" GetBalance="N"/>\r\n' +
+    '   <RequestType>GetProductTypes</RequestType>\r\n' +
+    '   <Session SID="' + sid + '"/>\r\n' +
+    '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+    '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+    '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'), true)
+  const response = await xml2js.parseStringPromise(rawResponse, { mergeAttrs: true })
+  return response?.BS_Response?.GetProductTypes?.[0]?.ProductType || []
+}
+
+function buildLinkedCardByAccountId (products) {
+  const linkedCardByAccountId = new Map()
+  for (const product of products) {
+    if (product.ProductType?.[0] === 'ACCOUNT' && product.LinkedProductType?.[0] === 'MS') {
+      const accountId = product.Id?.[0]
+      const cardId = product.LinkedProductId?.[0]
+      if (accountId && cardId) {
+        linkedCardByAccountId.set(accountId, cardId)
+      }
+    } else if (product.ProductType?.[0] === 'MS' && product.LinkedProductType?.[0] === 'ACCOUNT') {
+      const accountId = product.LinkedProductId?.[0]
+      const cardId = product.Id?.[0]
+      if (accountId && cardId) {
+        linkedCardByAccountId.set(accountId, cardId)
+      }
+    }
+  }
+  return linkedCardByAccountId
+}
+
 export function createDateIntervals (fromDate, toDate) {
-  const interval = 31 * 24 * 60 * 60 * 1000 // 31 days interval for fetching data
-  const gapMs = 1
+  const firstDate = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate())
+  const lastDate = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59, 999)
   return commonCreateDateIntervals({
-    fromDate,
-    toDate,
-    addIntervalToDate: date => new Date(date.getTime() + interval - gapMs),
-    gapMs
+    fromDate: firstDate,
+    toDate: lastDate,
+    addIntervalToDate: date => {
+      const intervalEnd = new Date(date)
+      intervalEnd.setDate(intervalEnd.getDate() + 30)
+      intervalEnd.setHours(23, 59, 59, 999)
+      return intervalEnd
+    },
+    gapMs: 1
   })
 }
 
@@ -168,6 +230,7 @@ async function getTransactions (accountId, fromDate, toDate, sid) {
     '   <ExecuteAction Id="' + accountId + '">\r\n' +
     '      <Parameter Id="DateFrom">' + fromDate + '</Parameter>\r\n' +
     '      <Parameter Id="DateTo">' + toDate + '</Parameter>\r\n' +
+    '      <Parameter Id="B735$OpenNewWindow">N</Parameter>\r\n' +
     '   </ExecuteAction>\r\n' +
     '   <RequestType>ExecuteAction</RequestType>\r\n' +
     '   <Session SID="' + sid + '"/>\r\n' +
@@ -183,59 +246,78 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
   toDate.setDate(toDate.getDate())
 
   const dates = createDateIntervals(fromDate, toDate)
-  const responses = await Promise.all(dates.map(async date => {
+  const results = []
+  // Fetch sequentially because the bank may reuse the same statement URL
+  // for different date ranges. Parallel requests would race for the same
+  // file and some intervals would be lost.
+  for (const date of dates) {
     let response = await getTransactions(account.transactionsAccId, transactionDate(date[0]), transactionDate(date[1]), sid)
     // if the response is failed by incorrect toDate we're recalculating it
     if (/\d{2}.\d{2}.\d{4}/.test(response)) {
       response = await getTransactions(account.transactionsAccId, transactionDate(date[0]), response, sid)
     }
-    return response
-  }))
-  const mailIDs = responses.map(response => {
-    if (response === null) {
-      return null
+    if (!response) {
+      continue
     }
-    return response.BS_Response.ExecuteAction.MailId
-  })
-  return await Promise.all(flatMap(mailIDs.filter(Boolean), (mailId) => {
-    return fetchApi(BASE_URL,
-      '<BS_Request>\r\n' +
-      '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
-      '   <RequestType>MailAttachment</RequestType>\r\n' +
-      '   <Session SID="' + sid + '"/>\r\n' +
-      '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
-      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-      '   <TerminalCapabilities>\r\n' +
-      '       <LongParameter>Y</LongParameter>\r\n' +
-      '       <ScreenWidth>99</ScreenWidth>\r\n' +
-      '       <AnyAmount>Y</AnyAmount>\r\n' +
-      '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-      '       <CheckWidth>39</CheckWidth>\r\n' +
-      '       <InputDataSources>\r\n' +
-      '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-      '       </InputDataSources>\r\n' +
-      '   </TerminalCapabilities>\r\n' +
-      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-  }))
+    const { MailId: mailId, URL: url, Message: message } = response.BS_Response.ExecuteAction
+    if (message) {
+      if (message.includes('в системе не зарегистрировано операций по карточке')) {
+        continue
+      }
+      throw new Error(`Unexpected statement response: ${message}`)
+    }
+    if (url) {
+      const urlResponse = await fetch(url)
+      results.push(urlResponse.body)
+    } else if (mailId) {
+      const mailResponse = await fetchApi(BASE_URL,
+        '<BS_Request>\r\n' +
+        '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
+        '   <RequestType>MailAttachment</RequestType>\r\n' +
+        '   <Session SID="' + sid + '"/>\r\n' +
+        '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+        '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+        '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+        '   <TerminalCapabilities>\r\n' +
+        '       <LongParameter>Y</LongParameter>\r\n' +
+        '       <ScreenWidth>99</ScreenWidth>\r\n' +
+        '       <AnyAmount>Y</AnyAmount>\r\n' +
+        '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+        '       <CheckWidth>39</CheckWidth>\r\n' +
+        '       <InputDataSources>\r\n' +
+        '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+        '       </InputDataSources>\r\n' +
+        '   </TerminalCapabilities>\r\n' +
+        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+      results.push(mailResponse.BS_Response.MailAttachment.Attachment.Body)
+    } else {
+      throw new Error('Statement response contains neither MailId nor URL')
+    }
+  }
+
+  return results
 }
 
-export function parseTransactions (mails) {
-  const transactions = flatMap(mails, mail => {
-    const data = mail.BS_Response.MailAttachment.Attachment.Body
-    return parseFullTransactionsMail(data)
-  })
+export function parseTransactions (htmls) {
+  const transactions = flatMap(htmls, html => parseFullTransactionsHtml(html))
   console.log(`>>> Загружено ${transactions.length} операций.`)
   return transactions
 }
 
-export function parseFullTransactionsMail (html) {
+export function parseAccountTransactions (htmls) {
+  const transactions = flatMap(htmls, html => parseAccountTransactionsHtml(html))
+  console.log(`>>> Загружено ${transactions.length} операций.`)
+  return transactions
+}
+
+export function parseFullTransactionsHtml (html) {
   const $ = cheerio.load(html)
   const tdObjects = $('div[class="head"]').toArray()
   if (tdObjects.length < 2) {
     return []
   }
-  const card = tdObjects[0].children[3].children[0].data.split(' ')[1]
+  const productNumber = $(tdObjects[0]).text().match(/(?:\d{4,}\*+\d{4}|\d{8,})/)
+  const card = productNumber ? productNumber[0] : null
   let counter = 0
   let i = 0
   const data = []
@@ -297,60 +379,114 @@ export function parseFullTransactionsMail (html) {
   return data
 }
 
-// Экспорт пополнений карточки
+export function parseAccountTransactionsHtml (html) {
+  const $ = cheerio.load(html)
+  return $('table[class="table-schet"] tbody tr').toArray().map(row => {
+    const cells = $(row).find('td').toArray().map(cell => $(cell).text().replace(/\s+/g, ' ').trim())
+    if (cells.length < 6) {
+      return null
+    }
+    const amount = Number.parseFloat(cells[4].replace(/\s/g, '').replace(',', '.'))
+    if (!cells[1] || !cells[2] || !cells[3] || isNaN(amount)) {
+      return null
+    }
+    return {
+      cardNum: null,
+      date: cells[1],
+      reflectedDate: cells[0],
+      description: cells[2],
+      type: cells[2],
+      amountReal: amount,
+      currencyReal: cells[3],
+      amount,
+      currency: cells[3],
+      place: cells[2],
+      authCode: null,
+      mcc: null,
+      statementType: 'account'
+    }
+  }).filter(Boolean)
+}
 
-export async function fetchDeposits (sid, account) {
-  console.log('>>> Загрузка списка пополнений...')
+// Экспорт последних операций по карточке
+
+export async function fetchLatestOperations (sid, account) {
+  console.log('>>> Загрузка списка операций...')
   const response = await fetchApi(BASE_URL,
     '<BS_Request>\r\n' +
-    '   <ExecuteAction Id="' + account.latestTrID + '"/>\r\n' +
+    '   <ExecuteAction Id="' + account.latestTrID + '">\r\n' +
+    '     <Parameter Id="WSIG:OpenNewWindow">N</Parameter>\r\n' +
+    '   </ExecuteAction>\r\n' +
     '   <RequestType>ExecuteAction</RequestType>\r\n' +
     '   <Session SID="' + sid + '"/>\r\n' +
     '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
     '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
     '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-  if (response) {
-    const isMailAttachment = !!response.BS_Response.ExecuteAction.MailId
-    if (isMailAttachment) {
-      const mailResponse = await fetchApi(BASE_URL,
-        '<BS_Request>\r\n' +
-        '   <MailAttachment Id="' + response.BS_Response.ExecuteAction.MailId + '" No="0"/>\r\n' +
-        '   <RequestType>MailAttachment</RequestType>\r\n' +
-        '   <Session SID="' + sid + '"/>\r\n' +
-        '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
-        '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
-        '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-        '   <TerminalCapabilities>\r\n' +
-        '       <LongParameter>Y</LongParameter>\r\n' +
-        '       <ScreenWidth>99</ScreenWidth>\r\n' +
-        '       <AnyAmount>Y</AnyAmount>\r\n' +
-        '       <BooleanParameter>Y</BooleanParameter>\r\n' +
-        '       <CheckWidth>39</CheckWidth>\r\n' +
-        '       <InputDataSources>\r\n' +
-        '           <InputDataSource>Lookup</InputDataSource>\r\n' +
-        '       </InputDataSources>\r\n' +
-        '   </TerminalCapabilities>\r\n' +
-        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
-      return mailResponse.BS_Response.MailAttachment.Attachment.Body
-    } else {
-      const urlResponse = await fetch(response.BS_Response.ExecuteAction.URL)
-      return urlResponse.body
-    }
+  if (!response) {
+    return null
   }
-  return null
+
+  const { MailId: mailId, URL: url, Message: message } = response.BS_Response.ExecuteAction
+  if (message) {
+    throw new Error(`Unexpected latest operations response: ${message}`)
+  }
+  if (url) {
+    const urlResponse = await fetch(url)
+    return urlResponse.body
+  }
+  if (mailId) {
+    const mailResponse = await fetchApi(BASE_URL,
+      '<BS_Request>\r\n' +
+      '   <MailAttachment Id="' + mailId + '" No="0"/>\r\n' +
+      '   <RequestType>MailAttachment</RequestType>\r\n' +
+      '   <Session SID="' + sid + '"/>\r\n' +
+      '   <TerminalId>stbank.ibank</TerminalId>\r\n' +
+      '   <TerminalTime>' + terminalTime() + '</TerminalTime>\r\n' +
+      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+      '   <TerminalCapabilities>\r\n' +
+      '       <LongParameter>Y</LongParameter>\r\n' +
+      '       <ScreenWidth>99</ScreenWidth>\r\n' +
+      '       <AnyAmount>Y</AnyAmount>\r\n' +
+      '       <BooleanParameter>Y</BooleanParameter>\r\n' +
+      '       <CheckWidth>39</CheckWidth>\r\n' +
+      '       <InputDataSources>\r\n' +
+      '           <InputDataSource>Lookup</InputDataSource>\r\n' +
+      '       </InputDataSources>\r\n' +
+      '   </TerminalCapabilities>\r\n' +
+      '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+    return mailResponse.BS_Response.MailAttachment.Attachment.Body
+  }
+  throw new Error('Latest operations response contains neither MailId nor URL')
 }
 
-export function parseDeposits (mail, fromDate) {
-  const transactions = parseDepositsMail(mail).filter((transaction) => transaction.amountReal > 0).filter((transaction) => {
-    const [day, month, year] = transaction.date.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
-    return (new Date(`${year}-${month}-${day}`) > fromDate)
-  })
-  console.log(`>>> Загружено ${transactions.length} пополнений.`)
-  return transactions
+export function parseLatestOperations (html, fromDate) {
+  const transactions = parseLatestOperationsHtml(html)
+
+  // Для внутренних переводов возможны дублирующиеся записи про перевод:
+  // Перевод (списание) или Перевод (зачисление) и просто Перевод.
+  const detailedTransfers = new Set(transactions
+    .filter(transaction => transaction.type === 'Перевод (списание)' || transaction.type === 'Перевод (зачисление)')
+    .map(getLatestTransactionKey))
+  const deduplicated = transactions.filter(transaction =>
+    transaction.type !== 'Перевод' ||
+    !detailedTransfers.has(getLatestTransactionKey(transaction))
+  )
+
+  const filtered = deduplicated
+    .filter((transaction) => transaction.amountReal !== 0)
+    // Rows without an authorization code are unsuccessful attempts
+    .filter((transaction) => transaction.authCode !== null)
+    .filter((transaction) => {
+      const [day, month, year] = transaction.date.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
+      return (new Date(`${year}-${month}-${day}`) > fromDate)
+    })
+
+  console.log(`>>> Загружено ${filtered.length} операций.`)
+  return filtered
 }
 
-export function parseDepositsMail (html) {
+export function parseLatestOperationsHtml (html) {
   const $ = cheerio.load(html)
   const head = $('p[style="margin-right:auto;text-align:center;"]').toArray()[0]
   if (head.children.length < 3) {
@@ -364,15 +500,28 @@ export function parseDepositsMail (html) {
   const data = []
   const arrTrans = $('table.section_1').toArray()[0].children.filter((tableRow) => { return tableRow.name === 'tbody' })
   for (const arrTran of arrTrans) {
-    const arrTranChildrens = arrTran.children[0].children
+    const row = arrTran.children[0]
+    const arrTranChildrens = row.children
     if (arrTranChildrens.length >= 7) { // Значит это операция, а не просто форматирование
-      const child = arrTranChildrens[0].parent.children.filter((tableRow) => { return tableRow.name === 'td' })
-      const date = child[0].children[0].data
-      const type = child[2].children[0].data
-      const amountRealMatch = child[3].children[0].data.match(/([-\d\s,]*)\s([A-Z]+)/)
+      const child = $(row).find('td').toArray()
+      if ($(child[1]).text().trim()) {
+        continue
+      }
+      const date = $(child[0]).text().trim()
+      const type = $(child[2]).text().trim()
+      const amountText = $(child[3]).text().trim()
+      const amountRealMatch = amountText.match(/^([-\d\s,]+)\s([A-Z]+)$/)
+      if (!amountRealMatch) {
+        // authorization or card checks with empty amount and 0 as the currency
+        if (/^0,00\s+0$/.test(amountText)) {
+          continue
+        }
+        throw new Error(`unexpected receipt amount: ${amountText}`)
+      }
       const amountReal = Number(parseFloat(amountRealMatch[1].replace(/\s/g, '').replace(/,/g, '.')))
       const currencyReal = amountRealMatch[2]
-      const place = child[6].children[0].data
+      const place = $(child[6]).text().trim()
+      const authCode = $(child[4]).text().trim() || null
       if (!date || !type || !currencyReal || !place || isNaN(amountReal)) {
         throw new Error('unexpected receipt')
       }
@@ -386,11 +535,21 @@ export function parseDepositsMail (html) {
         amount: null,
         currency: null,
         place,
-        authCode: null,
+        authCode,
         mcc: null
       }
       data.push(dataTran)
     }
   }
+
   return data
+}
+
+function getLatestTransactionKey (transaction) {
+  return [
+    transaction.date,
+    transaction.amountReal,
+    transaction.currencyReal,
+    transaction.authCode
+  ].join('|')
 }

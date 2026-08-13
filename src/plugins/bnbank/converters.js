@@ -4,6 +4,7 @@ import { toISODateString } from '../../common/dateUtils'
 export const card = 'card'
 export const deposit = 'deposit'
 export const checking = 'checking'
+const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 export function convertCard (json) {
   return convertAccount(json, card)
@@ -18,6 +19,10 @@ export function convertCheckingAccount (json) {
 }
 
 export function convertAccount (json, accountType) {
+  if (!json || typeof json !== 'object') return null
+  if (Object.prototype.hasOwnProperty.call(json, 'id')) {
+    return convertIskraAccount(json, accountType)
+  }
   switch (accountType) {
     case card:
       if (json.cards && json.cards.length > 0) { // only loading card accounts
@@ -74,7 +79,64 @@ export function convertAccount (json, accountType) {
   }
 }
 
+function getInstrument (currency) {
+  return codeToCurrencyLookup[currency] || currency
+}
+
+function getMoneyAmount (money) {
+  if (!money) return 0
+  const displayAmount = Number.parseFloat(String(money.amount ?? '').replace(',', '.'))
+  const fractionalPart = String(money.fractionalPart ?? 0).padStart(2, '0')
+  const structuredAmount = Number.parseFloat(`${money.integerPart ?? 0}.${fractionalPart}`)
+  const amount = Number.isFinite(displayAmount) ? displayAmount : structuredAmount
+  if (!Number.isFinite(amount)) return 0
+  return money.sign === 'MINUS' ? -Math.abs(amount) : Math.abs(amount)
+}
+
+function convertIskraAccount (json, accountType) {
+  if (typeof json.id !== 'string' || !json.id ||
+    typeof json.name !== 'string' || !json.name ||
+    typeof json.balance?.currency !== 'string' || !json.balance.currency) return null
+  const currency = json.balance.currency
+  const balance = getMoneyAmount(json.balance)
+  const account = {
+    id: json.id,
+    type: accountType,
+    title: accountType === deposit ? `Депозит ${json.name}` : json.name,
+    currencyCode: currency,
+    instrument: getInstrument(currency),
+    balance,
+    syncID: [json.id]
+  }
+
+  if (typeof json.pan === 'string' && json.pan.length >= 4) {
+    account.syncID.push(json.pan.slice(-4))
+  }
+  if (accountType === deposit) {
+    const startDate = new Date(json.contractOpenDate)
+    const endDate = new Date(json.contractEndDate)
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
+      return null
+    }
+    const rate = Number.parseFloat(String(json.currentInterestRate).replace(',', '.'))
+    Object.assign(account, {
+      startDate,
+      startBalance: balance,
+      capitalization: true,
+      percent: Number.isFinite(rate) ? rate : null,
+      endDateOffsetInterval: 'day',
+      endDateOffset: Math.round((endDate - startDate) / MS_PER_DAY),
+      payoffInterval: 'month',
+      payoffStep: 1
+    })
+  }
+  return account
+}
+
 export function convertTransaction (apiTransaction, accounts, hold = false) {
+  if (apiTransaction.productId && apiTransaction.transactionSum) {
+    return convertIskraTransaction(apiTransaction, accounts)
+  }
   if (apiTransaction.accountNumber.length > 16) {
     apiTransaction.accountNumber = apiTransaction.accountNumber.slice(-16)
   }
@@ -123,6 +185,69 @@ export function convertTransaction (apiTransaction, accounts, hold = false) {
   return transaction
 }
 
+function convertIskraTransaction (apiTransaction, accounts) {
+  const account = accounts.find(account => account.id === apiTransaction.productId)
+  if (!account) return null
+
+  const detail = apiTransaction.operationDetail || {}
+  const statusCode = apiTransaction.productType === 'CARD' || account.type === card
+    ? detail.statusCode
+    : 'EXECUTED'
+  if (statusCode === 'CANCELLED') return null
+
+  const operationSum = getMoneyAmount(apiTransaction.operationSum)
+  const transactionSum = getMoneyAmount(apiTransaction.transactionSum)
+  if (operationSum === 0 && transactionSum === 0) return null
+
+  const operationInstrument = getInstrument(apiTransaction.operationSum?.currency) || account.instrument
+  const transactionInstrument = getInstrument(apiTransaction.transactionSum?.currency) || operationInstrument
+  const transactionMoney = { sum: transactionSum, instrument: transactionInstrument }
+  const operationMoney = { sum: operationSum, instrument: operationInstrument }
+  const accountMoney = [transactionMoney, operationMoney].find(money => money.instrument === account.instrument) || transactionMoney
+  const invoiceMoney = [transactionMoney, operationMoney]
+    .find(money => money !== accountMoney && money.instrument !== accountMoney.instrument)
+  const date = new Date(detail.operationDate || apiTransaction.paymentDate)
+  if (Number.isNaN(date.getTime())) return null
+  const invoice = invoiceMoney ? { sum: invoiceMoney.sum, instrument: invoiceMoney.instrument } : null
+  const merchantTitle = cleanMerchantTitle(detail.merchantName)
+  const { city, country } = parseLocation(apiTransaction)
+  const mcc = parseMcc(apiTransaction)
+  const transaction = {
+    date,
+    movements: [{
+      id: getIskraOperationId(apiTransaction, detail),
+      account: { id: account.id },
+      invoice,
+      sum: accountMoney.sum,
+      fee: 0
+    }],
+    merchant: null,
+    comment: null,
+    hold: statusCode === 'IN_PROGRESS'
+  }
+
+  if (merchantTitle) {
+    transaction.merchant = {
+      title: merchantTitle,
+      mcc,
+      city,
+      country,
+      location: null
+    }
+  }
+  if (apiTransaction.operationName && apiTransaction.operationName !== merchantTitle) {
+    transaction.comment = apiTransaction.operationName
+  }
+  return transaction
+}
+
+function getIskraOperationId (apiTransaction, detail) {
+  if (apiTransaction.id) {
+    return apiTransaction.idType ? `${apiTransaction.idType}:${apiTransaction.id}` : apiTransaction.id
+  }
+  return detail.authorizationCode || null
+}
+
 function parseCashTransfer (transaction, apiTransaction, account, invoice) {
   if (apiTransaction.operationCode === 6 || (!!apiTransaction.operationName && (
     apiTransaction.operationName.indexOf('наличны') >= 0 ||
@@ -164,8 +289,12 @@ function parseInnerTransfer (transaction, apiTransaction, account, invoice) {
 }
 
 function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
-  if (!!apiTransaction.operationPlace && (
-    apiTransaction.operationPlace?.indexOf('POPOLNENIE KARTY') >= 0)) {
+  if ([
+    /POPOLNENIE KARTY/i
+  ].some(regexp => regexp.test(apiTransaction.operationPlace)) ||
+    [
+      /P2P/i
+    ].some(regexp => regexp.test(apiTransaction.operationName))) {
     // добавим вторую часть перевода
     transaction.movements.push({
       id: null,
@@ -183,29 +312,116 @@ function parseOuterTransfer (transaction, apiTransaction, account, invoice) {
   }
 }
 
+function cleanMerchantTitle (title) {
+  if (!title) return null
+  // Remove technical prefixes
+  let cleaned = title
+    .replace(/^(I\.-SHOP|PT|TO OOO)\s*/i, '')
+    .trim()
+
+  // Remove MCC suffix if present (e.g. "SUPERMARKET\nMCC 5411, ...")
+  const mccIndex = cleaned.indexOf('\nMCC ')
+  if (mccIndex > 0) {
+    cleaned = cleaned.substring(0, mccIndex).trim()
+  }
+
+  // Remove surrounding quotes
+  cleaned = cleaned.replace(/^"(.+)"$/, '$1').trim()
+
+  return cleaned || null
+}
+
+function parseMcc (apiTransaction) {
+  const mccCode = apiTransaction.operationDetail?.mccCode
+  if (!mccCode) return null
+  const match = mccCode.match(/^(\d+)/)
+  return match ? parseInt(match[1], 10) : null
+}
+
+function parseLocation (apiTransaction) {
+  const location = apiTransaction.operationDetail?.terminalLocation || ''
+  if (!location || location === '-') return { city: null, country: null }
+  // Format: "BLR MINSK", "BLR G. MINSK", "BLR d.BOLSHOE STI", "G. MINSK"
+  let country = null
+  let city = location
+
+  // Check for country code at the beginning
+  if (/^BLR\s+/i.test(location)) {
+    country = 'BLR'
+    city = location.replace(/^BLR\s+/i, '')
+  }
+
+  // Clean up city prefixes (G. = город, d. = деревня)
+  city = city
+    .replace(/^G\.\s*/i, '')
+    .replace(/^d\.\s*/i, '')
+    .trim()
+
+  return { city: city || null, country }
+}
+
+function getMerchantName (apiTransaction) {
+  // For hold transactions - merchant is in operationDetail.operationName or top-level operationName
+  if (apiTransaction.operationDetail?.operationName && apiTransaction.operationDetail.operationName !== '-') {
+    return cleanMerchantTitle(apiTransaction.operationDetail.operationName)
+  }
+  // For settled transactions - merchant is in operationPlace
+  if (apiTransaction.operationPlace) {
+    return cleanMerchantTitle(apiTransaction.operationPlace)
+  }
+  return null
+}
+
+function isIgnoredMerchant (merchantName) {
+  if (!merchantName) return true
+  const ignored = [
+    'BNB - OPLATA USLUG',
+    'Оплата услуг в интернет(мобильном) банкинге',
+    'OPLATA USLUG - KOMPLAT BNB',
+    'BNB KOMPLAT ERIP OTHER',
+    'BNB KOMPLAT ERIP MB SV',
+    'BNB KOMPLAT ERIP MB',
+    'BNB KOMPLAT SMS',
+    'BNB-BANK ERIP',
+    'BNB-BANK FEE SMS'
+  ]
+  if (ignored.some(i => merchantName.indexOf(i) >= 0)) return true
+  // BLR MINSK / SOA BNB without actual merchant name
+  if (/^BLR\s+(\w+\.?\s*)?(MINSK|SOA\s+BNB)/.test(merchantName)) return true
+  if (/^G\.\s*MINSK$/i.test(merchantName)) return true
+  if (/^SOA\s+BNB$/i.test(merchantName)) return true
+  return false
+}
+
 function parsePayee (transaction, apiTransaction) {
-  // интернет-платежи отображаем без получателя
-  if (!apiTransaction.operationPlace ||
-    apiTransaction.operationPlace.indexOf('BNB - OPLATA USLUG') >= 0 ||
-    apiTransaction.operationPlace.indexOf('Оплата услуг в интернет(мобильном) банкинге') >= 0 ||
-    apiTransaction.operationPlace.indexOf('OPLATA USLUG - KOMPLAT BNB') >= 0 ||
-    /\bBLR\s+MINSK\b/.test(apiTransaction.operationPlace)) {
+  const merchantName = getMerchantName(apiTransaction)
+  if (isIgnoredMerchant(merchantName)) {
     return false
   }
+
+  const mcc = parseMcc(apiTransaction)
+  const { city, country } = parseLocation(apiTransaction)
+
   transaction.merchant = {
-    mcc: null,
+    mcc,
     location: null
   }
-  const merchant = apiTransaction.operationPlace.split('>').map(str => str.trim())
-  if (merchant.length === 1) {
-    transaction.merchant.fullTitle = apiTransaction.operationPlace
-  } else if (merchant.length === 2) {
-    transaction.merchant.title = merchant[0]
+
+  // Try to parse structured merchant (format: "NAME > CITY COUNTRY")
+  const merchant = (apiTransaction.operationPlace || '').split('>').map(str => str.trim())
+  if (merchant.length === 2) {
+    transaction.merchant.title = cleanMerchantTitle(merchant[0])
     const geo = merchant[1].split(' ')
     transaction.merchant.city = merchant[1].replace(' ' + geo[geo.length - 1], '').trim()
     transaction.merchant.country = geo[geo.length - 1]
+  } else if (city) {
+    // Use structured merchant with city (country may be null)
+    transaction.merchant.city = city
+    transaction.merchant.country = country
+    transaction.merchant.title = merchantName
   } else {
-    throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.operationPlace)
+    // Use fullTitle for non-structured merchant without location
+    transaction.merchant.fullTitle = merchantName
   }
 }
 
@@ -220,24 +436,44 @@ function parseComment (transaction, apiTransaction, account) {
     transaction.comment = 'Капитализация'
     return false
   }
-  switch (apiTransaction.operationName) {
-    // переводы между счетами полезной информации не несут, гасим сразу
-    case 'Списание по операции ПЦ "Перечисление с карты на карту" ':
-    case 'On-line пополнение договора (списание с БПК)':
-      return true
 
-    // в покупках комментарии не оставляем
-    case 'Покупки':
-    case 'Покупки(конверсия)':
-    case 'Операция в Интернет-Банк':
-    case 'Покупка товаров и услуг':
-    case 'Списание по операции ПЦ "Оплата услуг в ИБ" ':
-      return false
+  const operationName = apiTransaction.operationName
 
-    default:
-      transaction.comment = apiTransaction.operationName
-      return false
+  // Useless technical comments - don't add to transaction
+  const ignoredComments = [
+    'Списание по операции ПЦ "Перечисление с карты на карту" ',
+    'On-line пополнение договора (списание с БПК)',
+    'Покупки',
+    'Покупки(конверсия)',
+    'Операция в Интернет-Банк',
+    'Покупка товаров и услуг',
+    'Списание по операции ПЦ "Оплата услуг в ИБ" ',
+    // New technical comments to ignore
+    'Оплата товаров, работ или услуг',
+    'Оплата товаров, работ или услуг в устройствах других Банков',
+    'Пополнение карт через ЕРИП в устройствах иных банков',
+    'Оплата услуг в СДБО БНБ-Банк'
+  ]
+
+  // For transfer operations, no need for comment - return true to stop processing
+  if (operationName === 'Списание по операции ПЦ "Перечисление с карты на карту" ' ||
+      operationName === 'On-line пополнение договора (списание с БПК)') {
+    return true
   }
+
+  // Skip useless technical comments
+  if (ignoredComments.includes(operationName)) {
+    return false
+  }
+
+  // Check for comments with MCC info (hold transactions) - extract only useful part if any
+  if (operationName.includes('\nMCC ')) {
+    // The merchant name is before \nMCC - don't duplicate it in comment
+    return false
+  }
+
+  transaction.comment = operationName
+  return false
 }
 
 export function getLastTransactionDate (str) {
@@ -266,7 +502,7 @@ export function transactionsUnique (array) {
 export function convertTestTransactions (apiTransactions, accounts, hold = false) {
   const transactions = []
   for (const apiTransaction of apiTransactions) {
-    const transaction = convertTransaction(apiTransaction, accounts, hold = false)
+    const transaction = convertTransaction(apiTransaction, accounts, hold)
     if (transaction) {
       transactions.push(transaction)
     }

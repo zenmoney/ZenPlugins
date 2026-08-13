@@ -21,6 +21,8 @@ export interface StatementTransaction {
   time: string
   category: string
   details: string
+  // Signed amount in the account currency ("Сумма в валюте счёта"):
+  // negative for expenses/outgoing, positive for income/incoming.
   amount: number
   instrument: string
   isCardOperation: boolean

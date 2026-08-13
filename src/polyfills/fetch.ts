@@ -13,12 +13,30 @@ const _fetchWithoutCookies = makeFetchCookie(_fetch, {
 })
 const _restoreCookies = ZenMoney.restoreCookies.bind(ZenMoney)
 const _saveCookies = ZenMoney.saveCookies.bind(ZenMoney)
+const _openWebView = ZenMoney.openWebView.bind(ZenMoney)
 
 const cookieJar = _fetchCookie.cookieJar as CookieJar
 const cookieStore = cookieJar.store
 
 const clientPfxs: Record<string, Uint8Array> = {}
 const trustedCertificates: string[] = []
+
+function withDefaultTls(options?: unknown): Record<string, unknown> {
+  const normalizedOptions = options !== null && typeof options === 'object'
+    ? options as Record<string, unknown>
+    : {}
+
+  if (normalizedOptions.tls !== undefined) {
+    return normalizedOptions
+  }
+
+  const ca = [...trustedCertificates]
+  const pfx = Object.values(clientPfxs)
+
+  return ca.length > 0 || pfx.length > 0
+    ? { ...normalizedOptions, tls: { ca, pfx } }
+    : normalizedOptions
+}
 
 delete ZenMoney.Headers.prototype.getAll
 
@@ -27,12 +45,8 @@ global.fetch = function (url?: unknown, options?: unknown): any {
   options = typeof url !== 'string' && url != null ? url : options
   const headers = new ZenMoney.Headers(get(options, 'headers') ?? {})
   options = {
-    ...(options as Record<string, unknown> ?? {}),
-    headers,
-    tls: {
-      ca: [...trustedCertificates],
-      pfx: Object.values(clientPfxs)
-    }
+    ...withDefaultTls(options),
+    headers
   }
   url = getOptString(options, 'url') ?? url
   const cookie = headers.get('cookie')
@@ -42,8 +56,8 @@ global.fetch = function (url?: unknown, options?: unknown): any {
       ? _fetchCookie
       : makeFetchCookie(_fetch, {
         getCookieString: async () => '',
-        setCookie: async function (cookieString: string, currentUrl: string, opts: { ignoreError: boolean }) {
-          return await cookieJar.setCookie(cookieString, currentUrl, opts)
+        setCookie: async function () {
+          return await cookieJar.setCookie.apply(cookieJar, arguments as any)
         }
       })
   return impl.call(this, url, options)
@@ -146,6 +160,10 @@ async function trustCertificates (certs: string[]): Promise<void> {
   trustedCertificates.push(...certs)
 }
 
+function openWebView (url: unknown, headers: unknown, intercept: unknown, callback: unknown, options?: Record<string, unknown>) {
+  return _openWebView(url, headers, intercept, callback, withDefaultTls(options))
+}
+
 Object.assign(
   ZenMoney,
   {
@@ -155,6 +173,7 @@ Object.assign(
     saveCookies,
     setClientPfx,
     setCookie,
+    openWebView,
     trustCertificates
   }
 )

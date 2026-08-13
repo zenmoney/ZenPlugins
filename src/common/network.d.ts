@@ -1,3 +1,5 @@
+import type { CookieJar } from 'fetch-cookie'
+
 export interface FetchResponseHeaders {
   entries: () => IterableIterator<[string, string]>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,6 +65,10 @@ export declare function fetch (url: string, options?: FetchOptions): Promise<Fet
 // you should use `fetch` with proper headers.
 export declare function fetchJson (url: string, options?: FetchOptions): Promise<FetchResponse>
 
+export declare interface WebView {
+  cookieJar: CookieJar
+}
+
 // WebView flow, useful for auth flow
 // All requests are intercepted in intercept function.
 // So we can detect when flow is finished and extract necessary tokens
@@ -84,10 +90,11 @@ export declare function fetchJson (url: string, options?: FetchOptions): Promise
 //     }
 //   }
 // })
-export declare function openWebViewAndInterceptRequest (arg: {
+export declare function openWebViewAndInterceptRequest<T> (arg: {
   url: string
   headers?: unknown
   log?: boolean
   sanitizeRequestLog?: unknown
-  intercept?: (request: InterceptedRequest) => unknown }
-): Promise<void>
+  configure?: (webView: WebView) => Promise<void>
+  intercept?: (request: InterceptedRequest, webView: WebView) => T | Promise<T> | null | undefined }
+): Promise<T | null | undefined>

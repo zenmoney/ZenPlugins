@@ -1,6 +1,6 @@
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
-import { InvalidPreferencesError } from '../../errors'
+import { InvalidPreferencesError, TemporaryError } from '../../errors'
 
 const baseUrl = 'https://id.uzum.uz/api'
 const apelsinApiBaseUrl = 'https://mobile.apelsin.uz/api'
@@ -32,6 +32,10 @@ export async function coldAuth (preferences) {
       console.error('SMS code validation failed', e)
     }
   } while (!smsVerified && smsCheckAttemps < maxSmsCheckAttempts)
+
+  if (!smsVerified) {
+    throw new TemporaryError('SMS code was not verified')
+  }
 
   await validatePassword(preferences.password)
 

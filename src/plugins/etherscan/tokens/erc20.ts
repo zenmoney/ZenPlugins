@@ -1,5 +1,6 @@
 import flatten from 'lodash/flatten'
 import { fetch } from '../common'
+import { fetchPaginatedTransactions } from '../common/pagination'
 import { type Preferences } from '../types'
 
 import {
@@ -59,12 +60,9 @@ export async function fetchAccounts (
   return flatten(result)
 }
 
-const PAGE_SIZE = 100
-
 interface AccountTransactionsOptions {
   startBlock: number
   endBlock: number
-  page?: number
 }
 
 export async function fetchAccountTransactions (
@@ -72,42 +70,32 @@ export async function fetchAccountTransactions (
   account: TokenAccount,
   options: AccountTransactionsOptions
 ): Promise<TokenTransaction[]> {
-  const { startBlock, endBlock, page = 1 } = options
+  const { startBlock, endBlock } = options
 
-  try {
-    const response = await fetch<TokenTransactionResponse>({
-      chainid: preferences.chain,
-      module: 'account',
-      action: 'tokentx',
-      contractaddress: account.contractAddress,
-      address: account.id,
-      startblock: startBlock,
-      endblock: endBlock,
-      page,
-      offset: PAGE_SIZE,
-      sort: 'desc',
-      apikey: preferences.apiKey
-    })
+  return await fetchPaginatedTransactions({
+    startBlock,
+    endBlock,
+    getKey: (transaction) => `${transaction.hash}:${transaction.logIndex}`,
+    fetchPage: async ({ startBlock, endBlock, page, offset }) => {
+      const response = await fetch<TokenTransactionResponse>({
+        chainid: preferences.chain,
+        module: 'account',
+        action: 'tokentx',
+        contractaddress: account.contractAddress,
+        address: account.id,
+        startblock: startBlock,
+        endblock: endBlock,
+        page,
+        offset,
+        sort: 'desc',
+        apikey: preferences.apiKey
+      })
 
-    const transactions = response.result
+      if (!Array.isArray(response.result)) {
+        return []
+      }
 
-    if (response.result.length === PAGE_SIZE) {
-      return [
-        ...transactions,
-        ...(await fetchAccountTransactions(preferences, account, {
-          ...options,
-          page: page + 1
-        }))
-      ]
+      return response.result
     }
-
-    return transactions
-  } catch (error: any) {
-    // eslint-disable-line
-    if (error?.body?.message === 'No transactions found') {
-      return []
-    }
-
-    throw error
-  }
+  })
 }

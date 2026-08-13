@@ -1,4 +1,4 @@
-import { BUSINESS_TZ, DATETIME_REGEX } from './models'
+import { BUSINESS_TIME_OFFSET, BUSINESS_TZ, DATETIME_REGEX } from './models'
 
 export const isNonEmptyString = (v: unknown): v is string =>
   typeof v === 'string' && v.length > 0
@@ -28,4 +28,8 @@ export const convertDateToYyyyMmDd = (date: Date): string => {
   const d = String(date.getUTCDate()).padStart(2, '0')
 
   return `${y}-${m}-${d}`
+}
+
+export const getBusinessDateIdentityKey = (date: Date): string => {
+  return convertDateToYyyyMmDd(new Date(date.getTime() + BUSINESS_TIME_OFFSET))
 }

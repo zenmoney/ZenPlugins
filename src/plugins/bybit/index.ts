@@ -3,6 +3,7 @@ import {
   fetchAccounts,
   fetchAuthorizationTransactions,
   fetchConvertCoinUsdtValues,
+  fetchFlexibleEarnPositions,
   fetchFinancialTransactions,
   login
 } from './api'
@@ -18,8 +19,14 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
   const balances = await fetchAccounts(auth.credentials)
   const convertUsdtValues = await fetchConvertCoinUsdtValues(auth.credentials)
+  const flexibleEarnPositions = await fetchFlexibleEarnPositions(auth.credentials)
 
-  const aggregateAccount = createAggregatedAccount(balances, auth.cardBalanceCoins, convertUsdtValues)
+  const aggregateAccount = createAggregatedAccount(
+    balances,
+    auth.cardBalanceCoins,
+    convertUsdtValues,
+    flexibleEarnPositions
+  )
   if (ZenMoney.isAccountSkipped(aggregateAccount.id)) {
     return { accounts: [aggregateAccount], transactions: [] }
   }

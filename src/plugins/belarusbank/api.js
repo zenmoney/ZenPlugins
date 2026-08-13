@@ -329,8 +329,10 @@ export function parseCards (html) {
     account.accountId = account.transactionsData.additional[account.transactionsData.additional.length - 1].replace(/('|\\')/g, '')
 
     account.transactionsData.action = $('form[id="' + account.transactionsData.additional[0].replace(/'/g, '') + '"]').attr('action') || $('form').attr('action')
-    account.transactionsData.holdsData = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт по заблокированным операциям"]')
-      .attr('onclick').replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
+    const holdsOnclick = accountTable.children('td[class="tdAccountButton"]').children('a[title="Получить отчёт по заблокированным операциям"]').attr('onclick')
+    account.transactionsData.holdsData = holdsOnclick
+      ? holdsOnclick.replace('return myfaces.oam.submitForm(', '').replace(');', '').match(/'(.[^']*)'/ig)
+      : []
 
     if (cardTable.children('td').length > 1) {
       account.type = 'ccard'
@@ -510,7 +512,8 @@ async function getAccountsListPage (html, viewns) {
 }
 
 async function processHolds (html, viewns, acc) {
-  if (!acc.raw.transactionsData.holdsData) {
+  if (!acc.raw.transactionsData.holdsData || acc.raw.transactionsData.holdsData.length === 0) {
+    console.log('>>> Загрузка холдов пропущена: кнопка холдов отсутствует для ' + acc.title)
     return []
   }
   const $ = cheerio.load(html)

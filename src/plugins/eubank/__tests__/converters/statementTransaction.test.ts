@@ -34,7 +34,7 @@ function makeTx (overrides: Partial<StatementTransaction>): StatementTransaction
     time: '15:52:33',
     category: 'Кафе и рестораны',
     details: 'STARBUCKS COFFEE SHOP',
-    amount: 5400,
+    amount: -5400,
     instrument: 'KZT',
     isCardOperation: true,
     originString: '14.03.2026 15:52:33 Кафе и рестораны STARBUCKS COFFEE SHOP 5400 KZT -5400 Карта: **9876',
@@ -61,7 +61,7 @@ describe('convertPdfStatementTransaction', () => {
   it('should convert USD purchase', () => {
     const result = convertPdfStatementTransaction(makeTx({
       details: 'AIRBNB * HM3AJJZFHC',
-      amount: 242.65,
+      amount: -242.65,
       instrument: 'USD',
       category: 'Путешествия'
     }), accounts)
@@ -104,7 +104,7 @@ describe('convertPdfStatementTransaction', () => {
     const result = convertPdfStatementTransaction(makeTx({
       category: 'Финансы',
       details: 'Visa Infinite',
-      amount: 7792.49,
+      amount: -7792.49,
       instrument: 'USD',
       isCardOperation: false
     }), accounts)
@@ -118,7 +118,7 @@ describe('convertPdfStatementTransaction', () => {
     const result = convertPdfStatementTransaction(makeTx({
       category: 'Финансы',
       details: 'Алексей Ц.',
-      amount: 400000,
+      amount: -400000,
       isCardOperation: false
     }), accounts)
     expect(result).not.toBeNull()
@@ -166,6 +166,24 @@ describe('convertPdfStatementTransaction', () => {
     expect(result.transaction.movements).toHaveLength(1)
     expect(result.transaction.movements[0].sum).toBe(139000)
     expect(result.transaction.comment).toBe('Пополнение с Бонусов')
+  })
+
+  it('should convert ATM cash withdrawal as a single expense', () => {
+    const result = convertPdfStatementTransaction(makeTx({
+      category: 'Услуги',
+      details: 'В банкомате',
+      amount: -100000,
+      isCardOperation: true
+    }), accounts)
+    expect(result).not.toBeNull()
+    if (result == null) return
+    expect(result.transaction.movements).toHaveLength(1)
+    expect(result.transaction.movements[0].sum).toBe(-100000)
+    expect(result.transaction.merchant).toEqual({
+      fullTitle: 'В банкомате',
+      mcc: null,
+      location: null
+    })
   })
 
   it('should skip zero amount transactions', () => {

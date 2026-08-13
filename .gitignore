@@ -1,6 +1,7 @@
 # Zenmoney browser runtime
 zp_*.json
 zp_pipe.txt
+bootloader_config.json
 
 # network traces and other development stuff, not intended for public use
 /src/plugins/**/temp
@@ -46,6 +47,8 @@ Thumbs.db
 # production
 /build
 /dist
+/log
+/.webpack-cache
 
 # misc
 /npm-debug.log
@@ -53,6 +56,7 @@ Thumbs.db
 /yarn-error.log
 /.yarnrc
 /.yarn/
+/.shared-cache
 
 # repository docs/plans
 AGENT.md
@@ -66,6 +70,7 @@ plans/archive/
 review/
 
 # local capture/debug artifacts
+temp/
 .local/
 .tmp-*/
 .tmp-*

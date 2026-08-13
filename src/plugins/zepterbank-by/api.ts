@@ -2,8 +2,63 @@ import { fetchAccounts, fetchLogin, fetchCardTransactions, fetchProductStatement
 import type { Account, Transaction } from '../../types/zenmoney'
 import { convertCardAccount, convertCurrentAccount, convertCardTransaction, convertStatementTransaction } from './converters'
 import { BankMessageError, InvalidLoginOrPasswordError } from '../../errors'
-import { convertDateToYyyyMmDd } from './helpers'
-import { FetchAccountMeta } from './types/fetch.types'
+import { convertDateToYyyyMmDd, convertIsoDateStringToDate, getBusinessDateIdentityKey } from './helpers'
+import { mergeTransactions } from './mergeTransactions'
+import type { FetchAccountMeta, FetchCardTransaction, FetchProductStatementOutput, FetchStatementOperation } from './types/fetch.types'
+
+const getStatementOperations = (statement: FetchProductStatementOutput): FetchStatementOperation[] => {
+  if (Array.isArray(statement)) {
+    return []
+  }
+
+  return statement.operations ?? []
+}
+
+const normalizeCardTransactionText = (value: string | undefined): string =>
+  (value ?? '').replace(/\s+/g, ' ').trim().toUpperCase()
+
+const getCardTransactionMcc = (transaction: FetchCardTransaction): string =>
+  transaction.transMcc?.replace(/\D/g, '') ?? ''
+
+const getCardTransactionMatchKey = (transaction: FetchCardTransaction): string => [
+  getBusinessDateIdentityKey(convertIsoDateStringToDate(transaction.effectiveDate)),
+  transaction.amount,
+  transaction.currencyIso,
+  normalizeCardTransactionText(transaction.cardAcceptor),
+  getCardTransactionMcc(transaction)
+].join('|')
+
+const isPendingPurchase = (transaction: FetchCardTransaction): boolean =>
+  /\bPRE-PURCHASE\b/i.test(transaction.transacName)
+
+const isPurchaseCompletion = (transaction: FetchCardTransaction): boolean =>
+  /\bPURCH COMPL\b/i.test(transaction.transacName)
+
+const dropCompletedPendingPurchases = (transactions: FetchCardTransaction[]): FetchCardTransaction[] => {
+  const completionsByKey = new Map<string, number>()
+
+  for (const transaction of transactions) {
+    if (isPurchaseCompletion(transaction)) {
+      const key = getCardTransactionMatchKey(transaction)
+      completionsByKey.set(key, (completionsByKey.get(key) ?? 0) + 1)
+    }
+  }
+
+  return transactions.filter((transaction) => {
+    if (!isPendingPurchase(transaction)) {
+      return true
+    }
+
+    const key = getCardTransactionMatchKey(transaction)
+    const matchingCompletionsCount = completionsByKey.get(key) ?? 0
+    if (matchingCompletionsCount <= 0) {
+      return true
+    }
+
+    completionsByKey.set(key, matchingCompletionsCount - 1)
+    return false
+  })
+}
 
 export const authenticate = async (login: string, password: string): Promise<{ sessionToken: string }> => {
   const { data, error } = await fetchLogin({ login, password })
@@ -31,9 +86,11 @@ export const getAccounts = async ({ sessionToken }: { sessionToken: string }): P
     throw new BankMessageError(error.errorInfo.errorText)
   }
 
+  const { cards = [], accounts = [] } = data.products
+
   return [
-    ...data.products.cards.map((acc) => convertCardAccount(acc)),
-    ...data.products.accounts.map((acc) => convertCurrentAccount(acc))
+    ...cards.map((acc) => convertCardAccount(acc)),
+    ...accounts.map((acc) => convertCurrentAccount(acc))
   ]
 }
 
@@ -67,12 +124,13 @@ export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sess
     throw new BankMessageError(productStatementResponse.error.errorInfo.errorText)
   }
 
-  return [
-    ...(cardTransactionsResponse?.data ?? [])
-      .filter((op) => op.amount !== '0.00')
-      .map((op) => convertCardTransaction(op, account)),
-    ...productStatementResponse.data.operations
-      .filter((op) => op.operationSum !== '0.00')
-      .map((op) => convertStatementTransaction(op, account))
-  ]
+  const historyTransactions = dropCompletedPendingPurchases(cardTransactionsResponse?.data ?? [])
+    .filter((op) => op.amount !== '0.00')
+    .map((op) => convertCardTransaction(op, account))
+
+  const statementTransactions = getStatementOperations(productStatementResponse.data)
+    .filter((op) => op.operationSum !== '0.00')
+    .map((op) => convertStatementTransaction(op, account))
+
+  return mergeTransactions(historyTransactions, statementTransactions)
 }

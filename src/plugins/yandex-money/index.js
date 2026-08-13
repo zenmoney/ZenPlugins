@@ -1,7 +1,10 @@
 import { fetchAccount, fetchTransactions, isAuthError, login } from './api'
 import { convertAccount, convertTransaction } from './converters'
+import { trustYooMoneyCertificates } from './certs'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
+  trustYooMoneyCertificates()
+
   let apiAccount = null
   let accessToken = ZenMoney.getData('accessToken')
   if (accessToken) {

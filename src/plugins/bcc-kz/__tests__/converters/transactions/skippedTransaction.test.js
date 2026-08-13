@@ -38,7 +38,7 @@ describe('convertTransaction', () => {
         image: 'banks/caspkzka.png',
         bonus_prc: 0,
         rrn: '',
-        trn_id: 13550779061,
+        trn_id: 10000000004,
         trn_code: 2560,
         eci: '',
         refer: '37415C34A264C0CA3A84AFAD384909B6'
@@ -61,7 +61,7 @@ describe('convertTransaction', () => {
         image: 'banks/tseskzka.png',
         bonus_prc: 0,
         rrn: '',
-        trn_id: 14214438890,
+        trn_id: 10000000005,
         trn_code: 2560,
         eci: '',
         refer: '97B33172A38CF9B1D81E20C1D4DFD6F7'
@@ -84,7 +84,7 @@ describe('convertTransaction', () => {
         image: 'banks/tseskzka.png',
         bonus_prc: 0,
         rrn: '',
-        trn_id: 15099016775,
+        trn_id: 10000000006,
         trn_code: 2560,
         eci: '',
         refer: '807748679E034AB95EE6FFCBDCFAE0DB'
@@ -107,7 +107,7 @@ describe('convertTransaction', () => {
         image: 'banks/hsbkkzkx.png',
         bonus_prc: 0,
         rrn: '',
-        trn_id: 13060018393,
+        trn_id: 10000000007,
         trn_code: 2560,
         eci: '',
         refer: '48FE45629AAD03CC393D9572483D92F7'
@@ -130,7 +130,7 @@ describe('convertTransaction', () => {
         image: 'banks/citikzka.png',
         bonus_prc: 0,
         rrn: '',
-        trn_id: 14022645461,
+        trn_id: 10000000008,
         trn_code: 2560,
         eci: '',
         refer: '85D4B9E65CF70F8E40425251D74F685E'
@@ -153,10 +153,33 @@ describe('convertTransaction', () => {
         image: 'banks/irtykzka.png',
         bonus_prc: 0,
         rrn: '',
-        trn_id: 13793971982,
+        trn_id: 10000000009,
         trn_code: 2560,
         eci: '',
         refer: '1540661315C0606D10BBC195CFC4C1E9'
+      },
+      null
+    ],
+    [
+      {
+        oper_date: '12.12.2025',
+        oper_time: '15:08',
+        is_blocked: false,
+        is_income: false,
+        post_time: '12.12.2025',
+        amount: 0,
+        cur: 'KZT',
+        fee: 0,
+        cms: 0,
+        title: 'Перевод на счет KZ000000000000000105',
+        description: 'Перевод на счет KZ000000000000000105',
+        image: 'transfers/own_transfer.png',
+        bonus_prc: 0,
+        rrn: '',
+        trn_id: 10000000003,
+        trn_code: 2532,
+        eci: '',
+        refer: '75462BCD0A2058913528CC0235C50074'
       },
       null
     ]

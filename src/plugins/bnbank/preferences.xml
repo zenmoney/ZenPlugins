@@ -3,23 +3,34 @@
     <EditTextPreference
         key="phone"
         obligatory="true"
-        title="Логин или номер телефона"
-        dialogTitle="Логин или номер телефона"
-        dialogMessage="Логин или номер телефона без плюса"
+        inputType="phone"
+        title="Номер телефона Iskra"
+        dialogTitle="Номер телефона Iskra"
+        dialogMessage="Номер телефона в международном формате, например +375000000000"
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||{@s}"
     />
     <EditTextPreference
-        key="password"
+        key="identificationNumber"
         obligatory="true"
-        inputType="textPassword"
-        title="Пароль от интернет-банка"
-        dialogTitle="Пароль от интернет-банка"
-        dialogMessage="Пароль от интернет-банка и пин-код от приложения — это разные пароли. Если вы не помните пароль от интернет-банка, восстановите его на сайте банка."
+        title="Идентификационный номер"
+        dialogTitle="Идентификационный номер"
+        dialogMessage="Для резидента РБ — идентификационный номер документа, удостоверяющего личность. Для нерезидента — номер документа."
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="||***********"
+        summary="||{@s}"
+    />
+    <ListPreference
+        key="isResident"
+        title="Резидент РБ"
+        dialogTitle="Резидент РБ"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        entries="Да|Нет"
+        entryValues="true|false"
+        defaultValue="true"
+        summary="||{@s}"
     />
     <EditTextPreference
         key="startDate"

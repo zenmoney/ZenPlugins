@@ -1,3 +1,5 @@
+import { appendCashbackComment } from './cashback'
+
 function parseAmount (str) {
   if (!str && str !== 0) return null
   const s = String(str).replace(/\s/g, '')
@@ -59,12 +61,13 @@ export function convertTransaction (json, account) {
 
   const sum = getSumAmount(json)
   if (sum === 0) return null
+  const transactionKey = getTransactionKey(json)
 
   const transaction = {
     date: getDate(json.date),
     movements: [
       {
-        id: null,
+        id: getMovementId(account, transactionKey, 'card'),
         account: { id: account.id },
         invoice: null,
         sum,
@@ -82,11 +85,9 @@ export function convertTransaction (json, account) {
     parsePayee
   ].some(parser => parser(transaction, json))
 
-  if (json.mcc) {
-    transaction.comment = transaction.comment
-      ? `${transaction.comment} | MCC: ${json.mcc}`
-      : `MCC: ${json.mcc}`
-  }
+  transaction.comment = json.mcc
+    ? appendCashbackComment(transaction.comment, json.mcc)
+    : transaction.comment
 
   return transaction
 }
@@ -118,7 +119,7 @@ function parseCash (transaction, json) {
   if (json.type === 'Выдача наличных') {
     // добавим вторую часть перевода
     transaction.movements.push({
-      id: null,
+      id: getMovementId(transaction.movements[0].account, getTransactionKey(json), 'cash'),
       account: {
         company: null,
         type: 'cash',
@@ -140,7 +141,7 @@ function parsePayee (transaction, json) {
   }
 
   transaction.merchant = {
-    mcc: null,
+    mcc: parseInt(json.mcc) || null,
     location: null
   }
   const merchant = json.cardAcceptor.split('>')
@@ -196,7 +197,7 @@ function getSumAmount (json) {
 function makeOuterTransfer (transaction, json) {
   transaction.merchant = null
   transaction.movements.push({
-    id: null,
+    id: getMovementId(transaction.movements[0].account, getTransactionKey(json), 'ccard'),
     account: {
       company: null,
       type: 'ccard',
@@ -212,4 +213,38 @@ function makeOuterTransfer (transaction, json) {
 export function getDate (str) {
   const [year, month, day, hour, minute, second] = str.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/).slice(1)
   return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`)
+}
+
+function getMovementId (account, transactionKey, movementType) {
+  return ['belinvestbank', account.id, movementType, transactionKey].join(':')
+}
+
+function getTransactionKey (json) {
+  if (json.appId !== undefined && json.appId !== null && String(json.appId).trim() !== '' && String(json.appId).trim() !== '—') {
+    return joinIdParts(['app', json.appId])
+  }
+
+  if (json.historyKey !== undefined && json.historyKey !== null && String(json.historyKey).trim() !== '') {
+    return joinIdParts(['history', json.cardNum, json.date, json.historyKey])
+  }
+
+  return joinIdParts([
+    'fallback',
+    json.cardNum,
+    json.date,
+    json.type,
+    json.sign,
+    json.accountAmt,
+    json.accountAmtCurrency,
+    json.transactionAmt,
+    json.transactionAmtCurrency
+  ])
+}
+
+function joinIdParts (parts) {
+  return parts.map(normalizeIdPart).join(':')
+}
+
+function normalizeIdPart (part) {
+  return String(part ?? '').trim().replace(/\s+/g, ' ')
 }

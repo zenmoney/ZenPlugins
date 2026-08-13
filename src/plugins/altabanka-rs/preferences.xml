@@ -11,17 +11,6 @@
         summary="|ID пользователя|{@s}"
     />
     <EditTextPreference
-        key="password"
-        obligatory="true"
-        inputType="textPassword"
-        title="Пароль от интернет-банка"
-        dialogTitle="Пароль от интернет-банка"
-        dialogMessage="Введите пароль от интернет-банка"
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="||***********"
-    />
-    <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"

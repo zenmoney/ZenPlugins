@@ -38,12 +38,12 @@ export async function scrape ({ preferences, fromDate, toDate, isFirstRun }) {
         await refreshToken(ZenMoney.getData('authRefreshToken'))
         uzcardCards = await getUzcardCards()
       } catch (ex) {
-        if (e instanceof AuthError) {
+        if (ex instanceof AuthError) {
           console.info('try to do cold auth')
           await coldAuth(preferences)
           uzcardCards = await getUzcardCards()
         } else {
-          throw e
+          throw ex
         }
       }
     } else {

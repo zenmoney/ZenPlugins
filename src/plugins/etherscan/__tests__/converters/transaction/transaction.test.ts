@@ -3,6 +3,7 @@ import { EthereumTransaction } from '../../../ether/types'
 
 const OWN_ACCOUNT = 'ACCOUNT_ID'
 const baseMock: EthereumTransaction = {
+  blockNumber: '1',
   timeStamp: '1658608646',
   hash: '0x90bb0dcbe8fa38387145aa17d6ad99f57da91d4c6d4b65b5f7cf56454f73234b',
   from: '1',
@@ -47,6 +48,15 @@ describe('convertTransaction', () => {
     const result = convertTransaction(OWN_ACCOUNT, {
       ...baseMock,
       value: '0'
+    })
+
+    expect(result).toBe(null)
+  })
+
+  it('should ignore value < 0.01 operations', () => {
+    const result = convertTransaction(OWN_ACCOUNT, {
+      ...baseMock,
+      value: '200'
     })
 
     expect(result).toBe(null)

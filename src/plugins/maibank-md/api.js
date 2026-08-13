@@ -1,7 +1,7 @@
 import { fetch } from '../../common/network'
 import { assign, filter, defaultsDeep } from 'lodash'
 import { generateRandomString, generateUUID, randomInt } from '../../common/utils'
-import { InvalidPreferencesError, InvalidOtpCodeError } from '../../errors'
+import { InvalidPreferencesError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 import protoModel from './model'
 
 function generateDevice () {
@@ -170,8 +170,20 @@ export async function fetchTransactions (auth, fromDate, toDate) {
       responseEntity: protoModel.md.maib.app.tx.TxResponse,
       auth
     })
-    transactions.push(...response.body.transactions)
-    fromId = response.body.transactions.slice(-1)[0].id
+    const batch = parseTransactionHistoryResponse(response)
+    if (batch.length === 0) {
+      break
+    }
+    transactions.push(...batch)
+    fromId = batch[batch.length - 1].id
   } while (transactions.slice(-1)[0].date >= fromDate.getTime() - 86400000 && transactions.length === count)
   return filter(transactions, transaction => transaction.date >= fromDate.getTime())
+}
+
+export function parseTransactionHistoryResponse (response) {
+  if (response.status === 401) {
+    throw new TemporaryUnavailableError('Unauthorized access')
+  }
+  console.assert(Array.isArray(response.body?.transactions), 'unexpected transaction history response', response)
+  return response.body.transactions
 }

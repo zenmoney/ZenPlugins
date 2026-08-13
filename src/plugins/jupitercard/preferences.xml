@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="email"
+        obligatory="true"
+        inputType="textEmailAddress"
+        title="Jupiter account email"
+        dialogTitle="Jupiter account email"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="||{@s}">
+    </EditTextPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        defaultValue="2026-01-01T00:00:00.000Z"
+        dialogTitle="From what date to load transactions"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>

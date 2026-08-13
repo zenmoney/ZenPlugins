@@ -1,4 +1,4 @@
-import { convertTransaction } from '../../../converters'
+import { convertTransaction, filterDuplicates } from '../../../converters'
 
 describe('convertTransaction', () => {
   const accounts = [
@@ -458,5 +458,44 @@ describe('convertTransaction', () => {
     }, accounts)
 
     expect(transaction).toEqual(null)
+  })
+
+  it('prefers posted transaction over matching hold duplicate', () => {
+    const holdTransaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '3.13',
+      balance: '',
+      cardPan: '111111******1111',
+      curr: 'BYN',
+      debitFlag: '0',
+      description: 'Оплата товаров и услуг',
+      error: '',
+      operationDate: null,
+      orderStatus: '2',
+      place: 'SHOP "SOSEDI"            / MINSK        / BY',
+      status: 'A',
+      transAmount: '3.13',
+      transDate: '2019-01-28 07:51:13',
+      transactionId: '1111111'
+    }, accounts)
+    const postedTransaction = convertTransaction({
+      accountId: 'BY36MTBK10110008000001111000',
+      amount: '3.13',
+      balance: '',
+      cardPan: '111111******1111',
+      curr: 'BYN',
+      debitFlag: '0',
+      description: 'Оплата товаров и услуг',
+      error: '',
+      operationDate: null,
+      orderStatus: '1',
+      place: 'SHOP "SOSEDI"            / MINSK        / BY',
+      status: 'T',
+      transAmount: '3.13',
+      transDate: '2019-01-28 07:51:13',
+      transactionId: '1111111'
+    }, accounts)
+
+    expect(filterDuplicates([holdTransaction, postedTransaction])).toEqual([postedTransaction])
   })
 })

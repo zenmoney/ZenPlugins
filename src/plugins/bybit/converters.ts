@@ -1,6 +1,6 @@
 import { InvalidPreferencesError } from '../../errors'
 import { AccountOrCard, AccountType, Merchant, Transaction } from '../../types/zenmoney'
-import { CardTransaction, CoinBalance } from './models'
+import { CardTransaction, CoinBalance, FlexibleEarnPosition } from './models'
 
 /** Stable id of the single USD Bybit Card account. */
 export const BYBIT_CARD_AGGREGATE_ACCOUNT_ID = 'bybit_card'
@@ -47,20 +47,31 @@ export function parseCardBalanceCoinsList (raw: string): Set<string> {
 export function createAggregatedAccount (
   balances: CoinBalance[],
   cardBalanceCoins: Set<string>,
-  convertUsdtValues: Map<string, number>
+  convertUsdtValues: Map<string, number>,
+  flexibleEarnPositions: FlexibleEarnPosition[] = []
 ): AccountOrCard {
   // USD fiat in Funding is taken 1:1 (it has no entry in the Convert coin list).
   // Every other allowed coin uses Bybit's own "one-click" USDT-worth value (`uBalance`)
   // so the aggregated balance matches what the Bybit Card UI displays.
   let usdSum = 0
   for (const b of balances) {
-    if (!cardBalanceCoins.has(b.coin)) {
+    const coin = b.coin.toUpperCase()
+    if (!cardBalanceCoins.has(coin)) {
       continue
     }
-    if (b.coin === 'USD') {
+    if (coin === 'USD') {
       usdSum += b.transferBalance
     } else {
-      usdSum += convertUsdtValues.get(b.coin) ?? 0
+      usdSum += convertUsdtValues.get(coin) ?? 0
+    }
+  }
+  // With Bybit Card Auto-Earn and Auto-Deduction enabled, the redeemable part of
+  // Flexible Earn is part of the card's spending power even though Funding is 0.
+  // USDT/USDC are the only supported aggregate coins and are represented 1:1 in
+  // this USD account, matching the existing card-balance model.
+  for (const position of flexibleEarnPositions) {
+    if (cardBalanceCoins.has(position.coin.toUpperCase())) {
+      usdSum += position.availableAmount
     }
   }
   return {
@@ -100,12 +111,14 @@ export function convertTransaction (
   }
 
   const accountCurrency = account.instrument.toUpperCase()
-  const transactionCurrency = entry.transactionCurrency.toUpperCase()
-  const sum = sign * Math.abs(entry.basicAmount)
-  const sameCurrency = transactionCurrency === accountCurrency || entry.transactionAmount === 0
+  const transactionCurrency = entry.paidCurrency.toUpperCase()
+  const totalAmount = Math.abs(entry.basicAmount)
+  const feeAmount = Math.min(totalAmount, Math.abs(entry.totalFees))
+  const sum = sign * (totalAmount - feeAmount)
+  const sameCurrency = transactionCurrency === accountCurrency || entry.paidAmount === 0
   const invoice = sameCurrency
     ? null
-    : { sum: sign * Math.abs(entry.transactionAmount), instrument: transactionCurrency }
+    : { sum: sign * Math.abs(entry.paidAmount), instrument: transactionCurrency }
 
   const hold = entry.tradeStatus === '0' || entry.side === '1'
 
@@ -119,11 +132,22 @@ export function convertTransaction (
       account: { id: account.id },
       invoice,
       sum,
-      fee: 0
+      fee: feeAmount === 0 ? 0 : sign * feeAmount
     }],
     merchant,
-    comment: null
+    comment: buildComment(entry)
   }
+}
+
+function buildComment (entry: CardTransaction): string | null {
+  const details: string[] = []
+  const place = [entry.merchCity?.trim(), entry.merchCountry?.trim()].filter(Boolean).join(', ')
+
+  if (place !== '') {
+    details.push(`Place: ${place}`)
+  }
+
+  return details.length === 0 ? null : details.join('; ')
 }
 
 function buildMerchant (entry: CardTransaction): Merchant | null {

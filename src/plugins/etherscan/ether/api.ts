@@ -1,5 +1,6 @@
 import { fetch } from '../common'
 import { Preferences } from '../types'
+import { fetchPaginatedTransactions } from '../common/pagination'
 import {
   AccountResponse,
   EthereumAccount,
@@ -26,50 +27,37 @@ interface AccountTransactionsOptions {
   account: string
   startBlock: number
   endBlock: number
-  page?: number
 }
-
-const PAGE_SIZE = 100
 
 export async function fetchAccountTransactions (
   preferences: Preferences,
   options: AccountTransactionsOptions
 ): Promise<EthereumTransaction[]> {
-  const { account, startBlock, endBlock, page = 1 } = options
+  const { account, startBlock, endBlock } = options
 
-  try {
-    const response = await fetch<TransactionResponse>({
-      chainid: preferences.chain,
-      module: 'account',
-      action: 'txlist',
-      address: account,
-      startblock: startBlock,
-      endblock: endBlock,
-      page,
-      offset: PAGE_SIZE,
-      sort: 'desc',
-      apikey: preferences.apiKey
-    })
+  return await fetchPaginatedTransactions({
+    startBlock,
+    endBlock,
+    getKey: (transaction) => transaction.hash,
+    fetchPage: async ({ startBlock, endBlock, page, offset }) => {
+      const response = await fetch<TransactionResponse>({
+        chainid: preferences.chain,
+        module: 'account',
+        action: 'txlist',
+        address: account,
+        startblock: startBlock,
+        endblock: endBlock,
+        page,
+        offset,
+        sort: 'desc',
+        apikey: preferences.apiKey
+      })
 
-    const transactions = response.result
+      if (!Array.isArray(response.result)) {
+        return []
+      }
 
-    if (response.result.length === PAGE_SIZE) {
-      return [
-        ...transactions,
-        ...(await fetchAccountTransactions(preferences, {
-          ...options,
-          page: page + 1
-        }))
-      ]
+      return response.result
     }
-
-    return transactions
-  } catch (error: any) {
-    // eslint-disable-line
-    if (error?.body?.message === 'No transactions found') {
-      return []
-    }
-
-    throw error
-  }
+  })
 }
