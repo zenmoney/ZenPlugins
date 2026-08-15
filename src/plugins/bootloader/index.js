@@ -1,3 +1,5 @@
+import { defaultsDeep } from 'lodash'
+
 import { installApiCapture } from './captureApi'
 import { installConsoleCapture } from './captureConsole'
 import { installUnhandledErrorCapture } from './captureErrors'
@@ -34,6 +36,40 @@ function evaluateScript (script) {
   eval(script)
 }
 
+export function installDataOverride (data, enabled) {
+  if (!enabled) {
+    return
+  }
+  if (typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('Bootloader override data must be an object')
+  }
+
+  const nativeGetData = ZenMoney.getData.bind(ZenMoney)
+  const nativeSetData = ZenMoney.setData.bind(ZenMoney)
+  const nativeClearData = ZenMoney.clearData.bind(ZenMoney)
+  const overrides = { ...data }
+
+  ZenMoney.getData = (key, defaultValue) => {
+    if (!Object.prototype.hasOwnProperty.call(overrides, key)) {
+      return nativeGetData(key, defaultValue)
+    }
+    const overrideValue = overrides[key]
+    const nativeValue = nativeGetData(key, defaultValue)
+    if (overrideValue === null || typeof overrideValue !== 'object' || nativeValue === null || typeof nativeValue !== 'object') {
+      return overrideValue
+    }
+    return defaultsDeep(Array.isArray(overrideValue) ? [] : {}, overrideValue, nativeValue)
+  }
+  ZenMoney.setData = (key, value) => {
+    delete overrides[key]
+    return nativeSetData(key, value)
+  }
+  ZenMoney.clearData = () => {
+    for (const key of Object.keys(overrides)) delete overrides[key]
+    return nativeClearData()
+  }
+}
+
 async function execute () {
   const bootloaderPreferences = ZenMoney.getPreferences() || {}
   const fetchImplementation = global.fetch.bind(global)
@@ -42,6 +78,7 @@ async function execute () {
   const session = await transport.createSession(getClientInfo())
 
   ZenMoney.getPreferences = () => session.preferences
+  installDataOverride(session.data, session.config.overrideData)
   const consoleCapture = installConsoleCapture({
     transport,
     enabled: session.config.captureConsole

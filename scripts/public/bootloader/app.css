@@ -50,7 +50,7 @@ pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.55
 .content { width: min(1280px, 100%); margin: 0 auto; padding: 28px clamp(18px, 4vw, 54px) 64px; }
 .dashboard { display: grid; grid-template-columns: minmax(320px, .82fr) minmax(420px, 1.18fr); gap: 22px; align-items: start; }
 .panel { overflow: hidden; border: 1px solid #2b292c; border-radius: 20px; background: var(--surface); }
-.section-header { padding: 22px 24px 17px; }
+.section-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px 17px; }
 .section-header h2 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
 .section-header h2 span { display: inline-grid; min-width: 25px; height: 25px; place-items: center; margin-left: 6px; border-radius: 99px; background: var(--surface-3); color: var(--muted); font-size: 12px; vertical-align: 2px; }
 .section-header p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
@@ -86,6 +86,8 @@ pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.55
 .diff-line.added i { background: rgba(60, 201, 120, .1); color: var(--green); }
 .diff-empty { padding: 24px; color: var(--muted); text-align: center; }
 .saved-title { margin: 0 22px 9px; color: var(--muted); font-size: 12px; }
+.copy-state-button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); color: var(--text); padding: 7px 13px; cursor: pointer; }
+.copy-state-button:hover { border-color: var(--muted); background: var(--surface-3); }
 
 .checkpoint { margin: 0 22px 20px; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; }
 .checkpoint-title { display: flex; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid var(--border); }

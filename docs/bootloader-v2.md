@@ -29,9 +29,15 @@ Port `5050` is reserved for Bootloader. `yarn host` stops a previous Bootloader 
   "preferences": {
     "startDate": "2010-01-01T12:00:00.000Z"
   },
+  "data": {
+    "auth": {
+      "token": "saved-token"
+    }
+  },
   "bootloader": {
     "captureConsole": true,
     "captureErrors": true,
+    "overrideData": false,
     "network": {
       "enabled": true,
       "maxBodyBytes": 65536
@@ -48,7 +54,30 @@ Network capture records raw URLs, headers, and bodies. They can contain credenti
 
 Persistent session files are stored under `.local/bootloader/<plugin>` and are ignored by Git.
 
-The server reads `bootloader_config.json` again when each scrape starts, so preferences and capture/session settings can be changed without restarting `yarn host`.
+The server reads `bootloader_config.json` again when each scrape starts, so preferences, data, and capture/session settings can be changed without restarting `yarn host`.
+
+## Plugin data
+
+Put optional persisted plugin data into the `data` field of `bootloader_config.json`. Set `bootloader.overrideData` to `true` to use it for the next scrape:
+
+```json
+{
+  "data": {
+    "auth": {
+      "token": "saved-token"
+    }
+  },
+  "bootloader": {
+    "overrideData": true
+  }
+}
+```
+
+`overrideData` is `false` by default. In that mode the Bootloader client ignores the configured `data` and uses only the store already held by the Zenmoney application.
+
+When the override is enabled, configured values take priority at every depth, while missing nested fields are filled from the client's native store. A plugin `setData` call replaces the override for that key, while `clearData` clears both layers. Applying the override itself does not call `clearData` or `saveData`.
+
+The State section's **Copy** button copies the last state passed to `saveData`, or the current state when the plugin has not saved yet. Paste that JSON into the `data` field and enable `overrideData` to reuse authorization from a failed scrape.
 
 ## Plugin debug API
 

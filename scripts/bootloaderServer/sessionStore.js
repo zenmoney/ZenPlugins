@@ -6,10 +6,10 @@ function clone (value) {
   return JSON.parse(JSON.stringify(value))
 }
 
-function makeEmptyState () {
+function makeEmptyState (initialData = {}) {
   return {
-    initial: {},
-    current: {},
+    initial: clone(initialData),
+    current: clone(initialData),
     saved: null,
     reads: [],
     changes: []
@@ -61,7 +61,7 @@ class SessionStore {
     this.trim()
   }
 
-  create (client = {}) {
+  create (client = {}, initialData = {}) {
     const now = new Date().toISOString()
     const session = {
       id: uuid(),
@@ -74,7 +74,7 @@ class SessionStore {
       events: [],
       accounts: [],
       transactions: [],
-      state: makeEmptyState(),
+      state: makeEmptyState(initialData),
       checkpoints: {},
       result: null
     }
