@@ -1,4 +1,5 @@
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
+import md5 from 'crypto-js/md5'
 import { Account, AccountType, Transaction } from '../../types/zenmoney'
 import { ensureCurrency, getMaskedCardLastDigits, isNonEmptyString } from './helpers'
 import type { FetchAccountMeta } from './types/base'
@@ -157,15 +158,17 @@ const getFullStatementSign = (fetchTransaction: FetchCardStatementOperation): nu
 
 const getMiniCardOperationId = (fetchTransaction: FetchMiniCardStatementOperation, account: Account): string => {
   if (isNonEmptyString(fetchTransaction.transactionAuthCode)) {
-    return [
+    const source = [
       account.id,
       'auth',
       fetchTransaction.operationDate,
       fetchTransaction.transactionAuthCode
     ].join(':')
+
+    return md5(source).toString()
   }
 
-  return [
+  const source = [
     account.id,
     'details',
     fetchTransaction.operationDate,
@@ -177,6 +180,30 @@ const getMiniCardOperationId = (fetchTransaction: FetchMiniCardStatementOperatio
     fetchTransaction.operationPlace ?? '',
     fetchTransaction.mcc ?? ''
   ].join(':')
+
+  return md5(source).toString()
+}
+
+const getFullStatementOperationId = (
+  fetchTransaction: FetchCardStatementOperation,
+  account: Account,
+  operationSign: number,
+  transactionAmount: number,
+  operationAmount: number
+): string => {
+  const source = [
+    account.id,
+    fetchTransaction.operationDate,
+    fetchTransaction.operationCode,
+    fetchTransaction.actionGroup,
+    operationSign,
+    transactionAmount,
+    operationAmount,
+    fetchTransaction.operationClosingBalance,
+    fetchTransaction.operationName
+  ].join(':')
+
+  return md5(source).toString()
 }
 
 export const convertMiniCardStatementOperation = (fetchTransaction: FetchMiniCardStatementOperation, account: Account): Transaction => {
@@ -227,17 +254,7 @@ export const convertFullStatementOperation = (fetchTransaction: FetchCardStateme
     comment: fetchTransaction.operationName,
     movements: [
       {
-        id: [
-          account.id,
-          fetchTransaction.operationDate,
-          fetchTransaction.operationCode,
-          fetchTransaction.actionGroup,
-          operationSign,
-          transactionAmount,
-          operationAmount,
-          fetchTransaction.operationClosingBalance,
-          fetchTransaction.operationName
-        ].join(':'),
+        id: getFullStatementOperationId(fetchTransaction, account, operationSign, transactionAmount, operationAmount),
         account: { id: account.id },
         fee: 0,
         invoice: hasInvoice
