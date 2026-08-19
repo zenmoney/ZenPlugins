@@ -28,13 +28,12 @@ describe('Iskra API', () => {
     }
     fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
       status: 200,
-      body: { accessToken: 'new-access-token', refreshToken: 'new-refresh-token' }
+      body: {
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+        deviceTrustStatus: 'NOT_TRUSTED_WITH_OTHER_TRUSTED'
+      }
     }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
-      status: 200,
-      body: { referenceState: 'CONFIRMED', fingerprintId: 'fingerprint-id' }
-    }, { method: 'POST' })
-
     await expect(login({})).resolves.toBe('new-access-token')
     expect(global.ZenMoney.readLine).not.toHaveBeenCalled()
     expect(pluginData.currentData.auth).toEqual({
@@ -67,21 +66,89 @@ describe('Iskra API', () => {
         ])
       }
     })
-    const [, fingerprintRequest] = fetchMock.lastCall(`${BASE_URL}user/v1/fingerprint`)
-    expect(fingerprintRequest.headers).toMatchObject({
+    const [, refreshRequest] = fetchMock.lastCall(`${BASE_URL}user/v1/oauth/refresh`)
+    expect(refreshRequest.headers).toMatchObject({
       'user-agent': 'Android/GOOGLE/16/samsung/SM-S948B/1.8.3',
       'accept-language': 'RU'
-    })
-    expect(JSON.parse(fingerprintRequest.body)).toMatchObject({
-      location: { latitude: '53.900000', longitude: '27.566700' },
-      deviceModel: 'samsung SM-S948B',
-      osVersion: '16',
-      buildDisplay: 'S948BXXS4AZG5'
     })
     expect(pluginData.saveDataRequested).toBe(true)
   })
 
-  it('completes the captured phone verification before checking the device fingerprint', async () => {
+  it('preserves saved authentication when token refresh fails temporarily', async () => {
+    const savedAuth = {
+      accessToken: 'old-access-token',
+      refreshToken: 'old-refresh-token',
+      deviceTrustStatus: 'TRUSTED'
+    }
+    const pluginData = makePluginDataApi({ auth: savedAuth })
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', model: 'Sync' },
+      readLine: jest.fn(),
+      ...pluginData.methods
+    }
+    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
+      status: 503,
+      body: { message: 'Service unavailable' }
+    }, { method: 'POST' })
+
+    await expect(login({})).rejects.toBeInstanceOf(TemporaryError)
+    expect(global.ZenMoney.readLine).not.toHaveBeenCalled()
+    expect(fetchMock.calls(`${BASE_URL}user/v1/auth/otp`)).toHaveLength(0)
+    expect(pluginData.currentData.auth).toEqual(savedAuth)
+  })
+
+  it('preserves saved authentication when token refresh response is incomplete', async () => {
+    const savedAuth = {
+      accessToken: 'old-access-token',
+      refreshToken: 'old-refresh-token',
+      deviceTrustStatus: 'TRUSTED'
+    }
+    const pluginData = makePluginDataApi({ auth: savedAuth })
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', model: 'Sync' },
+      readLine: jest.fn(),
+      ...pluginData.methods
+    }
+    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
+      status: 200,
+      body: { accessToken: 'new-access-token' }
+    }, { method: 'POST' })
+
+    await expect(login({})).rejects.toBeInstanceOf(TemporaryError)
+    expect(global.ZenMoney.readLine).not.toHaveBeenCalled()
+    expect(fetchMock.calls(`${BASE_URL}user/v1/auth/otp`)).toHaveLength(0)
+    expect(pluginData.currentData.auth).toEqual(savedAuth)
+  })
+
+  it('requests login SMS only when the refresh token has explicitly expired', async () => {
+    const pluginData = makePluginDataApi({
+      auth: { accessToken: 'old-access-token', refreshToken: 'old-refresh-token', deviceTrustStatus: 'TRUSTED' }
+    })
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', model: 'Sync' },
+      readLine: jest.fn().mockResolvedValueOnce(null),
+      ...pluginData.methods
+    }
+    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
+      status: 498,
+      body: { code: 'REFRESH_TOKEN_EXPIRED' }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}user/v1/auth/otp`, {
+      status: 200,
+      body: { secret: 'login-secret', validationType: 'OTP', expiredTime: 60 }
+    }, { method: 'POST' })
+
+    await expect(login({
+      phone: '+375000000000',
+      identificationNumber: 'TEST123',
+      isResident: true
+    })).rejects.toBeInstanceOf(InvalidOtpCodeError)
+    expect(global.ZenMoney.readLine).toHaveBeenCalledTimes(1)
+    expect(fetchMock.calls(`${BASE_URL}user/v1/auth/otp`)).toHaveLength(1)
+    expect(pluginData.currentData.auth).toBeNull()
+  })
+
+  it('completes the captured phone verification without requesting fingerprint enrollment', async () => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
       device: { manufacturer: 'OnePlus', brand: 'OnePlus', model: 'NE2211', os: { version: '11' } },
@@ -136,11 +203,6 @@ describe('Iskra API', () => {
         status: 'SUCCESS'
       }
     }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
-      status: 200,
-      body: { referenceState: 'CONFIRMED', fingerprintId: 'fingerprint-id' }
-    }, { method: 'POST' })
-
     await expect(login({
       phone: '+375000000000',
       identificationNumber: 'TEST123',
@@ -159,11 +221,31 @@ describe('Iskra API', () => {
       `${BASE_URL}user/v1/auth`,
       `${BASE_URL}user/v1/devices/verification`,
       `${BASE_URL}user/v1/devices/verification/phone/otp`,
-      `${BASE_URL}user/v1/devices/verification/phone`,
-      `${BASE_URL}user/v1/fingerprint`
+      `${BASE_URL}user/v1/devices/verification/phone`
     ])
     const [, deviceOtpRequest] = fetchMock.lastCall(`${BASE_URL}user/v1/devices/verification/phone`)
     expect(JSON.parse(deviceOtpRequest.body)).toEqual({ secret: 'device-secret', otp: '222222' })
+  })
+
+  it('does not request fingerprint enrollment after a trusted refresh', async () => {
+    const pluginData = makePluginDataApi({
+      auth: { accessToken: 'old-access-token', refreshToken: 'old-refresh-token', deviceTrustStatus: 'TRUSTED' }
+    })
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', brand: 'zenmoney', model: 'Sync', os: { version: '15' } },
+      readLine: jest.fn(),
+      ...pluginData.methods
+    }
+    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
+      status: 200,
+      body: { accessToken: 'new-access-token', refreshToken: 'new-refresh-token' }
+    }, { method: 'POST' })
+    await expect(login({})).resolves.toBe('new-access-token')
+
+    expect(global.ZenMoney.readLine).not.toHaveBeenCalled()
+    expect(fetchMock.calls().matched.map(([url]) => url)).toEqual([
+      `${BASE_URL}user/v1/oauth/refresh`
+    ])
   })
 
   it('rejects an unsupported trusted-device verification step', async () => {
@@ -284,11 +366,6 @@ describe('Iskra API', () => {
       status: 200,
       body: { accessToken: 'new-access-token', refreshToken: 'new-refresh-token' }
     }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
-      status: 200,
-      body: { referenceState: 'CONFIRMED', fingerprintId: 'fingerprint-id' }
-    }, { method: 'POST' })
-
     await expect(login({})).resolves.toBe('new-access-token')
 
     expect(pluginData.currentData.device).toEqual({
@@ -500,16 +577,12 @@ describe('Iskra API', () => {
       readLine: jest.fn(),
       ...pluginData.methods
     }
-    fetchMock.once(`${BASE_URL}user/v1/oauth/refresh`, {
-      status: 200,
-      body: { accessToken: 'new-access-token', refreshToken: 'new-refresh-token' }
-    }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}user/v1/fingerprint`, {
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations/products`, {
       status: 400,
       body: { code, message: 'User blocked by phobos' }
-    }, { method: 'POST' })
+    })
 
-    const promise = login({})
+    const promise = fetchAccounts('access-token')
     await expect(promise).rejects.toMatchObject({
       message: expect.stringContaining('Откройте приложение Iskra')
     })
