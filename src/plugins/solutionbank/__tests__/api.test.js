@@ -325,7 +325,10 @@ describe('fetchTransactions', () => {
         body: {
           komplatResponse: [
             {
-              response: '<BS_Response><GetAuthHistory><Operation Date="20260504123456" Type="*Оплата* Безналичная операция" Currency="933" Merchant="REGULAR SHOP">-5,00</Operation></GetAuthHistory></BS_Response>'
+              response: '<BS_Response><GetAuthHistory>' +
+                '<Operation Date="20260504123456" Type="*Оплата* Безналичная операция" Currency="933" Merchant="REGULAR SHOP">-5,00</Operation>' +
+                '<Operation Date="20260504123556" Type="681: Electronic return or refund" Currency="933" Merchant="REGULAR SHOP">7,50</Operation>' +
+                '</GetAuthHistory></BS_Response>'
             }
           ]
         }
@@ -450,6 +453,54 @@ describe('fetchOperations', () => {
         hold: false,
         mcc: '5411'
       }
+    ])
+  })
+
+  it('loads cleared returns from the full account statement', async () => {
+    const fromDate = new Date('2026-05-01T00:00:00.000+03:00')
+    const toDate = new Date('2026-05-31T23:59:59.000+03:00')
+    const account = {
+      id: 'account-id',
+      internalAccountId: 'internal-account-id',
+      accountType: '1',
+      bankCode: '288',
+      cardHash: 'card-hash',
+      instrumentCode: '933',
+      rkcCode: '004'
+    }
+
+    fetchMock.once({
+      method: 'POST',
+      matcher: baseUrl + 'products/getCardAccountFullStatement',
+      response: {
+        status: 200,
+        body: {
+          operations: [
+            {
+              operationName: 'Возврат покупки',
+              transactionAuthCode: 'return-auth-code',
+              transactionDate: new Date('2026-05-12T12:00:00.000+03:00').getTime(),
+              operationDate: new Date('2026-05-10T12:00:00.000+03:00').getTime(),
+              transactionAmount: 7.5,
+              transactionCurrency: '933',
+              operationAmount: 7.5,
+              operationCurrency: '933',
+              operationPlace: 'EXAMPLE SHOP',
+              operationSign: '1'
+            }
+          ]
+        }
+      }
+    })
+
+    await expect(fetchOperations(sessionToken, [account], fromDate, toDate)).resolves.toEqual([
+      expect.objectContaining({
+        id: 'return-auth-code',
+        operationName: 'Возврат покупки',
+        transactionAmount: 7.5,
+        operationAmount: 7.5,
+        hold: false
+      })
     ])
   })
 
