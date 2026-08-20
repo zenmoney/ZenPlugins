@@ -29,6 +29,7 @@ const androidSystemFeatures = [
   'android.software.webview'
 ]
 const statementIntervalMs = 31 * 24 * 60 * 60 * 1000
+const unclearedReturnTransactionName = '681: Electronic return or refund'
 
 function generateDeviceID () {
   return 'xxxxxxxxxxxxxxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16))
@@ -386,7 +387,10 @@ export async function fetchTransactions (sessionToken, accounts, fromDate) {
     return undefined
   })
 
-  const filteredTransactions = transactions.filter(tr => tr !== undefined && tr.transactionDate >= fromDate && tr.transactionAmount !== 0)
+  const filteredTransactions = transactions.filter(tr => tr !== undefined &&
+    tr.transactionDate >= fromDate &&
+    tr.transactionAmount !== 0 &&
+    tr.transactionName !== unclearedReturnTransactionName)
 
   console.log(`>>> Загружено ${filteredTransactions.length} транзакций из мини-выписки.`)
   return filteredTransactions

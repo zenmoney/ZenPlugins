@@ -261,7 +261,10 @@ describe('convertCardTransaction', () => {
       throw new Error('Matching transactions not found')
     }
 
-    expect(convertCardTransaction(rawCardTransaction, cardAccount1).movements[0].id)
-      .toBe(convertStatementTransaction(rawStatementTransaction, cardAccount1).movements[0].id)
+    const cardMovementId = convertCardTransaction(rawCardTransaction, cardAccount1).movements[0].id
+    const statementMovementId = convertStatementTransaction(rawStatementTransaction, cardAccount1).movements[0].id
+
+    expect(cardMovementId).toMatch(/^[a-f0-9]{32}$/)
+    expect(statementMovementId).toBe(cardMovementId)
   })
 })

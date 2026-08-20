@@ -1,4 +1,5 @@
 import { Account, AccountType, Transaction } from '../../types/zenmoney'
+import md5 from 'crypto-js/md5'
 import {
   FetchCardAccount,
   FetchCurrentAccount,
@@ -49,7 +50,7 @@ const buildMovementId = ({
   sum: number | null
   invoice: { sum: number, instrument: string } | null
 }): string => {
-  return [
+  const source = [
     'zepterbank-by',
     accountId,
     getBusinessDateIdentityKey(date),
@@ -58,6 +59,8 @@ const buildMovementId = ({
     String(mcc ?? ''),
     normalizeIdPart(merchantTitle)
   ].join('|')
+
+  return md5(source).toString()
 }
 
 const parseMcc = (mcc: string | undefined): number | null => {

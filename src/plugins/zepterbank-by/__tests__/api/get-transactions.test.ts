@@ -1,24 +1,12 @@
 import { convertCardAccount, convertCardTransaction, convertStatementTransaction } from '../../converters'
+import { mergeTransactions } from '../../mergeTransactions'
 import { TEST_ACCOUNTS } from '../../__mocks__/accounts.sample'
 import { TEST_CARD_TRANSACTIONS, TEST_STATEMENT_TRANSACTIONS } from '../../__mocks__/transactions.sample'
 import type { Transaction } from '../../../../types/zenmoney'
-import type { FetchCardTransaction, FetchProductStatementOutput, FetchTransactionsOutput } from '../../types/fetch.types'
+import type { FetchCardTransaction, FetchProductStatementOutput, FetchStatementOperation, FetchTransactionsOutput } from '../../types/fetch.types'
 
 const mockFetchCardTransactions = jest.fn()
 const mockFetchProductStatement = jest.fn()
-
-const usePluginData = (data: Record<string, unknown> = {}): Record<string, unknown> => {
-  const zenMoneyMock = {
-    getData: jest.fn((name: string, defaultValue: unknown) => data[name] ?? defaultValue),
-    setData: jest.fn((name: string, value: unknown) => {
-      data[name] = value
-    }),
-    saveData: jest.fn(),
-    getPreferences: jest.fn(() => ({}))
-  }
-  Object.assign(global, { ZenMoney: zenMoneyMock })
-  return data
-}
 
 const withAnyMovementIds = (transaction: Transaction): Transaction => {
   const [firstMovement, secondMovement] = transaction.movements
@@ -39,6 +27,11 @@ const withAnyMovementIds = (transaction: Transaction): Transaction => {
           }
         ]
   }
+}
+
+const expectBareMovementIdHash = (id: string | null): void => {
+  expect(id).toMatch(/^[a-f0-9]{32}$/)
+  expect(id).toHaveLength(32)
 }
 
 jest.mock('../../fetchApi', () => ({
@@ -483,6 +476,122 @@ describe('getTransactions', () => {
     })
   })
 
+  it('replaces an unambiguous railway hold with its smaller final commission', async () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const makeHistoryTransaction = (effectiveDate: string, amount: string): FetchCardTransaction => ({
+      effectiveDate,
+      transacName: 'EPOS PRE-PURCHASE',
+      amount,
+      currencyIso: 'BYN',
+      cardAcceptor: 'I.-SHOP"WWW.PASS.RW.BY"',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС4112'
+    })
+    const makeStatementOperation = (amount: string): FetchStatementOperation => ({
+      transactionDate: '2026-08-10T00:00:00',
+      balanceDate: '2026-08-12',
+      operationName: 'Оплата товаров и услуг в устройствах других банков',
+      operationSum: amount,
+      transactionSum: amount,
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1 as const,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'I.-SHOP"WWW.PASS.RW.BY"',
+      MCC: 'MCC 4112'
+    })
+
+    mockFetchCardTransactions.mockResolvedValue({
+      status: 200,
+      data: [
+        makeHistoryTransaction('2026-08-10T21:17:23', '30.99'),
+        makeHistoryTransaction('2026-08-10T20:47:52', '30.99'),
+        makeHistoryTransaction('2026-08-10T20:42:50', '57.90')
+      ],
+      error: null
+    })
+    mockFetchProductStatement.mockResolvedValue({
+      status: 200,
+      data: {
+        incomeForPeriod: '0.00',
+        outcomeForPeriod: '79.80',
+        ibanNum: rawCardAccount.ibanNum,
+        contractCurrency: String(rawCardAccount.currency),
+        contractCurrencyISO: rawCardAccount.currencyIso,
+        operations: [
+          makeStatementOperation('30.99'),
+          makeStatementOperation('30.99'),
+          makeStatementOperation('17.82')
+        ]
+      },
+      error: null
+    })
+
+    const transactions = await getTransactions({
+      sessionToken: 'session-token',
+      fromDate: new Date('2026-08-10T00:00:00.000Z'),
+      toDate: new Date('2026-08-12T23:59:59.000Z')
+    }, account)
+
+    expect(transactions.map((transaction) => transaction.movements[0].sum)).toEqual([-30.99, -30.99, -17.82])
+    expect(transactions.some((transaction) => transaction.movements[0].sum === -57.9)).toBe(false)
+    expect(new Set(transactions.map((transaction) => transaction.movements[0].id)).size).toBe(3)
+    for (const transaction of transactions) {
+      expectBareMovementIdHash(transaction.movements[0].id)
+    }
+  })
+
+  it('does not guess between ambiguous partial railway settlements', () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const makeHistoryTransaction = (amount: string): Transaction => convertCardTransaction({
+      effectiveDate: '2026-08-10T20:42:50',
+      transacName: 'EPOS PRE-PURCHASE',
+      amount,
+      currencyIso: 'BYN',
+      cardAcceptor: 'I.-SHOP"WWW.PASS.RW.BY"',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС4112'
+    }, account)
+    const statementTransaction = convertStatementTransaction({
+      transactionDate: '2026-08-10T00:00:00',
+      balanceDate: '2026-08-12',
+      operationName: 'Оплата товаров и услуг в устройствах других банков',
+      operationSum: '17.82',
+      transactionSum: '17.82',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'I.-SHOP"WWW.PASS.RW.BY"',
+      MCC: 'MCC 4112'
+    }, account)
+
+    const transactions = mergeTransactions([
+      makeHistoryTransaction('57.90'),
+      makeHistoryTransaction('40.00')
+    ], [statementTransaction])
+
+    expect(transactions.map((transaction) => transaction.movements[0].sum)).toEqual([-57.9, -40, -17.82])
+  })
+
   it('keeps the same final id when bank changes merchant and mcc between syncs', async () => {
     const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
 
@@ -563,8 +672,7 @@ describe('getTransactions', () => {
     expect(statementOnly[0].movements[0].id).toBe(historyOnly[0].movements[0].id)
   })
 
-  it('preserves legacy history id through persisted alias when bank later returns only statement', async () => {
-    usePluginData()
+  it('uses the same bare hash when history later becomes statement-only', async () => {
     const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
 
     if (rawCardAccount == null) {
@@ -640,13 +748,83 @@ describe('getTransactions', () => {
     }, account)
 
     expect(historyOnly).toHaveLength(1)
-    expect(historyOnly[0].movements[0].id).toContain('|2026-06-24|sum|-65.84|4111|st. m. Grushevka|0')
+    expectBareMovementIdHash(historyOnly[0].movements[0].id)
     expect(statementOnly).toHaveLength(1)
     expect(statementOnly[0].movements[0].id).toBe(historyOnly[0].movements[0].id)
   })
 
+  it('returns bare hashes for statement transactions regardless source identity length', () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = {
+      ...convertCardAccount(rawCardAccount),
+      id: 'a'.repeat(43)
+    }
+    const statementOperation = {
+      transactionDate: '2026-08-03T00:00:00',
+      balanceDate: '2026-08-03',
+      operationName: 'Оплата товаров и услуг в устройствах других банков',
+      transactionSum: '41.10',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSum: '41.10',
+      operationSign: -1 as const,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'I.-SHOP"WWW.PASS.RW.BY"',
+      MCC: 'MCC 4112'
+    }
+    const atLimitTransaction = convertStatementTransaction(statementOperation, account)
+    const overLimitTransaction = convertStatementTransaction({
+      ...statementOperation,
+      transactionSum: '65.84',
+      operationSum: '65.84',
+      terminalLocation: 'st. m. Mikhalovo',
+      MCC: 'MCC 4111'
+    }, account)
+
+    const [atLimit, overLimit] = mergeTransactions([], [atLimitTransaction, overLimitTransaction])
+
+    expectBareMovementIdHash(atLimit.movements[0].id)
+    expectBareMovementIdHash(overLimit.movements[0].id)
+    expect(atLimit.movements[0].id).not.toBe(overLimit.movements[0].id)
+    expect(mergeTransactions([], [overLimitTransaction])[0].movements[0].id).toBe(overLimit.movements[0].id)
+  })
+
+  it('returns bare hashes for history transactions with Unicode merchant data', () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = {
+      ...convertCardAccount(rawCardAccount),
+      id: 'a'.repeat(20)
+    }
+    const merchant = 'К'.repeat(10)
+    const historyTransaction = convertCardTransaction({
+      effectiveDate: '2026-08-03T12:00:00',
+      transacName: 'POS PURCHASE ',
+      amount: '1.22',
+      currencyIso: 'BYN',
+      cardAcceptor: merchant,
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС5300'
+    }, account)
+    const merged = mergeTransactions([historyTransaction], [])[0]
+
+    expectBareMovementIdHash(historyTransaction.movements[0].id)
+    expectBareMovementIdHash(merged.movements[0].id)
+  })
+
   it('keeps pending card id stable after the bank returns it as a posted purchase', async () => {
-    usePluginData()
     const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
 
     if (rawCardAccount == null) {
@@ -704,8 +882,7 @@ describe('getTransactions', () => {
     }, account)
 
     expect(pendingOnly).toHaveLength(1)
-    expect(pendingOnly[0].movements[0].id).toContain('|2026-06-25|sum|-1.22|0')
-    expect(pendingOnly[0].movements[0].id).not.toContain('|5300|21VEK.BY|')
+    expectBareMovementIdHash(pendingOnly[0].movements[0].id)
     expect(postedOnly).toHaveLength(1)
     expect(postedOnly[0].movements[0].id).toBe(pendingOnly[0].movements[0].id)
   })

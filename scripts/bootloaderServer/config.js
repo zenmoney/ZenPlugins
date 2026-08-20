@@ -4,6 +4,7 @@ const path = require('path')
 const DEFAULT_BOOTLOADER_CONFIG = {
   captureConsole: true,
   captureErrors: true,
+  overrideData: false,
   network: {
     enabled: true,
     maxBodyBytes: 65536
@@ -51,6 +52,9 @@ function validateConfig (raw, filename) {
   if (raw.preferences !== undefined && !isObject(raw.preferences)) {
     throw new Error(`${configName}.preferences must contain an object in ${filename}`)
   }
+  if (raw.data !== undefined && !isObject(raw.data)) {
+    throw new Error(`${configName}.data must contain an object in ${filename}`)
+  }
   if (raw.bootloader !== undefined && !isObject(raw.bootloader)) {
     throw new Error(`${configName}.bootloader must contain an object in ${filename}`)
   }
@@ -62,6 +66,7 @@ function loadDebugConfig (pluginPaths) {
   if (raw === null) {
     raw = {
       preferences: legacyPreferences,
+      data: {},
       bootloader: DEFAULT_BOOTLOADER_CONFIG
     }
     fs.writeFileSync(pluginPaths.debugConfig, JSON.stringify(raw, null, 2) + '\n', 'utf8')
@@ -69,6 +74,7 @@ function loadDebugConfig (pluginPaths) {
   }
   validateConfig(raw, pluginPaths.debugConfig)
   const bootloader = mergeConfig(DEFAULT_BOOTLOADER_CONFIG, raw.bootloader)
+  bootloader.overrideData = bootloader.overrideData === true
   bootloader.network.enabled = bootloader.network.enabled !== false
   delete bootloader.network.sanitize
   bootloader.network.maxBodyBytes = Math.max(0, Number(bootloader.network.maxBodyBytes) || 0)
@@ -76,6 +82,7 @@ function loadDebugConfig (pluginPaths) {
   bootloader.sessions.limit = Math.max(1, Number(bootloader.sessions.limit) || DEFAULT_BOOTLOADER_CONFIG.sessions.limit)
   return {
     preferences: raw.preferences || {},
+    data: raw.data || {},
     bootloader
   }
 }

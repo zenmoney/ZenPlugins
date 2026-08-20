@@ -87,10 +87,14 @@
     for (const button of document.querySelectorAll('[data-session]')) {
       button.addEventListener('click', () => selectSession(button.dataset.session))
     }
+    const copyStateButton = document.querySelector('[data-copy-state]')
+    if (copyStateButton) {
+      copyStateButton.addEventListener('click', () => copyLatestState(copyStateButton))
+    }
   }
 
-  function sectionHeader (title, count, subtitle) {
-    return `<div class="section-header"><div><h2>${escapeHtml(title)}${count === undefined ? '' : ` <span>${count}</span>`}</h2>${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ''}</div></div>`
+  function sectionHeader (title, count, subtitle, action = '') {
+    return `<div class="section-header"><div><h2>${escapeHtml(title)}${count === undefined ? '' : ` <span>${count}</span>`}</h2>${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ''}</div>${action}</div>`
   }
 
   function accountInstrument (account) {
@@ -203,10 +207,24 @@
 
   function renderState (session) {
     const saved = session.state.saved
-    return `<section class="panel state-panel">${sectionHeader('State', session.state.changes.length, 'Изменения getData / setData')}
+    const copyButton = '<button class="copy-state-button" type="button" data-copy-state>Copy</button>'
+    return `<section class="panel state-panel">${sectionHeader('State', session.state.changes.length, 'Изменения getData / setData', copyButton)}
       <div class="diff"><div class="diff-header"><span>initial</span><span>→</span><span>current</span></div>${diffRows(session.state.initial, session.state.current)}</div>
       ${saved === null ? '' : `<div class="saved-title">Сохранённый state</div><div class="diff"><div class="diff-header"><span>current</span><span>→</span><span>saved</span></div>${diffRows(session.state.current, saved)}</div>`}
     </section>`
+  }
+
+  async function copyLatestState (button) {
+    const session = state.session
+    if (!session) return
+    const latest = session.state.saved === null ? session.state.current : session.state.saved
+    try {
+      await window.navigator.clipboard.writeText(json(latest))
+      button.textContent = 'Copied'
+    } catch (error) {
+      button.textContent = 'Copy failed'
+      developerConsole.error(error)
+    }
   }
 
   function renderCheckpoints (session) {

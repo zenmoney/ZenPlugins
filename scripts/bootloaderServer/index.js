@@ -61,7 +61,10 @@ function setupBootloaderServer ({ app, pluginPaths, storageDirectory }) {
   app.post('/api/v2/sessions', bodyParser.json({ limit: '256kb' }), asyncRoute((req, res) => {
     const scrapeConfig = loadDebugConfig(pluginPaths)
     store.configure(scrapeConfig.bootloader.sessions)
-    const session = store.create(req.body || {})
+    const session = store.create(
+      req.body || {},
+      scrapeConfig.bootloader.overrideData ? scrapeConfig.data : {}
+    )
     const serverUrl = `${req.protocol}://${req.get('host')}`
     res.status(201).json({
       protocolVersion: 2,
@@ -70,6 +73,7 @@ function setupBootloaderServer ({ app, pluginPaths, storageDirectory }) {
       scriptUrl: `${serverUrl}/index.js`,
       plugin,
       preferences: scrapeConfig.preferences,
+      data: scrapeConfig.data,
       config: scrapeConfig.bootloader
     })
   }))

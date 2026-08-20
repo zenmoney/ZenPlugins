@@ -52,6 +52,18 @@ describe('Bootloader SessionStore', () => {
     })
   })
 
+  it('starts a session with data supplied by the development server', () => {
+    const store = makeStore()
+    const session = store.create({}, { auth: { token: 'imported' }, device: { id: 'device-id' } })
+
+    expect(session.state.initial).toEqual({
+      auth: { token: 'imported' },
+      device: { id: 'device-id' }
+    })
+    expect(session.state.current).toEqual(session.state.initial)
+    expect(session.state.saved).toBeNull()
+  })
+
   it('applies changed session settings before a new scrape', () => {
     const store = makeStore()
     store.create()
