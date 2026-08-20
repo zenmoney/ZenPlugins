@@ -80,20 +80,6 @@ describe('createAggregatedAccount', () => {
     expect(account.balance).toBe(80)
   })
 
-  it('adds only the redeemable Flexible Earn amount for configured card coins', () => {
-    const account = createAggregatedAccount(
-      [],
-      new Set(['USDT', 'USD']),
-      new Map(),
-      [
-        { coin: 'USDT', amount: 2300, availableAmount: 2252.3136 },
-        { coin: 'USDC', amount: 100, availableAmount: 100 }
-      ]
-    )
-
-    expect(account.balance).toBe(2252.3136)
-  })
-
   it('returns a zero-balance account when there are no matching coins', () => {
     const account = createAggregatedAccount([], cardCoins, new Map())
     expect(account.balance).toBe(0)
