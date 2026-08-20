@@ -3,7 +3,6 @@ import { parseCardBalanceCoinsList } from './converters'
 import {
   fetchCardTransactionsPage,
   fetchConvertCoinUsdtValues as fetchConvertCoinUsdtValuesApi,
-  fetchFlexibleEarnPositions as fetchFlexibleEarnPositionsApi,
   fetchFundingBalances
 } from './fetchApi'
 import {
@@ -12,7 +11,6 @@ import {
   CardTransactionQueryType,
   CoinBalance,
   Credentials,
-  FlexibleEarnPosition,
   Preferences
 } from './models'
 
@@ -82,10 +80,6 @@ export async function fetchAccounts (creds: Credentials): Promise<CoinBalance[]>
 
 export async function fetchConvertCoinUsdtValues (creds: Credentials): Promise<Map<string, number>> {
   return await fetchConvertCoinUsdtValuesApi(creds)
-}
-
-export async function fetchFlexibleEarnPositions (creds: Credentials): Promise<FlexibleEarnPosition[]> {
-  return await fetchFlexibleEarnPositionsApi(creds)
 }
 
 export async function fetchTransactions (

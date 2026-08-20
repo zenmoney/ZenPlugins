@@ -25,12 +25,6 @@ export interface CoinBalance {
   transferBalance: number
 }
 
-export interface FlexibleEarnPosition {
-  coin: string
-  amount: number
-  availableAmount: number
-}
-
 // Subset of /v5/card/transaction/query-asset-records `data[]` items
 // that we actually use. All amount fields come as strings in the API
 // response and are converted to numbers at parse time.
