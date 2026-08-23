@@ -40,15 +40,17 @@ export interface ExportData {
   downloadLink: string
 }
 
-export interface ExportOperation {
+export type ExportOperation = {
   ID: string
   Action: string
-  'Time (UTC)'?: string
-  Time?: string
-  Total?: string
-  'Gross Total'?: string
-  'Currency (Total)'?: string
-  'Currency (Gross Total)'?: string
   'Merchant name'?: string
   'Merchant category'?: string
-}
+} & ({
+  'Time (UTC)': string
+  Total: string
+  'Currency (Total)': string
+} | {
+  Time: string
+  'Gross Total': string
+  'Currency (Gross Total)': string
+})

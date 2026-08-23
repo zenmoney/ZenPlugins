@@ -32,9 +32,9 @@ function convertTransaction (op: ExportOperation, accountId: string, cardId: str
   const isCardDebit = op.Action === 'Card debit'
   const isCardCashback = op.Action === 'Spending cashback' && !preferences.investCashback
   const isCardTransaction = isCardDebit || isCardCashback
-  const time = op['Time (UTC)'] ?? op.Time
-  const date = new Date(op['Time (UTC)'] != null && time != null ? `${time.replace(' ', 'T')}Z` : time ?? '')
-  const sum = Number(op.Total ?? op['Gross Total'])
+  const time = 'Time (UTC)' in op ? op['Time (UTC)'] : op.Time
+  const date = new Date('Time (UTC)' in op ? time : `${time}+00:00`)
+  const sum = Number('Total' in op ? op.Total : op['Gross Total'])
 
   console.log('Converting operation', op)
 
