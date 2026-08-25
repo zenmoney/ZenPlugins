@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>binance</id>
+    <company>0</company>
+    <description>Read-only Binance wallets, external transfers, Pay, P2P, Simple Earn and internal wallet movements.</description>
+    <version>0.1</version>
+    <build>5</build>
+    <modular>true</modular>
+    <files><js>index.js</js><preferences>preferences.xml</preferences></files>
+</provider>
