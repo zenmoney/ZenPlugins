@@ -1,322 +1,464 @@
-import * as _ from 'lodash'
-import { fetch } from '../../common/network'
-import { parseResponseBody, stringifyRequestBody, Type } from '../../common/protocols/burlap'
-import { generateRandomString, generateUUID, randomInt } from '../../common/utils'
-import { BankMessageError, InvalidOtpCodeError, PasswordExpiredError, PreviousSessionNotClosedError, TemporaryUnavailableError } from '../../errors'
+import Base64 from 'crypto-js/enc-base64'
+import SHA256 from 'crypto-js/sha256'
+import { fetchJson } from '../../common/network'
+import { generateUUID } from '../../common/utils'
+import {
+  InvalidLoginOrPasswordError,
+  InvalidOtpCodeError,
+  InvalidPreferencesError,
+  TemporaryError,
+  UserInteractionError
+} from '../../errors'
 
-const PROTOCOL_VERSION = '0.5.0'
-const APP_VERSION = '1.213.1'
-const ENDPOINT = 'https://online.ukrsibbank.com/clientendpoint/burlap'
+const API_URL = 'https://online.ukrsibbank.com/clientendpoint'
+const APP_VERSION = '2.264.0'
+const AUTH_SCHEMA_VERSION = 1
+const PAGE_SIZE = 50
+const INVALID_LOGIN_CODES = new Set(['2071'])
+const TOKEN_REJECTION_CODES = new Set(['TOKEN_EXPIRED', 'TOKEN_INVALID', '2003', '2050'])
+const OTP_REQUIRED_CODES = new Set(['OTP_REQUIRED', '2020', '2021', '2048'])
+const POST_LOGIN_ACTIONS = new Set([
+  'MUST_SET_PASSWORD',
+  'SHOULD_UPDATE_EMAIL',
+  'SHOULD_UPDATE_SECURITY_QUESTIONS',
+  'MRS_INVITATION',
+  'INSTALMENT_PAYMENT_ENABLE'
+])
 
-export function generateDevice () {
+const COMMON_REQUEST_LOG_MASK = {
+  headers: {
+    authorization: true,
+    RefreshToken: true,
+    refreshtoken: true,
+    otpId: true,
+    otpid: true,
+    otpValue: true,
+    otpvalue: true
+  },
+  body: {
+    phone: true,
+    password: true,
+    secretString: true
+  }
+}
+
+const COMMON_RESPONSE_LOG_MASK = {
+  headers: {
+    authorization: true,
+    refreshtoken: true,
+    'set-cookie': true,
+    dossierid: true,
+    userid: true,
+    loginsessionid: true
+  },
+  body: {
+    holderName: true,
+    loginSessionId: true,
+    userId: true,
+    pan: maskCardNumberForLog,
+    cardNumber: maskCardNumberForLog
+  }
+}
+
+export class SessionExpiredError extends Error {
+  constructor (code) {
+    super(`UKRSIB hot authorization was rejected with code ${code}`)
+    this.code = code
+  }
+}
+
+function normalizeText (value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function maskCardNumberForLog (value) {
+  if (typeof value !== 'string' && typeof value !== 'number') return value
+  const digits = String(value).replace(/\s/g, '')
+  return /^\d{12,19}$/.test(digits)
+    ? `${digits.slice(0, 6)}${'*'.repeat(digits.length - 10)}${digits.slice(-4)}`
+    : value
+}
+
+export function normalizePhone (value) {
+  const phone = normalizeText(value)?.replace(/[\s()-]/g, '')
+  const match = /^(?:\+?380|0)?(\d{9})$/.exec(phone || '')
+  if (!match) {
+    throw new InvalidPreferencesError('Вкажіть номер телефону у форматі +380XXXXXXXXX')
+  }
+  return `+380${match[1]}`
+}
+
+export function validatePreferences (preferences) {
+  const password = normalizeText(preferences?.password)
+  if (!password) {
+    throw new InvalidPreferencesError('Вкажіть пароль від UKRSIB online')
+  }
   return {
-    id: 'v1',
-    androidId: randomInt(0, Math.pow(2, 64) - 1).toString(16),
-    manufacturer: 'Zenmoney',
-    model: 'Zenmoney Phone',
-    uuid: generateRandomString(32, '0123456789abcdef'),
-    legacyId: generateRandomString(16, '0123456789abcdef'),
-    fingerprint: generateUUID(),
-    imsi: generateRandomString(15, '0123456789'),
-    imei: generateRandomString(15, '0123456789')
+    login: normalizePhone(preferences?.login),
+    password
   }
 }
 
-export function getIdGenerator (device) {
-  let i = 0
-  return () => device.androidId + '-' + i++
+function getRuntimeDevice () {
+  return typeof ZenMoney === 'object' && ZenMoney?.device
+    ? ZenMoney.device
+    : {}
 }
 
-export async function burlapRequest (options) {
-  const id = options.idGenerator()
-  const device = options.device
-  let payload = null
-  let response
-  try {
-    response = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'mb-protocol-version': PROTOCOL_VERSION,
-        'mb-app-version': APP_VERSION,
-        'Content-Type': 'application/gzip; charset=utf-8',
-        'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 6.0; Android SDK built for x86_64 Build/MASTER)',
-        Host: 'online.ukrsibbank.com',
-        Connection: 'Keep-Alive',
-        'Accept-Encoding': 'gzip',
-        'Cache-Control': 'no-cache'
-      },
-      body: options.body || null,
-      sanitizeRequestLog: { headers: { cookie: true }, body: _.get(options, 'sanitizeRequestLog.body') },
-      sanitizeResponseLog: { headers: { 'set-cookie': true }, body: _.get(options, 'sanitizeResponseLog.body') },
-      stringify: (body) => stringifyRequestBody(PROTOCOL_VERSION, {
-        __type: 'com.mobiletransport.messaging.MessageImpl',
-        correlationId: null,
-        id,
-        theme: options.theme || 'none',
-        timeToLive: 0,
-        payload: body,
-        properties: [
-          { __type: 'com.mobiletransport.messaging.Property', name: 'LANGUAGE', value: 'EN' },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'DEVICE_ROOTED', value: true },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'CONNECTION_TYPE', value: 'WIFI' },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'DEVICE_IMEI', value: device.imei },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'DEVICE_LONGITUDE', value: 30.523487 },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'DEVICE_LATITUDE', value: 50.450412 },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'APP_VERSION', value: APP_VERSION },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'compress_response', value: 'false' },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'DEVICE_OS', value: 'Android v. 6.0' },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'DEVICE_MANUFACTURER', value: 'unknown' },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'DEVICE_IMSI', value: device.imsi },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'DEVICE_ID', value: device.uuid },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'LEGACY_DEVICE_ID', value: device.androidId },
-          { __type: 'com.mobiletransport.messaging.Property', name: 'DEVICE_MODEL', value: 'Android SDK built for x86_64' },
-          ...options.token
-            ? [{ __type: 'com.mobiletransport.messaging.Property', name: 'CLIENT-TOKEN', value: options.token }]
-            : []
-        ]
-      }),
-      parse: (bodyStr) => {
-        payload = parseResponseBody(PROTOCOL_VERSION, bodyStr, id).payload
-        return payload
-      }
-    })
-  } catch (e) {
-    if (e.response && e.response.status === 503) {
-      throw new TemporaryUnavailableError()
-    } else {
-      throw e
-    }
-  }
-  response.body = payload
-  if (response.body &&
-    response.body.__type === 'com.mobiletransport.messaging.ErrorResponse' &&
-    response.body.message) {
-    if ([
-      'операцию позже',
-      'временно недоступна'
-    ].some(str => response.body.message.indexOf(str) >= 0)) {
-      throw new TemporaryUnavailableError()
-    } else {
-      throw new BankMessageError(response.body.message)
-    }
-  }
-  const error = getError(response)
-  if (error) {
-    if ([
-      'is working in System on this device now',
-      'user with this phone number is already registered',
-      'Пользователь с таким Логином сейчас работает в системе на этом же устройстве',
-      'Пользователь с таким номером телефона уже зарегистрирован'
-    ].some(str => error.message.indexOf(str) >= 0)) {
-      throw new PreviousSessionNotClosedError()
-    } else if ([
-      'We are unable to process your request at this time. Please try again later',
-      'Please log in in 15 minutes. Currently, entry is not possible due to an incomplete technical session'
-    ].some(str => error.message.indexOf(str) >= 0)) {
-      throw new TemporaryUnavailableError()
-    }
-  }
-  return response
+function isUuid (value) {
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
-export async function logout (device, idGenerator) {
-  return burlapRequest({
-    idGenerator,
-    device,
-    body: {
-      __type: 'com.ukrsibbank.client.protocol.authentication.LogoutRequest'
-    }
+export function normalizeDevice (storedDevice = {}) {
+  const runtimeDevice = getRuntimeDevice()
+  const legacyFingerprint = storedDevice.fingerprint
+  return {
+    deviceId: isUuid(storedDevice.deviceId)
+      ? storedDevice.deviceId
+      : isUuid(legacyFingerprint) ? legacyFingerprint : generateUUID(),
+    screenResolution: normalizeText(storedDevice.screenResolution) || '1080x2400',
+    model: normalizeText(storedDevice.model) || normalizeText(runtimeDevice.model) || 'ZenMoney Phone',
+    manufacturer: normalizeText(storedDevice.manufacturer) || normalizeText(runtimeDevice.brand) || 'ZenMoney',
+    os: normalizeText(storedDevice.os) || 'Android 15'
+  }
+}
+
+function hashLogin (login) {
+  return SHA256(login).toString()
+}
+
+function createAuthState (login, storedState = {}) {
+  const storedAuth = storedState.auth || storedState
+  const storedDevice = storedAuth.device || storedState.device || {}
+  const compatible = storedAuth.schemaVersion === AUTH_SCHEMA_VERSION &&
+    storedAuth.loginHash === hashLogin(login)
+  return {
+    schemaVersion: AUTH_SCHEMA_VERSION,
+    loginHash: hashLogin(login),
+    device: normalizeDevice(storedDevice),
+    authorization: compatible ? normalizeText(storedAuth.authorization) : null,
+    refreshToken: compatible ? normalizeText(storedAuth.refreshToken) : null,
+    tokenValidUntil: compatible && Number.isFinite(storedAuth.tokenValidUntil)
+      ? storedAuth.tokenValidUntil
+      : null,
+    dossierId: compatible ? normalizeText(storedAuth.dossierId) : null
+  }
+}
+
+function hasHotAuth (authState) {
+  return Boolean(authState.authorization && authState.refreshToken)
+}
+
+function createCommonHeaders (authState) {
+  const device = authState.device
+  return {
+    screenResolution: device.screenResolution,
+    deviceId: device.deviceId,
+    language: 'UK',
+    channel: 'MOBILE',
+    deviceModel: device.model,
+    deviceManufacturer: device.manufacturer,
+    clientVersion: APP_VERSION,
+    clientPlatform: 'Android',
+    os: device.os,
+    requestId: generateUUID().replace(/-/g, ''),
+    ...authState.authorization && { authorization: authState.authorization }
+  }
+}
+
+function updateAuthState (authState, response) {
+  const authorization = normalizeText(response.headers.authorization)
+  const refreshToken = normalizeText(response.headers.refreshtoken)
+  const tokenValidFor = Number(response.headers.tokenvalidfor)
+  const dossierId = normalizeText(response.headers.dossierid)
+  if (authorization) authState.authorization = authorization
+  if (refreshToken) authState.refreshToken = refreshToken
+  if (Number.isFinite(tokenValidFor) && tokenValidFor > 0) {
+    authState.tokenValidUntil = Date.now() + tokenValidFor
+  }
+  if (dossierId) authState.dossierId = dossierId
+}
+
+function getErrorCode (body) {
+  return normalizeText(body?.errorCode)
+}
+
+function getOtpData (body) {
+  const data = body?.errorData
+  if (!data || typeof data !== 'object') return null
+  return {
+    otpId: normalizeText(data.otpId),
+    expiredTimeout: Number(data.expiredTimeout),
+    otpLength: Number(data.otpLength)
+  }
+}
+
+function assertSuccessfulResponse (response, method, path) {
+  const errorCode = getErrorCode(response.body)
+  console.assert(response.ok, 'UKRSIB API request failed', {
+    method,
+    path,
+    status: response.status,
+    errorCode,
+    errorKey: normalizeText(response.body?.key),
+    hasErrorData: Boolean(response.body?.errorData)
   })
 }
 
-async function makeExecuteOperationRequest ({
-  response,
-  action,
-  parameters,
-  device,
-  idGenerator
-}) {
-  return burlapRequest({
-    idGenerator,
-    device,
-    body: {
-      __type: 'com.ukrsibbank.client.protocol.operation.ExecuteOperationRequest',
-      data: {
-        __type: 'com.ukrsibbank.client.protocol.operation.OperationDataMto',
-        executionId: response.body.meta.executionId,
-        operationId: response.body.meta.operationId,
-        stepId: response.body.meta.stepId,
-        action: { __type: 'com.ukrsibbank.client.protocol.operation.ActionDataMto', id: action, parameterId: null },
-        parameters: response.body.meta.parameters.map(parameter => {
-          return {
-            __type: 'com.ukrsibbank.client.protocol.operation.ParameterMto',
-            id: parameter.id,
-            value: parameters && parameter.id in parameters ? parameters[parameter.id] : parameter.value
-          }
-        })
-      }
-    },
-    sanitizeRequestLog: { body: { data: { parameters: { value: true } }, meta: { parameters: { value: true } } } }
-  })
-}
-
-function getPhoneNumber (str) {
-  const match = /^(?:\+?380|)(\d{9})$/.exec(str.trim())
-  if (match) {
-    return '+380' + match[1]
+async function request (authState, path, options = {}) {
+  const method = options.method || 'GET'
+  const headers = {
+    ...createCommonHeaders(authState),
+    ...options.refreshToken && { RefreshToken: options.refreshToken },
+    ...options.otpId && { otpId: options.otpId },
+    ...options.otpValue && { otpValue: options.otpValue }
   }
-  throw new InvalidPreferencesError('Неверный номер телефона')
-}
-
-function getError (response) {
-  const messages = _.get(response, 'body.meta.messages')
-  return messages && messages.find(message => message.type && message.type.name === 'ERROR')
-}
-
-export async function login ({ login, password }, device, idGenerator) {
-  login = getPhoneNumber(login)
-
-  let response = await burlapRequest({
-    idGenerator,
-    device,
-    body: {
-      __type: 'com.ukrsibbank.client.protocol.operation.StartOperationRequest',
-      operationId: 'logIn',
-      parameters: [
-        {
-          __type: 'com.ukrsibbank.client.protocol.operation.ParameterMto',
-          id: 'capabilities',
-          value: {
-            __type: 'com.ukrsibbank.client.protocol.authentication.AuthenticationCapabilitiesMto',
-            capabilities: new Type.List([], 'com.ukrsibbank.client.protocol.authentication.AuthenticationCapabilityMto')
-          }
-        }
-      ]
-    },
-    sanitizeResponseLog: { body: { meta: { parameters: { value: true } } } }
-  })
-
-  response = await makeExecuteOperationRequest({
-    idGenerator,
-    device,
-    response,
-    action: 'login',
-    parameters: {
-      phone: login,
-      password
-    }
-  })
-
-  const error = getError(response)
-  if (error) {
-    if ([
-      'Login by phone number is disabled in the profile settings'
-    ].some(str => error.message.indexOf(str) >= 0)) {
-      throw new BankMessageError('Вход по номеру телефона выключен в настройках аккаунта.')
-    }
-    if (error.message.indexOf('the wrong password') >= 0) {
-      throw new InvalidPreferencesError('Неверный номер телефона или пароль')
-    }
-  }
-
-  while (true) {
-    if (response.body.meta.parameters && response.body.meta.parameters.find(parameter =>
-      parameter.id === 'isSignedIn' &&
-      parameter.value === true)) {
-      break
-    } else if (response.body.meta.stepId === 'otp') {
-      // response = await makeExecuteOperationRequest({
-      //   idGenerator,
-      //   device,
-      //   response,
-      //   action: 'resendPasswordWithSms'
-      // })
-      const code = await ZenMoney.readLine('Введите одноразовый пароль для входа в UKRSIB Online из SMS или push-уведомления', { inputType: 'number' })
-      response = await makeExecuteOperationRequest({
-        idGenerator,
-        device,
-        response,
-        action: 'next',
-        parameters: {
-          otp: code
-        }
-      })
-      const error = getError(response)
-      if (error && [
-        'Введен некорректный код подтверждения',
-        'Entered an incorrect one-time password'
-      ].some(str => error.message.indexOf(str) >= 0)) {
-        throw new InvalidOtpCodeError()
-      }
-      if (response.body.meta.stepId === 'otp') {
-        console.assert(false, 'unexpected login step')
-      }
-    } else if (response.body.meta.title === 'Check out identification data') {
-      // throw new TemporaryError('В приложении банка для вас есть информационные сообщения. Их нужно прочесть и закрыть там, чтобы продолжить синхронизацию из Дзен-мани.')
-      response = await makeExecuteOperationRequest({
-        idGenerator,
-        device,
-        response,
-        action: 'a1', // skip
-        parameters: {}
-      })
-      if (response.body.meta.title === 'Check out identification data') {
-        console.assert(false, 'unexpected skip info message step')
-      }
-    } else if (response.body.meta.stepId === 'enterNewPassword') {
-      throw new PasswordExpiredError()
-    } else {
-      console.assert(false, 'unexpected login step')
-    }
-  }
-}
-
-export async function fetchAccounts (device, idGenerator) {
-  const response = await burlapRequest({
-    idGenerator,
-    device,
-    body: {
-      __type: 'com.ukrsibbank.client.protocol.product.ProductsRequest'
-    },
-    sanitizeResponseLog: { body: { cards: { holderName: true } } }
-  })
-  return response.body
-}
-
-export async function fetchTransactions ({ id, category }, fromDate, toDate, device, idGenerator) {
-  const transactions = []
-  const limit = 25
-  let offset = 0
-  let response
-
-  do {
-    response = await burlapRequest({
-      idGenerator,
-      device,
+  const response = await fetchJson(`${API_URL}${path}`, {
+    method,
+    headers,
+    ...options.body !== undefined && { body: options.body },
+    sanitizeRequestLog: COMMON_REQUEST_LOG_MASK,
+    sanitizeResponseLog: {
+      ...COMMON_RESPONSE_LOG_MASK,
       body: {
-        __type: 'com.ukrsibbank.client.protocol.transaction.TransactionsRequest',
-        filter: null,
-        maximalAmount: null,
-        minimalAmount: null,
-        status: null,
-        categories: new Type.List([], 'string'),
-        endDate: toDate,
-        startDate: fromDate,
-        page: {
-          __type: 'com.ukrsibbank.client.protocol.paging.PageMto',
-          count: new Type.Int(limit),
-          offset: new Type.Int(offset)
-        },
-        productIdentity: {
-          __type: 'com.ukrsibbank.client.protocol.product.ProductIdentityMto',
-          id,
-          category
-        }
+        ...COMMON_RESPONSE_LOG_MASK.body,
+        ...options.sanitizeResponseBody
+      }
+    }
+  })
+  updateAuthState(authState, response)
+
+  if (response.ok) return response.body
+
+  const errorCode = getErrorCode(response.body)
+  if (path === '/auth/login' && INVALID_LOGIN_CODES.has(errorCode)) {
+    throw new InvalidLoginOrPasswordError('Неправильний номер телефону або пароль')
+  }
+  if (options.allowSessionExpiry && TOKEN_REJECTION_CODES.has(errorCode)) {
+    throw new SessionExpiredError(errorCode)
+  }
+
+  if (OTP_REQUIRED_CODES.has(errorCode)) {
+    const otpData = getOtpData(response.body)
+    console.assert(otpData?.otpId, 'UKRSIB OTP response is missing otpId', {
+      path,
+      status: response.status,
+      errorCode
+    })
+    if (options.otpValue) {
+      throw new InvalidOtpCodeError()
+    }
+    if (options.isInBackground) {
+      throw new UserInteractionError()
+    }
+    const timeoutSeconds = Number.isFinite(otpData.expiredTimeout) && otpData.expiredTimeout > 0
+      ? otpData.expiredTimeout
+      : 120
+    const code = await ZenMoney.readLine('Введіть код із SMS або push-повідомлення від UKRSIBBANK', {
+      inputType: 'number',
+      time: timeoutSeconds * 1000
+    })
+    if (!normalizeText(code)) throw new InvalidOtpCodeError()
+    return request(authState, path, {
+      ...options,
+      otpId: otpData.otpId,
+      otpValue: String(code)
+    })
+  }
+
+  assertSuccessfulResponse(response, method, path)
+  return undefined
+}
+
+function createVerifyAppSecret (device) {
+  return Base64.stringify(SHA256([
+    device.deviceId,
+    device.model,
+    device.screenResolution,
+    device.os
+  ].join('.')))
+}
+
+async function verifyApp (authState, isInBackground) {
+  authState.authorization = null
+  authState.refreshToken = null
+  await request(authState, '/auth/verify-app', {
+    method: 'POST',
+    isInBackground,
+    body: { secretString: createVerifyAppSecret(authState.device) }
+  })
+  console.assert(authState.authorization, 'UKRSIB verify-app response is missing authorization header', {
+    clientVersion: APP_VERSION
+  })
+}
+
+async function coldAuth (credentials, authState, isInBackground) {
+  await verifyApp(authState, isInBackground)
+  if (isInBackground) throw new UserInteractionError()
+  await request(authState, '/auth/login', {
+    method: 'POST',
+    isInBackground,
+    body: {
+      phone: credentials.login,
+      password: credentials.password
+    }
+  })
+  console.assert(authState.authorization && authState.refreshToken, 'UKRSIB login response is missing authorization state', {
+    hasAuthorization: Boolean(authState.authorization),
+    hasRefreshToken: Boolean(authState.refreshToken)
+  })
+}
+
+async function refreshAuth (authState, isInBackground) {
+  await request(authState, '/auth/refreshtoken', {
+    method: 'GET',
+    refreshToken: authState.refreshToken,
+    isInBackground,
+    allowSessionExpiry: true
+  })
+  console.assert(authState.authorization && authState.refreshToken, 'UKRSIB refresh response is missing authorization state', {
+    hasAuthorization: Boolean(authState.authorization),
+    hasRefreshToken: Boolean(authState.refreshToken)
+  })
+}
+
+async function validatePostLoginActions (authState, isInBackground) {
+  const response = await request(authState, '/profile/postlogin-actions/mandatory', {
+    isInBackground,
+    allowSessionExpiry: true
+  })
+  console.assert(response && Array.isArray(response.actions), 'UKRSIB post-login actions response is malformed', {
+    hasResponse: Boolean(response),
+    actionsType: response?.actions === null ? 'null' : typeof response?.actions
+  })
+  const actions = response.actions.map(action => typeof action === 'string' ? action : null)
+  console.assert(actions.every(action => POST_LOGIN_ACTIONS.has(action)), 'UKRSIB post-login action is unsupported', {
+    actionCount: actions.length,
+    actions
+  })
+  if (actions.includes('MUST_SET_PASSWORD')) {
+    throw new TemporaryError('Відкрийте застосунок UKRSIB online 2.0 та встановіть новий пароль, потім повторіть синхронізацію.')
+  }
+  if (actions.includes('SHOULD_UPDATE_EMAIL')) {
+    throw new TemporaryError('Відкрийте застосунок UKRSIB online 2.0 та додайте або оновіть email, потім повторіть синхронізацію.')
+  }
+}
+
+export async function login (preferences, isInBackground, storedState = {}) {
+  const credentials = validatePreferences(preferences)
+  const authState = createAuthState(credentials.login, storedState)
+  if (hasHotAuth(authState)) {
+    try {
+      await refreshAuth(authState, isInBackground)
+      await validatePostLoginActions(authState, isInBackground)
+      return { authState, isInBackground: Boolean(isInBackground) }
+    } catch (error) {
+      if (!(error instanceof SessionExpiredError)) throw error
+      console.info('UKRSIB hot authorization was rejected; starting cold authorization', {
+        code: error.code
+      })
+      authState.authorization = null
+      authState.refreshToken = null
+      authState.tokenValidUntil = null
+    }
+  }
+  await coldAuth(credentials, authState, isInBackground)
+  await validatePostLoginActions(authState, isInBackground)
+  return { authState, isInBackground: Boolean(isInBackground) }
+}
+
+async function authorizedRequest (session, path, options = {}, canRefresh = true) {
+  try {
+    return await request(session.authState, path, {
+      ...options,
+      isInBackground: session.isInBackground,
+      allowSessionExpiry: true
+    })
+  } catch (error) {
+    if (!(error instanceof SessionExpiredError) || !canRefresh) throw error
+    await refreshAuth(session.authState, session.isInBackground)
+    return authorizedRequest(session, path, options, false)
+  }
+}
+
+export async function fetchProducts (session) {
+  const [accounts, deposits, loanResponse] = await Promise.all([
+    authorizedRequest(session, '/product/accountlite'),
+    authorizedRequest(session, '/product/deposit'),
+    authorizedRequest(session, '/product/v2/loan')
+  ])
+  console.assert(Array.isArray(accounts), 'UKRSIB accounts response is not an array', {
+    actualType: accounts === null ? 'null' : typeof accounts
+  })
+  console.assert(Array.isArray(deposits), 'UKRSIB deposits response is not an array', {
+    actualType: deposits === null ? 'null' : typeof deposits
+  })
+  console.assert(loanResponse && (loanResponse.loans == null || Array.isArray(loanResponse.loans)), 'UKRSIB loans response is malformed', {
+    hasResponse: Boolean(loanResponse),
+    loansType: loanResponse?.loans === null ? 'null' : typeof loanResponse?.loans
+  })
+  const cardsByAccount = await Promise.all(accounts.map(async account => {
+    const cards = await authorizedRequest(session, `/product/cardlite?accountId=${encodeURIComponent(String(account.id))}`, {
+      sanitizeResponseBody: {
+        holderName: true,
+        pan: maskCardNumberForLog,
+        cardNumber: maskCardNumberForLog,
+        number: maskCardNumberForLog
       }
     })
-    transactions.push(...response.body.transactions)
-    offset += response.body.transactions.length
-  } while (response && response.body.transactions && response.body.transactions.length >= limit)
+    console.assert(Array.isArray(cards), 'UKRSIB cards response is not an array', {
+      accountId: String(account.id),
+      actualType: cards === null ? 'null' : typeof cards
+    })
+    return cards
+  }))
+  return {
+    accounts,
+    cards: cardsByAccount.flat(),
+    deposits,
+    loans: loanResponse.loans || []
+  }
+}
 
+function dateToTimestamp (value, fieldName) {
+  if (value == null) return null
+  const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime()
+  console.assert(Number.isFinite(timestamp), 'UKRSIB transaction interval date is invalid', {
+    fieldName,
+    actualType: typeof value
+  })
+  return timestamp
+}
+
+export async function fetchTransactions (session, fromDate, toDate) {
+  const transactions = []
+  const seenPages = new Set()
+  let offset = 0
+  const dateFrom = dateToTimestamp(fromDate, 'fromDate')
+  const dateTo = dateToTimestamp(toDate, 'toDate')
+  while (true) {
+    const page = await authorizedRequest(session, '/product/transactions', {
+      method: 'POST',
+      body: {
+        ...dateFrom != null && { dateFrom },
+        ...dateTo != null && { dateTo },
+        offset,
+        count: PAGE_SIZE
+      }
+    })
+    console.assert(Array.isArray(page), 'UKRSIB transactions response is not an array', {
+      offset,
+      actualType: page === null ? 'null' : typeof page
+    })
+    const signature = page.map(transaction => String(transaction?.id)).join('|')
+    console.assert(page.length < PAGE_SIZE || !seenPages.has(signature), 'UKRSIB transaction pagination repeated a full page', {
+      offset,
+      count: page.length
+    })
+    seenPages.add(signature)
+    transactions.push(...page)
+    if (page.length < PAGE_SIZE) break
+    offset += page.length
+  }
   return transactions
 }

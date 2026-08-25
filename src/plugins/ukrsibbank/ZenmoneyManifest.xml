@@ -3,8 +3,8 @@
     <id>ukrsibbank</id>
     <company>15395</company>
     <description></description>
-    <version>1.0</version>
-    <build>1</build>
+    <version>2.0</version>
+    <build>2</build>
     <modular>true</modular>
     <files>
         <js>index.js</js>
