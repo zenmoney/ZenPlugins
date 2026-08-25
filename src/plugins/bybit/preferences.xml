@@ -21,16 +21,15 @@
         negativeButtonText="Cancel"
         summary="||***********"
     />
-    <EditTextPreference
-        key="baseUrl"
-        obligatory="true"
-        defaultValue="https://api.bybit.com"
-        title="Bybit API region"
-        dialogTitle="Bybit API base URL"
-        dialogMessage="Use the official API host for your Bybit account region. Examples: https://api.bybit.com, https://api.bybit.kz, https://api.bybit.eu."
-        positiveButtonText="OK"
-        negativeButtonText="Cancel"
-        summary="|baseUrl|{@s}"
+    <ListPreference
+        key="region"
+        defaultValue="global"
+        title="Bybit account region"
+        dialogTitle="Bybit account region"
+        dialogMessage="Choose the Bybit site where this account was registered. The plugin uses only official API hosts; no URL needs to be entered manually."
+        entries="Global|Netherlands|Turkey|Kazakhstan|Georgia|United Arab Emirates|European Economic Area|Indonesia|Japan|Brazil"
+        entryValues="global|netherlands|turkey|kazakhstan|georgia|uae|eea|indonesia|japan|brazil"
+        summary="|region|{@s}"
     />
     <EditTextPreference
         key="startDate"
@@ -43,15 +42,61 @@
         negativeButtonText="Cancel"
         summary="|startDate|{@s}"
     />
+    <CheckBoxPreference
+        key="syncTransfers"
+        defaultValue="true"
+        title="Sync wallet transfers"
+        dialogTitle="Sync wallet transfers"
+        dialogMessage="Import confirmed external deposits and withdrawals, Funding ↔ Unified transfers, and Flexible Earn subscriptions/redemptions. Failed, pending and ambiguous records are ignored."
+        summary="||{@s}"
+    />
     <EditTextPreference
-        key="cardBalanceCoins"
+        key="transferAssets"
         obligatory="true"
-        defaultValue="USDT, USDC"
-        title="Card funding coins"
-        dialogTitle="Coins that fund the card"
-        dialogMessage="Comma-separated list, e.g. USDT, USDC. Include only stablecoins selected in Bybit Card → Paying With with Auto-Deduction enabled. The USD account balance combines their Funding value, redeemable Flexible Earn availableAmount, and Funding USD fiat 1:1. Bybit's public API does not expose the Auto-Deduction switch. Only USDT and USDC are supported."
+        defaultValue="USDT, USDC, FDUSD, TUSD, USD"
+        title="Transfer assets"
+        dialogTitle="Transfer assets"
+        dialogMessage="Comma-separated stable-value assets to import as nominal USD wallet movements: USDT, USDC, FDUSD, TUSD and USD. Other coins remain included in account balances and valuation without creating misleading historical USD cash flow."
         positiveButtonText="OK"
         negativeButtonText="Cancel"
-        summary="|cardBalanceCoins|{@s}"
+        summary="|transferAssets|{@s}"
+    />
+    <ListPreference
+        key="externalTransferAccount"
+        defaultValue="funding"
+        title="External deposit wallet"
+        dialogTitle="External deposit wallet"
+        dialogMessage="Choose the deposit account configured in Bybit. The history API does not expose which wallet received an older external deposit, so the plugin never guesses."
+        entries="Funding|Unified"
+        entryValues="funding|unified"
+        summary="|externalTransferAccount|{@s}"
+    />
+    <ListPreference
+        key="earnTransferAccount"
+        defaultValue="funding"
+        title="Flexible Earn source wallet"
+        dialogTitle="Flexible Earn source wallet"
+        dialogMessage="Choose the wallet you normally use for Flexible Earn subscriptions and redemptions. Bybit's Earn order history omits the historical source account."
+        entries="Funding|Unified"
+        entryValues="funding|unified"
+        summary="|earnTransferAccount|{@s}"
+    />
+    <CheckBoxPreference
+        key="syncCard"
+        defaultValue="false"
+        title="Sync Bybit Card"
+        dialogTitle="Sync Bybit Card"
+        dialogMessage="Enable only if you use a Bybit Card and granted its read-only permission. When off, the plugin shows Unified, Funding and Flexible Earn without creating a Card account or importing card purchases."
+        summary="||{@s}"
+    />
+    <ListPreference
+        key="cardPaymentSource"
+        defaultValue="funding"
+        title="Bybit Card payment source"
+        dialogTitle="Bybit Card payment source"
+        dialogMessage="Choose the source selected in Bybit Card payment settings. The Bybit API does not provide this setting, so the plugin never guesses. Choose Flexible Earn only when Auto-Deduction is enabled there; otherwise choose Funding."
+        entries="Flexible Earn|Funding"
+        entryValues="earn|funding"
+        summary="|cardPaymentSource|{@s}"
     />
 </PreferenceScreen>

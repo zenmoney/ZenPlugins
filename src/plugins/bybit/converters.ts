@@ -1,11 +1,21 @@
 import { InvalidPreferencesError } from '../../errors'
 import { AccountOrCard, AccountType, Merchant, Transaction } from '../../types/zenmoney'
-import { CardTransaction, CoinBalance, FlexibleEarnPosition } from './models'
+import { CardTransaction, CoinBalance, EarnTransfer, ExternalTransfer, FlexibleEarnPosition, InternalTransfer, UnifiedWallet } from './models'
 
-/** Stable id of the single USD Bybit Card account. */
-export const BYBIT_CARD_AGGREGATE_ACCOUNT_ID = 'bybit_card'
+export const BYBIT_UNIFIED_ACCOUNT_ID = 'bybit_unified'
+export const BYBIT_FUNDING_ACCOUNT_ID = 'bybit_funding'
+export const BYBIT_FLEXIBLE_EARN_ACCOUNT_ID = 'bybit_flexible_earn'
+export const DEFAULT_TRANSFER_ASSETS = new Set(['USDT', 'USDC', 'FDUSD', 'TUSD', 'USD'])
 
-const AGGREGATE_COINS_SUPPORTED: ReadonlySet<string> = new Set(['USDT', 'USDC'])
+export function parseTransferAssets (raw?: string): Set<string> {
+  const assets = new Set((raw ?? 'USDT,USDC,FDUSD,TUSD,USD').split(',').map(value => value.trim().toUpperCase()).filter(Boolean))
+  if (assets.size === 0) throw new InvalidPreferencesError('Bybit: choose at least one transfer asset')
+  const unsupportedAssets = [...assets].filter(asset => !DEFAULT_TRANSFER_ASSETS.has(asset))
+  if (unsupportedAssets.length > 0) {
+    throw new InvalidPreferencesError(`Bybit: unsupported transfer asset(s): ${unsupportedAssets.join(', ')}. Only USDT, USDC, FDUSD, TUSD and USD can be imported as nominal USD wallet movements.`)
+  }
+  return assets
+}
 
 // Mapping of /v5/card/transaction/query-asset-records `side` codes to a sign for the amount.
 // The docs list 13 sides; we only emit transactions for unambiguous debits/credits.
@@ -26,63 +36,75 @@ const SIDE_SIGN: Readonly<Record<string, 1 | -1>> = {
 // 0 In_Progress, 1 Completed, 2 Declined, 3 Reversal.
 const SKIPPED_TRADE_STATUSES: ReadonlySet<string> = new Set(['2', '3'])
 
-export function parseCardBalanceCoinsList (raw: string): Set<string> {
-  const coins = new Set<string>()
-  for (const part of raw.split(',')) {
-    const coin = part.trim().toUpperCase()
-    if (coin === '' || coins.has(coin)) {
-      continue
-    }
-
-    if (!AGGREGATE_COINS_SUPPORTED.has(coin)) {
-      throw new InvalidPreferencesError(
-        `Bybit: aggregate card account supports only USDT and USDC in the coin list (got ${coin}).`
-      )
-    }
-    coins.add(coin)
+export function createUnifiedAccount (wallet: UnifiedWallet): AccountOrCard {
+  return {
+    id: BYBIT_UNIFIED_ACCOUNT_ID,
+    type: AccountType.checking,
+    title: 'Bybit Unified',
+    instrument: 'USD',
+    balance: wallet.totalEquity,
+    syncIds: [BYBIT_UNIFIED_ACCOUNT_ID]
   }
-  return coins
 }
 
-export function createAggregatedAccount (
+export function createFundingAccount (
   balances: CoinBalance[],
-  cardBalanceCoins: Set<string>,
-  convertUsdtValues: Map<string, number>,
-  flexibleEarnPositions: FlexibleEarnPosition[] = []
+  convertUsdtValues: Map<string, number>
 ): AccountOrCard {
-  // USD fiat in Funding is taken 1:1 (it has no entry in the Convert coin list).
-  // Every other allowed coin uses Bybit's own "one-click" USDT-worth value (`uBalance`)
-  // so the aggregated balance matches what the Bybit Card UI displays.
-  let usdSum = 0
-  for (const b of balances) {
-    const coin = b.coin.toUpperCase()
-    if (!cardBalanceCoins.has(coin)) {
-      continue
-    }
-    if (coin === 'USD') {
-      usdSum += b.transferBalance
-    } else {
-      usdSum += convertUsdtValues.get(coin) ?? 0
-    }
-  }
-  // With Bybit Card Auto-Earn and Auto-Deduction enabled, the redeemable part of
-  // Flexible Earn is part of the card's spending power even though Funding is 0.
-  // USDT/USDC are the only supported aggregate coins and are represented 1:1 in
-  // this USD account, matching the existing card-balance model.
-  for (const position of flexibleEarnPositions) {
-    if (cardBalanceCoins.has(position.coin.toUpperCase())) {
-      usdSum += position.availableAmount
-    }
+  let balance = 0
+  for (const item of balances) {
+    const coin = item.coin.toUpperCase()
+    // Funding's wallet balance is the asset owned in the wallet. `transferBalance`
+    // is merely the currently transferable amount and becomes zero when Bybit reserves
+    // a coin for Card spending, although the asset still belongs to the user.
+    balance += coin === 'USD' ? item.walletBalance : (convertUsdtValues.get(coin) ?? 0)
   }
   return {
-    id: BYBIT_CARD_AGGREGATE_ACCOUNT_ID,
-    type: AccountType.ccard,
-    title: 'Bybit Card',
+    id: BYBIT_FUNDING_ACCOUNT_ID,
+    type: AccountType.checking,
+    title: 'Bybit Funding',
     instrument: 'USD',
-    balance: usdSum,
-    creditLimit: 0,
-    syncIds: [BYBIT_CARD_AGGREGATE_ACCOUNT_ID]
+    balance,
+    syncIds: [BYBIT_FUNDING_ACCOUNT_ID]
   }
+}
+
+export function createFlexibleEarnAccount (
+  positions: FlexibleEarnPosition[],
+  usdtPrices: Map<string, number>
+): AccountOrCard {
+  const balance = positions.reduce((sum, position) => {
+    const price = usdtPrices.get(position.coin.toUpperCase())
+    if (price == null || !Number.isFinite(price) || price <= 0) {
+      throw new Error(`Bybit Flexible Earn asset has no USDT valuation: ${position.coin}`)
+    }
+    return sum + position.amount * price
+  }, 0)
+  return {
+    id: BYBIT_FLEXIBLE_EARN_ACCOUNT_ID,
+    type: AccountType.investment,
+    title: 'Bybit Flexible Earn',
+    instrument: 'USD',
+    balance,
+    savings: true,
+    syncIds: [BYBIT_FLEXIBLE_EARN_ACCOUNT_ID]
+  }
+}
+
+/**
+ * Bybit exposes the Card as a product, not a wallet with a separately
+ * reconcilable balance.  Card purchases must therefore debit the wallet the
+ * user selected in Bybit's payment settings. The Card API does not return
+ * that setting, so the plugin must use the explicit user choice.
+ */
+export function selectCardSettlementAccount (
+  source: 'auto' | 'earn' | 'funding' | undefined,
+  fundingAccount: AccountOrCard,
+  flexibleEarnAccount: AccountOrCard
+): AccountOrCard {
+  if (source === 'earn') return flexibleEarnAccount
+  if (source === 'funding') return fundingAccount
+  throw new InvalidPreferencesError('Bybit: choose the Bybit Card payment source: Flexible Earn or Funding. The API does not disclose this setting.')
 }
 
 export function selectCardTransactionsForImport (
@@ -93,6 +115,76 @@ export function selectCardTransactionsForImport (
     ...financialEntries,
     ...authorizationEntries.filter(entry => entry.tradeStatus === '0')
   ]
+}
+
+function walletAccountId (accountType: string): string | null {
+  if (accountType === 'FUND') return BYBIT_FUNDING_ACCOUNT_ID
+  if (accountType === 'UNIFIED') return BYBIT_UNIFIED_ACCOUNT_ID
+  return null
+}
+
+export function convertExternalTransfers (
+  transfers: ExternalTransfer[],
+  target: 'funding' | 'unified',
+  assets: Set<string>
+): Transaction[] {
+  const accountId = target === 'unified' ? BYBIT_UNIFIED_ACCOUNT_ID : BYBIT_FUNDING_ACCOUNT_ID
+  return transfers.filter(item => assets.has(item.coin) && !Number.isNaN(item.date.getTime())).map(item => {
+    const sign = item.direction === 'deposit' ? 1 : -1
+    const network = item.network == null ? '' : `; network ${item.network}`
+    return {
+      hold: false,
+      date: item.date,
+      movements: [{
+        id: `bybit_external_${item.direction}_${item.id}`,
+        account: { id: accountId },
+        invoice: null,
+        sum: sign * item.amount,
+        fee: item.direction === 'withdrawal' ? -Math.abs(item.fee) : 0
+      }],
+      merchant: null,
+      comment: `Bybit external ${item.direction}: ${item.coin}${network}`
+    }
+  })
+}
+
+export function convertInternalTransfers (transfers: InternalTransfer[], assets: Set<string>): Transaction[] {
+  return transfers.flatMap(item => {
+    const from = walletAccountId(item.fromAccountType)
+    const to = walletAccountId(item.toAccountType)
+    if (from == null || to == null || from === to || !assets.has(item.coin) || Number.isNaN(item.date.getTime())) return []
+    return [{
+      hold: false,
+      date: item.date,
+      movements: [
+        { id: `bybit_internal_${item.id}_out`, account: { id: from }, invoice: null, sum: -item.amount, fee: 0 },
+        { id: `bybit_internal_${item.id}_in`, account: { id: to }, invoice: null, sum: item.amount, fee: 0 }
+      ],
+      merchant: null,
+      comment: `Bybit internal transfer: ${item.amount} ${item.coin}`
+    }]
+  })
+}
+
+export function convertEarnTransfers (
+  transfers: EarnTransfer[],
+  source: 'funding' | 'unified',
+  assets: Set<string>
+): Transaction[] {
+  const sourceId = source === 'unified' ? BYBIT_UNIFIED_ACCOUNT_ID : BYBIT_FUNDING_ACCOUNT_ID
+  return transfers.filter(item => assets.has(item.coin) && !Number.isNaN(item.date.getTime())).map(item => {
+    const stake = item.type === 'Stake'
+    return {
+      hold: false,
+      date: item.date,
+      movements: [
+        { id: `bybit_earn_${item.id}_source`, account: { id: sourceId }, invoice: null, sum: stake ? -item.amount : item.amount, fee: 0 },
+        { id: `bybit_earn_${item.id}_earn`, account: { id: BYBIT_FLEXIBLE_EARN_ACCOUNT_ID }, invoice: null, sum: stake ? item.amount : -item.amount, fee: 0 }
+      ],
+      merchant: null,
+      comment: `Bybit Flexible Earn ${item.type.toLowerCase()}: ${item.amount} ${item.coin}`
+    }
+  })
 }
 
 export function convertTransaction (

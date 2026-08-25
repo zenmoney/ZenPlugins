@@ -1,102 +1,116 @@
-import { InvalidPreferencesError } from '../../../../errors'
 import { AccountType } from '../../../../types/zenmoney'
+import { InvalidPreferencesError } from '../../../../errors'
 import {
-  BYBIT_CARD_AGGREGATE_ACCOUNT_ID,
-  createAggregatedAccount,
-  parseCardBalanceCoinsList
+  BYBIT_FLEXIBLE_EARN_ACCOUNT_ID,
+  BYBIT_FUNDING_ACCOUNT_ID,
+  createFlexibleEarnAccount,
+  createFundingAccount,
+  convertEarnTransfers,
+  convertExternalTransfers,
+  convertInternalTransfers,
+  parseTransferAssets,
+  selectCardSettlementAccount
 } from '../../converters'
-import { CoinBalance } from '../../models'
 
-describe('parseCardBalanceCoinsList', () => {
-  it('parses, trims, and uppercases a comma-separated list', () => {
-    expect(parseCardBalanceCoinsList('usdt, USDC')).toEqual(new Set(['USDT', 'USDC']))
-  })
-
-  it('deduplicates coins', () => {
-    expect(parseCardBalanceCoinsList('USDT, usdt, USDC')).toEqual(new Set(['USDT', 'USDC']))
-  })
-
-  it('treats empty and whitespace-only items as no-ops', () => {
-    expect(parseCardBalanceCoinsList(', ,USDT,')).toEqual(new Set(['USDT']))
-  })
-
-  it('throws InvalidPreferencesError for unsupported coins', () => {
-    expect(() => parseCardBalanceCoinsList('USDT, BTC')).toThrow(InvalidPreferencesError)
-  })
-})
-
-describe('createAggregatedAccount', () => {
-  const cardCoins = new Set(['USDT', 'USDC', 'USD'])
-
-  it('sums uBalance for USDT and USDC and adds USD fiat 1:1', () => {
-    const balances: CoinBalance[] = [
-      { coin: 'USDT', walletBalance: 100, transferBalance: 95 },
-      { coin: 'USDC', walletBalance: 50, transferBalance: 50 },
-      { coin: 'USD', walletBalance: 12.34, transferBalance: 12.34 }
-    ]
-    const convertUsdtValues = new Map<string, number>([
-      ['USDT', 95.01],
-      ['USDC', 49.97]
-    ])
-    expect(createAggregatedAccount(balances, cardCoins, convertUsdtValues)).toEqual({
-      id: BYBIT_CARD_AGGREGATE_ACCOUNT_ID,
-      type: AccountType.ccard,
-      title: 'Bybit Card',
+describe('Bybit wallet accounts', () => {
+  it('keeps Funding as a separate wallet balance', () => {
+    expect(createFundingAccount([
+      { coin: 'USDT', walletBalance: 10, transferBalance: 9.5 },
+      { coin: 'USD', walletBalance: 5, transferBalance: 4 }
+    ], new Map([['USDT', 9.55]]))).toEqual({
+      id: BYBIT_FUNDING_ACCOUNT_ID,
+      type: AccountType.checking,
+      title: 'Bybit Funding',
       instrument: 'USD',
-      balance: 95.01 + 49.97 + 12.34,
-      creditLimit: 0,
-      syncIds: [BYBIT_CARD_AGGREGATE_ACCOUNT_ID]
+      balance: 14.55,
+      syncIds: [BYBIT_FUNDING_ACCOUNT_ID]
     })
   })
 
-  it('ignores Funding coins that are not in cardBalanceCoins', () => {
-    const balances: CoinBalance[] = [
-      { coin: 'USDT', walletBalance: 10, transferBalance: 10 },
-      { coin: 'BTC', walletBalance: 999, transferBalance: 999 }
-    ]
-    const convertUsdtValues = new Map<string, number>([
-      ['USDT', 10],
-      ['BTC', 9_999_999]
+  it('keeps Flexible Earn in its own investment account', () => {
+    expect(createFlexibleEarnAccount([
+      { coin: 'USDT', amount: 2300, availableAmount: 2252.3136 },
+      { coin: 'BTC', amount: 0.01, availableAmount: 0.01 }
+    ], new Map([['USDT', 1], ['BTC', 100000]]))).toEqual({
+      id: BYBIT_FLEXIBLE_EARN_ACCOUNT_ID,
+      type: AccountType.investment,
+      title: 'Bybit Flexible Earn',
+      instrument: 'USD',
+      balance: 3300,
+      savings: true,
+      syncIds: [BYBIT_FLEXIBLE_EARN_ACCOUNT_ID]
+    })
+  })
+
+  it('uses the live USDC/USDT quote instead of assuming a permanent 1:1 peg', () => {
+    expect(createFlexibleEarnAccount([
+      { coin: 'USDC', amount: 1000, availableAmount: 1000 }
+    ], new Map([['USDC', 0.9985]])).balance).toBe(998.5)
+  })
+
+  it('routes Card purchases to the selected payment wallet', () => {
+    const funding = createFundingAccount([], new Map())
+    const earn = createFlexibleEarnAccount([{ coin: 'USDT', amount: 10, availableAmount: 10 }], new Map([['USDT', 1]]))
+
+    expect(selectCardSettlementAccount('earn', funding, earn).id).toBe(BYBIT_FLEXIBLE_EARN_ACCOUNT_ID)
+    expect(selectCardSettlementAccount('funding', funding, earn).id).toBe(BYBIT_FUNDING_ACCOUNT_ID)
+    expect(() => selectCardSettlementAccount('auto', funding, earn)).toThrow(InvalidPreferencesError)
+  })
+
+  it('imports confirmed external stablecoin movements with stable ids', () => {
+    const transactions = convertExternalTransfers([{
+      id: 'deposit-1',
+      direction: 'deposit',
+      coin: 'USDT',
+      amount: 100,
+      fee: 0,
+      date: new Date('2026-08-01T00:00:00Z'),
+      network: 'BSC'
+    }, {
+      id: 'btc-1',
+      direction: 'deposit',
+      coin: 'BTC',
+      amount: 1,
+      fee: 0,
+      date: new Date('2026-08-01T00:00:00Z'),
+      network: 'BTC'
+    }], 'funding', parseTransferAssets(undefined))
+    expect(transactions).toHaveLength(1)
+    expect(transactions[0].movements[0]).toMatchObject({
+      id: 'bybit_external_deposit_deposit-1',
+      account: { id: BYBIT_FUNDING_ACCOUNT_ID },
+      sum: 100,
+      fee: 0
+    })
+  })
+
+  it('rejects non-stable transfer assets instead of treating one coin as one dollar', () => {
+    expect(() => parseTransferAssets('USDT, BTC')).toThrow(InvalidPreferencesError)
+  })
+
+  it('creates balanced Funding to Unified and Funding to Earn transfers', () => {
+    const assets = new Set(['USDT'])
+    const internal = convertInternalTransfers([{
+      id: 'move-1',
+      coin: 'USDT',
+      amount: 50,
+      fromAccountType: 'FUND',
+      toAccountType: 'UNIFIED',
+      date: new Date('2026-08-02T00:00:00Z')
+    }], assets)[0]
+    expect(internal.movements.map(item => item.sum)).toEqual([-50, 50])
+
+    const earn = convertEarnTransfers([{
+      id: 'earn-1',
+      coin: 'USDT',
+      amount: 25,
+      type: 'Stake',
+      date: new Date('2026-08-03T00:00:00Z')
+    }], 'funding', assets)[0]
+    expect(earn.movements.map(item => item.sum)).toEqual([-25, 25])
+    expect(earn.movements).toMatchObject([
+      { account: { id: BYBIT_FUNDING_ACCOUNT_ID } },
+      { account: { id: BYBIT_FLEXIBLE_EARN_ACCOUNT_ID } }
     ])
-    const account = createAggregatedAccount(balances, new Set(['USDT', 'USD']), convertUsdtValues)
-    expect(account.balance).toBe(10)
-  })
-
-  it('counts a card coin as 0 when it is missing from the Convert response', () => {
-    const balances: CoinBalance[] = [
-      { coin: 'USDT', walletBalance: 5, transferBalance: 5 },
-      { coin: 'USDC', walletBalance: 3, transferBalance: 3 }
-    ]
-    const convertUsdtValues = new Map<string, number>([['USDT', 5]])
-    const account = createAggregatedAccount(balances, cardCoins, convertUsdtValues)
-    expect(account.balance).toBe(5)
-  })
-
-  it('uses transferBalance (not walletBalance) for USD fiat', () => {
-    const balances: CoinBalance[] = [
-      { coin: 'USD', walletBalance: 100, transferBalance: 80 }
-    ]
-    const account = createAggregatedAccount(balances, cardCoins, new Map())
-    expect(account.balance).toBe(80)
-  })
-
-  it('adds only the redeemable Flexible Earn amount for configured card coins', () => {
-    const account = createAggregatedAccount(
-      [],
-      new Set(['USDT', 'USD']),
-      new Map(),
-      [
-        { coin: 'USDT', amount: 2300, availableAmount: 2252.3136 },
-        { coin: 'USDC', amount: 100, availableAmount: 100 }
-      ]
-    )
-
-    expect(account.balance).toBe(2252.3136)
-  })
-
-  it('returns a zero-balance account when there are no matching coins', () => {
-    const account = createAggregatedAccount([], cardCoins, new Map())
-    expect(account.balance).toBe(0)
-    expect(account.id).toBe(BYBIT_CARD_AGGREGATE_ACCOUNT_ID)
   })
 })
