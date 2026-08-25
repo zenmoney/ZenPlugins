@@ -4,6 +4,11 @@ const mockLogin = jest.fn()
 const mockFetchAccounts = jest.fn()
 const mockFetchConvertCoinUsdtValues = jest.fn()
 const mockFetchFlexibleEarnPositions = jest.fn()
+const mockFetchEarnUsdtPrices = jest.fn()
+const mockFetchUnifiedWallet = jest.fn()
+const mockFetchExternalTransfers = jest.fn()
+const mockFetchInternalTransfers = jest.fn()
+const mockFetchEarnTransfers = jest.fn()
 const mockFetchFinancialTransactions = jest.fn()
 const mockFetchAuthorizationTransactions = jest.fn()
 
@@ -12,6 +17,11 @@ jest.mock('../api', () => ({
   fetchAccounts: mockFetchAccounts,
   fetchConvertCoinUsdtValues: mockFetchConvertCoinUsdtValues,
   fetchFlexibleEarnPositions: mockFetchFlexibleEarnPositions,
+  fetchEarnUsdtPrices: mockFetchEarnUsdtPrices,
+  fetchUnifiedWallet: mockFetchUnifiedWallet,
+  fetchExternalTransfers: mockFetchExternalTransfers,
+  fetchInternalTransfers: mockFetchInternalTransfers,
+  fetchEarnTransfers: mockFetchEarnTransfers,
   fetchFinancialTransactions: mockFetchFinancialTransactions,
   fetchAuthorizationTransactions: mockFetchAuthorizationTransactions
 }))
@@ -31,8 +41,7 @@ describe('Bybit scrape balance', () => {
         apiKey: 'key',
         apiSecret: 'secret',
         baseUrl: 'https://api.bybit.com'
-      },
-      cardBalanceCoins: new Set(['USDT', 'USDC', 'USD'])
+      }
     })
     mockFetchAccounts.mockResolvedValue([
       { coin: 'USDT', walletBalance: 314.3019, transferBalance: 314.3019 },
@@ -46,18 +55,23 @@ describe('Bybit scrape balance', () => {
     mockFetchFlexibleEarnPositions.mockResolvedValue([
       { coin: 'USDT', amount: 200, availableAmount: 200 }
     ])
+    mockFetchEarnUsdtPrices.mockResolvedValue(new Map([['USDT', 1]]))
+    mockFetchUnifiedWallet.mockResolvedValue({ totalEquity: 1_070.621910189452 })
+    mockFetchExternalTransfers.mockResolvedValue([])
+    mockFetchInternalTransfers.mockResolvedValue([])
+    mockFetchEarnTransfers.mockResolvedValue([])
     mockFetchFinancialTransactions.mockResolvedValue([])
     mockFetchAuthorizationTransactions.mockResolvedValue([])
   })
 
-  it('uses only Funding assets for the card balance', async () => {
+  it('keeps Funding and Flexible Earn separate without a duplicate Card balance', async () => {
     const result = await scrape({
       preferences: {
         apiKey: 'key',
         apiSecret: 'secret',
-        baseUrl: 'https://api.bybit.com',
+        region: 'global',
         startDate: '2026-01-01T00:00:00.000Z',
-        cardBalanceCoins: 'USDT, USDC'
+        syncCard: false
       },
       fromDate: new Date('2026-08-01T00:00:00.000Z'),
       toDate: new Date('2026-08-20T00:00:00.000Z'),
@@ -65,7 +79,11 @@ describe('Bybit scrape balance', () => {
       isInBackground: false
     })
 
-    expect(result.accounts[0].balance).toBeCloseTo(870.6219101894521)
-    expect(mockFetchFlexibleEarnPositions).not.toHaveBeenCalled()
+    expect(result.accounts).toMatchObject([
+      { id: 'bybit_unified', balance: 1_070.621910189452 },
+      { id: 'bybit_funding', balance: 870.6219101894521 },
+      { id: 'bybit_flexible_earn', balance: 200 }
+    ])
+    expect(result.accounts.find(account => account.id === 'bybit_card')).toBeUndefined()
   })
 })
