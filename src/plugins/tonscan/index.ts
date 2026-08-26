@@ -12,9 +12,10 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   })
 
   await Promise.all(
-    preferences.wallets
+    [...new Set(preferences.wallets
       .split(',')
       .map(walletAddress => walletAddress.trim())
+      .filter(walletAddress => walletAddress !== ''))]
       .map(async (ownerWalletAddress) => {
         const [wallet, jettons] = await Promise.all([
           tonscanApi.fetchWallet(ownerWalletAddress),
@@ -43,6 +44,9 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
         transactions.push(...walletTransactions)
         transactions.push(...jettonsTransactions)
       }))
+
+  // Release the rate limiter's final timer before the plugin worker exits.
+  await tonscanApi.waitForIdle()
 
   return {
     accounts,
