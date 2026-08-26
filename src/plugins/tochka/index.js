@@ -3,8 +3,10 @@ import { concat } from 'lodash'
 import { UserInteractionError } from '../../errors'
 import { fetchAccounts, fetchBalance, fetchTransactions, login } from './api'
 import { convertAccount, convertTransactionNew } from './converters'
+import { trustCertificates } from './certificates'
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
+  trustCertificates()
   if (!toDate) {
     toDate = new Date()
   }
