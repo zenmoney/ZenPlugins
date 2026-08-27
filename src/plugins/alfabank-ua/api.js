@@ -55,8 +55,17 @@ async function fetchApi (url, options, auth) {
     ...options?.sanitizeRequestLog
   }
   const sanitizeResponseLog = {
-    ...url === '/auth' && { body: { access_token: true, refresh_token: true } },
-    ...options?.sanitizeResponseLog
+    headers: {
+      'set-cookie': true,
+      'Set-Cookie': true,
+      ...options?.sanitizeResponseLog?.headers
+    },
+    body: url === '/device/token'
+      ? true
+      : {
+          ...url === '/auth' && { access_token: true, refresh_token: true },
+          ...options?.sanitizeResponseLog?.body
+        }
   }
   let result
   try {
@@ -135,11 +144,29 @@ async function askPinCode () {
 }
 
 function assertResponseCodeOk (response) {
-  console.assert(response.body.code === 'OK', 'unexpected response', response)
+  if (response?.body?.code !== 'OK') {
+    console.warn('Sense API returned an unexpected response', responseSummary(response))
+    throw new TemporaryUnavailableError('Sense Bank тимчасово відхилив запит. Спробуйте пізніше.')
+  }
 }
 
 function assertResponseAccessToken (response) {
-  console.assert(response.body.access_token, 'unexpected response', response)
+  if (typeof response?.body?.access_token !== 'string' || !response.body.access_token) {
+    console.warn('Sense authentication returned an unexpected response', responseSummary(response))
+    throw new TemporaryUnavailableError('Sense Bank тимчасово не підтвердив авторизацію. Спробуйте пізніше.')
+  }
+}
+
+function responseSummary (response) {
+  const body = response?.body
+  return {
+    status: Number.isInteger(response?.status) ? response.status : null,
+    contentType: response?.headers?.['content-type'] || response?.headers?.get?.('content-type') || null,
+    bodyType: body == null ? String(body) : typeof body,
+    responseCode: typeof body?.code === 'string' ? body.code : null,
+    responseError: typeof body?.error === 'string' ? body.error : null,
+    errorDescription: typeof body?.error_description === 'string' ? body.error_description : null
+  }
 }
 
 function getPhoneNumber (input) {
@@ -151,7 +178,7 @@ function getPhoneNumber (input) {
   return null
 }
 
-async function getDeviceToken (auth) {
+export async function getDeviceToken (auth) {
   const response = await fetchApi('/device/token', {
     method: 'POST',
     body: {
