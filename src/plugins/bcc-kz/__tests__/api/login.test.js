@@ -30,7 +30,8 @@ describe('bcc-kz login auth flow', () => {
   beforeEach(() => {
     global.ZenMoney = {
       device: { brand: 'Google', model: 'Pixel 7' },
-      readLine: jest.fn().mockResolvedValue('2009')
+      readLine: jest.fn().mockResolvedValue('2009'),
+      setCookie: jest.fn()
     }
     global.fetch = jest.fn()
   })
@@ -42,7 +43,8 @@ describe('bcc-kz login auth flow', () => {
       .mockResolvedValueOnce(makeNetworkResponse({
         access_token: 'bearer-token',
         provider_response: {
-          session_code: 'session-code'
+          session_code: 'session-code',
+          mbsessionid: 'mb-session-id'
         }
       }))
 
@@ -75,6 +77,12 @@ describe('bcc-kz login auth flow', () => {
     expect(connectBody.OS).toContain('OS:Android10')
     expect(auth.accessToken).toBe('bearer-token')
     expect(auth.sessionCode).toBe('session-code')
+    expect(global.ZenMoney.setCookie).toHaveBeenCalledWith(
+      'm.bcc.kz',
+      'mbsessionid',
+      'mb-session-id',
+      { path: '/', secure: true }
+    )
   })
 
   it('maps OTP timeout response to InvalidOtpCodeError', async () => {
