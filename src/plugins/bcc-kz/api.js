@@ -83,6 +83,15 @@ function extractSessionCode (responseBody, accessToken) {
   return null
 }
 
+function extractMbsessionId (responseBody, accessToken) {
+  const jwtPayload = decodeJwtPayload(accessToken)
+  return responseBody?.provider_response?.mbsessionid ||
+    responseBody?.mbsessionid ||
+    jwtPayload?.provider_response?.mbsessionid ||
+    jwtPayload?.mbsessionid ||
+    null
+}
+
 async function fetchAuthApi (options) {
   return await fetch(AUTH_URL, {
     method: 'POST',
@@ -98,6 +107,16 @@ async function fetchAuthApi (options) {
 
 export async function setLanguageCookie () {
   await ZenMoney.setCookie('m.bcc.kz', 'lang', 'ae')
+}
+
+export async function setMbsessionCookie (auth) {
+  if (!auth?.mbsessionId) {
+    return
+  }
+  await ZenMoney.setCookie('m.bcc.kz', 'mbsessionid', auth.mbsessionId, {
+    path: '/',
+    secure: true
+  })
 }
 
 function validatePreferences (rawPreferences) {
@@ -225,7 +244,8 @@ async function postAuth (auth) {
 
   return {
     accessToken: response.body.access_token,
-    sessionCode: extractSessionCode(response.body, response.body.access_token)
+    sessionCode: extractSessionCode(response.body, response.body.access_token),
+    mbsessionId: extractMbsessionId(response.body, response.body.access_token)
   }
 }
 
@@ -243,6 +263,11 @@ export async function login (rawPreferences, auth) {
   const connectResult = await postAuth(auth)
   auth.accessToken = connectResult.accessToken
   auth.sessionCode = connectResult.sessionCode
+  auth.mbsessionId = connectResult.mbsessionId
+  await setMbsessionCookie(auth)
+  if (auth.mbsessionId && typeof ZenMoney.saveCookies === 'function') {
+    await ZenMoney.saveCookies()
+  }
 }
 
 function createAuthenticatedMainUrl (auth, params) {
