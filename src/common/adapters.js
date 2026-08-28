@@ -483,7 +483,7 @@ export function adaptScrapeToGlobalApi (scrape) {
       if (Array.isArray(results.accounts) && Array.isArray(results.transactions)) {
         ZenMoney.addAccount(patchAccounts(results.accounts))
         ZenMoney.addTransaction(patchTransactions(results.transactions, results.accounts))
-        ZenMoney.setResult({ success: true })
+        ZenMoney.setResult({ ..._.omit(results, ['accounts', 'success', 'transactions']), success: true })
         return
       }
       throw new Error('scrape should return {accounts[], transactions[]}')
