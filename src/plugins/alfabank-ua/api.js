@@ -146,14 +146,14 @@ async function askPinCode () {
 function assertResponseCodeOk (response) {
   if (response?.body?.code !== 'OK') {
     console.warn('Sense API returned an unexpected response', responseSummary(response))
-    throw new TemporaryUnavailableError('Sense Bank тимчасово відхилив запит. Спробуйте пізніше.')
+    throw new TemporaryUnavailableError()
   }
 }
 
 function assertResponseAccessToken (response) {
   if (typeof response?.body?.access_token !== 'string' || !response.body.access_token) {
     console.warn('Sense authentication returned an unexpected response', responseSummary(response))
-    throw new TemporaryUnavailableError('Sense Bank тимчасово не підтвердив авторизацію. Спробуйте пізніше.')
+    throw new TemporaryUnavailableError()
   }
 }
 
