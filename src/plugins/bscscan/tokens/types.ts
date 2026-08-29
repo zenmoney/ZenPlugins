@@ -18,6 +18,7 @@ export interface TokenTransaction {
   tokenSymbol: string
   tokenDecimal: string
   transactionIndex: string
+  logIndex?: string
   gas: string
   gasPrice: string
   gasUsed: string
