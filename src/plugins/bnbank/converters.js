@@ -136,7 +136,7 @@ function convertIskraAccount (json, accountType) {
 }
 
 export function convertTransaction (apiTransaction, accounts, hold = false) {
-  if (apiTransaction.productId && apiTransaction.transactionSum) {
+  if (apiTransaction.productId) {
     return convertIskraTransaction(apiTransaction, accounts)
   }
   if (apiTransaction.accountNumber.length > 16) {
@@ -203,13 +203,20 @@ function convertIskraTransaction (apiTransaction, accounts) {
 
   const operationInstrument = getInstrument(apiTransaction.operationSum?.currency) || account.instrument
   const transactionInstrument = getInstrument(apiTransaction.transactionSum?.currency) || operationInstrument
-  const transactionMoney = { sum: transactionSum, instrument: transactionInstrument }
-  const operationMoney = { sum: operationSum, instrument: operationInstrument }
-  const accountMoney = [transactionMoney, operationMoney].find(money => money.instrument === account.instrument) || transactionMoney
-  const invoiceMoney = [transactionMoney, operationMoney]
+  const moneyCandidates = [
+    apiTransaction.transactionSum ? { sum: transactionSum, instrument: transactionInstrument } : null,
+    apiTransaction.operationSum ? { sum: operationSum, instrument: operationInstrument } : null
+  ].filter(Boolean)
+  const accountMoney = moneyCandidates.find(money => money.instrument === account.instrument && money.sum !== 0) ||
+    moneyCandidates.find(money => money.instrument === account.instrument) ||
+    moneyCandidates.find(money => money.sum !== 0)
+  const invoiceMoney = moneyCandidates
     .find(money => money !== accountMoney && money.instrument !== accountMoney.instrument)
-  const date = new Date(apiTransaction.paymentDate || detail.operationDate)
-  if (Number.isNaN(date.getTime())) return null
+  const date = [apiTransaction.paymentDate, detail.operationDate]
+    .filter(Boolean)
+    .map(value => new Date(value))
+    .find(value => !Number.isNaN(value.getTime()))
+  if (!date) return null
   const invoice = invoiceMoney ? { sum: invoiceMoney.sum, instrument: invoiceMoney.instrument } : null
   const merchantTitle = cleanMerchantTitle(detail.merchantName)
   const { city, country } = parseLocation(apiTransaction)

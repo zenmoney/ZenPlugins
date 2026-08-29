@@ -3,8 +3,9 @@ import { generateRandomString } from '../../common/utils'
 import { InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '../../errors'
 
 const BASE_URL = 'https://bnb-mobile.bnb.by/'
-const APP_VERSION = '1.8.3'
+const APP_VERSION = '1.9.0'
 const PAGE_SIZE = 20
+const MAX_TRANSACTION_SNAPSHOT_ATTEMPTS = 2
 const DEVICE_KEY = 'device'
 const AUTH_KEY = 'auth'
 const TRUSTED_DEVICE_STATUS = 'TRUSTED'
@@ -562,30 +563,32 @@ function toIskraProductType (account) {
   }
 }
 
-/**
- * Fetches every operation in the requested interval using offset pagination.
- */
-export async function fetchTransactions (accessToken, accounts, fromDate, toDate = new Date()) {
-  console.log('>>> Загрузка списка транзакций...')
-  const productTypes = accounts
-    .map(account => ({ id: account.id, type: toIskraProductType(account) }))
-    .filter(product => product.type)
-  if (productTypes.length === 0) {
-    return []
+function getOperationKey (operation) {
+  if (!operation || typeof operation.id !== 'string' || !operation.id.trim()) return null
+  if (operation.productType === 'ACCOUNT') {
+    const stableActionId = /^([0-9]+)_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.exec(operation.id)?.[1]
+    if (stableActionId) {
+      return [operation.productId, operation.productType, stableActionId].join('|')
+    }
   }
+  return [operation.productId, operation.productType, operation.idType, operation.id]
+    .map(value => value == null ? '' : String(value))
+    .join('|')
+}
 
+async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
   const operations = []
-  let totalCount = 0
+  const operationKeys = new Set()
+  let totalCount = null
+  let unstable = false
+
   do {
     const response = await fetchApiJson('product-transaction/v1/operations', {
       method: 'POST',
       headers: authHeaders(accessToken),
       body: {
         filter: {
-          date: {
-            till: (toDate || new Date()).toISOString(),
-            from: fromDate.toISOString()
-          },
+          date: dateRange,
           productTypes
         },
         pagination: {
@@ -601,10 +604,54 @@ export async function fetchTransactions (accessToken, accounts, fromDate, toDate
     if (response.operations.length === 0 && responseTotalCount > operations.length) {
       throw new TemporaryError('Банк вернул неполную страницу операций. Повторите синхронизацию позже.')
     }
+    if (totalCount != null && responseTotalCount !== totalCount) {
+      unstable = true
+    }
+    for (const operation of response.operations) {
+      const key = getOperationKey(operation)
+      if (!key || operationKeys.has(key)) {
+        unstable = true
+      } else {
+        operationKeys.add(key)
+      }
+    }
     operations.push(...response.operations)
+    if (operations.length > responseTotalCount) {
+      unstable = true
+    }
     totalCount = responseTotalCount
-  } while (operations.length < totalCount)
+  } while (!unstable && operations.length < totalCount)
 
-  console.log(`>>> Загружено ${operations.length} операций.`)
-  return operations
+  return { operations, unstable }
+}
+
+/**
+ * Fetches every operation in the requested interval using offset pagination and
+ * retries once if the bank changes the result set between pages.
+ */
+export async function fetchTransactions (accessToken, accounts, fromDate, toDate = new Date()) {
+  console.log('>>> Загрузка списка транзакций...')
+  const productTypes = accounts
+    .map(account => ({ id: account.id, type: toIskraProductType(account) }))
+    .filter(product => product.type)
+  if (productTypes.length === 0) {
+    return []
+  }
+
+  const dateRange = {
+    till: (toDate || new Date()).toISOString(),
+    from: fromDate.toISOString()
+  }
+  for (let attempt = 0; attempt < MAX_TRANSACTION_SNAPSHOT_ATTEMPTS; attempt++) {
+    const snapshot = await fetchTransactionSnapshot(accessToken, productTypes, dateRange)
+    if (!snapshot.unstable) {
+      console.log(`>>> Загружено ${snapshot.operations.length} операций.`)
+      return snapshot.operations
+    }
+    if (attempt + 1 < MAX_TRANSACTION_SNAPSHOT_ATTEMPTS) {
+      console.log('>>> Список операций изменился во время загрузки, повторяем...')
+    }
+  }
+
+  throw new TemporaryError('Банк изменил список операций во время загрузки. Повторите синхронизацию позже.')
 }
