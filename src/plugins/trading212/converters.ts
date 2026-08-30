@@ -32,8 +32,8 @@ function convertTransaction (op: ExportOperation, accountId: string, cardId: str
   const isCardDebit = op.Action === 'Card debit'
   const isCardCashback = op.Action === 'Spending cashback' && !preferences.investCashback
   const isCardTransaction = isCardDebit || isCardCashback
-  const time = op['Time (UTC)'] ?? op.Time
-  const date = new Date(op['Time (UTC)'] != null && time != null ? `${time.replace(' ', 'T')}Z` : time ?? '')
+  const time = (op['Time (UTC)'] ?? op.Time)?.replace(' ', 'T')
+  const date = new Date(op['Time (UTC)'] != null && time != null && !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(time) ? `${time}Z` : time ?? '')
   const sum = Number(op.Total ?? op['Gross Total'])
 
   console.log('Converting operation', op)

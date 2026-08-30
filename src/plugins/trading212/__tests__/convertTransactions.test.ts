@@ -106,9 +106,12 @@ describe('convertTransactions', () => {
     expect(result[0].movements[0].account).toEqual({ id: 'acc-1' })
   })
 
-  it('converts current export fields for interest on cash', () => {
+  it.each([
+    '2026-07-18 01:15:00+00:00',
+    '2026-07-18 01:15:00'
+  ])('converts Time (UTC) value %s for interest on cash', (time) => {
     const operations: ExportOperation[] = [
-      { ID: 'interest-001', Action: 'Interest on cash', 'Time (UTC)': '2026-07-18 01:15:00', Total: '2.48', 'Currency (Total)': 'USD' }
+      { ID: 'interest-001', Action: 'Interest on cash', 'Time (UTC)': time, Total: '2.48', 'Currency (Total)': 'USD' }
     ]
     const result = convertTransactions(operations, 'acc-1', 'acc-1-card', defaultPreferences)
 
