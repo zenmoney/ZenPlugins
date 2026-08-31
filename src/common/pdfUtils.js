@@ -1,9 +1,7 @@
-import pdfjs from 'pdfjs-dist'
+import 'pdfjs-dist/build/pdf.worker.entry'
 import pdf from 'pdf-extraction/lib/pdf-extraction'
 import { fetchJson } from './network'
 import { isDebug } from './utils'
-
-pdfjs.GlobalWorkerOptions.workerSrc = 'unexisting'
 
 const PDF_PARSER_URL = ''
 
