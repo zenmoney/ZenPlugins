@@ -1,53 +1,52 @@
-# Bybit Card plugin for ZenMoney
+# Bybit wallets and Card plugin for ZenMoney
 
-Synchronizes the **Bybit Card** with ZenMoney via the public Bybit V5 REST API, using a read-only API key + secret.
+Read-only synchronization of Bybit wallets and, optionally, Bybit Card transactions through the public V5 API.
 
-## What it imports
+## What the plugin creates
 
-- One ZenMoney credit-card account (`ccard`): **Bybit Card**.
-  - Stable id: `bybit_card`.
-  - Instrument: `USD`.
-  - Balance: the card's estimated spending power:
-    - the "one-click" USDT-worth (`uBalance`) returned by the [Convert coin list](https://bybit-exchange.github.io/docs/v5/asset/convert/convert-coin-list) for configured Funding coins (`USDT`, `USDC`);
-    - Funding `USD` fiat (added automatically, 1:1);
-    - the redeemable `availableAmount` returned by [`GET /v5/earn/position`](https://bybit-exchange.github.io/docs/v5/finance/earn/easy-onchain/position) for the same configured stablecoins.
-  - Bybit does not expose the card's Auto-Deduction switch through the public API. Configure only coins that are selected for card payment with Auto-Deduction enabled; otherwise the estimate can exceed the actual spending power.
-  - Skip in ZenMoney: `bybit_card`.
-- Card transactions from [`POST /v5/card/transaction/query-asset-records`](https://bybit-exchange.github.io/docs/v5/bybit-card/asset-records).
-  - `SIDE_QUERY_FINANCIAL_ALL` is used for posted card transactions.
-  - `SIDE_QUERY_AUTH` is queried for the requested date range and only in-progress authorizations (`tradeStatus=0`) are imported, so new card payments appear as ZenMoney holds before posting.
-  - The movement's `sum` is the pre-fee part of `basicAmount`, and its signed `fee` is populated from `totalFees`; together they preserve the exact total balance effect reported by Bybit.
-  - `invoice` is `paidAmount` in `paidCurrency` only when that currency differs from the USD card account; otherwise it is `null`.
-  - Merchant title and MCC are mapped to ZenMoney's native fields. City and country are retained in the comment because ZenMoney's final plugin serializer has no fields for them. `merchCategoryDesc` is used as a fallback merchant title. Bybit does not provide merchant coordinates.
-  - Authorizations (`side=1`) and any in-progress transactions (`tradeStatus=0`) are marked as holds.
-  - Declined (`tradeStatus=2`), reversal (`tradeStatus=3`), authorization-reversal (`side=2`), unDeduct-refund (`side=4`), and various `*-reversal` / `*-request` sides are filtered out to avoid double-counting.
+- **Bybit Unified** — the USD equity reported by Bybit for the Unified wallet.
+- **Bybit Funding** — all non-zero Funding assets, valued in USD through Bybit's own Convert valuation.
+- **Bybit Flexible Earn** — every Flexible Earn asset, valued in USDT with Bybit's own spot prices. The account is marked as savings.
 
-## How to create the API key
+The Card is a payment instrument, not an independent wallet with a reliable separate balance. Enabling Card sync imports its purchases into the wallet chosen in the Card's *Paying With* settings, without creating a duplicate "Bybit Card" balance.
 
-1. Sign in to [bybit.com](https://www.bybit.com) → click your avatar → **API**.
-2. Click **Create New Key** → **System-generated API Keys** → **API Transaction**.
-3. Set **API Key Permissions** to **Read-Only**.
-4. Enable:
-   - **Bybit Card** (this is the scope required by `/v5/card/transaction/query-asset-records`).
-   - **Earn** → *Earn* (read-only; required to include redeemable Flexible Earn in card spending power).
-   - **Wallet** → *Account Transfer* and *Subaccount Transfer* (so the funding-wallet balance probe works).
-   - **Exchange** → *Exchange History* (read-only; required by `/v5/asset/exchange/query-coin-list`, which provides the one-click `uBalance` used for the aggregated USD balance).
-5. **Do NOT** enable any trading, derivatives, or withdrawal permissions. Read-only "Exchange History" alone does not allow executing convert/exchange orders.
-6. Optionally restrict the key by IP for extra safety.
-7. Copy the **API Key** and **API Secret** (the secret is shown only once) and paste them into the plugin's preferences.
-8. Select the official API host for the account region. The global default is
-   `https://api.bybit.com`; Kazakhstan accounts use `https://api.bybit.kz`.
+## Wallet movements
 
-## Limitations
+- Confirmed on-chain deposits, deposits from another Bybit account and successful withdrawals are imported with stable operation IDs.
+- Funding ↔ Unified transfers are imported as balanced transfers between the two ZenMoney accounts.
+- Flexible Earn subscriptions and redemptions are imported as balanced transfers between Flexible Earn and the source wallet selected by the user.
+- Bybit does not expose the destination wallet of an older external deposit or the source wallet of an older Earn order. The plugin therefore asks for both settings and never guesses.
+- USDT, USDC, FDUSD, TUSD and USD can be imported at their nominal amount. Non-stable assets remain included in the live USD account valuation, but are not represented as misleading historical USD cash flow without a trustworthy historical quote.
+- The first synchronization reads the requested external history. Internal wallet and Flexible Earn history is limited to the latest 180 days to stay within Bybit API limits; later synchronizations continue incrementally from ZenMoney's last successful date.
 
-- The plugin imports the side codes listed above. If Bybit introduces new `side` values or renames the existing ones, the `SIDE_SIGN` whitelist in [`converters.ts`](converters.ts) needs to be updated.
-- The Flexible Earn part of the balance assumes that every configured stablecoin is selected in Bybit Card's **Paying With** settings and has **Auto-Deduction** enabled. The public Card API does not expose those switches.
-- Authorization reversals (`side=2`) are not imported — instead, the matching authorization (`side=1`, in-progress hold) is expected to disappear from the upstream feed or be superseded by a cleared transaction on a subsequent sync. ZenMoney's hold-reconciliation logic handles the difference.
-- Bybit documents a separate API hostname for some regions. A key created on a
-  regional Bybit site may be rejected by the global host, so the plugin setting
-  must match the account region.
+## Card transactions
 
-## Suggested ZenMoney workflow
+- Cleared purchases, refunds, chargebacks, ATM withdrawals and fees use stable
+  transaction IDs from Bybit. The aggregate financial query is retained because
+  it is the mode accepted by the live Kazakhstan Card API.
+- Pending authorizations are imported as holds; declined and reversal records are skipped so they cannot be double-counted.
+- Merchant, MCC, city and country are retained where Bybit provides them.
+- The Card API does not disclose the actual *Paying With* setting. The plugin therefore asks the user to choose **Flexible Earn** or **Funding** and never guesses from a current balance. Set it to the same source selected in Bybit.
 
-- `Bybit Card` is a single USD `ccard` account. Spending is imported as the final USD card charge, including Bybit's card fees.
-- Hide the card via «skip account» using `bybit_card` if needed. The plugin uses `ZenMoney.isAccountSkipped` and skips imports for skipped accounts.
+## Creating a safe API key
+
+1. In Bybit open **API** → **Create New Key** → **System-generated API Key**.
+2. Select **Read-Only** permissions.
+3. Enable only the read permissions needed by the active features:
+   - **Wallet** for wallet balances and transfer history;
+   - **Earn** for Flexible Earn positions;
+   - **Exchange History** for Funding asset valuation;
+   - **Bybit Card** only when Card transaction sync is enabled.
+4. Never enable trading, transfer or withdrawal permissions.
+5. Restrict the key to a trusted IP address when practical.
+
+Choose the account region from the predefined list. The plugin maps it to the
+official Bybit API host; users never type an API URL. Kazakhstan accounts use
+Bybit's documented `api.bybit.kz` host rather than the global host. Brazil uses
+the global host with Bybit's required `BRA_BTL` site identifier.
+
+## Limitations and safety
+
+- If Bybit does not publish a USDT market price for a non-stable Earn asset, synchronization stops with a clear error instead of silently valuing it at zero.
+- The plugin imports wallet balances, wallet movements and Card operations, not raw exchange orders, bot events or every trade fill. This keeps a household budget useful.
+- An API key and secret remain in ZenMoney preferences; development files `zp_preferences.json` are ignored by Git and must never be committed.

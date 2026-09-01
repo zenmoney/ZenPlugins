@@ -7,11 +7,19 @@ import {
   CardTransactionQueryType,
   CoinBalance,
   Credentials,
-  FlexibleEarnPosition
+  EarnTransfer,
+  ExternalTransfer,
+  FlexibleEarnPosition,
+  InternalTransfer,
+  UnifiedWallet
 } from './models'
 
 const RECV_WINDOW = '20000'
-const MIN_REQUEST_INTERVAL_MS = 1500
+// Asset and Earn history need many small date windows on the first sync.
+// Four signed requests per second stay well below Bybit's documented limits
+// while avoiding a multi-minute first run.
+const MIN_REQUEST_INTERVAL_MS = 500
+const INTERNAL_HISTORY_DAYS = 180
 let lastRequestAt = 0
 
 export interface CardTransactionPage {
@@ -75,10 +83,10 @@ export function signRequest (apiSecret: string, timestamp: string, apiKey: strin
   return crypto.HmacSHA256(message, apiSecret).toString(crypto.enc.Hex)
 }
 
-async function callApi (creds: Credentials, request: BybitRequest): Promise<FetchResponse> {
+async function callApi (creds: Credentials, request: BybitRequest, attempt = 0): Promise<FetchResponse> {
   await waitForRequestSlot()
 
-  const { apiKey, apiSecret, baseUrl } = creds
+  const { apiKey, apiSecret, baseUrl, siteId } = creds
   const timestamp = Date.now().toString()
 
   let url: string
@@ -107,7 +115,8 @@ async function callApi (creds: Credentials, request: BybitRequest): Promise<Fetc
     'X-BAPI-TIMESTAMP': timestamp,
     'X-BAPI-RECV-WINDOW': RECV_WINDOW,
     'X-BAPI-SIGN': signature,
-    'X-BAPI-SIGN-TYPE': '2'
+    'X-BAPI-SIGN-TYPE': '2',
+    ...(siteId == null ? {} : { 'x-site-id': siteId })
   }
 
   const response = await fetchJson(url, options)
@@ -127,6 +136,10 @@ async function callApi (creds: Credentials, request: BybitRequest): Promise<Fetc
       throw new InvalidPreferencesError(`Bybit: ${retMsg} (retCode=${retCode}). Recreate a read-only API key in Bybit Dashboard → API with Bybit Card, Earn, Wallet, and Exchange History permissions enabled.`)
     }
     // 10006 / 10018 rate-limit / ip ban
+    if (retCode === 10006 && attempt < 4) {
+      await new Promise(resolve => setTimeout(resolve, 1500 * (attempt + 1)))
+      return await callApi(creds, request, attempt + 1)
+    }
     if (retCode === 10006 || retCode === 10018) {
       throw new TemporaryError(`Bybit: ${retMsg} (retCode=${retCode})`)
     }
@@ -149,6 +162,150 @@ export async function fetchFundingBalances (creds: Credentials): Promise<CoinBal
     walletBalance: Number(getString(item, 'walletBalance')),
     transferBalance: Number(getString(item, 'transferBalance'))
   }))
+}
+
+export async function fetchUnifiedWallet (creds: Credentials): Promise<UnifiedWallet> {
+  const response = await callApi(creds, {
+    method: 'GET',
+    path: '/v5/account/wallet-balance',
+    query: { accountType: 'UNIFIED' }
+  })
+  const wallet = getArray(response.body, 'result.list')[0]
+  if (wallet == null) {
+    throw new TemporaryError('Bybit: Unified wallet was not returned by the API')
+  }
+  return { totalEquity: parseAmountString(wallet, 'totalEquity') }
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+async function fetchCursorRows (
+  creds: Credentials,
+  path: string,
+  query: Record<string, string | number | undefined>,
+  listKey: 'rows' | 'list'
+): Promise<unknown[]> {
+  const rows: unknown[] = []
+  let cursor: string | undefined
+  do {
+    const response = await callApi(creds, {
+      method: 'GET', path, query: { ...query, limit: 50, cursor }
+    })
+    rows.push(...getArray(response.body, `result.${listKey}`))
+    const nextCursor = getOptString(response.body, 'result.nextPageCursor')
+    cursor = nextCursor == null || nextCursor === '' ? undefined : nextCursor
+  } while (cursor != null)
+  return rows
+}
+
+function historyRanges (fromDate: Date, toDate: Date, days: number): Array<{ startTime: number, endTime: number }> {
+  const ranges: Array<{ startTime: number, endTime: number }> = []
+  let startTime = fromDate.getTime()
+  const finalTime = toDate.getTime()
+  while (startTime < finalTime) {
+    const endTime = Math.min(startTime + days * DAY_MS - 1, finalTime - 1)
+    ranges.push({ startTime, endTime })
+    startTime = endTime + 1
+  }
+  return ranges
+}
+
+function apiDate (value: string): Date {
+  const numeric = Number(value)
+  return new Date(numeric < 10_000_000_000 ? numeric * 1000 : numeric)
+}
+
+export async function fetchExternalTransfers (creds: Credentials, fromDate: Date, toDate: Date): Promise<ExternalTransfer[]> {
+  const transfers = new Map<string, ExternalTransfer>()
+  for (const range of historyRanges(fromDate, toDate, 29)) {
+    const deposits = await fetchCursorRows(creds, '/v5/asset/deposit/query-record', range, 'rows')
+    for (const row of deposits) {
+      if (getOptNumber(row, 'status') !== 3 || getOptString(row, 'depositType') === '50') continue
+      const id = getString(row, 'id')
+      transfers.set(`deposit:${id}`, {
+        id,
+        direction: 'deposit',
+        coin: getString(row, 'coin').toUpperCase(),
+        amount: parseAmountString(row, 'amount'),
+        fee: parseAmountString(row, 'depositFee'),
+        date: apiDate(getString(row, 'successAt')),
+        network: nullIfEmpty(getOptString(row, 'chain'))
+      })
+    }
+
+    const internalDeposits = await fetchCursorRows(creds, '/v5/asset/deposit/query-internal-record', range, 'rows')
+    for (const row of internalDeposits) {
+      if (getOptNumber(row, 'status') !== 2) continue
+      const id = getString(row, 'id')
+      transfers.set(`internal-deposit:${id}`, {
+        id: `internal-${id}`,
+        direction: 'deposit',
+        coin: getString(row, 'coin').toUpperCase(),
+        amount: parseAmountString(row, 'amount'),
+        fee: 0,
+        date: apiDate(getString(row, 'createdTime')),
+        network: 'Bybit internal'
+      })
+    }
+
+    const withdrawals = await fetchCursorRows(creds, '/v5/asset/withdraw/query-record', { ...range, withdrawType: 2 }, 'rows')
+    for (const row of withdrawals) {
+      if ((getOptString(row, 'status') ?? '').toLowerCase() !== 'success') continue
+      const id = getOptString(row, 'withdrawId') ?? getString(row, 'withdrawID')
+      transfers.set(`withdrawal:${id}`, {
+        id,
+        direction: 'withdrawal',
+        coin: getString(row, 'coin').toUpperCase(),
+        amount: parseAmountString(row, 'amount'),
+        fee: parseAmountString(row, 'withdrawFee'),
+        date: apiDate(getString(row, 'createTime')),
+        network: nullIfEmpty(getOptString(row, 'chain'))
+      })
+    }
+  }
+  return [...transfers.values()]
+}
+
+export async function fetchInternalTransfers (creds: Credentials, fromDate: Date, toDate: Date): Promise<InternalTransfer[]> {
+  const transfers = new Map<string, InternalTransfer>()
+  const boundedFromDate = new Date(Math.max(fromDate.getTime(), toDate.getTime() - INTERNAL_HISTORY_DAYS * DAY_MS))
+  for (const range of historyRanges(boundedFromDate, toDate, 7)) {
+    const rows = await fetchCursorRows(creds, '/v5/asset/transfer/query-inter-transfer-list', range, 'list')
+    for (const row of rows) {
+      if ((getOptString(row, 'status') ?? '').toUpperCase() !== 'SUCCESS') continue
+      const id = getString(row, 'transferId')
+      transfers.set(id, {
+        id,
+        coin: getString(row, 'coin').toUpperCase(),
+        amount: parseAmountString(row, 'amount'),
+        fromAccountType: getString(row, 'fromAccountType').toUpperCase(),
+        toAccountType: getString(row, 'toAccountType').toUpperCase(),
+        date: apiDate(getString(row, 'timestamp'))
+      })
+    }
+  }
+  return [...transfers.values()]
+}
+
+export async function fetchEarnTransfers (creds: Credentials, fromDate: Date, toDate: Date): Promise<EarnTransfer[]> {
+  const transfers = new Map<string, EarnTransfer>()
+  const boundedFromDate = new Date(Math.max(fromDate.getTime(), toDate.getTime() - INTERNAL_HISTORY_DAYS * DAY_MS))
+  for (const range of historyRanges(boundedFromDate, toDate, 7)) {
+    const rows = await fetchCursorRows(creds, '/v5/earn/order', { ...range, category: 'FlexibleSaving' }, 'list')
+    for (const row of rows) {
+      const type = getOptString(row, 'orderType')
+      if ((type !== 'Stake' && type !== 'Redeem') || getOptString(row, 'status') !== 'Success') continue
+      const id = getString(row, 'orderId')
+      transfers.set(id, {
+        id,
+        coin: getString(row, 'coin').toUpperCase(),
+        amount: parseAmountString(row, 'orderValue'),
+        type,
+        date: apiDate(getString(row, 'createdAt'))
+      })
+    }
+  }
+  return [...transfers.values()]
 }
 
 export async function fetchCardTransactionsPage (
@@ -217,6 +374,39 @@ export async function fetchFlexibleEarnPositions (creds: Credentials): Promise<F
       availableAmount: parseAmountString(item, 'availableAmount')
     }
   })
+}
+
+/**
+ * Values every non-stable Earn asset in USDT using Bybit's own spot ticker.
+ * A missing quote is a hard error: silently treating a held asset as zero
+ * would understate the user's capital.
+ */
+export async function fetchEarnUsdtPrices (
+  creds: Credentials,
+  positions: FlexibleEarnPosition[]
+): Promise<Map<string, number>> {
+  // Only the accounting unit itself is exactly 1. Other stablecoins can
+  // deviate from their peg, so use Bybit's live market price for them too.
+  const prices = new Map<string, number>([['USDT', 1]])
+  const coins = [...new Set(positions.map(position => position.coin.toUpperCase()))]
+  for (const coin of coins) {
+    if (prices.has(coin)) continue
+    const response = await callApi(creds, {
+      method: 'GET',
+      path: '/v5/market/tickers',
+      query: { category: 'spot', symbol: `${coin}USDT` }
+    })
+    const ticker = getArray(response.body, 'result.list')[0]
+    if (ticker == null) {
+      throw new TemporaryError(`Bybit: no USDT market price was returned for Flexible Earn asset ${coin}`)
+    }
+    const price = parseAmountString(ticker, 'lastPrice')
+    if (price <= 0) {
+      throw new TemporaryError(`Bybit: invalid USDT market price for Flexible Earn asset ${coin}`)
+    }
+    prices.set(coin, price)
+  }
+  return prices
 }
 
 function parseCardTransaction (item: unknown): CardTransaction {

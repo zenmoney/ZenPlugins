@@ -1,10 +1,14 @@
 import { InvalidPreferencesError } from '../../errors'
-import { parseCardBalanceCoinsList } from './converters'
 import {
   fetchCardTransactionsPage,
   fetchConvertCoinUsdtValues as fetchConvertCoinUsdtValuesApi,
+  fetchEarnUsdtPrices as fetchEarnUsdtPricesApi,
   fetchFlexibleEarnPositions as fetchFlexibleEarnPositionsApi,
-  fetchFundingBalances
+  fetchEarnTransfers as fetchEarnTransfersApi,
+  fetchExternalTransfers as fetchExternalTransfersApi,
+  fetchFundingBalances,
+  fetchInternalTransfers as fetchInternalTransfersApi,
+  fetchUnifiedWallet as fetchUnifiedWalletApi
 } from './fetchApi'
 import {
   Auth,
@@ -13,12 +17,28 @@ import {
   CoinBalance,
   Credentials,
   FlexibleEarnPosition,
+  EarnTransfer,
+  ExternalTransfer,
+  InternalTransfer,
+  UnifiedWallet,
   Preferences
 } from './models'
 
 // if > 100, the API returns 10 only
 const PAGE_LIMIT = 100
 const DEFAULT_BASE_URL = 'https://api.bybit.com'
+const REGION_ENDPOINTS: Readonly<Record<string, { baseUrl: string, siteId?: string }>> = {
+  global: { baseUrl: DEFAULT_BASE_URL },
+  netherlands: { baseUrl: 'https://api.bybit.nl' },
+  turkey: { baseUrl: 'https://api.bybit.tr' },
+  kazakhstan: { baseUrl: 'https://api.bybit.kz' },
+  georgia: { baseUrl: 'https://api.bybitgeorgia.ge' },
+  uae: { baseUrl: 'https://api.bybit.ae' },
+  eea: { baseUrl: 'https://api.bybit.eu' },
+  indonesia: { baseUrl: 'https://api.bybit.id' },
+  japan: { baseUrl: 'https://api.manepa.jp' },
+  brazil: { baseUrl: DEFAULT_BASE_URL, siteId: 'BRA_BTL' }
+}
 const ALLOWED_API_HOSTS: ReadonlySet<string> = new Set([
   'api.bybit.com',
   'api.bytick.com',
@@ -60,20 +80,22 @@ export function normalizeBaseUrl (rawBaseUrl?: string): string {
 
 export async function login (preferences: Preferences): Promise<Auth> {
   if (preferences.apiKey == null || preferences.apiKey === '' ||
-    preferences.apiSecret == null || preferences.apiSecret === '' ||
-    preferences.cardBalanceCoins == null || preferences.cardBalanceCoins.trim() === '') {
-    throw new InvalidPreferencesError('Bybit: API Key, API Secret, and Card funding coins are required')
+    preferences.apiSecret == null || preferences.apiSecret === '') {
+    throw new InvalidPreferencesError('Bybit: API Key and API Secret are required')
   }
-  // validate the coin list
-  const cardBalanceCoins = parseCardBalanceCoinsList(preferences.cardBalanceCoins)
-  // Always include fiat USD from the Funding wallet (1:1 to USD)
-  cardBalanceCoins.add('USD')
+  const region = preferences.region?.trim()
+  const endpoint = region == null || region === ''
+    ? { baseUrl: normalizeBaseUrl(preferences.baseUrl) }
+    : REGION_ENDPOINTS[region]
+  if (endpoint == null) {
+    throw new InvalidPreferencesError('Bybit: choose a supported account region')
+  }
   const credentials: Credentials = {
     apiKey: preferences.apiKey,
     apiSecret: preferences.apiSecret,
-    baseUrl: normalizeBaseUrl(preferences.baseUrl)
+    ...endpoint
   }
-  return { credentials, cardBalanceCoins }
+  return { credentials }
 }
 
 export async function fetchAccounts (creds: Credentials): Promise<CoinBalance[]> {
@@ -88,13 +110,38 @@ export async function fetchFlexibleEarnPositions (creds: Credentials): Promise<F
   return await fetchFlexibleEarnPositionsApi(creds)
 }
 
+export async function fetchEarnUsdtPrices (creds: Credentials, positions: FlexibleEarnPosition[]): Promise<Map<string, number>> {
+  return await fetchEarnUsdtPricesApi(creds, positions)
+}
+
+export async function fetchUnifiedWallet (creds: Credentials): Promise<UnifiedWallet> {
+  return await fetchUnifiedWalletApi(creds)
+}
+
+export async function fetchExternalTransfers (creds: Credentials, fromDate: Date, toDate: Date): Promise<ExternalTransfer[]> {
+  return await fetchExternalTransfersApi(creds, fromDate, toDate)
+}
+
+export async function fetchInternalTransfers (creds: Credentials, fromDate: Date, toDate: Date): Promise<InternalTransfer[]> {
+  return await fetchInternalTransfersApi(creds, fromDate, toDate)
+}
+
+export async function fetchEarnTransfers (creds: Credentials, fromDate: Date, toDate: Date): Promise<EarnTransfer[]> {
+  return await fetchEarnTransfersApi(creds, fromDate, toDate)
+}
+
+export function isCardTransactionInRange (transaction: CardTransaction, fromDate: Date, toDate: Date): boolean {
+  const createdAt = Number(transaction.txnCreate)
+  return Number.isFinite(createdAt) && createdAt >= fromDate.getTime() && createdAt < toDate.getTime()
+}
+
 export async function fetchTransactions (
   creds: Credentials,
   fromDate: Date,
   toDate: Date,
   type: CardTransactionQueryType
 ): Promise<CardTransaction[]> {
-  const transactions: CardTransaction[] = []
+  const transactions = new Map<string, CardTransaction>()
   const createBeginTime = fromDate.getTime()
   const createEndTime = toDate.getTime()
 
@@ -106,14 +153,19 @@ export async function fetchTransactions (
       page,
       limit: PAGE_LIMIT
     })
-    result.transactions.forEach(txn => transactions.push(txn))
+    // The live Card endpoint may return records outside createBeginTime /
+    // createEndTime for SIDE_QUERY_FINANCIAL_ALL.  Filter locally as well so
+    // adjacent ZenMoney sync windows cannot import the same transaction twice.
+    result.transactions
+      .filter(txn => isCardTransactionInRange(txn, fromDate, toDate))
+      .forEach(txn => transactions.set(txn.txnId, txn))
     const fetchedSoFar = page * PAGE_LIMIT
     if (result.transactions.length < PAGE_LIMIT || fetchedSoFar >= result.totalCount) {
       break
     }
   }
 
-  return transactions
+  return [...transactions.values()]
 }
 
 export async function fetchFinancialTransactions (
