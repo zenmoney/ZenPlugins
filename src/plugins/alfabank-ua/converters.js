@@ -266,7 +266,9 @@ function convertUsualTransaction (apiTransaction, account) {
   }
   if ([
     /Погашение процентов/i,
-    /Погашение тела кредита/i
+    /Погашение тела кредита/i,
+    /^(Збільшення|Зменшення) кредитного ліміту$/i,
+    /^(Увеличение|Уменьшение|Изменение) кредитного лимита$/i
   ].some(regexp => regexp.test(apiTransaction.operationName))) {
     return null
   }
