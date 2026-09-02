@@ -2,8 +2,9 @@ import forge from 'node-forge'
 import { fetch } from '../../common/network'
 import Connection from '../../common/protocols/webSocket'
 import { delay, generateUUID } from '../../common/utils'
+import { TemporaryUnavailableError } from '../../errors'
 
-const APP_VERSION = '2.338.05'
+const APP_VERSION = '2.339.05'
 const GRAPHQL_URL = 'https://mobile.pumb.ua/graphql'
 const WEB_SOCKET_URL = 'wss://mobile.pumb.ua/ws'
 const GRAPHQL_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibW9iaWxlIGFwcCIsImlhdCI6MTY4OTMxODI2Miwic2NvcGUiOlsiYXV0aCIsInNldHRpbmdzLW1ldGFkYXRhIl19.TdQl0F-tudg9-XdnFSyBtT2fopFqtjCNK2tSCNQLkaw'
@@ -151,16 +152,44 @@ function getGraphqlError (response) {
     .find(value => typeof value === 'string' && value)
   const message = [error.message, extension?.message, extension?.title]
     .find(value => typeof value === 'string' && value)
+  const extensionKeys = extension ? Object.keys(extension).sort() : []
+  const originalErrorKeys = originalError ? Object.keys(originalError).sort() : []
+  const diagnosticValues = extension == null
+    ? []
+    : ['classification', 'code']
+        .map(key => {
+          const value = extension[key]
+          if (typeof value !== 'string' || value.trim() === '') return null
+          return `${key}=${sanitizePersonalDataInText(value.trim()).slice(0, 120)}`
+        })
+        .filter(Boolean)
   return {
     code: typeof code === 'string' ? code.toUpperCase() : null,
-    message: typeof message === 'string' ? message : null
+    classification: typeof extension?.classification === 'string' ? extension.classification : null,
+    message: typeof message === 'string' ? message : null,
+    diagnosticKeys: {
+      extensions: extensionKeys,
+      originalError: originalErrorKeys
+    },
+    diagnosticValues
   }
 }
 
 function makeHttpError (response, operationName, graphqlError) {
-  const message = sanitizePersonalDataInText(graphqlError?.message || `PUMB returned HTTP ${response.status}`)
+  const status = Number.isInteger(response.status) ? response.status : 'unknown'
+  const code = graphqlError?.code || null
+  const bankMessage = sanitizePersonalDataInText(graphqlError?.message || 'PUMB returned an unexpected response')
+  const extensionKeys = graphqlError?.diagnosticKeys?.extensions || []
+  const originalErrorKeys = graphqlError?.diagnosticKeys?.originalError || []
+  const diagnosticValues = graphqlError?.diagnosticValues || []
+  const diagnostic = [
+    extensionKeys.length > 0 ? `extensions=${extensionKeys.join('|')}` : null,
+    originalErrorKeys.length > 0 ? `originalError=${originalErrorKeys.join('|')}` : null,
+    ...diagnosticValues
+  ].filter(Boolean).join('; ')
+  const message = `[HTTP ${status}${code ? `, ${code}` : ''}${diagnostic ? `; ${diagnostic}` : ''}] ${bankMessage}`
   const error = new Error(message)
-  error.code = graphqlError?.code || null
+  error.code = code
   error.httpStatus = response.status
   error.operationName = operationName
   return error
@@ -170,6 +199,16 @@ function throwGraphqlError (response, operationName) {
   const graphqlError = getGraphqlError(response)
   if (graphqlError?.code && SESSION_EXPIRED_CODES.has(graphqlError.code)) {
     throw new SessionExpiredError(graphqlError.code, operationName)
+  }
+  if (graphqlError?.classification === 'DataFetchingException') {
+    console.warn('PUMB GraphQL data-fetching failure', {
+      operationName,
+      status: Number.isInteger(response.status) ? response.status : null,
+      code: graphqlError.code,
+      diagnosticKeys: graphqlError.diagnosticKeys,
+      diagnosticValues: graphqlError.diagnosticValues
+    })
+    throw new TemporaryUnavailableError()
   }
   if (response.status < 200 || response.status >= 300 || graphqlError) {
     throw makeHttpError(response, operationName, graphqlError)
