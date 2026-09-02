@@ -2,6 +2,7 @@ import { createCipheriv, createHash, createHmac } from 'crypto'
 import {
   buildActivationDescriptor,
   createDeviceState,
+  generateDevicePin,
   generateDeviceOtp,
   openDeviceState,
   sealDeviceState
@@ -70,6 +71,16 @@ function makeXfad () {
 }
 
 describe('BGPB device OTP', () => {
+  it('generates a padded six-digit PIN and skips biased or weak values', () => {
+    const randomValues = [0xffffffff, 123456, 1042]
+
+    expect(generateDevicePin(() => randomValues.shift())).toBe('001042')
+  })
+
+  it('rejects invalid PIN random source values', () => {
+    expect(() => generateDevicePin(() => -1)).toThrow('random source returned an invalid value')
+  })
+
   it('derives activation and runtime OTP values compatible with DailyFin', () => {
     const descriptor = buildActivationDescriptor({
       xfad: makeXfad(),
