@@ -6,8 +6,7 @@ import {
   CardTransaction,
   CardTransactionQueryType,
   CoinBalance,
-  Credentials,
-  FlexibleEarnPosition
+  Credentials
 } from './models'
 
 const RECV_WINDOW = '20000'
@@ -124,7 +123,7 @@ async function callApi (creds: Credentials, request: BybitRequest): Promise<Fetc
     const retMsg = getOptString(response.body, 'retMsg') ?? 'unknown error'
     // 10003 invalid api key, 10004 invalid sign, 33004 api key expired, 10005 permission denied
     if (retCode === 10003 || retCode === 10004 || retCode === 33004 || retCode === 10005) {
-      throw new InvalidPreferencesError(`Bybit: ${retMsg} (retCode=${retCode}). Recreate a read-only API key in Bybit Dashboard → API with Bybit Card, Earn, Wallet, and Exchange History permissions enabled.`)
+      throw new InvalidPreferencesError(`Bybit: ${retMsg} (retCode=${retCode}). Recreate a read-only API key in Bybit Dashboard → API with Bybit Card, Wallet, and Exchange History permissions enabled.`)
     }
     // 10006 / 10018 rate-limit / ip ban
     if (retCode === 10006 || retCode === 10018) {
@@ -198,25 +197,6 @@ export async function fetchConvertCoinUsdtValues (creds: Credentials): Promise<M
     values.set(coin, parseAmountString(item, 'uBalance'))
   }
   return values
-}
-
-export async function fetchFlexibleEarnPositions (creds: Credentials): Promise<FlexibleEarnPosition[]> {
-  const response = await callApi(creds, {
-    method: 'GET',
-    path: '/v5/earn/position',
-    query: { category: 'FlexibleSaving' }
-  })
-
-  return getArray(response.body, 'result.list').map(item => {
-    return {
-      coin: getString(item, 'coin').toUpperCase(),
-      amount: parseAmountString(item, 'amount'),
-      // availableAmount is the redeemable portion and therefore the amount that
-      // Auto-Deduction can use for card spending. Do not fall back to the total
-      // amount: it can contain frozen funds.
-      availableAmount: parseAmountString(item, 'availableAmount')
-    }
-  })
 }
 
 function parseCardTransaction (item: unknown): CardTransaction {

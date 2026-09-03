@@ -1,6 +1,6 @@
 import { InvalidPreferencesError } from '../../errors'
 import { AccountOrCard, AccountType, Merchant, Transaction } from '../../types/zenmoney'
-import { CardTransaction, CoinBalance, FlexibleEarnPosition } from './models'
+import { CardTransaction, CoinBalance } from './models'
 
 /** Stable id of the single USD Bybit Card account. */
 export const BYBIT_CARD_AGGREGATE_ACCOUNT_ID = 'bybit_card'
@@ -47,8 +47,7 @@ export function parseCardBalanceCoinsList (raw: string): Set<string> {
 export function createAggregatedAccount (
   balances: CoinBalance[],
   cardBalanceCoins: Set<string>,
-  convertUsdtValues: Map<string, number>,
-  flexibleEarnPositions: FlexibleEarnPosition[] = []
+  convertUsdtValues: Map<string, number>
 ): AccountOrCard {
   // USD fiat in Funding is taken 1:1 (it has no entry in the Convert coin list).
   // Every other allowed coin uses Bybit's own "one-click" USDT-worth value (`uBalance`)
@@ -63,15 +62,6 @@ export function createAggregatedAccount (
       usdSum += b.transferBalance
     } else {
       usdSum += convertUsdtValues.get(coin) ?? 0
-    }
-  }
-  // With Bybit Card Auto-Earn and Auto-Deduction enabled, the redeemable part of
-  // Flexible Earn is part of the card's spending power even though Funding is 0.
-  // USDT/USDC are the only supported aggregate coins and are represented 1:1 in
-  // this USD account, matching the existing card-balance model.
-  for (const position of flexibleEarnPositions) {
-    if (cardBalanceCoins.has(position.coin.toUpperCase())) {
-      usdSum += position.availableAmount
     }
   }
   return {
