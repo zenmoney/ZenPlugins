@@ -204,7 +204,8 @@ function getUserAgent () {
 }
 
 function getErrorMessage (response) {
-  return response.body?.userMessage || response.body?.message || response.statusText || `HTTP ${response.status}`
+  return response.body?.userMessage || response.body?.message || response.body?.systemMessage ||
+    response.statusText || `HTTP ${response.status}`
 }
 
 function throwApiError (response, url, context) {
@@ -223,6 +224,9 @@ function throwApiError (response, url, context) {
   }
   if (url === 'user/v1/auth' && invalidPreferenceCodes.has(code)) {
     throw new InvalidPreferencesError(message)
+  }
+  if (code === 'APP_VERSION_IS_NOT_SUPPORTED') {
+    throw new TemporaryError(`BNB Iskra больше не поддерживает версию приложения, которую использует плагин. ${bankMessage}`)
   }
   if (blockedUserCodes.has(code)) {
     throw new TemporaryError('BNB Iskra заблокировал доступ к данным. Откройте приложение Iskra и выполните указанные там действия или обратитесь в поддержку BNB, затем повторите синхронизацию.')
