@@ -21,14 +21,14 @@ describe('convertTransactions', () => {
       [
         {
           hold: false,
-          date: new Date('2026-01-15 10:30:00'),
+          date: new Date('2026-01-15 10:30:00+00:00'),
           movements: [{ id: 'abc-123', account: { id: '12345' }, invoice: null, sum: -1000, fee: 0 }],
           comment: 'Market buy',
           merchant: null
         },
         {
           hold: false,
-          date: new Date('2026-01-16 14:20:00'),
+          date: new Date('2026-01-16 14:20:00+00:00'),
           movements: [{ id: 'abc-456', account: { id: '12345' }, invoice: null, sum: 500, fee: 0 }],
           comment: 'Market sell',
           merchant: null
@@ -39,28 +39,28 @@ describe('convertTransactions', () => {
       '67890',
       '67890-card',
       [
-        { ID: 'div-001', Action: 'Dividend (Tax)', Time: '2026-02-01 09:00:00', 'Gross Total': '-2.50', 'Currency (Gross Total)': 'USD' },
-        { ID: 'div-002', Action: 'Dividend (Dividend)', Time: '2026-02-01 09:00:00', 'Gross Total': '25.00', 'Currency (Gross Total)': 'USD' },
-        { ID: 'fee-001', Action: 'Stop limit order', Time: '2026-02-01 09:00:01', 'Gross Total': '-1.00', 'Currency (Gross Total)': 'USD' }
+        { ID: 'div-001', Action: 'Dividend (Tax)', 'Time (UTC)': '2026-02-01 09:00:00+00:00', Total: '-2.50', 'Currency (Total)': 'USD' },
+        { ID: 'div-002', Action: 'Dividend (Dividend)', 'Time (UTC)': '2026-02-01 09:00:00+00:00', Total: '25.00', 'Currency (Total)': 'USD' },
+        { ID: 'fee-001', Action: 'Stop limit order', 'Time (UTC)': '2026-02-01 09:00:01+00:00', Total: '-1.00', 'Currency (Total)': 'USD' }
       ] as ExportOperation[],
       [
         {
           hold: false,
-          date: new Date('2026-02-01 09:00:00'),
+          date: new Date('2026-02-01 09:00:00+00:00'),
           movements: [{ id: 'div-001', account: { id: '67890' }, invoice: null, sum: -2.50, fee: 0 }],
           comment: 'Dividend (Tax)',
           merchant: null
         },
         {
           hold: false,
-          date: new Date('2026-02-01 09:00:00'),
+          date: new Date('2026-02-01 09:00:00+00:00'),
           movements: [{ id: 'div-002', account: { id: '67890' }, invoice: null, sum: 25.00, fee: 0 }],
           comment: 'Dividend (Dividend)',
           merchant: null
         },
         {
           hold: false,
-          date: new Date('2026-02-01 09:00:01'),
+          date: new Date('2026-02-01 09:00:01+00:00'),
           movements: [{ id: 'fee-001', account: { id: '67890' }, invoice: null, sum: -1.00, fee: 0 }],
           comment: 'Stop limit order',
           merchant: null
@@ -108,7 +108,7 @@ describe('convertTransactions', () => {
 
   it('converts current export fields for interest on cash', () => {
     const operations: ExportOperation[] = [
-      { ID: 'interest-001', Action: 'Interest on cash', 'Time (UTC)': '2026-07-18 01:15:00', Total: '2.48', 'Currency (Total)': 'USD' }
+      { ID: 'interest-001', Action: 'Interest on cash', 'Time (UTC)': '2026-07-18 01:15:00+00:00', Total: '2.48', 'Currency (Total)': 'USD' }
     ]
     const result = convertTransactions(operations, 'acc-1', 'acc-1-card', defaultPreferences)
 
