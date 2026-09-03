@@ -68,7 +68,7 @@ describe('Iskra API', () => {
     })
     const [, refreshRequest] = fetchMock.lastCall(`${BASE_URL}user/v1/oauth/refresh`)
     expect(refreshRequest.headers).toMatchObject({
-      'user-agent': 'Android/GOOGLE/16/samsung/SM-S948B/1.8.3',
+      'user-agent': 'Android/GOOGLE/16/samsung/SM-S948B/1.9.0',
       'accept-language': 'RU'
     })
     expect(pluginData.saveDataRequested).toBe(true)
