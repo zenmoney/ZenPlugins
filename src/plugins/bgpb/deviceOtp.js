@@ -6,6 +6,10 @@ const ENVELOPE_VERSION = 1
 const KDF_ITERATIONS = 120000
 const OTP_PERIOD_SECONDS = 30
 const OTP_DIGITS = 6
+const PIN_SPACE_SIZE = Math.pow(10, OTP_DIGITS)
+const RANDOM_UINT32_RANGE = 0x100000000
+const RANDOM_UINT32_LIMIT = Math.floor(RANDOM_UINT32_RANGE / PIN_SPACE_SIZE) * PIN_SPACE_SIZE
+const PIN_GENERATION_ATTEMPTS = 100
 const DEVICE_MANUFACTURER = 'unknown'
 const DEVICE_MODEL = 'Android SDK built for x86'
 
@@ -124,6 +128,10 @@ function validateDeviceState (state) {
   return state
 }
 
+function isWeakDevicePin (pin) {
+  return new Set(pin).size < 3 || /(?:0123|1234|2345|3456|4567|5678|6789|9876|8765|7654|6543|5432|4321|3210)/.test(pin)
+}
+
 /**
  * Validates the local six-digit PIN used by the BGPB device token.
  */
@@ -131,9 +139,30 @@ export function validateDevicePin (pin) {
   if (!/^\d{6}$/.test(pin || '')) {
     throw new InvalidPreferencesError('PIN токена BGPB должен состоять ровно из 6 цифр')
   }
-  if (new Set(pin).size < 3 || /(?:0123|1234|2345|3456|4567|5678|6789|9876|8765|7654|6543|5432|4321|3210)/.test(pin)) {
+  if (isWeakDevicePin(pin)) {
     throw new InvalidPreferencesError('Выберите менее простой PIN токена BGPB')
   }
+}
+
+/**
+ * Generates a uniformly distributed local six-digit PIN for the BGPB device
+ * token while rejecting simple combinations that the token validator forbids.
+ */
+export function generateDevicePin (randomUint32 = () => crypto.lib.WordArray.random(4).words[0] >>> 0) {
+  for (let attempt = 0; attempt < PIN_GENERATION_ATTEMPTS; attempt++) {
+    const randomValue = randomUint32()
+    if (!Number.isInteger(randomValue) || randomValue < 0 || randomValue >= RANDOM_UINT32_RANGE) {
+      throw new Error('BGPB PIN random source returned an invalid value')
+    }
+    if (randomValue >= RANDOM_UINT32_LIMIT) {
+      continue
+    }
+    const pin = String(randomValue % PIN_SPACE_SIZE).padStart(OTP_DIGITS, '0')
+    if (!isWeakDevicePin(pin)) {
+      return pin
+    }
+  }
+  throw new Error('Could not generate a valid BGPB device PIN')
 }
 
 /**
