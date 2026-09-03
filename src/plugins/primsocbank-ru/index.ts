@@ -1,9 +1,12 @@
 import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { fetchAccounts, fetchTransactions, login } from './api'
+import { trustPrimsocbankCertificates } from './certs'
 import { convertAccounts, convertTransactions } from './converters'
 import { Auth, Preferences, ProductKind } from './models'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
+  trustPrimsocbankCertificates()
+
   const session = await login(preferences, ZenMoney.getData('auth') as Auth | undefined)
 
   const convertedAccounts = convertAccounts(await fetchAccounts(preferences, session))
