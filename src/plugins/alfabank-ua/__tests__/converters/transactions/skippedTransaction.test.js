@@ -104,6 +104,42 @@ describe('convertTransaction', () => {
           ]
       },
       null
+    ],
+    [
+      {
+        allowedOperations: [],
+        id: 'credit-limit-change-1',
+        operationDate: '2026-05-09T12:00:00+03:00',
+        operationName: 'Збільшення кредитного ліміту',
+        description: 'Кредитний ліміт',
+        categoryPFM: false,
+        subjectAmount: 2700000,
+        subjectUnit: 'UAH',
+        filterData: [
+          { key: 'incomeOutlay', value: 'Доход' },
+          { key: 'operationSum', value: '2700000' },
+          { key: 'operationCurrency', value: 'Гривна' }
+        ]
+      },
+      null
+    ],
+    [
+      {
+        allowedOperations: [],
+        id: 'credit-limit-change-2',
+        operationDate: '2026-05-10T12:00:00+03:00',
+        operationName: 'Уменьшение кредитного лимита',
+        description: 'Кредитный лимит',
+        categoryPFM: false,
+        subjectAmount: -500000,
+        subjectUnit: 'UAH',
+        filterData: [
+          { key: 'incomeOutlay', value: 'Расход' },
+          { key: 'operationSum', value: '-500000' },
+          { key: 'operationCurrency', value: 'Гривна' }
+        ]
+      },
+      null
     ]
   ])('converts skipped transaction', (apiTransaction, transaction) => {
     expect(convertTransaction(apiTransaction, { id: '1337' })).toEqual(transaction)
