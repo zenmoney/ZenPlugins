@@ -56,6 +56,33 @@ describe('Iskra transactions', () => {
     expect(transaction.date).toEqual(new Date('2026-07-27T15:45:00.000Z'))
   })
 
+  it('falls back to operationDate when paymentDate is malformed', () => {
+    const transaction = convertTransaction(makeOperation({
+      paymentDate: '-',
+      operationDetail: {
+        statusCode: 'EXECUTED',
+        operationDate: '2026-07-28T09:00:00+03:00'
+      }
+    }), accounts)
+
+    expect(transaction.date).toEqual(new Date('2026-07-28T06:00:00.000Z'))
+  })
+
+  it('uses operationSum when transactionSum is absent', () => {
+    const transaction = convertTransaction(makeOperation({
+      operationSum: { amount: '32.15', currency: 'BYN', sign: 'MINUS' },
+      transactionSum: null
+    }), accounts)
+
+    expect(transaction).toMatchObject({
+      movements: [{
+        account: { id: 'card-1' },
+        sum: -32.15,
+        invoice: null
+      }]
+    })
+  })
+
   it('uses the API operation type and id instead of a reusable authorization code', () => {
     const transaction = convertTransaction(makeOperation({
       idType: 'CARD_OPERATION',
