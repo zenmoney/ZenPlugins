@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>artsakhbank-am</id>
+    <company>0</company>
+    <description>
+        Artsakhbank (Armenia) — synchronizes accounts, cards and their transactions
+        via the online.artsakhbank.am internet bank. Input the login and password you
+        use there. Every sign-in is confirmed with a one-time code sent by SMS or email.
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="login"
+        summary="||{@s}"
+        title="Логин"
+        dialogTitle="Логин"
+        dialogMessage="Логин, с которым вы входите на online.artsakhbank.am"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="text"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <EditTextPreference
+        key="password"
+        summary="||***********"
+        title="Пароль от интернет-банка"
+        dialogTitle="Пароль от интернет-банка"
+        dialogMessage="Пароль, с которым вы входите на online.artsakhbank.am"
+        negativeButtonText="Отмена"
+        positiveButtonText="ОК"
+        inputType="textPassword"
+        obligatory="true"
+    >
+    </EditTextPreference>
+    <ListPreference
+        key="otpChannel"
+        title="Куда присылать код подтверждения"
+        dialogTitle="Куда присылать код подтверждения"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        entries="СМС|Электронная почта"
+        entryValues="3|5"
+        defaultValue="3"
+        summary="||{@s}">
+    </ListPreference>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2020-01-01T12:00:00.000Z"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    >
+    </EditTextPreference>
+</PreferenceScreen>
