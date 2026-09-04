@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>okx</id>
+    <company>0</company>
+    <description>Read-only OKX Trading, Funding and Savings wallets with paginated external transfers.</description>
+    <version>0.1</version>
+    <build>2</build>
+    <modular>true</modular>
+    <files><js>index.js</js><preferences>preferences.xml</preferences></files>
+</provider>
