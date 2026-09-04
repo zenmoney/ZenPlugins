@@ -2,8 +2,12 @@ import { Account, AccountType, Transaction } from '../../../types/zenmoney'
 import { generateTokenAddress, SUPPORTED_TOKENS } from './config'
 import { TokenAccount, TokenTransaction } from './types'
 
+// Small unsolicited token transfers are common on public addresses. USDT and
+// USDC are dollar-pegged, so this is a transparent $1 anti-spam boundary.
+const MINIMUM_TRACKED_STABLECOIN = 1
+
 function convertAccount (account: TokenAccount): Account | null {
-  const token = SUPPORTED_TOKENS.find(token => token.contractAddress === account.contractAddress)
+  const token = SUPPORTED_TOKENS.find(token => token.contractAddress.toLowerCase() === account.contractAddress.toLowerCase())
 
   if (token == null) {
     return null
@@ -26,23 +30,29 @@ export function convertAccounts (accounts: TokenAccount[]): Account[] {
 }
 
 export function convertTransaction (account: TokenAccount, transaction: TokenTransaction): Transaction | null {
-  const token = SUPPORTED_TOKENS.find(token => token.contractAddress === account.contractAddress)
+  const token = SUPPORTED_TOKENS.find(token => token.contractAddress.toLowerCase() === account.contractAddress.toLowerCase())
 
   if (token == null) {
     return null
   }
 
-  const direction = transaction.from === account.id ? 'PAYMENT' : 'DEPOSIT'
+  const direction = transaction.from.toLowerCase() === account.id.toLowerCase() ? 'PAYMENT' : 'DEPOSIT'
   const targetAccount = direction === 'PAYMENT' ? transaction.to : transaction.from
   const sign = direction === 'PAYMENT' ? -1 : 1
   const operationValue = token.convertBalance(Number(transaction.value))
+
+  if (direction === 'DEPOSIT' && Math.abs(operationValue) < MINIMUM_TRACKED_STABLECOIN) {
+    return null
+  }
 
   return {
     hold: null,
     date: new Date(Number(transaction.timeStamp) * 1000),
     movements: [
       {
-        id: transaction.hash,
+        // One blockchain transaction may contain several token transfers.
+        // logIndex makes their ZenMoney IDs distinct and stable.
+        id: `${transaction.hash}:${transaction.logIndex ?? transaction.transactionIndex}`,
         account: {
           id: generateTokenAddress(account.id, token)
         },
@@ -64,8 +74,6 @@ export function convertTransactions (account: TokenAccount, transactions: TokenT
   const list = transactions
     .map((transaction) => convertTransaction(account, transaction))
     .filter((transaction): transaction is Transaction => transaction !== null)
-
-  console.log('LST', list)
 
   return list
 }

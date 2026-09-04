@@ -3,11 +3,12 @@
     <EditTextPreference
         key="apiKey"
         obligatory="true"
-        title="ApiKey"
-        dialogTitle="ApiKey"
+        title="Alchemy API Key"
+        dialogTitle="Бесплатный ключ Alchemy"
+        dialogMessage="Создайте бесплатный ключ на alchemy.com, выберите BNB Smart Chain и вставьте только ключ, без URL. Ключ используется лишь для чтения адреса."
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
-        summary="|Ключ от API|***********"
+        summary="|Ключ Alchemy|***********"
     />
     <EditTextPreference
         key="account"

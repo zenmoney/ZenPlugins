@@ -11,6 +11,7 @@ export const scrape: Scrape = async ({
   endBlock
 }) => {
   const transactions: Transaction[] = []
+  const accountsWithActivity = new Set<string>()
   const [accounts] = await Promise.all([
     fetchAccounts(preferences)
   ])
@@ -21,11 +22,16 @@ export const scrape: Scrape = async ({
       endBlock
     })
 
+    if (account.balance !== 0 || accountTransactions.length > 0) {
+      accountsWithActivity.add(`${account.id}-${account.contractAddress}`)
+    }
     transactions.push(...convertTransactions(account, accountTransactions))
   }
 
   return {
-    accounts: convertAccounts(accounts),
+    // Preserve the legacy anyUSDC contract without cluttering new installs
+    // with empty stablecoin accounts.
+    accounts: convertAccounts(accounts.filter(account => accountsWithActivity.has(`${account.id}-${account.contractAddress}`))),
     transactions: mergeTransferTransactions(transactions)
   }
 }

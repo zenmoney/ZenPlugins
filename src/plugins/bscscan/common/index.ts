@@ -1,63 +1,34 @@
-import { stringify } from 'querystring'
-import { fetchJson } from '../../../common/network'
-import { delay } from '../../../common/utils'
 import { Preferences } from '../types'
+import { alchemyCall } from './alchemy'
 
-import type { BlockNoResponse, Response } from './types'
+import type { Response } from './types'
 
-const baseUrl = 'https://api.bscscan.com/api'
-
-const MAX_RPS = 5
-let activeList: Array<Promise<unknown>> = []
-
-async function fetchInner<T extends Response> (params: Record<string, string | number>): Promise<T> {
-  const query = stringify(params)
-
-  const response = await fetchJson(`${baseUrl}?${query}`)
-
-  const data = response.body as T
-
-  if (data.message === 'OK') {
-    return data
-  }
-
-  throw new Error(`fetch error: ${JSON.stringify(response)}`)
+interface AlchemyBlock {
+  number: string
+  timestamp: string
 }
 
-export async function fetch<T extends Response> (params: Record<string, string | number>): Promise<T> {
-  if (activeList.length < MAX_RPS) {
-    const request = fetchInner<T>(params)
-
-    const waiter = request
-      .then(async () => await delay(1000))
-      .catch(async () => await delay(1000))
-      .then(() => { // eslint-disable-line @typescript-eslint/no-floating-promises
-        activeList = activeList.filter(item => item !== waiter)
-      })
-    activeList.push(waiter)
-
-    const result = await request
-
-    return result
-  }
-
-  await Promise.race(activeList)
-  return await fetch<T>(params)
+async function fetchBlock (apiKey: string, number: number): Promise<AlchemyBlock> {
+  return await alchemyCall<AlchemyBlock>(apiKey, 'eth_getBlockByNumber', [`0x${number.toString(16)}`, false])
 }
 
+/** Find the last block at or before the requested Unix timestamp. */
 export async function fetchBlockNoByTime (
   preferences: Preferences,
   { timestamp }: { timestamp: number }
 ): Promise<number> {
-  const response = await fetch<BlockNoResponse>({
-    module: 'block',
-    action: 'getblocknobytime',
-    closest: 'before',
-    timestamp,
-    apiKey: preferences.apiKey
-  })
+  const latestHex = await alchemyCall<string>(preferences.apiKey, 'eth_blockNumber', [])
+  let low = 0
+  let high = Number(BigInt(latestHex))
 
-  return Number(response.result)
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2)
+    const block = await fetchBlock(preferences.apiKey, middle)
+    if (Number(BigInt(block.timestamp)) <= timestamp) low = middle
+    else high = middle - 1
+  }
+
+  return low
 }
 
 export { Response }
