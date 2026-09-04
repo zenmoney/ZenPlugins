@@ -3,9 +3,9 @@
     <EditTextPreference
         key="wallets"
         obligatory="true"
-        title="Wallets address"
-        dialogTitle="Wallets address"
-        dialogMessage="Адреса ваших кошельков (user-friendly form, через запятую)"
+        title="TON wallet addresses"
+        dialogTitle="TON wallet addresses"
+        dialogMessage="Адреса обычных TON-кошельков или TON Space в user-friendly формате, через запятую. Кастодиальный Telegram Wallet без собственного адреса не поддерживается."
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|wallets|{@s}"
