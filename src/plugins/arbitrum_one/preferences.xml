@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="apiKey"
+        obligatory="true"
+        title="API Key"
+        dialogTitle="etherscan.io API v2 Key"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|API Key|***********"
+    />
+    <EditTextPreference
+        key="account"
+        obligatory="true"
+        inputType="textPassword"
+        title="Wallet address"
+        dialogTitle="Wallet address"
+        dialogMessage="For multiple addresses, separate them with commas"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|Wallet address|{@s}"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="Load transactions since"
+        defaultValue="2024-08-01T00:00:00.000Z"
+        dialogTitle="Start date"
+        dialogMessage="Enter the date from which to load transactions"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|Start date|{@s}"
+    />
+</PreferenceScreen>
