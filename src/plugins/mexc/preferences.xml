@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference key="apiKey" obligatory="true" title="Read-only API Key" dialogTitle="Read-only API Key" dialogMessage="Enable Spot → Account → View account information and Withdrawal → View deposit/withdrawal details. Do not enable trading, withdrawal or transfer actions." positiveButtonText="OK" negativeButtonText="Cancel" summary="|apiKey|{@s}" />
+    <EditTextPreference key="apiSecret" obligatory="true" inputType="textPassword" title="Read-only API Secret" dialogTitle="Read-only API Secret" dialogMessage="The secret is shown once. Keep it private." positiveButtonText="OK" negativeButtonText="Cancel" summary="||***********" />
+    <EditTextPreference key="accountLabel" obligatory="true" defaultValue="MEXC" title="Account label" dialogTitle="Account label" positiveButtonText="OK" negativeButtonText="Cancel" summary="|accountLabel|{@s}" />
+    <EditTextPreference key="externalTransferAssets" defaultValue="USDT,USDC,USD,USDE,FDUSD,TUSD" title="Settlement assets to import" dialogTitle="Settlement assets to import" dialogMessage="Comma-separated USD-pegged assets for deposit/withdrawal history. Current balance still includes all supported assets." positiveButtonText="OK" negativeButtonText="Cancel" summary="|externalTransferAssets|{@s}" />
+    <EditTextPreference key="startDate" obligatory="true" inputType="date" defaultValue="2026-01-01T00:00:00.000Z" title="Load operations from" dialogTitle="Load operations from" dialogMessage="Imports completed external stablecoin deposits and withdrawals. MEXC itself provides up to 90 days of this history." positiveButtonText="OK" negativeButtonText="Cancel" summary="|startDate|{@s}" />
+</PreferenceScreen>
