@@ -580,9 +580,58 @@ function getOperationKey (operation) {
     .join('|')
 }
 
+function stringifyCanonical (value) {
+  if (Array.isArray(value)) {
+    return `[${value.map(stringifyCanonical).join(',')}]`
+  }
+  if (value != null && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stringifyCanonical(value[key])}`).join(',')}}`
+  }
+  return JSON.stringify(value)
+}
+
+function getOperationVariantKey (operation, operationKey) {
+  return stringifyCanonical({ ...operation, id: operationKey })
+}
+
+function getMoneyKey (money) {
+  if (!money || typeof money !== 'object') return null
+  const amount = money.amount ?? (
+    money.integerPart != null && money.fractionalPart != null
+      ? `${money.sign || ''}:${money.integerPart}:${money.fractionalPart}`
+      : null
+  )
+  if (amount == null) return null
+  return [money.currency, money.sign, amount]
+    .map(value => value == null ? '' : String(value))
+    .join('|')
+}
+
+function getCardOccurrenceKey (operation, operationKey) {
+  if (operation.productType !== 'CARD' || !operation.paymentDate) return null
+  const moneyKey = getMoneyKey(operation.transactionSum) || getMoneyKey(operation.operationSum)
+  if (!moneyKey) return null
+  return [operationKey, operation.paymentDate, moneyKey, operation.operationName]
+    .map(value => value == null ? '' : String(value))
+    .join('|')
+}
+
+function selectCardOperationVersion (previous, next) {
+  const previousStatus = previous.operationDetail?.statusCode
+  const nextStatus = next.operationDetail?.statusCode
+  const terminalStatuses = new Set(['EXECUTED', 'CANCELLED'])
+
+  if (previousStatus === 'IN_PROGRESS' && terminalStatuses.has(nextStatus)) return next
+  if (nextStatus === 'IN_PROGRESS' && terminalStatuses.has(previousStatus)) return previous
+  return null
+}
+
 async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
   const operations = []
-  const operationKeys = new Set()
+  const operationVariantPages = new Map()
+  const operationIndexes = new Map()
+  const operationOccurrences = new Map()
+  let rawOperationCount = 0
   let totalCount = null
   let unstable = false
 
@@ -597,7 +646,7 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
         },
         pagination: {
           limit: PAGE_SIZE,
-          offset: operations.length
+          offset: rawOperationCount
         }
       }
     }, 'Не удалось загрузить операции')
@@ -605,33 +654,75 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
     if (!Array.isArray(response?.operations) || !Number.isInteger(responseTotalCount) || responseTotalCount < 0) {
       throw new TemporaryError('Банк вернул некорректный список операций. Повторите синхронизацию позже.')
     }
-    if (response.operations.length === 0 && responseTotalCount > operations.length) {
+    if (response.operations.length === 0 && responseTotalCount > rawOperationCount) {
       throw new TemporaryError('Банк вернул неполную страницу операций. Повторите синхронизацию позже.')
     }
     if (totalCount != null && responseTotalCount !== totalCount) {
       unstable = true
     }
+    const pageOffset = rawOperationCount
     for (const operation of response.operations) {
       const key = getOperationKey(operation)
-      if (!key || operationKeys.has(key)) {
+      if (!key) {
         unstable = true
-      } else {
-        operationKeys.add(key)
+        continue
       }
+
+      const variantKey = getOperationVariantKey(operation, key)
+      const previousVariantPage = operationVariantPages.get(variantKey)
+      if (previousVariantPage != null) {
+        if (previousVariantPage !== pageOffset) {
+          unstable = true
+        }
+        continue
+      }
+      operationVariantPages.set(variantKey, pageOffset)
+
+      const occurrenceKey = getCardOccurrenceKey(operation, key)
+      const previousOccurrences = operationOccurrences.get(key)
+      if (occurrenceKey) {
+        const previousIndex = operationIndexes.get(occurrenceKey)
+        if (previousIndex != null) {
+          const selectedOperation = selectCardOperationVersion(operations[previousIndex], operation)
+          if (selectedOperation) {
+            operations[previousIndex] = selectedOperation
+          } else {
+            unstable = true
+          }
+          continue
+        }
+        if (previousOccurrences?.has(null)) {
+          unstable = true
+          continue
+        }
+        operationIndexes.set(occurrenceKey, operations.length)
+      } else {
+        if (previousOccurrences) {
+          unstable = true
+          continue
+        }
+      }
+      if (previousOccurrences) {
+        previousOccurrences.add(occurrenceKey)
+      } else {
+        operationOccurrences.set(key, new Set([occurrenceKey]))
+      }
+      operations.push(operation)
     }
-    operations.push(...response.operations)
-    if (operations.length > responseTotalCount) {
+    rawOperationCount += response.operations.length
+    if (rawOperationCount > responseTotalCount) {
       unstable = true
     }
     totalCount = responseTotalCount
-  } while (!unstable && operations.length < totalCount)
+  } while (!unstable && rawOperationCount < totalCount)
 
   return { operations, unstable }
 }
 
 /**
- * Fetches every operation in the requested interval using offset pagination and
- * retries once if the bank changes the result set between pages.
+ * Fetches every raw operation in the requested interval using offset pagination,
+ * reconciles card lifecycle versions, and retries once if pages overlap or the
+ * bank changes the result set between pages.
  */
 export async function fetchTransactions (accessToken, accounts, fromDate, toDate = new Date()) {
   console.log('>>> Загрузка списка транзакций...')
