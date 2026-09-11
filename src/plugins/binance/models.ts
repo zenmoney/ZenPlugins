@@ -1,12 +1,7 @@
 export interface Preferences {
   apiKey: string
   apiSecret: string
-  accountLabel?: string
   baseUrl?: string
-  syncSpot?: boolean
-  syncFunding?: boolean
-  syncEarn?: boolean
-  detailedWallets?: boolean
   syncTransactions?: boolean
   externalTransferAssets?: string
 }

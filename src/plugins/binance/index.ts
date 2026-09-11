@@ -7,21 +7,16 @@ import { parseSettlementAssets } from '../../common/settlementAssets'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   const credentials = login(preferences)
-  const selection = {
-    spot: preferences.syncSpot !== false,
-    funding: preferences.syncFunding !== false,
-    earn: preferences.syncEarn !== false
-  }
+  const selection = { spot: true, funding: true, earn: true }
   const [spot, funding, flexible, lockedEarn, prices, wallets] = await Promise.all([
-    selection.spot ? fetchSpotBalances(credentials) : Promise.resolve([]),
-    selection.funding ? fetchFundingBalances(credentials) : Promise.resolve([]),
-    selection.earn ? fetchFlexibleEarn(credentials) : Promise.resolve([]),
-    selection.earn ? fetchLockedEarn(credentials) : Promise.resolve([]),
+    fetchSpotBalances(credentials),
+    fetchFundingBalances(credentials),
+    fetchFlexibleEarn(credentials),
+    fetchLockedEarn(credentials),
     fetchPrices(credentials.baseUrl),
     fetchWalletBalances(credentials)
   ])
-  const detailedWallets = preferences.detailedWallets !== false
-  const accounts = createAccounts(preferences.accountLabel ?? 'Binance', spot, funding, flexible, lockedEarn, prices, selection, wallets, detailedWallets)
+  const accounts = createAccounts('Binance', spot, funding, flexible, lockedEarn, prices, selection, wallets, true)
   const transactions: Transaction[] = []
   if (preferences.syncTransactions !== false) {
     const settlementAssets = parseSettlementAssets(preferences.externalTransferAssets)
@@ -29,11 +24,11 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     // Fetch the heavier history endpoints sequentially. Binance assigns very
     // different request weights to wallet, Pay and Earn APIs; a large initial
     // sync must not create an avoidable burst and trigger an IP ban.
-    transactions.push(...convertExternalStablecoinTransfers(preferences.accountLabel ?? 'Binance', await fetchCapitalTransfers(credentials, fromDate, until), selection, detailedWallets, settlementAssets))
-    transactions.push(...convertPayTransfers(preferences.accountLabel ?? 'Binance', await fetchPayTransfers(credentials, fromDate, until), selection, detailedWallets, settlementAssets))
-    transactions.push(...convertC2CTransfers(preferences.accountLabel ?? 'Binance', await fetchC2CTransfers(credentials, fromDate, until), selection, detailedWallets, settlementAssets))
-    transactions.push(...convertInternalTransfers(preferences.accountLabel ?? 'Binance', await fetchInternalTransfers(credentials, fromDate, until), selection, detailedWallets, settlementAssets))
-    transactions.push(...convertEarnTransfers(preferences.accountLabel ?? 'Binance', await fetchEarnTransfers(credentials, fromDate, until), selection, detailedWallets, settlementAssets))
+    transactions.push(...convertExternalStablecoinTransfers('Binance', await fetchCapitalTransfers(credentials, fromDate, until), selection, true, settlementAssets))
+    transactions.push(...convertPayTransfers('Binance', await fetchPayTransfers(credentials, fromDate, until), selection, true, settlementAssets))
+    transactions.push(...convertC2CTransfers('Binance', await fetchC2CTransfers(credentials, fromDate, until), selection, true, settlementAssets))
+    transactions.push(...convertInternalTransfers('Binance', await fetchInternalTransfers(credentials, fromDate, until), selection, true, settlementAssets))
+    transactions.push(...convertEarnTransfers('Binance', await fetchEarnTransfers(credentials, fromDate, until), selection, true, settlementAssets))
   }
   return {
     accounts,

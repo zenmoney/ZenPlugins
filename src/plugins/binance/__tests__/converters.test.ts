@@ -14,7 +14,7 @@ describe('Binance balance conversion', () => {
 
   it('creates stable ids for main and secondary accounts', () => {
     const accounts = createAccounts('Binance M', [{ asset: 'USDT', free: 100, locked: 2 }], [{ asset: 'USDT', amount: 3 }], [{ asset: 'BTC', amount: 0.1 }], [], prices, undefined, [], true)
-    expect(accounts[0]).toEqual({ id: 'binance_m_spot', type: AccountType.investment, title: 'Binance M Spot', instrument: 'USD', balance: 102, savings: false, syncIds: ['binance_m_spot'] })
+    expect(accounts[0]).toEqual({ id: 'binance_m_spot', type: AccountType.investment, title: 'Binance M Spot', instrument: 'USDT', balance: 102, savings: false, syncIds: ['binance_m_spot'] })
     expect(accounts[1]).toMatchObject({ id: 'binance_m_funding', title: 'Binance M Funding', balance: 3 })
     expect(accounts[2]).toMatchObject({ id: 'binance_m_earn', title: 'Binance M Earn', balance: 6000 })
   })

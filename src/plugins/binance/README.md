@@ -2,7 +2,7 @@
 
 Read-only synchronization through the official Binance REST API.
 
-By default it mirrors the top-level Binance wallets as separate USD-valued investment accounts:
+It mirrors the top-level Binance wallets as separate USDT-valued investment accounts:
 - `Spot` — free assets plus amounts locked in Spot orders;
 - `Funding` — the wallet used by Pay/P2P and related flows;
 - `Earn` — Flexible and Locked Simple Earn positions combined;
@@ -29,4 +29,6 @@ Binance limits Pay, P2P, internal wallet and Earn history. The plugin reads up t
 3. Keep Spot & Margin Trading, Futures, and Withdrawals off.
 4. Do not enable Universal Transfer: reading its history does not require permission to move funds.
 
-Use a distinct account label for each connection, for example `Binance` and `Binance M`. The label is part of the stable account ID; changing it later creates a different set of ZenMoney accounts.
+After authentication, ZenMoney shows every discovered Binance wallet and lets the user choose which accounts to synchronize or link to existing accounts. Account selection is intentionally kept out of the credentials screen so there is one canonical place to manage it.
+
+The accounts use the `USDT` instrument because all balances are valued against Binance USDT quotes. This also allows an existing manually maintained USDT account to be linked during migration without creating a duplicate USD account.
