@@ -13,7 +13,7 @@ import {
 } from './converters'
 
 const baseUrl = 'https://mobile.apelsin.uz/api'
-const appVersion = 'Av2.3.0'
+const appVersion = 'Av2.49.1'
 const userAgent = 'okhttp/5.0.0-alpha.14'
 const deviceName = 'ZenMoney'
 
