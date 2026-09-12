@@ -75,7 +75,7 @@ describe('PUMB fetch API', () => {
       login: '+380501234567',
       password: 'MTIzNA==',
       deviceId: 'bank-device-id',
-      appVersion: '2.338.05',
+      appVersion: '2.339.05',
       appType: 'A_PROD',
       deviceData: {
         os: 'ANDROID',
@@ -134,7 +134,7 @@ describe('PUMB fetch API', () => {
 
     expect(publicConnection.send.mock.calls[0][1].body).toMatchObject({
       data: {
-        app_version: '2.338.05',
+        app_version: '2.339.05',
         hardware_id: '0123456789abcdef',
         cz: { functional: 'INIT', request: 'IDENTIFY', version: 6 }
       },
