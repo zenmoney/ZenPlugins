@@ -1,4 +1,4 @@
-import { ETHER_MAINNET, BNB_MAINNET } from './config'
+import { ETHER_MAINNET, BNB_MAINNET, ARBITRUM_ONE } from './config'
 
 export interface Response {
   status: string
@@ -9,4 +9,4 @@ export interface BlockNoResponse extends Response {
   result: string
 }
 
-export type Chain = typeof ETHER_MAINNET | typeof BNB_MAINNET
+export type Chain = typeof ETHER_MAINNET | typeof BNB_MAINNET | typeof ARBITRUM_ONE

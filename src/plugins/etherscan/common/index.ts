@@ -4,7 +4,7 @@ import { delay } from '../../../common/utils'
 import { Preferences } from '../types'
 import _ from 'lodash'
 
-import type { BlockNoResponse, Response } from './types'
+import type { BlockNoResponse, Chain, Response } from './types'
 import { TemporaryError } from '../../../errors'
 
 const baseUrl = 'https://api.etherscan.io/v2/api'
@@ -88,10 +88,11 @@ export async function fetch<T extends Response> (
 
 export async function fetchBlockNoByTime (
   preferences: Preferences,
+  chain: Chain,
   { timestamp }: { timestamp: number }
 ): Promise<number> {
   const response = await fetch<BlockNoResponse>({
-    chainid: preferences.chain,
+    chainid: chain,
     module: 'block',
     action: 'getblocknobytime',
     closest: 'before',

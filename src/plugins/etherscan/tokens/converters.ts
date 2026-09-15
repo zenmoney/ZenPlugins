@@ -6,7 +6,8 @@ import {
 import { generateTokenAddress, SUPPORTED_TOKENS } from './config'
 import type { TokenAccount, TokenTransaction } from './types'
 import type { Chain } from '../common/types'
-import { ETHER_MAINNET } from '../common/config'
+import { ETHER_MAINNET, chainAccountId } from '../common/config'
+import { normalizeMerchant } from '../common/merchants'
 import { getTransactionFee } from '../ether/converters'
 import type { EthereumTransaction } from '../ether/types'
 
@@ -21,7 +22,7 @@ function convertAccount (account: TokenAccount, chain: Chain): Account | null {
     return null
   }
 
-  const id = generateTokenAddress(account.id, token)
+  const id = generateTokenAddress(chain, account.id, token)
 
   return {
     id,
@@ -78,7 +79,7 @@ export function convertTransaction (
       {
         id: hash,
         account: {
-          id: generateTokenAddress(account.id, token)
+          id: generateTokenAddress(chain, account.id, token)
         },
         invoice: null,
         sum: sign * operationValue,
@@ -86,7 +87,7 @@ export function convertTransaction (
       }
     ],
     merchant: {
-      fullTitle: targetAccount,
+      fullTitle: normalizeMerchant(targetAccount, account.id, chain),
       mcc: null,
       location: null
     },
@@ -103,7 +104,7 @@ export function convertTransaction (
         {
           id: hash + '_fee',
           account: {
-            id: account.id
+            id: chainAccountId(chain, account.id)
           },
           invoice: null,
           sum:
@@ -113,7 +114,7 @@ export function convertTransaction (
         }
       ],
       merchant: {
-        fullTitle: targetAccount,
+        fullTitle: normalizeMerchant(targetAccount, account.id, chain),
         mcc: null,
         location: null
       },

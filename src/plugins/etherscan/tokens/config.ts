@@ -1,4 +1,4 @@
-import { ETHER_MAINNET, BNB_MAINNET } from '../common/config'
+import { ETHER_MAINNET, BNB_MAINNET, ARBITRUM_ONE } from '../common/config'
 
 export type TokenConfig = Record<number, TokenConfigItem[]>
 
@@ -10,10 +10,11 @@ export interface TokenConfigItem {
 }
 
 export const generateTokenAddress = (
+  chain: number,
   address: string,
   token: TokenConfigItem
 ): string => {
-  return `${address}-${token.contractAddress}`
+  return `${chain}-${address}-${token.contractAddress}`
 }
 
 export const SUPPORTED_TOKENS: TokenConfig = {
@@ -49,6 +50,20 @@ export const SUPPORTED_TOKENS: TokenConfig = {
       contractAddress: '0x8965349fb649a33a30cbfda057d8ec2c48abe2a2',
       instrument: 'USDT',
       convertBalance: (value: number) => value / 1000000000 / 1000000000
+    }
+  ],
+  [ARBITRUM_ONE]: [
+    {
+      title: 'USDT',
+      contractAddress: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
+      instrument: 'USDT',
+      convertBalance: (value: number) => value / 1000000
+    },
+    {
+      title: 'USDC',
+      contractAddress: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+      instrument: 'USDT',
+      convertBalance: (value: number) => value / 1000000
     }
   ]
 }
