@@ -1,13 +1,64 @@
-import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
+import { fetchJson, FetchOptions, FetchResponse, ParseError } from '../../common/network'
 import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import { AltynAccount, AltynTransaction, Preferences } from './models'
 
-const API_BASE = 'https://api.lk.altyn.one'
-const LK_BASE = 'https://lk.altyn.one'
+// Банк перенёс кабинет и приложение на lk.altyn.in; старый lk.altyn.one
+// объявлен временно недоступным, поэтому оставлен запасным доменом.
+const API_BASES = ['https://api.lk.altyn.in', 'https://api.lk.altyn.one']
+const LK_BASES = ['https://lk.altyn.in', 'https://lk.altyn.one']
+
+// Домены, ответившие последним успешным ответом. Кешируются на время запуска
+// синхронизации, чтобы не пробовать недоступный домен на каждый запрос.
+let workingApiBase: string | null = null
+let workingLkBase: string | null = null
+
+// Ошибка транспорта (DNS, обрыв соединения) — сервер не ответил вовсе.
+// Ответ с любым статусом или битым JSON (ParseError и ошибки статусов)
+// означает, что домен отвечает, и фолбек на другой домен не нужен.
+export function isNetworkError (error: unknown): boolean {
+  return !(error instanceof ParseError) &&
+    !(error instanceof TemporaryError) &&
+    !(error instanceof InvalidLoginOrPasswordError)
+}
+
+// Домены кабинета в порядке приоритета: последним работавший — первым.
+export function lkBases (): string[] {
+  return workingLkBase === null
+    ? LK_BASES
+    : [workingLkBase, ...LK_BASES.filter((base) => base !== workingLkBase)]
+}
+
+// Фиксирует домен кабинета, прошедший авторизацию, для последующих запросов.
+export function setWorkingLkBase (base: string): void {
+  workingLkBase = base
+}
+
+// Пробует API-домены по очереди, начиная с последнего работавшего.
+// Транспортная ошибка означает недоступность домена — пробуем следующий;
+// любой HTTP-ответ считается успехом (статусы разбирает вызывающий код).
+async function fetchJsonWithFallback (path: string, options: FetchOptions): Promise<FetchResponse> {
+  const ordered = workingApiBase === null
+    ? API_BASES
+    : [workingApiBase, ...API_BASES.filter((base) => base !== workingApiBase)]
+  let lastError: unknown = null
+  for (const base of ordered) {
+    try {
+      const response = await fetchJson(base + path, options)
+      workingApiBase = base
+      return response
+    } catch (error) {
+      if (!isNetworkError(error)) {
+        throw error
+      }
+      lastError = error
+    }
+  }
+  throw new TemporaryError(`Altyn Wallet: нет связи ни с одним доменом (${API_BASES.join(', ')}) — ${String(lastError)}`)
+}
 
 // Базовый запрос к API Altyn Wallet с Bearer-токеном из настроек.
 async function fetchApi (path: string, preferences: Preferences, options: FetchOptions = {}): Promise<FetchResponse> {
-  const response = await fetchJson(API_BASE + path, {
+  const response = await fetchJsonWithFallback(path, {
     ...options,
     headers: {
       ...options.headers as Record<string, string>,
@@ -84,5 +135,3 @@ export async function fetchTransactions (
   }
   return all
 }
-
-export { LK_BASE }
