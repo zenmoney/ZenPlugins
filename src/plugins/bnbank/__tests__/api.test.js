@@ -576,12 +576,10 @@ describe('Iskra API', () => {
       transactionSum: { amount: '-37.18', currency: 'BYN', sign: 'MINUS' },
       operationDetail: { statusCode }
     })
-    for (let attempt = 0; attempt < 2; attempt++) {
-      fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
-        status: 200,
-        body: { operations: [makeVersion('EXECUTED'), makeVersion('CANCELLED')], totalCount: 2 }
-      }, { method: 'POST' })
-    }
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
+      body: { operations: [makeVersion('EXECUTED'), makeVersion('CANCELLED')], totalCount: 2 }
+    }, { method: 'POST' })
 
     await expect(fetchTransactions(
       'access-token',
@@ -589,7 +587,7 @@ describe('Iskra API', () => {
       new Date('2026-07-01T00:00:00Z'),
       new Date('2026-09-01T00:00:00Z')
     )).rejects.toBeInstanceOf(TemporaryError)
-    expect(fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)).toHaveLength(2)
+    expect(fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)).toHaveLength(1)
   })
 
   it('fails safely when repeated card identifiers lack fields required to identify an occurrence', async () => {
@@ -606,12 +604,10 @@ describe('Iskra API', () => {
       paymentDate: '2026-08-27T16:18:22Z',
       operationDetail: { statusCode }
     })
-    for (let attempt = 0; attempt < 2; attempt++) {
-      fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
-        status: 200,
-        body: { operations: [makeVersion('IN_PROGRESS'), makeVersion('EXECUTED')], totalCount: 2 }
-      }, { method: 'POST' })
-    }
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
+      body: { operations: [makeVersion('IN_PROGRESS'), makeVersion('EXECUTED')], totalCount: 2 }
+    }, { method: 'POST' })
 
     await expect(fetchTransactions(
       'access-token',
@@ -621,7 +617,7 @@ describe('Iskra API', () => {
     )).rejects.toBeInstanceOf(TemporaryError)
   })
 
-  it('restarts pagination when pages overlap and returns a stable snapshot', async () => {
+  it('returns de-duplicated best-effort operations when pages overlap', async () => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
       device: { manufacturer: 'Zenmoney', model: 'Sync' },
@@ -630,21 +626,16 @@ describe('Iskra API', () => {
     const firstPage = Array.from({ length: 20 }, (_, index) => ({ id: `operation-${index}` }))
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
       status: 200,
-      body: { operations: firstPage, totalCount: 21 }
+      body: { operations: firstPage, totalCount: 22 }
     }, { method: 'POST' })
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
       status: 200,
-      body: { operations: [{ id: 'operation-19' }], totalCount: 21 }
+      body: { operations: [{ id: 'operation-19' }], totalCount: 22 }
     }, { method: 'POST' })
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
       status: 200,
-      body: { operations: firstPage, totalCount: 21 }
+      body: { operations: [{ id: 'operation-20' }], totalCount: 22 }
     }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
-      status: 200,
-      body: { operations: [{ id: 'operation-20' }], totalCount: 21 }
-    }, { method: 'POST' })
-
     const result = await fetchTransactions(
       'access-token',
       [{ id: 'card-1', type: 'card' }],
@@ -657,10 +648,10 @@ describe('Iskra API', () => {
     )
     const requestOffsets = fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)
       .map(([, options]) => JSON.parse(options.body).pagination.offset)
-    expect(requestOffsets).toEqual([0, 20, 0, 20])
+    expect(requestOffsets).toEqual([0, 20, 21])
   })
 
-  it('detects overlapping ACCOUNT operations when only the volatile UUID suffix changes', async () => {
+  it('de-duplicates overlapping ACCOUNT operations when only the volatile UUID suffix changes', async () => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
       device: { manufacturer: 'Zenmoney', model: 'Sync' },
@@ -692,15 +683,6 @@ describe('Iskra API', () => {
         totalCount: 21
       }
     }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
-      status: 200,
-      body: { operations: firstPage, totalCount: 21 }
-    }, { method: 'POST' })
-    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
-      status: 200,
-      body: { operations: [{ id: 'operation-20' }], totalCount: 21 }
-    }, { method: 'POST' })
-
     const result = await fetchTransactions(
       'access-token',
       [{ id: 'account-1', type: 'checking' }],
@@ -708,14 +690,14 @@ describe('Iskra API', () => {
       new Date('2026-07-29T00:00:00Z')
     )
 
-    expect(result).toHaveLength(21)
-    expect(result[result.length - 1].id).toBe('operation-20')
+    expect(result).toHaveLength(20)
+    expect(result[result.length - 1].id).toBe(`${stablePrefix}_11111111-1111-4111-8111-111111111111`)
     const requestOffsets = fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)
       .map(([, options]) => JSON.parse(options.body).pagination.offset)
-    expect(requestOffsets).toEqual([0, 20, 0, 20])
+    expect(requestOffsets).toEqual([0, 20])
   })
 
-  it('restarts pagination when totalCount changes between pages', async () => {
+  it('continues pagination when totalCount changes between pages', async () => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
       device: { manufacturer: 'Zenmoney', model: 'Sync' },
@@ -732,11 +714,34 @@ describe('Iskra API', () => {
     }, { method: 'POST' })
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
       status: 200,
+      body: { operations: [{ id: 'operation-21' }], totalCount: 22 }
+    }, { method: 'POST' })
+
+    await expect(fetchTransactions(
+      'access-token',
+      [{ id: 'card-1', type: 'card' }],
+      new Date('2026-07-01T00:00:00Z'),
+      new Date('2026-07-29T00:00:00Z')
+    )).resolves.toHaveLength(22)
+    const requestOffsets = fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)
+      .map(([, options]) => JSON.parse(options.body).pagination.offset)
+    expect(requestOffsets).toEqual([0, 20, 21])
+  })
+
+  it('returns collected operations when totalCount decreases below the raw row count', async () => {
+    const pluginData = makePluginDataApi({})
+    global.ZenMoney = {
+      device: { manufacturer: 'Zenmoney', model: 'Sync' },
+      ...pluginData.methods
+    }
+    const firstPage = Array.from({ length: 20 }, (_, index) => ({ id: `operation-${index}` }))
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
       body: { operations: firstPage, totalCount: 21 }
     }, { method: 'POST' })
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
       status: 200,
-      body: { operations: [{ id: 'operation-20' }], totalCount: 21 }
+      body: { operations: [{ id: 'operation-20' }], totalCount: 20 }
     }, { method: 'POST' })
 
     await expect(fetchTransactions(
@@ -747,34 +752,54 @@ describe('Iskra API', () => {
     )).resolves.toHaveLength(21)
     const requestOffsets = fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)
       .map(([, options]) => JSON.parse(options.body).pagination.offset)
-    expect(requestOffsets).toEqual([0, 20, 0, 20])
+    expect(requestOffsets).toEqual([0, 20])
   })
 
-  it('fails instead of returning duplicate or incomplete operations after two unstable snapshots', async () => {
+  it('converges on a later stable synchronization after a best-effort overlapping pass', async () => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
       device: { manufacturer: 'Zenmoney', model: 'Sync' },
       ...pluginData.methods
     }
     const firstPage = Array.from({ length: 20 }, (_, index) => ({ id: `operation-${index}` }))
-    for (let attempt = 0; attempt < 2; attempt++) {
-      fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
-        status: 200,
-        body: { operations: firstPage, totalCount: 21 }
-      }, { method: 'POST' })
-      fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
-        status: 200,
-        body: { operations: [{ id: 'operation-19' }], totalCount: 21 }
-      }, { method: 'POST' })
-    }
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
+      body: { operations: firstPage, totalCount: 21 }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
+      body: { operations: [{ id: 'operation-19' }], totalCount: 21 }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
+      body: { operations: firstPage, totalCount: 21 }
+    }, { method: 'POST' })
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
+      body: { operations: [{ id: 'operation-20' }], totalCount: 21 }
+    }, { method: 'POST' })
 
-    await expect(fetchTransactions(
+    const firstResult = await fetchTransactions(
       'access-token',
       [{ id: 'card-1', type: 'card' }],
       new Date('2026-07-01T00:00:00Z'),
       new Date('2026-07-29T00:00:00Z')
-    )).rejects.toBeInstanceOf(TemporaryError)
+    )
+    const secondResult = await fetchTransactions(
+      'access-token',
+      [{ id: 'card-1', type: 'card' }],
+      new Date('2026-07-01T00:00:00Z'),
+      new Date('2026-07-29T00:00:00Z')
+    )
+
+    expect(firstResult).toHaveLength(20)
+    expect(secondResult.map(operation => operation.id)).toEqual(
+      Array.from({ length: 21 }, (_, index) => `operation-${index}`)
+    )
     expect(fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)).toHaveLength(4)
+    const requestOffsets = fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)
+      .map(([, options]) => JSON.parse(options.body).pagination.offset)
+    expect(requestOffsets).toEqual([0, 20, 0, 20])
   })
 
   it.each([undefined, '', '   '])('fails instead of accepting an operation with bank identifier %p', async id => {
@@ -783,15 +808,13 @@ describe('Iskra API', () => {
       device: { manufacturer: 'Zenmoney', model: 'Sync' },
       ...pluginData.methods
     }
-    for (let attempt = 0; attempt < 2; attempt++) {
-      fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
-        status: 200,
-        body: {
-          operations: [{ id, productId: 'card-1', productType: 'CARD' }],
-          totalCount: 1
-        }
-      }, { method: 'POST' })
-    }
+    fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
+      status: 200,
+      body: {
+        operations: [{ id, productId: 'card-1', productType: 'CARD' }],
+        totalCount: 1
+      }
+    }, { method: 'POST' })
 
     await expect(fetchTransactions(
       'access-token',
@@ -799,7 +822,7 @@ describe('Iskra API', () => {
       new Date('2026-07-01T00:00:00Z'),
       new Date('2026-07-29T00:00:00Z')
     )).rejects.toBeInstanceOf(TemporaryError)
-    expect(fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)).toHaveLength(2)
+    expect(fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)).toHaveLength(1)
   })
 
   it('refreshes an expired bearer token and retries a protected request once', async () => {
@@ -998,7 +1021,7 @@ describe('Iskra API', () => {
     )).rejects.toBeInstanceOf(TemporaryError)
   })
 
-  it('stops when the bank returns an empty page before totalCount is reached', async () => {
+  it('returns collected operations when the bank returns an empty page before totalCount is reached', async () => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
       device: { manufacturer: 'Zenmoney', model: 'Sync' },
@@ -1013,6 +1036,6 @@ describe('Iskra API', () => {
       'access-token',
       [{ id: 'card-1', type: 'card' }],
       new Date('2026-07-01T00:00:00Z')
-    )).rejects.toBeInstanceOf(TemporaryError)
+    )).resolves.toEqual([])
   })
 })
