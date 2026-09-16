@@ -631,6 +631,8 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
   const operationVariantPages = new Map()
   const operationIndexes = new Map()
   const operationOccurrences = new Map()
+  const skippedOperationKeys = new Set()
+  const skippedOccurrenceKeys = new Set()
   const driftReasons = new Set()
   let rawOperationCount = 0
   let totalCount = null
@@ -673,7 +675,12 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
     for (const operation of response.operations) {
       const key = getOperationKey(operation)
       if (!key) {
-        throw new TemporaryError('Банк вернул операцию без идентификатора. Повторите синхронизацию позже.')
+        console.log('>>> Пропускаем операцию без идентификатора:', operation)
+        continue
+      }
+      if (skippedOperationKeys.has(key)) {
+        console.log('>>> Пропускаем операцию с неоднозначными версиями:', operation)
+        continue
       }
 
       const variantKey = getOperationVariantKey(operation, key)
@@ -689,23 +696,35 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
       const occurrenceKey = getCardOccurrenceKey(operation, key)
       const previousOccurrences = operationOccurrences.get(key)
       if (occurrenceKey) {
+        if (skippedOccurrenceKeys.has(occurrenceKey)) {
+          console.log('>>> Пропускаем неоднозначную версию операции:', operation)
+          continue
+        }
         const previousIndex = operationIndexes.get(occurrenceKey)
         if (previousIndex != null) {
           const selectedOperation = selectCardOperationVersion(operations[previousIndex], operation)
           if (selectedOperation) {
             operations[previousIndex] = selectedOperation
           } else {
-            throw new TemporaryError('Банк вернул неоднозначные версии одной операции. Повторите синхронизацию позже.')
+            console.log('>>> Пропускаем неоднозначные версии операции:', {
+              previous: operations[previousIndex],
+              current: operation
+            })
+            skippedOccurrenceKeys.add(occurrenceKey)
           }
           continue
         }
         if (previousOccurrences?.has(null)) {
-          throw new TemporaryError('Банк вернул неоднозначные версии одной операции. Повторите синхронизацию позже.')
+          console.log('>>> Пропускаем операции с неоднозначными версиями:', operation)
+          skippedOperationKeys.add(key)
+          continue
         }
         operationIndexes.set(occurrenceKey, operations.length)
       } else {
         if (previousOccurrences) {
-          throw new TemporaryError('Банк вернул неоднозначные версии одной операции. Повторите синхронизацию позже.')
+          console.log('>>> Пропускаем операции с неоднозначными версиями:', operation)
+          skippedOperationKeys.add(key)
+          continue
         }
       }
       if (previousOccurrences) {
@@ -722,7 +741,13 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
     totalCount = responseTotalCount
   } while (rawOperationCount < totalCount)
 
-  return { operations, driftReasons: [...driftReasons] }
+  const safeOperations = operations.filter(operation => {
+    const key = getOperationKey(operation)
+    if (skippedOperationKeys.has(key)) return false
+    const occurrenceKey = getCardOccurrenceKey(operation, key)
+    return !occurrenceKey || !skippedOccurrenceKeys.has(occurrenceKey)
+  })
+  return { operations: safeOperations, driftReasons: [...driftReasons] }
 }
 
 /**

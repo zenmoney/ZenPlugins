@@ -561,7 +561,7 @@ describe('Iskra API', () => {
     )).resolves.toEqual(operations)
   })
 
-  it('fails safely when terminal versions of the same card occurrence conflict', async () => {
+  it('logs and skips conflicting terminal versions of the same card occurrence', async () => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
       device: { manufacturer: 'Zenmoney', model: 'Sync' },
@@ -576,9 +576,10 @@ describe('Iskra API', () => {
       transactionSum: { amount: '-37.18', currency: 'BYN', sign: 'MINUS' },
       operationDetail: { statusCode }
     })
+    const validOperation = { id: 'valid-operation', productId: 'card-1', productType: 'CARD' }
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
       status: 200,
-      body: { operations: [makeVersion('EXECUTED'), makeVersion('CANCELLED')], totalCount: 2 }
+      body: { operations: [makeVersion('EXECUTED'), makeVersion('CANCELLED'), validOperation], totalCount: 3 }
     }, { method: 'POST' })
 
     await expect(fetchTransactions(
@@ -586,11 +587,11 @@ describe('Iskra API', () => {
       [{ id: 'card-1', type: 'card' }],
       new Date('2026-07-01T00:00:00Z'),
       new Date('2026-09-01T00:00:00Z')
-    )).rejects.toBeInstanceOf(TemporaryError)
+    )).resolves.toEqual([validOperation])
     expect(fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)).toHaveLength(1)
   })
 
-  it('fails safely when repeated card identifiers lack fields required to identify an occurrence', async () => {
+  it('logs and skips repeated card identifiers that lack fields required to identify an occurrence', async () => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
       device: { manufacturer: 'Zenmoney', model: 'Sync' },
@@ -604,9 +605,10 @@ describe('Iskra API', () => {
       paymentDate: '2026-08-27T16:18:22Z',
       operationDetail: { statusCode }
     })
+    const validOperation = { id: 'valid-operation', productId: 'card-1', productType: 'CARD' }
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
       status: 200,
-      body: { operations: [makeVersion('IN_PROGRESS'), makeVersion('EXECUTED')], totalCount: 2 }
+      body: { operations: [makeVersion('IN_PROGRESS'), makeVersion('EXECUTED'), validOperation], totalCount: 3 }
     }, { method: 'POST' })
 
     await expect(fetchTransactions(
@@ -614,7 +616,7 @@ describe('Iskra API', () => {
       [{ id: 'card-1', type: 'card' }],
       new Date('2026-07-01T00:00:00Z'),
       new Date('2026-09-01T00:00:00Z')
-    )).rejects.toBeInstanceOf(TemporaryError)
+    )).resolves.toEqual([validOperation])
   })
 
   it('returns de-duplicated best-effort operations when pages overlap', async () => {
@@ -802,17 +804,19 @@ describe('Iskra API', () => {
     expect(requestOffsets).toEqual([0, 20, 0, 20])
   })
 
-  it.each([undefined, '', '   '])('fails instead of accepting an operation with bank identifier %p', async id => {
+  it.each([undefined, '', '   '])('logs and skips an operation with bank identifier %p', async id => {
     const pluginData = makePluginDataApi({})
     global.ZenMoney = {
       device: { manufacturer: 'Zenmoney', model: 'Sync' },
       ...pluginData.methods
     }
+    const invalidOperation = { id, productId: 'card-1', productType: 'CARD' }
+    const validOperation = { id: 'valid-operation', productId: 'card-1', productType: 'CARD' }
     fetchMock.once(`${BASE_URL}product-transaction/v1/operations`, {
       status: 200,
       body: {
-        operations: [{ id, productId: 'card-1', productType: 'CARD' }],
-        totalCount: 1
+        operations: [invalidOperation, validOperation],
+        totalCount: 2
       }
     }, { method: 'POST' })
 
@@ -821,7 +825,7 @@ describe('Iskra API', () => {
       [{ id: 'card-1', type: 'card' }],
       new Date('2026-07-01T00:00:00Z'),
       new Date('2026-07-29T00:00:00Z')
-    )).rejects.toBeInstanceOf(TemporaryError)
+    )).resolves.toEqual([validOperation])
     expect(fetchMock.calls(`${BASE_URL}product-transaction/v1/operations`)).toHaveLength(1)
   })
 
