@@ -83,6 +83,14 @@ export const jettonsTransfersResponseMock: RawJettonTransfer = {
       destination: '0:5225808CAB7270BB522D5092759C091CAE03EF23325963CAA97EE3C4681E1DC5',
       amount: 2000, // 0.002 USDT < 0.01, will be filtered out
       transaction_now: 1718424875
+    },
+    {
+      transaction_hash: 'aborted-transfer',
+      source: '0:2036F688708A1D807FE514AC92E5640B50A79A65761573004D02B3A6D61D6C58',
+      destination: '0:5225808CAB7270BB522D5092759C091CAE03EF23325963CAA97EE3C4681E1DC5',
+      amount: '5000000',
+      transaction_now: 1718424877,
+      transaction_aborted: true
     }
   ]
 }

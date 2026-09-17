@@ -1,4 +1,5 @@
 import qs from 'querystring'
+import crypto from 'crypto-js'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import get from '../../types/get'
 import { SUPPORTED_JETTONS } from './config'
@@ -11,7 +12,7 @@ export interface Preferences {
 }
 
 export interface RawJettons {
-  jetton_wallets: Array<{ address: string, jetton: string, balance: number }>
+  jetton_wallets: Array<{ address: string, jetton: string, balance: number | string }>
 }
 
 export interface JettonInfo {
@@ -25,7 +26,7 @@ export interface JettonInfo {
 }
 
 export interface RawWallet {
-  balance: number
+  balance: number | string
 }
 
 export interface WalletInfo {
@@ -48,11 +49,15 @@ export interface TonTransaction {
 
 export interface RawJettonTransfer {
   jetton_transfers: Array<{
+    trace_id?: string
     transaction_hash: string
+    transaction_lt?: string
+    query_id?: string
     source: string
     destination: string
-    amount: number
+    amount: number | string
     transaction_now: number
+    transaction_aborted?: boolean
   }>
 }
 
@@ -87,6 +92,10 @@ export class TonscanApi {
     this.baseUrl = options.baseUrl
     this.requestsDelay = options.requestsDelay ?? 1300
     this.maxRps = options.maxRps ?? MAX_RPS
+  }
+
+  public async waitForIdle (): Promise<void> {
+    await Promise.all(this.activeList)
   }
 
   private async fetchApi (
@@ -149,17 +158,19 @@ export class TonscanApi {
     ) as FetchResponse & { body: RawJettons }
 
     const filteredJettons = response.body.jetton_wallets.filter(t => Object.keys(SUPPORTED_JETTONS).includes(t.jetton))
-    const jettonsAddressBook = await this.fetchAddressBook(filteredJettons.map(t => t.address))
+    const jettonsAddressBook = filteredJettons.length > 0
+      ? await this.fetchAddressBook(filteredJettons.map(t => t.address))
+      : {}
 
     return filteredJettons
       .map(t => ({
-        address: jettonsAddressBook[t.address].user_friendly,
+        address: jettonsAddressBook[t.address]?.user_friendly ?? t.address,
         jetton: t.jetton,
         jettonType: SUPPORTED_JETTONS[t.jetton].ticker,
         title: SUPPORTED_JETTONS[t.jetton].title,
         decimals: SUPPORTED_JETTONS[t.jetton].decimals,
         owner: ownerWalletAddress,
-        balance: t.balance
+        balance: Number(t.balance)
       }))
   }
 
@@ -174,7 +185,7 @@ export class TonscanApi {
 
     return {
       address: wallet,
-      balance: response.body.balance
+      balance: Number(response.body.balance)
     }
   }
 
@@ -212,16 +223,16 @@ export class TonscanApi {
 
       transactions.push(...incomeTransactions.map(t => ({
         transactionId: t.in_msg.hash,
-        fromAddress: addressBook[t.in_msg.source].user_friendly,
-        toAddress: addressBook[t.in_msg.destination].user_friendly,
+        fromAddress: addressBook[t.in_msg.source]?.user_friendly ?? t.in_msg.source,
+        toAddress: addressBook[t.in_msg.destination]?.user_friendly ?? t.in_msg.destination,
         quantity: t.in_msg.value,
         timestamp: t.in_msg.created_at
       })))
 
       transactions.push(...outcomeTransactions.map(t => ({
         transactionId: t.hash,
-        fromAddress: addressBook[t.source].user_friendly,
-        toAddress: addressBook[t.destination].user_friendly,
+        fromAddress: addressBook[t.source]?.user_friendly ?? t.source,
+        toAddress: addressBook[t.destination]?.user_friendly ?? t.destination,
         quantity: t.value,
         timestamp: t.created_at
       })))
@@ -238,6 +249,7 @@ export class TonscanApi {
 
   public async fetchJettonsTransfers (jettons: JettonInfo[], fromDate: Date, toDate?: Date): Promise<JettonTransfer[]> {
     const transfers: JettonTransfer[] = []
+    const movementIds = new Set<string>()
 
     // fetch each supported jetton transfers separately to avoid fetching all trasnfers of unsupported jettons
     for (const jetton of jettons) {
@@ -256,14 +268,16 @@ export class TonscanApi {
             sort: 'desc'
           })}`) as FetchResponse & { body: RawJettonTransfer }
 
-        transfers.push(...response.body.jetton_transfers.map(t => ({
-          jettonAddress: jetton.address,
-          transactionId: t.transaction_hash,
-          fromAddress: t.source,
-          toAddress: t.destination,
-          quantity: t.amount,
-          timestamp: t.transaction_now
-        })))
+        transfers.push(...response.body.jetton_transfers
+          .filter(t => t.transaction_aborted !== true)
+          .map(t => ({
+            jettonAddress: jetton.address,
+            transactionId: jettonTransferId(t, movementIds),
+            fromAddress: t.source,
+            toAddress: t.destination,
+            quantity: Number(t.amount),
+            timestamp: t.transaction_now
+          })))
 
         if (limit > response.body.jetton_transfers.length) {
           break
@@ -289,4 +303,31 @@ export class TonscanApi {
 
     return updatedTransfers
   }
+}
+
+function jettonTransferId (transfer: RawJettonTransfer['jetton_transfers'][number], usedIds: Set<string>): string {
+  // A TON transaction may contain multiple Jetton transfers. The transaction
+  // hash alone is therefore not always unique. Preserve the historical ID for
+  // the first movement to avoid duplicating existing ZenMoney imports.
+  if (!usedIds.has(transfer.transaction_hash)) {
+    usedIds.add(transfer.transaction_hash)
+    return transfer.transaction_hash
+  }
+  const discriminator = [
+    transfer.trace_id,
+    transfer.transaction_lt,
+    transfer.query_id,
+    transfer.source,
+    transfer.destination,
+    String(transfer.amount),
+    String(transfer.transaction_now)
+  ]
+    .filter((value): value is string => value != null && value !== '')
+    .join('|')
+  const base = `${transfer.transaction_hash}:${crypto.SHA256(discriminator).toString(crypto.enc.Hex)}`
+  let candidate = base
+  let suffix = 2
+  while (usedIds.has(candidate)) candidate = `${base}:${suffix++}`
+  usedIds.add(candidate)
+  return candidate
 }
