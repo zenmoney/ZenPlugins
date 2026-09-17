@@ -5,7 +5,7 @@ import { InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '..
 const BASE_URL = 'https://bnb-mobile.bnb.by/'
 const APP_VERSION = '1.9.0'
 const PAGE_SIZE = 20
-const MAX_TRANSACTION_SNAPSHOT_ATTEMPTS = 2
+const MAX_TRANSACTION_PAGES = 1000
 const DEVICE_KEY = 'device'
 const AUTH_KEY = 'auth'
 const TRUSTED_DEVICE_STATUS = 'TRUSTED'
@@ -631,11 +631,18 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
   const operationVariantPages = new Map()
   const operationIndexes = new Map()
   const operationOccurrences = new Map()
+  const skippedOperationKeys = new Set()
+  const skippedOccurrenceKeys = new Set()
+  const driftReasons = new Set()
   let rawOperationCount = 0
   let totalCount = null
-  let unstable = false
+  let pageCount = 0
 
   do {
+    if (pageCount >= MAX_TRANSACTION_PAGES) {
+      throw new TemporaryError('Банк вернул слишком большой список операций. Повторите синхронизацию позже.')
+    }
+    pageCount++
     const response = await fetchApiJson('product-transaction/v1/operations', {
       method: 'POST',
       headers: authHeaders(accessToken),
@@ -654,17 +661,25 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
     if (!Array.isArray(response?.operations) || !Number.isInteger(responseTotalCount) || responseTotalCount < 0) {
       throw new TemporaryError('Банк вернул некорректный список операций. Повторите синхронизацию позже.')
     }
-    if (response.operations.length === 0 && responseTotalCount > rawOperationCount) {
-      throw new TemporaryError('Банк вернул неполную страницу операций. Повторите синхронизацию позже.')
-    }
     if (totalCount != null && responseTotalCount !== totalCount) {
-      unstable = true
+      driftReasons.add('изменился totalCount')
+    }
+    if (response.operations.length === 0) {
+      if (responseTotalCount > rawOperationCount) {
+        driftReasons.add('банк вернул пустую страницу до конца списка')
+      }
+      totalCount = responseTotalCount
+      break
     }
     const pageOffset = rawOperationCount
     for (const operation of response.operations) {
       const key = getOperationKey(operation)
       if (!key) {
-        unstable = true
+        console.log('>>> Пропускаем операцию без идентификатора:', operation)
+        continue
+      }
+      if (skippedOperationKeys.has(key)) {
+        console.log('>>> Пропускаем операцию с неоднозначными версиями:', operation)
         continue
       }
 
@@ -672,7 +687,7 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
       const previousVariantPage = operationVariantPages.get(variantKey)
       if (previousVariantPage != null) {
         if (previousVariantPage !== pageOffset) {
-          unstable = true
+          driftReasons.add('страницы пересеклись')
         }
         continue
       }
@@ -681,24 +696,34 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
       const occurrenceKey = getCardOccurrenceKey(operation, key)
       const previousOccurrences = operationOccurrences.get(key)
       if (occurrenceKey) {
+        if (skippedOccurrenceKeys.has(occurrenceKey)) {
+          console.log('>>> Пропускаем неоднозначную версию операции:', operation)
+          continue
+        }
         const previousIndex = operationIndexes.get(occurrenceKey)
         if (previousIndex != null) {
           const selectedOperation = selectCardOperationVersion(operations[previousIndex], operation)
           if (selectedOperation) {
             operations[previousIndex] = selectedOperation
           } else {
-            unstable = true
+            console.log('>>> Пропускаем неоднозначные версии операции:', {
+              previous: operations[previousIndex],
+              current: operation
+            })
+            skippedOccurrenceKeys.add(occurrenceKey)
           }
           continue
         }
         if (previousOccurrences?.has(null)) {
-          unstable = true
+          console.log('>>> Пропускаем операции с неоднозначными версиями:', operation)
+          skippedOperationKeys.add(key)
           continue
         }
         operationIndexes.set(occurrenceKey, operations.length)
       } else {
         if (previousOccurrences) {
-          unstable = true
+          console.log('>>> Пропускаем операции с неоднозначными версиями:', operation)
+          skippedOperationKeys.add(key)
           continue
         }
       }
@@ -711,18 +736,25 @@ async function fetchTransactionSnapshot (accessToken, productTypes, dateRange) {
     }
     rawOperationCount += response.operations.length
     if (rawOperationCount > responseTotalCount) {
-      unstable = true
+      driftReasons.add('получено строк больше totalCount')
     }
     totalCount = responseTotalCount
-  } while (!unstable && rawOperationCount < totalCount)
+  } while (rawOperationCount < totalCount)
 
-  return { operations, unstable }
+  const safeOperations = operations.filter(operation => {
+    const key = getOperationKey(operation)
+    if (skippedOperationKeys.has(key)) return false
+    const occurrenceKey = getCardOccurrenceKey(operation, key)
+    return !occurrenceKey || !skippedOccurrenceKeys.has(occurrenceKey)
+  })
+  return { operations: safeOperations, driftReasons: [...driftReasons] }
 }
 
 /**
  * Fetches every raw operation in the requested interval using offset pagination,
- * reconciles card lifecycle versions, and retries once if pages overlap or the
- * bank changes the result set between pages.
+ * reconciles card lifecycle versions, and returns the best-effort result when
+ * the bank changes the result set between pages. A later synchronization loads
+ * the overlapping date range again and converges on the current operation list.
  */
 export async function fetchTransactions (accessToken, accounts, fromDate, toDate = new Date()) {
   console.log('>>> Загрузка списка транзакций...')
@@ -737,16 +769,10 @@ export async function fetchTransactions (accessToken, accounts, fromDate, toDate
     till: (toDate || new Date()).toISOString(),
     from: fromDate.toISOString()
   }
-  for (let attempt = 0; attempt < MAX_TRANSACTION_SNAPSHOT_ATTEMPTS; attempt++) {
-    const snapshot = await fetchTransactionSnapshot(accessToken, productTypes, dateRange)
-    if (!snapshot.unstable) {
-      console.log(`>>> Загружено ${snapshot.operations.length} операций.`)
-      return snapshot.operations
-    }
-    if (attempt + 1 < MAX_TRANSACTION_SNAPSHOT_ATTEMPTS) {
-      console.log('>>> Список операций изменился во время загрузки, повторяем...')
-    }
+  const snapshot = await fetchTransactionSnapshot(accessToken, productTypes, dateRange)
+  if (snapshot.driftReasons.length > 0) {
+    console.log(`>>> Список операций изменился во время загрузки (${snapshot.driftReasons.join(', ')}). Возвращаем собранные данные; следующая синхронизация уточнит результат.`)
   }
-
-  throw new TemporaryError('Банк изменил список операций во время загрузки. Повторите синхронизацию позже.')
+  console.log(`>>> Загружено ${snapshot.operations.length} операций.`)
+  return snapshot.operations
 }
