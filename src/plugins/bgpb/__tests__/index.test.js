@@ -1,8 +1,12 @@
 const mockActivateDeviceToken = jest.fn()
 const mockFetchAccounts = jest.fn()
+const mockFetchFullTransactions = jest.fn()
+const mockFetchLastTransactions = jest.fn()
+const mockFetchTransactionsAccId = jest.fn()
 const mockLogin = jest.fn()
 const mockLoginDeviceToken = jest.fn()
 const mockLogoff = jest.fn()
+const mockParseTransactionsAndOverdraft = jest.fn()
 const mockRegisterDeviceToken = jest.fn()
 const mockBuildActivationDescriptor = jest.fn()
 const mockCreateDeviceIdentity = jest.fn()
@@ -18,13 +22,13 @@ jest.mock('../api', () => ({
   activateDeviceToken: mockActivateDeviceToken,
   fetchAccounts: mockFetchAccounts,
   fetchBalance: jest.fn(),
-  fetchFullTransactions: jest.fn(),
-  fetchLastTransactions: jest.fn(),
-  fetchTransactionsAccId: jest.fn(),
+  fetchFullTransactions: mockFetchFullTransactions,
+  fetchLastTransactions: mockFetchLastTransactions,
+  fetchTransactionsAccId: mockFetchTransactionsAccId,
   login: mockLogin,
   loginDeviceToken: mockLoginDeviceToken,
   logoff: mockLogoff,
-  parseTransactionsAndOverdraft: jest.fn(),
+  parseTransactionsAndOverdraft: mockParseTransactionsAndOverdraft,
   registerDeviceToken: mockRegisterDeviceToken
 }))
 
@@ -40,7 +44,7 @@ jest.mock('../deviceOtp', () => ({
   validateDevicePin: mockValidateDevicePin
 }))
 
-const { scrape, shouldFetchFullStatement } = require('../index')
+const { createDeviceAuthorizationProvider, scrape, shouldFetchFullStatement } = require('../index')
 
 const LOGIN = 'user@example.com'
 const GENERATED_PIN = '582041'
@@ -79,6 +83,7 @@ function createZenMoney (initialData = {}) {
     getData: jest.fn(key => pluginStorage[key]),
     setData: jest.fn((key, value) => { pluginStorage[key] = value }),
     saveData: jest.fn(),
+    isAccountSkipped: jest.fn(() => false),
     readLine: jest.fn()
   }
   return pluginStorage
@@ -122,6 +127,9 @@ beforeEach(() => {
   mockLoginDeviceToken.mockResolvedValue('device-sid')
   mockLogoff.mockResolvedValue(undefined)
   mockFetchAccounts.mockResolvedValue([])
+  mockFetchLastTransactions.mockResolvedValue([])
+  mockFetchTransactionsAccId.mockResolvedValue({ transactionsAccId: null, conditionsAccId: null })
+  mockParseTransactionsAndOverdraft.mockReturnValue({ overdraft: null, transactions: [] })
 })
 
 describe('statement source selection', () => {
@@ -148,6 +156,71 @@ describe('statement source selection', () => {
       transactionsAccId: null
     }, true)).toBe(false)
   })
+
+  it('shares one fresh post-login OTP between protected actions', async () => {
+    const generateOtp = jest.fn()
+      .mockReturnValueOnce('login-otp')
+      .mockReturnValueOnce('action-otp')
+      .mockReturnValue('action-otp')
+    const waitForNextOtpPeriod = jest.fn(async () => {})
+    const getDeviceAuthorization = createDeviceAuthorizationProvider(DEVICE_STATE, GENERATED_PIN, 'login-otp', {
+      generateOtp,
+      waitForNextOtpPeriod
+    })
+
+    await expect(Promise.all([
+      getDeviceAuthorization(),
+      getDeviceAuthorization()
+    ])).resolves.toEqual([
+      { deviceNo: DEVICE_STATE.deviceNo, otp: 'action-otp' },
+      { deviceNo: DEVICE_STATE.deviceNo, otp: 'action-otp' }
+    ])
+    expect(waitForNextOtpPeriod).toHaveBeenCalledTimes(1)
+    expect(generateOtp).toHaveBeenCalledTimes(2)
+  })
+
+  it('refreshes the shared authorization after the OTP period changes', async () => {
+    const generateOtp = jest.fn()
+      .mockReturnValueOnce('login-otp')
+      .mockReturnValueOnce('action-otp-1')
+      .mockReturnValueOnce('action-otp-1')
+      .mockReturnValueOnce('action-otp-2')
+    const waitForNextOtpPeriod = jest.fn(async () => {})
+    const getDeviceAuthorization = createDeviceAuthorizationProvider(DEVICE_STATE, GENERATED_PIN, 'login-otp', {
+      generateOtp,
+      waitForNextOtpPeriod
+    })
+
+    await expect(getDeviceAuthorization()).resolves.toEqual({
+      deviceNo: DEVICE_STATE.deviceNo,
+      otp: 'action-otp-1'
+    })
+    await expect(getDeviceAuthorization()).resolves.toEqual({
+      deviceNo: DEVICE_STATE.deviceNo,
+      otp: 'action-otp-1'
+    })
+    await expect(getDeviceAuthorization()).resolves.toEqual({
+      deviceNo: DEVICE_STATE.deviceNo,
+      otp: 'action-otp-2'
+    })
+    expect(waitForNextOtpPeriod).toHaveBeenCalledTimes(1)
+    expect(generateOtp).toHaveBeenCalledTimes(4)
+  })
+
+  it('fails after two unchanged OTP periods instead of waiting forever', async () => {
+    const generateOtp = jest.fn(() => 'login-otp')
+    const waitForNextOtpPeriod = jest.fn(async () => {})
+    const getDeviceAuthorization = createDeviceAuthorizationProvider(DEVICE_STATE, GENERATED_PIN, 'login-otp', {
+      generateOtp,
+      waitForNextOtpPeriod
+    })
+
+    await expect(getDeviceAuthorization()).rejects.toMatchObject({
+      message: expect.stringContaining('Проверьте время')
+    })
+    expect(waitForNextOtpPeriod).toHaveBeenCalledTimes(2)
+    expect(generateOtp).toHaveBeenCalledTimes(3)
+  })
 })
 
 describe('device PIN lifecycle', () => {
@@ -164,6 +237,7 @@ describe('device PIN lifecycle', () => {
     expect(ZenMoney.saveData.mock.invocationCallOrder[0]).toBeLessThan(mockLogin.mock.invocationCallOrder[0])
     expect(ZenMoney.readLine).not.toHaveBeenCalled()
     expect(mockLoginDeviceToken).toHaveBeenCalledWith(DEVICE_STATE.deviceNo, 'device-otp')
+    expect(mockGenerateDeviceOtp).toHaveBeenCalledTimes(1)
   })
 
   it('reuses the generated PIN from plugin data without registering again', async () => {
@@ -178,6 +252,8 @@ describe('device PIN lifecycle', () => {
     expect(mockGenerateDevicePin).not.toHaveBeenCalled()
     expect(mockRegisterDeviceToken).not.toHaveBeenCalled()
     expect(ZenMoney.setData).not.toHaveBeenCalled()
+    expect(mockLoginDeviceToken).toHaveBeenCalledWith(DEVICE_STATE.deviceNo, 'device-otp')
+    expect(mockGenerateDeviceOtp).toHaveBeenCalledTimes(1)
   })
 
   it('reuses a PIN persisted before an interrupted first registration', async () => {

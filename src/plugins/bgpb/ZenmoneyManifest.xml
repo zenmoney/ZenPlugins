@@ -2,7 +2,7 @@
 <provider>
     <id>bgpb</id>
     <version>1.0</version>
-    <build>4</build>
+    <build>5</build>
     <company>15372</company>
     <modular>true</modular>
     <codeRequired>false</codeRequired>

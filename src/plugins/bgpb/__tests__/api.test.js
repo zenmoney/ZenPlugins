@@ -49,9 +49,9 @@ describe('request logging', () => {
 
     await expect(login('login-value', 'password-value')).resolves.toBe('response-secret-sid')
     const loginRequest = global.fetch.mock.calls[0][1]
-    expect(loginRequest.headers['User-Agent']).toBe('BGPB mobile/1.6.2 (Android; unknownAndroidSDKbuiltforx86; Android 11)')
-    expect(loginRequest.body).toContain('<Parameter Id="AppVersion">1.6.2</Parameter>')
-    expect(loginRequest.body).toContain('<TerminalId Version="1.6.2">41742962</TerminalId>')
+    expect(loginRequest.headers['User-Agent']).toBe('DailyFin/1.7.1 (Android; unknownAndroidSDKbuiltforx86; Android 11)')
+    expect(loginRequest.body).toContain('<Parameter Id="AppVersion">1.7.1</Parameter>')
+    expect(loginRequest.body).toContain('<TerminalId Version="1.7.1">41742962</TerminalId>')
     await expect(fetchBalance('request-secret-sid', {
       productType: 'MS',
       cardNumber: '518597******1111',
@@ -151,7 +151,7 @@ describe('request logging', () => {
 })
 
 describe('fetchFullTransactions', () => {
-  it('uses DailyFin device authorization parameters for a protected action', async () => {
+  it('awaits fresh DailyFin device authorization for a protected action', async () => {
     global.fetch = jest.fn()
       .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><ExecuteAction><MailId>mail-1</MailId></ExecuteAction></BS_Response>'))
       .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><MailAttachment><Attachment><Body>statement</Body></Attachment></MailAttachment></BS_Response>'))
@@ -159,7 +159,7 @@ describe('fetchFullTransactions', () => {
     await expect(fetchFullTransactions('statement-secret-sid', {
       title: 'Deposit',
       transactionsAccId: 'statement-action'
-    }, new Date('2026-05-01T00:00:00+0300'), new Date('2026-05-21T00:00:00+0300'), () => ({
+    }, new Date('2026-05-01T00:00:00+0300'), new Date('2026-05-21T00:00:00+0300'), async () => ({
       deviceNo: '123456',
       otp: '654321'
     }))).resolves.toHaveLength(1)
@@ -168,6 +168,34 @@ describe('fetchFullTransactions', () => {
     expect(statementRequest).toContain('<Session IpAddress="10.0.2.15" Prolong="Y" SID="statement-secret-sid">')
     expect(statementRequest).toContain('<Parameter Id="DeviceNo">123456</Parameter>')
     expect(statementRequest).toContain('<Parameter Id="Password">654321</Parameter>')
+  })
+
+  it('preserves the bank password rejection from a statement request', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Error Count="1" Class="2"><ErrorLine Idx="1">Ошибка проверки пароля</ErrorLine></Error></BS_Response>'))
+
+    const error = await fetchFullTransactions('statement-secret-sid', {
+      title: 'Deposit',
+      transactionsAccId: 'statement-action'
+    }, new Date('2026-05-01T00:00:00+0300'), new Date('2026-05-21T00:00:00+0300')).catch(error => error)
+
+    expect(error).toBeInstanceOf(InvalidPreferencesError)
+    expect(error.message).toBe('Ответ банка: Ошибка проверки пароля')
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not hide an authorization error while loading a statement attachment', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><ExecuteAction><MailId>mail-1</MailId></ExecuteAction></BS_Response>'))
+      .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Error Count="1" Class="2"><ErrorLine Idx="1">Ошибка авторизации</ErrorLine></Error></BS_Response>'))
+
+    const error = await fetchFullTransactions('statement-secret-sid', {
+      title: 'Deposit',
+      transactionsAccId: 'statement-action'
+    }, new Date('2026-05-01T00:00:00+0300'), new Date('2026-05-21T00:00:00+0300')).catch(error => error)
+
+    expect(error).toBeInstanceOf(InvalidPreferencesError)
+    expect(error.message).toBe('Ответ банка: Ошибка авторизации')
   })
 })
 

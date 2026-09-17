@@ -9,7 +9,7 @@ import { BankMessageError, InvalidLoginOrPasswordError, InvalidPreferencesError,
 
 const BASE_URL = 'https://mobapp-frontend.bgpb.by/'
 const TERMINAL_ID = 41742962
-const APP_VERSION = '1.6.2'
+const APP_VERSION = '1.7.1'
 const DEVICE_PLATFORM = 'Android 11'
 const PUSH_HISTORY_ENDPOINT = `push-history/api/android_${APP_VERSION}/v2/getHistory`
 const HISTORY_BASE_PATH = 'history/client/2/1/'
@@ -143,7 +143,7 @@ async function fetchApi (url, xml, options, predicate = () => true, errorFactory
   options = withDefaultSanitizeLogMasks(options)
   options.method = options.method ? options.method : 'POST'
   options.headers = {
-    'User-Agent': `BGPB mobile/${APP_VERSION} (Android; unknownAndroidSDKbuiltforx86; ${DEVICE_PLATFORM})`,
+    'User-Agent': `DailyFin/${APP_VERSION} (Android; unknownAndroidSDKbuiltforx86; ${DEVICE_PLATFORM})`,
     'Content-Type': 'multipart/form-data; boundary=' + boundary
   }
   options.body = boundaryStart +
@@ -726,6 +726,7 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
 
   for (const date of dates) {
     try {
+      const deviceAuthorization = getDeviceAuthorization ? await getDeviceAuthorization() : null
       const response = await fetchApi(SOU_ADMIN_ENDPOINT,
         '<BS_Request>\r\n' +
         '   <ExecuteAction Id="' + account.transactionsAccId + '" Button="OK">\r\n' +
@@ -733,10 +734,10 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
         '      <Parameter Id="DateTill">' + transactionDate(date[1]) + '</Parameter>\r\n' +
         '   </ExecuteAction>\r\n' +
         '   <RequestType>ExecuteAction</RequestType>\r\n' +
-        buildSessionXml(sid, getDeviceAuthorization ? getDeviceAuthorization() : null) +
+        buildSessionXml(sid, deviceAuthorization) +
         buildTerminalInfoXml() +
         '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError('bad request'))
+        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError(message))
 
       const mailId = response?.BS_Response?.ExecuteAction?.MailId
       if (mailId) {
@@ -758,7 +759,10 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
   for (const mailId of mailIDs) {
     try {
       mails.push(await fetchMailAttachment(sid, mailId))
-    } catch (_error) {
+    } catch (error) {
+      if (!(error instanceof TemporaryError)) {
+        throw error
+      }
       console.log(`>>> Не удалось загрузить вложение выписки для "${account.title}", пропускаем один интервал.`)
     }
   }
