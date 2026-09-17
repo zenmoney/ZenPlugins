@@ -2,7 +2,7 @@ import { fetch, fetchJson, FetchResponse } from '../../common/network'
 import { getString } from '../../types/get'
 import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import { AltynAccount, AltynTransaction, Preferences } from './models'
-import { fetchAccounts, fetchTransactions, LK_BASE } from './fetchApi'
+import { fetchAccounts, fetchTransactions, isNetworkError, lkBases, setWorkingLkBase } from './fetchApi'
 // @ts-expect-error нет типов у пакета querystring-browser
 import * as qs from 'querystring-browser'
 
@@ -41,16 +41,16 @@ function cookieHeader (cookies: CookieMap): Record<string, string> {
 }
 
 // Авторизация через NextAuth: подтверждение токена PIN-кодом.
-// Подтверждённая цепочка:
+// Подтверждённая цепочка (на одном домене кабинета):
 //   1. GET  /api/auth/csrf                         → csrfToken + csrf-cookie
 //   2. POST /api/auth/callback/credentials (otp=PIN, token=token, csrf-cookie)
 //        → ставит __Secure-next-auth.session-token, сервер помечает токен верифицированным
-// api.lk.altyn.one после этого принимает Bearer-токен.
-export async function authorize (preferences: Preferences): Promise<void> {
+// После этого API (api.lk.altyn.*) принимает Bearer-токен.
+async function authorizeOn (lkBase: string, preferences: Preferences): Promise<void> {
   const cookies: CookieMap = new Map()
 
   // 1. Получаем csrfToken + csrf-cookie
-  const csrfResponse = await fetchJson(`${LK_BASE}/api/auth/csrf`, {
+  const csrfResponse = await fetchJson(`${lkBase}/api/auth/csrf`, {
     headers: { Accept: 'application/json', ...cookieHeader(cookies) }
   })
   updateCookies(cookies, csrfResponse)
@@ -64,10 +64,10 @@ export async function authorize (preferences: Preferences): Promise<void> {
     isPinEnabled: 'true',
     redirect: 'false',
     csrfToken,
-    callbackUrl: `${LK_BASE}/auth/pin`,
+    callbackUrl: `${lkBase}/auth/pin`,
     json: 'true'
   })
-  const callbackResponse = await fetch(`${LK_BASE}/api/auth/callback/credentials`, {
+  const callbackResponse = await fetch(`${lkBase}/api/auth/callback/credentials`, {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
@@ -83,6 +83,25 @@ export async function authorize (preferences: Preferences): Promise<void> {
   if (callbackResponse.status >= 400) {
     throw new TemporaryError(`Altyn Wallet: не удалось подтвердить сессию (status ${callbackResponse.status})`)
   }
+}
+
+// Пробует домены кабинета по очереди: транспортная ошибка (домен недоступен)
+// — пробуем следующий; ответ с любым статусом — домен работает, не меняем.
+export async function authorize (preferences: Preferences): Promise<void> {
+  let lastError: unknown = null
+  for (const lkBase of lkBases()) {
+    try {
+      await authorizeOn(lkBase, preferences)
+      setWorkingLkBase(lkBase)
+      return
+    } catch (error) {
+      if (!isNetworkError(error)) {
+        throw error
+      }
+      lastError = error
+    }
+  }
+  throw new TemporaryError(`Altyn Wallet: нет связи ни с одним доменом кабинета — ${String(lastError)}`)
 }
 
 export async function fetchAllAccounts (preferences: Preferences): Promise<AltynAccount[]> {

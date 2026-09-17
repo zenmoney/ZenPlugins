@@ -3,7 +3,7 @@ import { AccountOrCard } from '../../types/zenmoney'
 // Настройки из preferences.xml (key="token", key="pin", key="startDate")
 // startDate не входит сюда — он становится fromDate при первом запуске
 export interface Preferences {
-  // Токен из lk.altyn.one (Bearer для запросов к API)
+  // Токен из lk.altyn.in (Bearer для запросов к API)
   token: string
   // PIN-код для подтверждения сессии (NextAuth callback/credentials, поле otp)
   pin: string
