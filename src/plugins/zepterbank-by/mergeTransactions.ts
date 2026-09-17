@@ -13,8 +13,19 @@ interface SourcedTransaction {
 
 type TransactionWithDedupDate = Transaction & { dedupDate?: Date }
 
+const MERCHANT_ID_PREFIX_LENGTH = 25
+const SAFE_MERCHANT_PREFIX_MIN_LENGTH = 16
+
 const normalizeText = (text: string | null | undefined): string =>
   (text ?? '').replace(/\s+/g, ' ').trim()
+
+const normalizeMerchant = (text: string | null | undefined): string =>
+  normalizeText(text)
+    .replace(/&quot;/g, '"')
+    .toUpperCase()
+    .split(/[^0-9A-ZА-ЯЁІЎ]+/g)
+    .filter(Boolean)
+    .join(' ')
 
 const getMerchantTitle = (transaction: Transaction): string => {
   const { merchant } = transaction
@@ -64,13 +75,35 @@ const getMccSignature = (transaction: Transaction): string => {
 const getDaySignature = (transaction: Transaction): string =>
   getBusinessDateIdentityKey((transaction as TransactionWithDedupDate).dedupDate ?? transaction.date)
 
-const getDuplicateFingerprint = (transaction: Transaction): string => [
+const getDuplicateBaseFingerprint = (transaction: Transaction): string => [
   getMovementAccountId(transaction),
   getDaySignature(transaction),
   getAmountSignature(transaction),
-  getMccSignature(transaction),
-  normalizeText(getMerchantTitle(transaction))
+  getMccSignature(transaction)
 ].join('|')
+
+const areMerchantTitlesCompatible = (left: Transaction, right: Transaction): boolean => {
+  const leftMerchant = normalizeMerchant(getMerchantTitle(left))
+  const rightMerchant = normalizeMerchant(getMerchantTitle(right))
+
+  if (leftMerchant === rightMerchant) {
+    return true
+  }
+
+  if (leftMerchant === '' || rightMerchant === '') {
+    return false
+  }
+
+  const leftPrefix = leftMerchant.slice(0, MERCHANT_ID_PREFIX_LENGTH)
+  const rightPrefix = rightMerchant.slice(0, MERCHANT_ID_PREFIX_LENGTH)
+
+  if (leftPrefix === rightPrefix) {
+    return true
+  }
+
+  return Math.min(leftMerchant.length, rightMerchant.length) >= SAFE_MERCHANT_PREFIX_MIN_LENGTH &&
+    (leftMerchant.startsWith(rightMerchant) || rightMerchant.startsWith(leftMerchant))
+}
 
 const getStableIdFingerprint = (transaction: Transaction): string => [
   getMovementAccountId(transaction),
@@ -92,7 +125,7 @@ const getPartialSettlementFingerprint = (transaction: Transaction): string => [
   getMovementInstrumentSignature(transaction),
   getMovementDirection(transaction),
   getMccSignature(transaction),
-  normalizeText(getMerchantTitle(transaction)).toUpperCase()
+  normalizeMerchant(getMerchantTitle(transaction)).slice(0, MERCHANT_ID_PREFIX_LENGTH)
 ].join('|')
 
 const getAbsoluteMovementAmount = (transaction: Transaction): number => {
@@ -115,11 +148,12 @@ const isMatchingDuplicate = (left: Transaction, right: Transaction): boolean => 
   const leftId = getMovementId(left)
   const rightId = getMovementId(right)
 
-  if (leftId !== null && rightId !== null) {
-    return leftId === rightId || getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
+  if (leftId !== null && rightId !== null && leftId === rightId) {
+    return true
   }
 
-  return getDuplicateFingerprint(left) === getDuplicateFingerprint(right)
+  return getDuplicateBaseFingerprint(left) === getDuplicateBaseFingerprint(right) &&
+    areMerchantTitlesCompatible(left, right)
 }
 
 const reconcileUnambiguousPartialSettlements = (entries: SourcedTransaction[]): SourcedTransaction[] => {

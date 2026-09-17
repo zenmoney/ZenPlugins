@@ -168,6 +168,132 @@ describe('getTransactions', () => {
     ])
   })
 
+  it('deduplicates statement merchants truncated after a safe token prefix', () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const purchases = [
+      { amount: '12.34', effectiveDate: '2026-09-04T19:55:09' },
+      { amount: '56.78', effectiveDate: '2026-09-04T19:45:58' },
+      { amount: '90.12', effectiveDate: '2026-09-04T19:44:18' }
+    ]
+    const historyTransactions = purchases.map(({ amount, effectiveDate }) => convertCardTransaction({
+      effectiveDate,
+      transacName: 'POS PURCHASE ',
+      amount,
+      currencyIso: 'BYN',
+      cardAcceptor: 'SHOP SAMPLE.MARKET LONGNAME',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС5411'
+    }, account))
+    const statementTransactions = purchases.map(({ amount }) => convertStatementTransaction({
+      transactionDate: '2026-09-04T00:00:00',
+      balanceDate: '2026-09-07',
+      operationName: 'Оплата товаров и услуг в устройствах других банков',
+      operationSum: amount,
+      transactionSum: amount,
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'SHOP SAMPLE.MARKET LONGNA',
+      MCC: 'MCC 5411'
+    }, account))
+    const historyOnlyIds = mergeTransactions(historyTransactions, [])
+      .map((transaction) => transaction.movements[0].id)
+
+    const transactions = mergeTransactions(historyTransactions, statementTransactions)
+
+    expect(transactions).toHaveLength(3)
+    expect(transactions.map((transaction) => transaction.movements[0].sum)).toEqual([-12.34, -56.78, -90.12])
+    expect(transactions.map((transaction) => transaction.movements[0].id)).toEqual(historyOnlyIds)
+    expect(transactions.map((transaction) => transaction.merchant)).toEqual(statementTransactions.map((transaction) => transaction.merchant))
+  })
+
+  it('does not deduplicate different merchants with the same transaction identity fields', () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const historyTransaction = convertCardTransaction({
+      effectiveDate: '2026-09-04T19:55:09',
+      transacName: 'POS PURCHASE ',
+      amount: '20.00',
+      currencyIso: 'BYN',
+      cardAcceptor: 'SHOP ALPHA SUPERMARKET',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС5411'
+    }, account)
+    const statementTransaction = convertStatementTransaction({
+      transactionDate: '2026-09-04T00:00:00',
+      balanceDate: '2026-09-07',
+      operationName: 'Оплата товаров и услуг в устройствах других банков',
+      operationSum: '20.00',
+      transactionSum: '20.00',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'SHOP BRAVO SUPERMARKET',
+      MCC: 'MCC 5411'
+    }, account)
+
+    const transactions = mergeTransactions([historyTransaction], [statementTransaction])
+
+    expect(transactions).toHaveLength(2)
+    expect(transactions[0].movements[0].id).not.toBe(transactions[1].movements[0].id)
+  })
+
+  it('does not deduplicate merchants when their shared prefix is too short', () => {
+    const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
+
+    if (rawCardAccount == null) {
+      throw new Error('Card account not found')
+    }
+
+    const account = convertCardAccount(rawCardAccount)
+    const historyTransaction = convertCardTransaction({
+      effectiveDate: '2026-09-04T19:55:09',
+      transacName: 'POS PURCHASE ',
+      amount: '20.00',
+      currencyIso: 'BYN',
+      cardAcceptor: 'SHOP ALPHA',
+      repeatable: false,
+      transOperType: 'debit',
+      transMcc: 'МСС5411'
+    }, account)
+    const statementTransaction = convertStatementTransaction({
+      transactionDate: '2026-09-04T00:00:00',
+      balanceDate: '2026-09-07',
+      operationName: 'Оплата товаров и услуг в устройствах других банков',
+      operationSum: '20.00',
+      transactionSum: '20.00',
+      transactionCurrency: '933',
+      transactionCurrencyISO: 'BYN',
+      operationSign: -1,
+      operationCurrency: '933',
+      operationCurrencyIso: 'BYN',
+      merchant: 'BLR MINSK',
+      terminalLocation: 'SHOP ALPHA EXPRESS',
+      MCC: 'MCC 5411'
+    }, account)
+
+    expect(mergeTransactions([historyTransaction], [statementTransaction])).toHaveLength(2)
+  })
+
   it('deduplicates capitalization rows using statement balance date', async () => {
     const rawCardAccount = TEST_ACCOUNTS.CARD.find((account) => account.productCardId === 'Ch8xqhoVt978H4A8qpjgw4vGkhi9M35r2LL45im8')
 
