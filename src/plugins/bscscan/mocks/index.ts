@@ -89,24 +89,37 @@ export const transactionsResponseMock2: TransactionResponse = {
 }
 
 export function mockEndPoints (): void {
-  fetchMock.once('https://api.bscscan.com/api?module=account&action=balancemulti&address=1%2C2&tag=latest&apiKey=API_KEY', {
-    status: 200,
-    body: accountResponseMock
-  })
-  fetchMock.once('https://api.bscscan.com/api?module=block&action=getblocknobytime&closest=before&timestamp=1640552400&apiKey=API_KEY', {
-    status: 200,
-    body: startBlockResponseMock
-  })
-  fetchMock.once('https://api.bscscan.com/api?module=block&action=getblocknobytime&closest=before&timestamp=1641070800&apiKey=API_KEY', {
-    status: 200,
-    body: endBlockResponseMock
-  })
-  fetchMock.once('https://api.bscscan.com/api?module=account&action=txlist&address=1&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY', {
-    status: 200,
-    body: transactionsResponseMock1
-  })
-  fetchMock.once('https://api.bscscan.com/api?module=account&action=txlist&address=2&startblock=1&endblock=99999999&page=1&offset=100&sort=desc&apikey=API_KEY', {
-    status: 200,
-    body: transactionsResponseMock2
+  fetchMock.post('https://bnb-mainnet.g.alchemy.com/v2/API_KEY', (_url: string, options: { body: string }) => {
+    const request = JSON.parse(options.body)
+    const ok = (result: unknown): { status: number, body: { jsonrpc: string, id: number, result: unknown } } => ({
+      status: 200,
+      body: { jsonrpc: '2.0', id: 1, result }
+    })
+    if (request.method === 'eth_getBalance') {
+      return ok(request.params[0] === '1' ? '0x1bc16d674ec80000' : '0x8ac7230489e80000')
+    }
+    if (request.method === 'eth_getTransactionReceipt') {
+      return ok({ gasUsed: '0x5208', effectiveGasPrice: '0x3b9aca00', status: '0x1' })
+    }
+    const params = request.params[0]
+    const incoming = params.toAddress != null
+    const account = params.toAddress ?? params.fromAddress
+    const row = (hash: string, from: string, to: string, value: string): {
+      hash: string
+      from: string
+      to: string
+      rawContract: { value: string }
+      metadata: { blockTimestamp: string }
+    } => ({
+      hash, from, to, rawContract: { value }, metadata: { blockTimestamp: '2015-07-30T15:26:28.000Z' }
+    })
+    const transfers = account === '1'
+      ? incoming
+        ? [row('2', 'OTHER_ACCOUNT', '1', '0x1bc16d674ec80000')]
+        : [row('1', '1', 'OTHER_ACCOUNT', '0xde0b6b3a7640000'), row('3', '1', '2', '0xde0b6b3a7640000')]
+      : incoming
+        ? [row('3', '1', '2', '0xde0b6b3a7640000')]
+        : []
+    return ok({ transfers })
   })
 }

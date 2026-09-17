@@ -1,22 +1,19 @@
 import flatten from 'lodash/flatten'
-import { fetch } from '../common'
+import { alchemyCall } from '../common/alchemy'
 import { Preferences } from '../types'
 
-import { AccountResponse, TokenAccount, TokenTransaction, TokenTransactionResponse } from './types'
+import { TokenAccount, TokenTransaction } from './types'
 import { SUPPORTED_TOKENS } from './config'
 
 export async function fetchAddressTokens (preferences: Preferences, address: string): Promise<TokenAccount[]> {
   const result = await Promise.all(SUPPORTED_TOKENS.map(async token => {
-    const response = await fetch<AccountResponse>({
-      module: 'account',
-      action: 'tokenbalance',
-      contractaddress: token.contractAddress,
-      address,
-      tag: 'latest',
-      apiKey: preferences.apiKey
-    })
-
-    const balance = Number(response.result)
+    const normalizedAddress = address.trim().replace(/^0x/i, '').toLowerCase()
+    const data = `0x70a08231${normalizedAddress.padStart(64, '0')}`
+    const rawBalance = await alchemyCall<string>(preferences.apiKey, 'eth_call', [{
+      to: token.contractAddress,
+      data
+    }, 'latest'])
+    const balance = Number(BigInt(rawBalance))
 
     const account: TokenAccount = {
       id: address,
@@ -30,8 +27,7 @@ export async function fetchAddressTokens (preferences: Preferences, address: str
   return result
 }
 
-/* Эндпоинт bscscan для получения инфы про все токены — платный.
-   Поэтому обходим тут все поддерживаемые токены по каждому адресу отдельно */
+/* Query only the allowlisted stablecoins for every configured address. */
 export async function fetchAccounts (
   preferences: Preferences
 ): Promise<TokenAccount[]> {
@@ -46,12 +42,91 @@ export async function fetchAccounts (
   return flatten(result)
 }
 
-const PAGE_SIZE = 100
-
 interface AccountTransactionsOptions {
   startBlock: number
   endBlock: number
-  page?: number
+}
+
+interface AlchemyTransfer {
+  blockNum?: string
+  uniqueId?: string
+  hash?: string
+  from?: string
+  to?: string
+  rawContract?: { value?: string, address?: string }
+  metadata?: { blockTimestamp?: string }
+}
+
+interface AlchemyTransfersResult {
+  transfers?: AlchemyTransfer[]
+  pageKey?: string
+}
+
+function transferLogIndex (transfer: AlchemyTransfer): string {
+  const match = transfer.uniqueId?.match(/:log:(\d+)$/)
+  return match?.[1] ?? '0'
+}
+
+function toTokenTransaction (transfer: AlchemyTransfer, account: TokenAccount): TokenTransaction | null {
+  const timestamp = Date.parse(transfer.metadata?.blockTimestamp ?? '')
+  const rawValue = transfer.rawContract?.value
+  if (transfer.hash == null || transfer.from == null || transfer.to == null || rawValue == null || !Number.isFinite(timestamp)) return null
+
+  return {
+    blockNumber: transfer.blockNum == null ? '0' : BigInt(transfer.blockNum).toString(),
+    timeStamp: Math.floor(timestamp / 1000).toString(),
+    hash: transfer.hash,
+    nonce: '0',
+    blockHash: '',
+    from: transfer.from,
+    contractAddress: transfer.rawContract?.address ?? account.contractAddress,
+    to: transfer.to,
+    value: BigInt(rawValue).toString(),
+    tokenName: '',
+    tokenSymbol: '',
+    tokenDecimal: '18',
+    transactionIndex: '0',
+    logIndex: transferLogIndex(transfer),
+    gas: '0',
+    gasPrice: '0',
+    gasUsed: '0',
+    cumulativeGasUsed: '0',
+    input: '0x',
+    confirmations: '0'
+  }
+}
+
+async function fetchDirection (
+  preferences: Preferences,
+  account: TokenAccount,
+  direction: 'incoming' | 'outgoing',
+  options: AccountTransactionsOptions
+): Promise<TokenTransaction[]> {
+  let pageKey: string | undefined
+  const transactions = new Map<string, TokenTransaction>()
+  do {
+    const params: Record<string, unknown> = {
+      fromBlock: `0x${options.startBlock.toString(16)}`,
+      toBlock: `0x${options.endBlock.toString(16)}`,
+      category: ['erc20'],
+      contractAddresses: [account.contractAddress],
+      withMetadata: true,
+      excludeZeroValue: true,
+      maxCount: '0x3e8',
+      order: 'asc'
+    }
+    params[direction === 'incoming' ? 'toAddress' : 'fromAddress'] = account.id
+    if (pageKey != null) params.pageKey = pageKey
+
+    const result = await alchemyCall<AlchemyTransfersResult>(preferences.apiKey, 'alchemy_getAssetTransfers', [params])
+    for (const row of result.transfers ?? []) {
+      const transaction = toTokenTransaction(row, account)
+      if (transaction != null) transactions.set(`${transaction.hash}:${transaction.logIndex ?? '0'}`, transaction)
+    }
+    pageKey = result.pageKey
+  } while (pageKey != null)
+
+  return [...transactions.values()]
 }
 
 export async function fetchAccountTransactions (
@@ -59,40 +134,9 @@ export async function fetchAccountTransactions (
   account: TokenAccount,
   options: AccountTransactionsOptions
 ): Promise<TokenTransaction[]> {
-  const { startBlock, endBlock, page = 1 } = options
-
-  try {
-    const response = await fetch<TokenTransactionResponse>({
-      module: 'account',
-      action: 'tokentx',
-      contractaddress: account.contractAddress,
-      address: account.id,
-      startblock: startBlock,
-      endblock: endBlock,
-      page,
-      offset: PAGE_SIZE,
-      sort: 'desc',
-      apikey: preferences.apiKey
-    })
-
-    const transactions = response.result
-
-    if (response.result.length === PAGE_SIZE) {
-      return [
-        ...transactions,
-        ...await fetchAccountTransactions(preferences, account, {
-          ...options,
-          page: page + 1
-        })
-      ]
-    }
-
-    return transactions
-  } catch (error: any) { // eslint-disable-line
-    if (error?.body?.message === 'No transactions found') {
-      return []
-    }
-
-    throw error
-  }
+  const [incoming, outgoing] = await Promise.all([
+    fetchDirection(preferences, account, 'incoming', options),
+    fetchDirection(preferences, account, 'outgoing', options)
+  ])
+  return [...new Map([...incoming, ...outgoing].map(transaction => [`${transaction.hash}:${transaction.logIndex ?? '0'}`, transaction])).values()]
 }

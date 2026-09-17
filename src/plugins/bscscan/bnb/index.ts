@@ -10,6 +10,7 @@ export const scrape: Scrape = async ({
   endBlock
 }) => {
   const transactions: Transaction[] = []
+  const accountsWithActivity = new Set<string>()
 
   const accountsResponse = await fetchAccounts(preferences)
 
@@ -22,11 +23,14 @@ export const scrape: Scrape = async ({
       endBlock
     })
 
+    if (account.balance !== 0 || accountTransactions.length > 0) {
+      accountsWithActivity.add(account.id)
+    }
     transactions.push(...convertTransactions(account.id, accountTransactions))
   }
 
   return {
-    accounts,
+    accounts: accounts.filter(account => accountsWithActivity.has(account.id)),
     transactions: mergeTransferTransactions(transactions)
   }
 }

@@ -44,7 +44,7 @@ describe('scrape', () => {
           account: { id: '1' },
           invoice: null,
           sum: -1000000,
-          fee: -323
+          fee: -21
         }],
         merchant: {
           fullTitle: 'OTHER_ACCOUNT',
@@ -79,7 +79,7 @@ describe('scrape', () => {
             account: { id: '1' },
             invoice: null,
             sum: -1000000,
-            fee: -323
+            fee: -21
           }, {
             id: '3',
             account: { id: '2' },

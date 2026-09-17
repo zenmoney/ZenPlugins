@@ -3,11 +3,12 @@
     <id>bscscan</id>
     <company>16078</company>
     <description>
-        Плагин для синхронизации BNB Smart Chain с помощью bscscan.
-        Для синхронизации укажите ApiKey и адреса кошельков.
+        Плагин для синхронизации BNB Smart Chain.
+        Для синхронизации укажите бесплатный ключ Alchemy и адреса BNB Smart Chain.
+        Плагин учитывает BNB и проверенные Binance-Peg USDT/USDC; произвольные токены и криптоспам не добавляются.
     </description>
     <version>1.0</version>
-    <build>1</build>
+    <build>2</build>
     <modular>true</modular>
     <api>public</api>
     <files>

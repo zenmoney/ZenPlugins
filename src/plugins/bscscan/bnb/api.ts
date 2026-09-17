@@ -1,67 +1,90 @@
-import { fetch } from '../common'
+import { alchemyCall } from '../common/alchemy'
 import { Preferences } from '../types'
-import { AccountResponse, BNBAccount, BNBTransaction, TransactionResponse } from './types'
+import { BNBAccount, BNBTransaction } from './types'
+
+function fromHex (value: string): string {
+  return BigInt(value).toString(10)
+}
 
 export async function fetchAccounts (
   preferences: Preferences
 ): Promise<BNBAccount[]> {
-  const response = await fetch<AccountResponse>({
-    module: 'account',
-    action: 'balancemulti',
-    address: preferences.account,
-    tag: 'latest',
-    apiKey: preferences.apiKey
-  })
-
-  return response.result
+  const addresses = preferences.account.split(',').map(address => address.trim()).filter(Boolean)
+  return await Promise.all(addresses.map(async (account) => ({
+    account,
+    balance: fromHex(await alchemyCall<string>(preferences.apiKey, 'eth_getBalance', [account, 'latest']))
+  })))
 }
 
 interface AccountTransactionsOptions {
   account: string
   startBlock: number
   endBlock: number
-  page?: number
 }
 
-const PAGE_SIZE = 100
+interface AlchemyTransfer {
+  hash?: string
+  from?: string
+  to?: string
+  rawContract?: { value?: string }
+  metadata?: { blockTimestamp?: string }
+}
+
+interface AlchemyTransfersResult {
+  transfers?: AlchemyTransfer[]
+  pageKey?: string
+}
+
+interface AlchemyReceipt {
+  gasUsed?: string
+  effectiveGasPrice?: string
+  status?: string
+}
+
+async function fetchReceipt (apiKey: string, hash: string): Promise<AlchemyReceipt> {
+  return await alchemyCall<AlchemyReceipt>(apiKey, 'eth_getTransactionReceipt', [hash])
+}
 
 export async function fetchAccountTransactions (
   preferences: Preferences,
   options: AccountTransactionsOptions
 ): Promise<BNBTransaction[]> {
-  const { account, startBlock, endBlock, page = 1 } = options
-
-  try {
-    const response = await fetch<TransactionResponse>({
-      module: 'account',
-      action: 'txlist',
-      address: account,
-      startblock: startBlock,
-      endblock: endBlock,
-      page,
-      offset: PAGE_SIZE,
-      sort: 'desc',
-      apikey: preferences.apiKey
-    })
-
-    const transactions = response.result
-
-    if (response.result.length === PAGE_SIZE) {
-      return [
-        ...transactions,
-        ...await fetchAccountTransactions(preferences, {
-          ...options,
-          page: page + 1
-        })
-      ]
-    }
-
-    return transactions
-  } catch (error: any) { // eslint-disable-line
-    if (error?.body?.message === 'No transactions found') {
-      return []
-    }
-
-    throw error
+  let pageKey: string | undefined
+  const transfers = new Map<string, AlchemyTransfer>()
+  for (const direction of ['incoming', 'outgoing'] as const) {
+    pageKey = undefined
+    do {
+      const params: Record<string, unknown> = {
+        fromBlock: `0x${options.startBlock.toString(16)}`,
+        toBlock: `0x${options.endBlock.toString(16)}`,
+        category: ['external'],
+        withMetadata: true,
+        excludeZeroValue: true,
+        maxCount: '0x3e8',
+        order: 'asc'
+      }
+      params[direction === 'incoming' ? 'toAddress' : 'fromAddress'] = options.account
+      if (pageKey != null) params.pageKey = pageKey
+      const result = await alchemyCall<AlchemyTransfersResult>(preferences.apiKey, 'alchemy_getAssetTransfers', [params])
+      for (const transfer of result.transfers ?? []) {
+        if (transfer.hash != null) transfers.set(transfer.hash, transfer)
+      }
+      pageKey = result.pageKey
+    } while (pageKey != null)
   }
+
+  return await Promise.all([...transfers.values()].map(async transfer => {
+    const receipt = await fetchReceipt(preferences.apiKey, transfer.hash ?? '')
+    const timestamp = Date.parse(transfer.metadata?.blockTimestamp ?? '')
+    return {
+      hash: transfer.hash ?? '',
+      from: transfer.from ?? '',
+      to: transfer.to ?? '',
+      value: fromHex(transfer.rawContract?.value ?? '0x0'),
+      timeStamp: Math.floor(timestamp / 1000).toString(),
+      isError: receipt.status === '0x0' ? '1' : '0',
+      gasPrice: fromHex(receipt.effectiveGasPrice ?? '0x0'),
+      gasUsed: fromHex(receipt.gasUsed ?? '0x0')
+    }
+  }))
 }
