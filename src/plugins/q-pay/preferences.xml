@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="email"
+        obligatory="true"
+        inputType="textEmailAddress"
+        title="Email Q-Pay"
+        dialogTitle="Email Q-Pay"
+        dialogMessage="Введите email, который используется для входа на pay.quantera.pro."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||{@s}"
+    />
+    <EditTextPreference
+        key="password"
+        obligatory="true"
+        inputType="textPassword"
+        title="Пароль Q-Pay"
+        dialogTitle="Пароль Q-Pay"
+        dialogMessage="Введите пароль от pay.quantera.pro."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||********"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="Начальная дата"
+        defaultValue="2026-01-01T00:00:00.000Z"
+        dialogTitle="Начальная дата"
+        dialogMessage="Операции Q-Pay будут загружены начиная с этой даты."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>

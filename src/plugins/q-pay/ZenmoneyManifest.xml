@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>q-pay</id>
+    <company>0</company>
+    <description>Q-Pay (pay.quantera.pro) — синхронизация кошельков, активных карт и истории операций.</description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>
