@@ -68,7 +68,7 @@ function account (id: string, title: string, balance: number, savings: boolean):
     id,
     type: AccountType.investment,
     title,
-    instrument: 'USD',
+    instrument: 'USDT',
     balance,
     savings,
     syncIds: [id]
