@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="wallet1Title"
+        obligatory="false"
+        inputType="text"
+        title="Название кошелька 1"
+        dialogTitle="Название кошелька 1"
+        dialogMessage="Как назвать счёт в приложении. По умолчанию Bitcoin"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Название кошелька 1|{@s}"
+    />
+    <EditTextPreference
+        key="wallet1Addresses"
+        obligatory="true"
+        inputType="textPassword"
+        title="Адреса кошелька 1"
+        dialogTitle="Адреса кошелька 1"
+        dialogMessage="Адреса одного кошелька через запятую. Все они станут одним счётом"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Адреса кошелька 1|{@s}"
+    />
+    <EditTextPreference
+        key="wallet2Title"
+        obligatory="false"
+        inputType="text"
+        title="Название кошелька 2"
+        dialogTitle="Название кошелька 2"
+        dialogMessage="Как назвать счёт в приложении. По умолчанию Bitcoin 2"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Название кошелька 2|{@s}"
+    />
+    <EditTextPreference
+        key="wallet2Addresses"
+        obligatory="false"
+        inputType="textPassword"
+        title="Адреса кошелька 2"
+        dialogTitle="Адреса кошелька 2"
+        dialogMessage="Оставьте пустым, если второго кошелька нет"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Адреса кошелька 2|{@s}"
+    />
+    <EditTextPreference
+        key="wallet3Title"
+        obligatory="false"
+        inputType="text"
+        title="Название кошелька 3"
+        dialogTitle="Название кошелька 3"
+        dialogMessage="Как назвать счёт в приложении. По умолчанию Bitcoin 3"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Название кошелька 3|{@s}"
+    />
+    <EditTextPreference
+        key="wallet3Addresses"
+        obligatory="false"
+        inputType="textPassword"
+        title="Адреса кошелька 3"
+        dialogTitle="Адреса кошелька 3"
+        dialogMessage="Оставьте пустым, если третьего кошелька нет"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Адреса кошелька 3|{@s}"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        defaultValue="2018-01-01T00:00:00.000Z"
+        dialogTitle="Дата начала загрузки"
+        dialogMessage="Введите дату, с которой загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
