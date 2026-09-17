@@ -1,4 +1,5 @@
-import { fetchAccounts, fetchTransactions, generateDevice, login, setLanguageCookie } from './api'
+import { fetchAccounts, fetchTransactions, generateDevice, login, setLanguageCookie, setMbsessionCookie } from './api'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { convertAccounts, convertTransaction } from './converters'
 
 export async function fetchAccountsWithCachedAuthFallback (preferences, auth, deps = { fetchAccounts, login }) {
@@ -25,6 +26,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     }
   }
   await setLanguageCookie()
+  await setMbsessionCookie(auth)
 
   const apiAccounts = await fetchAccountsWithCachedAuthFallback(preferences, auth)
   ZenMoney.setData('auth', auth)
@@ -47,6 +49,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }))
   return {
     accounts: accountsData,
-    transactions
+    transactions: adjustTransactions({
+      transactions,
+      accounts: accountsData
+    })
   }
 }
