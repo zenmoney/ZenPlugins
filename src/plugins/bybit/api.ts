@@ -26,6 +26,8 @@ import {
 
 // if > 100, the API returns 10 only
 const PAGE_LIMIT = 100
+const DAY_MS = 24 * 60 * 60 * 1000
+const PENDING_HOLD_LOOKBACK_DAYS = 14
 const DEFAULT_BASE_URL = 'https://api.bybit.com'
 const REGION_ENDPOINTS: Readonly<Record<string, { baseUrl: string, siteId?: string }>> = {
   global: { baseUrl: DEFAULT_BASE_URL },
@@ -176,10 +178,25 @@ export async function fetchFinancialTransactions (
   return await fetchTransactions(creds, fromDate, toDate, 'SIDE_QUERY_FINANCIAL_ALL')
 }
 
+/**
+ * Open authorizations are read over a fixed window instead of the
+ * synchronization window, deliberately. They serve two purposes at once: they
+ * are imported as holds and they are subtracted from the Funding balance, so
+ * the set must not depend on how much history the caller happens to ask for.
+ * Were it to depend on `fromDate`, a first run would subtract a stale
+ * authorization while the next daily run would not, and the balance would jump
+ * between synchronizations. Fourteen days costs nothing over the status quo:
+ * ZenMoney asks for at least the last fourteen days anyway (`calculateFromDate`
+ * in `src/common/adapters.js`), which is what this query used to span. It is an
+ * ample margin over the day and a half an authorization on this card was
+ * observed to need. One that stays open longer drops out of the window and the
+ * balance gives its money back — the price of not pairing an authorization with
+ * its clearing, which Bybit makes impossible by issuing unrelated identifiers.
+ */
 export async function fetchAuthorizationTransactions (
   creds: Credentials,
-  fromDate: Date,
   toDate: Date
 ): Promise<CardTransaction[]> {
-  return await fetchTransactions(creds, fromDate, toDate, 'SIDE_QUERY_AUTH')
+  const startDate = new Date(toDate.getTime() - PENDING_HOLD_LOOKBACK_DAYS * DAY_MS)
+  return await fetchTransactions(creds, startDate, toDate, 'SIDE_QUERY_AUTH')
 }
