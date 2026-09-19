@@ -99,4 +99,14 @@
         entryValues="earn|funding"
         summary="|cardPaymentSource|{@s}"
     />
+    <EditTextPreference
+        key="cardConversionFeePercent"
+        defaultValue="0"
+        title="Crypto-to-fiat conversion fee, %"
+        dialogTitle="Crypto-to-fiat conversion fee, %"
+        dialogMessage="Bybit sells crypto for fiat at its own rate when a card purchase is authorized, and keeps a markup that no API field reports. Without it card purchases are imported cheaper than the wallet actually paid. Find the real cost in the Bybit app: open a card purchase, look at &quot;Crypto used&quot;, and divide the crypto amount by the fiat amount it produced, e.g. 7.8797 USDT for 7.77 USD is 1.41%. Leave 0 to import only the fees Bybit reports."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|cardConversionFeePercent|{@s}"
+    />
 </PreferenceScreen>

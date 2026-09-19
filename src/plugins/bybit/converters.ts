@@ -17,6 +17,28 @@ export function parseTransferAssets (raw?: string): Set<string> {
   return assets
 }
 
+/**
+ * Bybit sells crypto for fiat when a card purchase is authorized and keeps a
+ * markup between that rate and the wallet's nominal USD valuation. No Card API
+ * field reports it: `totalFees` covers only the fiat-side fees (foreign
+ * transaction, interchange, tax), while the conversion markup is visible solely
+ * in the mobile app's "Crypto used" record. The user therefore supplies it, so
+ * that card spending debits what the wallet actually loses.
+ */
+export function parseCardConversionFeePercent (raw?: string): number {
+  const trimmed = raw?.trim()
+  if (trimmed == null || trimmed === '') {
+    return 0
+  }
+  // Number() would also accept '0x10', '1e1' and '1,000', turning a typo into a
+  // markup on every card purchase. Only plain decimals are a percentage.
+  const value = /^\d+([.,]\d+)?$/.test(trimmed) ? Number(trimmed.replace(',', '.')) : NaN
+  if (!Number.isFinite(value) || value < 0 || value >= 100) {
+    throw new InvalidPreferencesError('Bybit: crypto-to-fiat conversion fee must be a percentage between 0 and 100')
+  }
+  return value
+}
+
 // Mapping of /v5/card/transaction/query-asset-records `side` codes to a sign for the amount.
 // The docs list 13 sides; we only emit transactions for unambiguous debits/credits.
 // Anything else (authorization reversals, refund-requests, refund reversals, etc.) is
@@ -107,14 +129,52 @@ export function selectCardSettlementAccount (
   throw new InvalidPreferencesError('Bybit: choose the Bybit Card payment source: Flexible Earn or Funding. The API does not disclose this setting.')
 }
 
+/**
+ * An open authorization is imported as a hold and subtracted from the balance.
+ * Both have to act on exactly the same set: importing one that is not
+ * subtracted, or subtracting one that is not imported, is the very drift this
+ * plugin is correcting. Hence one predicate, used by both.
+ */
+export function isOpenCardAuthorization (entry: CardTransaction): boolean {
+  return entry.tradeStatus === '0' && SIDE_SIGN[entry.side] === -1
+}
+
 export function selectCardTransactionsForImport (
   financialEntries: CardTransaction[],
   authorizationEntries: CardTransaction[]
 ): CardTransaction[] {
   return [
     ...financialEntries,
-    ...authorizationEntries.filter(entry => entry.tradeStatus === '0')
+    ...authorizationEntries.filter(isOpenCardAuthorization)
   ]
+}
+
+/**
+ * Authorizing a card purchase does not yet move money out of Bybit: the coin is
+ * sold and the proceeds are parked in the Funding wallet as a fiat balance with
+ * `transferBalance` zero, until the merchant clears the purchase, which was
+ * observed to take about a day and a half. That parked fiat is part of the reported wallet balance while the very
+ * same purchase is already imported as a hold, so it would be counted twice.
+ *
+ * The deduction is applied to Funding whichever wallet settles the card: the
+ * fiat pocket was observed there on a Funding-settled account, and that is
+ * where the card settles. An Auto-Deduction account paying from Flexible Earn
+ * was not available to verify, so if Bybit instead froze the Earn position, the
+ * correction would land on the wrong account.
+ */
+export function sumPendingCardHolds (authorizationEntries: CardTransaction[]): number {
+  return authorizationEntries
+    .filter(isOpenCardAuthorization)
+    .reduce((sum, entry) => sum + Math.abs(entry.basicAmount), 0)
+}
+
+export function withPendingCardHoldsDeducted (account: AccountOrCard, pendingHoldTotal: number): AccountOrCard {
+  // A null balance means the plugin could not determine it; turning that into a
+  // negative number would be worse than leaving it unknown.
+  if (pendingHoldTotal === 0 || account.balance == null) {
+    return account
+  }
+  return { ...account, balance: account.balance - pendingHoldTotal }
 }
 
 function walletAccountId (accountType: string): string | null {
@@ -189,7 +249,8 @@ export function convertEarnTransfers (
 
 export function convertTransaction (
   entry: CardTransaction,
-  account: AccountOrCard
+  account: AccountOrCard,
+  conversionFeePercent = 0
 ): Transaction | null {
   if (SKIPPED_TRADE_STATUSES.has(entry.tradeStatus)) {
     return null
@@ -206,7 +267,14 @@ export function convertTransaction (
   const transactionCurrency = entry.paidCurrency.toUpperCase()
   const totalAmount = Math.abs(entry.basicAmount)
   const feeAmount = Math.min(totalAmount, Math.abs(entry.totalFees))
-  const sum = sign * (totalAmount - feeAmount)
+  // Only spending converts crypto to fiat. A refund returns fiat that Bybit
+  // converts back at its own rate, which the API does not disclose either, so
+  // no markup is invented for credits.
+  const conversionFee = sign < 0 ? roundToCents(totalAmount * conversionFeePercent / 100) : 0
+  // Round to the account's cents: binary floating point turns 7.77 - 0.15 into
+  // 7.619999999999999, which ZenMoney would store verbatim.
+  const totalFee = roundToCents(feeAmount + conversionFee)
+  const sum = sign * roundToCents(totalAmount - feeAmount)
   const sameCurrency = transactionCurrency === accountCurrency || entry.paidAmount === 0
   const invoice = sameCurrency
     ? null
@@ -224,11 +292,15 @@ export function convertTransaction (
       account: { id: account.id },
       invoice,
       sum,
-      fee: feeAmount === 0 ? 0 : sign * feeAmount
+      fee: totalFee === 0 ? 0 : sign * totalFee
     }],
     merchant,
     comment: buildComment(entry)
   }
+}
+
+function roundToCents (value: number): number {
+  return Math.round(value * 100) / 100
 }
 
 function buildComment (entry: CardTransaction): string | null {
