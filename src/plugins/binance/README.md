@@ -31,6 +31,6 @@ Binance limits Pay, P2P, internal wallet and Earn history. The plugin reads up t
 
 After authentication, ZenMoney shows every discovered Binance wallet and lets the user choose which accounts to synchronize or link to existing accounts. Account selection is intentionally kept out of the credentials screen so there is one canonical place to manage it.
 
-If you connect more than one Binance account to the same ZenMoney profile, set a unique **Connection name** for each additional API key before synchronizing (for example, `Binance Masha`). Leave the existing connection's name blank to preserve its legacy `Binance` account IDs. The name is included in wallet sync IDs and deterministic transaction IDs so separate Binance users are not auto-matched to or mixed with each other's accounts.
+If you connect more than one Binance account to the same ZenMoney profile, set a unique **Connection name** for each additional API key before synchronizing (for example, `Binance 2`). Leave the existing connection's name blank to preserve its legacy `Binance` account IDs. The name is included in wallet sync IDs and deterministic transaction IDs so separate connections are not auto-matched to or mixed with each other's accounts.
 
 The accounts use the `USDT` instrument because all balances are valued against Binance USDT quotes. This also allows an existing manually maintained USDT account to be linked during migration without creating a duplicate USD account.
