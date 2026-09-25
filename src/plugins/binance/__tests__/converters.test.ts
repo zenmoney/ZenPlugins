@@ -19,6 +19,16 @@ describe('Binance balance conversion', () => {
     expect(accounts[2]).toMatchObject({ id: 'binance_m_earn', title: 'Binance M Earn', balance: 6000 })
   })
 
+  it('keeps the legacy default ids but namespaces a separately labeled connection', () => {
+    const spot = [{ asset: 'USDT', free: 100, locked: 2 }]
+    const primary = createAccounts('Binance', spot, [], [], [], prices, undefined, [], true)
+    const maria = createAccounts('Binance Маша', spot, [], [], [], prices, undefined, [], true)
+
+    expect(primary[0]).toMatchObject({ id: 'binance_spot', title: 'Binance Spot', syncIds: ['binance_spot'] })
+    expect(maria[0]).toMatchObject({ id: 'binance_masha_spot', title: 'Binance Маша Spot', syncIds: ['binance_masha_spot'] })
+    expect(maria[0].id).not.toBe(primary[0].id)
+  })
+
   it('allows users to disable exchange wallets without changing the others', () => {
     const accounts = createAccounts('Binance', [{ asset: 'USDT', free: 10, locked: 0 }], [{ asset: 'USDT', amount: 20 }], [{ asset: 'USDT', amount: 30 }], [], prices, { spot: false, funding: true, earn: false }, [], true)
     expect(accounts).toHaveLength(1)
@@ -75,6 +85,16 @@ describe('Binance balance conversion', () => {
     }], selection, true)[0]).toMatchObject({
       movements: [{ id: 'binance_c2c_p2p-1', account: { id: 'binance_funding' }, sum: -100, fee: -0.1 }]
     })
+  })
+
+  it('uses the connection label in deterministic operation ids as well as account ids', () => {
+    const transfer = [{ id: 'same-exchange-id', direction: 'deposit' as const, coin: 'USDT', amount: 5, fee: 0, date: new Date('2026-09-01T10:00:00Z'), network: null, walletType: 0 }]
+    const primary = convertExternalStablecoinTransfers('Binance', transfer, undefined, true)
+    const maria = convertExternalStablecoinTransfers('Binance Маша', transfer, undefined, true)
+
+    expect(primary[0].movements[0]).toMatchObject({ id: 'binance_deposit_same-exchange-id', account: { id: 'binance_spot' } })
+    expect(maria[0].movements[0]).toMatchObject({ id: 'binance_masha_deposit_same-exchange-id', account: { id: 'binance_masha_spot' } })
+    expect(maria[0].movements[0].id).not.toBe(primary[0].movements[0].id)
   })
 
   it('creates balanced internal and Earn transfers without portfolio noise', () => {
