@@ -8,9 +8,9 @@ describe('Bitget accounts', () => {
       { accountType: 'bots', valueUsdt: 21.04068974 },
       { accountType: 'earn', valueUsdt: 100 }
     ])).toEqual([
-      { id: 'bitget_spot', type: AccountType.investment, title: 'Bitget Spot', instrument: 'USD', balance: 647.84903385, savings: false, syncIds: ['bitget_spot'] },
-      { id: 'bitget_bots', type: AccountType.investment, title: 'Bitget Bots', instrument: 'USD', balance: 21.04068974, savings: true, syncIds: ['bitget_bots'] },
-      { id: 'bitget_earn', type: AccountType.investment, title: 'Bitget Earn', instrument: 'USD', balance: 100, savings: true, syncIds: ['bitget_earn'] }
+      { id: 'bitget_spot', type: AccountType.investment, title: 'Bitget Spot', instrument: 'USDT', balance: 647.84903385, savings: false, syncIds: ['bitget_spot'] },
+      { id: 'bitget_bots', type: AccountType.investment, title: 'Bitget Bots', instrument: 'USDT', balance: 21.04068974, savings: true, syncIds: ['bitget_bots'] },
+      { id: 'bitget_earn', type: AccountType.investment, title: 'Bitget Earn', instrument: 'USDT', balance: 100, savings: true, syncIds: ['bitget_earn'] }
     ])
   })
 

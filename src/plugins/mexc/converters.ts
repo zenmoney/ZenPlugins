@@ -33,7 +33,7 @@ export function createSpotAccount (label: string, balances: SpotAsset[], prices:
     id,
     type: AccountType.investment,
     title: `${title} Spot`,
-    instrument: 'USD',
+    instrument: 'USDT',
     balance: Number(balance.toFixed(8)),
     savings: false,
     syncIds: [id]

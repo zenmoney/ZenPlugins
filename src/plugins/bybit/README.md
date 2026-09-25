@@ -4,8 +4,8 @@ Read-only synchronization of Bybit wallets and, optionally, Bybit Card transacti
 
 ## What the plugin creates
 
-- **Bybit Unified** — the USD equity reported by Bybit for the Unified wallet.
-- **Bybit Funding** — all non-zero Funding assets, valued in USD through Bybit's own Convert valuation.
+- **Bybit Unified** — the Unified wallet equity reported by Bybit, stored using ZenMoney's shared USDT accounting unit.
+- **Bybit Funding** — all non-zero Funding assets, valued in USDT through Bybit's own Convert valuation.
 - **Bybit Flexible Earn** — every Flexible Earn asset, valued in USDT with Bybit's own spot prices. The account is marked as savings.
 
 The Card is a payment instrument, not an independent wallet with a reliable separate balance. Enabling Card sync imports its purchases into the wallet chosen in the Card's *Paying With* settings, without creating a duplicate "Bybit Card" balance.
@@ -16,7 +16,7 @@ The Card is a payment instrument, not an independent wallet with a reliable sepa
 - Funding ↔ Unified transfers are imported as balanced transfers between the two ZenMoney accounts.
 - Flexible Earn subscriptions and redemptions are imported as balanced transfers between Flexible Earn and the source wallet selected by the user.
 - Bybit does not expose the destination wallet of an older external deposit or the source wallet of an older Earn order. The plugin therefore asks for both settings and never guesses.
-- USDT, USDC, FDUSD, TUSD and USD can be imported at their nominal amount. Non-stable assets remain included in the live USD account valuation, but are not represented as misleading historical USD cash flow without a trustworthy historical quote.
+- Crypto wallets use USDT as the shared accounting unit. Bybit's USD-reported equity and USD-pegged transfer amounts use nominal 1:1 USD/USDT parity; this is an accounting convention, not a guarantee that USD-pegged assets always trade exactly at parity. USDT, USDC, FDUSD, TUSD and USD transfers can be imported at nominal amount. Non-stable assets remain included in live USDT account valuation, but are not represented as historical USDT cash flow without a trustworthy historical quote.
 - The first synchronization reads the requested external history. Internal wallet and Flexible Earn history is limited to the latest 180 days to stay within Bybit API limits; later synchronizations continue incrementally from ZenMoney's last successful date.
 
 ## Card transactions
