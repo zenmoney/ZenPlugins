@@ -184,11 +184,14 @@ describe('hapoalim api login', () => {
     const originalClearTimeout = global.clearTimeout
     const scheduledCallbacks = []
 
-    global.setTimeout = jest.fn((callback) => {
+    global.setTimeout = jest.fn((callback, delay) => {
+      if (delay !== 1000) {
+        return originalSetTimeout(callback, delay)
+      }
       scheduledCallbacks.push(callback)
       return scheduledCallbacks.length
     })
-    global.clearTimeout = jest.fn()
+    global.clearTimeout = jest.fn(originalClearTimeout)
 
     openWebViewAndInterceptRequestMock.mockImplementationOnce(async ({ configure, intercept }) => {
       const webView = createWebView({
@@ -210,9 +213,21 @@ describe('hapoalim api login', () => {
 
     try {
       const authPromise = login()
+      let completed = false
+      authPromise.then(() => { completed = true })
 
       expect(scheduledCallbacks).toHaveLength(1)
-      await scheduledCallbacks.shift()()
+      for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 40; j++) {
+          await Promise.resolve()
+        }
+        if (!completed) {
+          expect(scheduledCallbacks.length).toBeGreaterThan(0)
+          await scheduledCallbacks.shift()()
+        } else {
+          break
+        }
+      }
 
       const auth = await authPromise
       expect(auth).toMatchObject({
@@ -254,9 +269,12 @@ describe('hapoalim api login', () => {
 
   it('retries configured WebView auth after close before falling back to the global cookie store', async () => {
     const originalSetTimeout = global.setTimeout
-    global.setTimeout = jest.fn((callback) => {
-      callback()
-      return 1
+    global.setTimeout = jest.fn((callback, delay) => {
+      if (delay === 250) {
+        callback()
+        return 1
+      }
+      return originalSetTimeout(callback, delay)
     })
 
     fetchJsonMock
