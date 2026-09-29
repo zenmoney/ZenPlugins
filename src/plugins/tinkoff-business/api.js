@@ -1,9 +1,11 @@
 import { Base64 } from 'jshashes'
 import { parse, stringify } from 'querystring'
-import { fetchJson, openWebViewAndInterceptRequest } from '../../common/network'
+import { convertHeadersToPlainObject, fetchJson, generateRequestLogId } from '../../common/network'
+import { sanitizeUrlContainingObject } from '../../common/sanitize'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
 import { TemporaryUnavailableError } from '../../errors'
+import { getTrustedCertificates } from './certificates'
 import config from './config'
 
 const base64 = new Base64()
@@ -50,6 +52,58 @@ async function callGate (url, options = {}, predicate = () => true) {
   return response
 }
 
+function logWebViewNavigation (navigation) {
+  console.debug('request', sanitizeUrlContainingObject({
+    id: generateRequestLogId(),
+    url: navigation.url,
+    method: navigation.method || 'GET',
+    headers: convertHeadersToPlainObject(navigation.headers)
+  }, {
+    url: {
+      query: {
+        state: true,
+        client_id: true,
+        redirect_uri: true,
+        scope_parameters: true,
+        code: true,
+        session_state: true
+      }
+    }
+  }))
+}
+
+async function authorizeInWebView (url, state) {
+  const webView = new ZenMoney.WebView({
+    tls: {
+      ca: getTrustedCertificates()
+    }
+  })
+  const redirectUriWithoutProtocol = config.redirectUri.replace(/^https?:\/\//i, '')
+  let resolveAuthorized
+  let rejectAuthorized
+  const authorized = new Promise((resolve, reject) => {
+    resolveAuthorized = resolve
+    rejectAuthorized = reject
+  })
+  webView.navigationPolicy = navigation => {
+    logWebViewNavigation(navigation)
+    const i = navigation.url.indexOf(redirectUriWithoutProtocol)
+    if (i < 0) {
+      return undefined // LOAD
+    }
+    const params = parse(navigation.url.substring(i + redirectUriWithoutProtocol.length + 1))
+    resolveAuthorized(params.code && params.state === state ? { code: params.code } : { error: params })
+    return true // BLOCK
+  }
+  try {
+    await webView.show()
+    webView.goto(url, { waitUntil: 'commit' }).catch(rejectAuthorized)
+    return await authorized
+  } finally {
+    await webView.close()
+  }
+}
+
 export async function login ({ accessToken, refreshToken, expirationDateMs } = {}, { inn, kpp }, isInBackground) {
   let response
   if (accessToken) {
@@ -75,7 +129,6 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
   }
   if (!response) {
     const state = generateRandomString(16)
-    const redirectUriWithoutProtocol = config.redirectUri.replace(/^https?:\/\//i, '')
     const url = `https://id.tinkoff.ru/auth/authorize?${stringify({
       client_id: config.clientId,
       redirect_uri: config.redirectUri,
@@ -86,32 +139,7 @@ export async function login ({ accessToken, refreshToken, expirationDateMs } = {
         kpp
       })
     })}`
-    const { error, code } = await openWebViewAndInterceptRequest({
-      url,
-      sanitizeRequestLog: {
-        url: {
-          query: {
-            client_id: true,
-            redirect_uri: true,
-            scope_parameters: true,
-            code: true,
-            session_state: true
-          }
-        }
-      },
-      intercept: request => {
-        const i = request.url.indexOf(redirectUriWithoutProtocol)
-        if (i < 0) {
-          return null
-        }
-        const params = parse(request.url.substring(i + redirectUriWithoutProtocol.length + 1))
-        if (params.code && params.state === state) {
-          return { code: params.code }
-        } else {
-          return { error: params }
-        }
-      }
-    })
+    const { error, code } = await authorizeInWebView(url, state)
     if (error && (!error.error || error.error === 'access_denied')) {
       throw new TemporaryError('Не удалось пройти авторизацию в Тинькофф Бизнес. Попробуйте еще раз')
     }
