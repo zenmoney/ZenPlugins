@@ -7,12 +7,14 @@ export const BYBIT_FUNDING_ACCOUNT_ID = 'bybit_funding'
 export const BYBIT_FLEXIBLE_EARN_ACCOUNT_ID = 'bybit_flexible_earn'
 export const DEFAULT_TRANSFER_ASSETS = new Set(['USDT', 'USDC', 'FDUSD', 'TUSD', 'USD'])
 
+// Use USDT as the shared crypto accounting unit. Bybit reports Unified and USD
+// balances in USD; stable-asset movements use nominal USD/USDT parity.
 export function parseTransferAssets (raw?: string): Set<string> {
   const assets = new Set((raw ?? 'USDT,USDC,FDUSD,TUSD,USD').split(',').map(value => value.trim().toUpperCase()).filter(Boolean))
   if (assets.size === 0) throw new InvalidPreferencesError('Bybit: choose at least one transfer asset')
   const unsupportedAssets = [...assets].filter(asset => !DEFAULT_TRANSFER_ASSETS.has(asset))
   if (unsupportedAssets.length > 0) {
-    throw new InvalidPreferencesError(`Bybit: unsupported transfer asset(s): ${unsupportedAssets.join(', ')}. Only USDT, USDC, FDUSD, TUSD and USD can be imported as nominal USD wallet movements.`)
+    throw new InvalidPreferencesError(`Bybit: unsupported transfer asset(s): ${unsupportedAssets.join(', ')}. Only USDT, USDC, FDUSD, TUSD and USD can be imported as nominal USDT wallet movements.`)
   }
   return assets
 }
@@ -41,7 +43,7 @@ export function createUnifiedAccount (wallet: UnifiedWallet): AccountOrCard {
     id: BYBIT_UNIFIED_ACCOUNT_ID,
     type: AccountType.checking,
     title: 'Bybit Unified',
-    instrument: 'USD',
+    instrument: 'USDT',
     balance: wallet.totalEquity,
     syncIds: [BYBIT_UNIFIED_ACCOUNT_ID]
   }
@@ -63,7 +65,7 @@ export function createFundingAccount (
     id: BYBIT_FUNDING_ACCOUNT_ID,
     type: AccountType.checking,
     title: 'Bybit Funding',
-    instrument: 'USD',
+    instrument: 'USDT',
     balance,
     syncIds: [BYBIT_FUNDING_ACCOUNT_ID]
   }
@@ -84,7 +86,7 @@ export function createFlexibleEarnAccount (
     id: BYBIT_FLEXIBLE_EARN_ACCOUNT_ID,
     type: AccountType.investment,
     title: 'Bybit Flexible Earn',
-    instrument: 'USD',
+    instrument: 'USDT',
     balance,
     savings: true,
     syncIds: [BYBIT_FLEXIBLE_EARN_ACCOUNT_ID]

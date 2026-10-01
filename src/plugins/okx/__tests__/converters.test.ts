@@ -8,9 +8,9 @@ describe('OKX accounts', () => {
       { wallet: 'Funding', valueUsdt: 0, savings: false },
       { wallet: 'Savings', valueUsdt: 452.95799248, savings: true }
     ])).toEqual([
-      { id: 'okx_trading', type: AccountType.investment, title: 'OKX Trading', instrument: 'USD', balance: 723.49765952, savings: false, syncIds: ['okx_trading'] },
-      { id: 'okx_funding', type: AccountType.investment, title: 'OKX Funding', instrument: 'USD', balance: 0, savings: false, syncIds: ['okx_funding'] },
-      { id: 'okx_savings', type: AccountType.investment, title: 'OKX Savings', instrument: 'USD', balance: 452.95799248, savings: true, syncIds: ['okx_savings'] }
+      { id: 'okx_trading', type: AccountType.investment, title: 'OKX Trading', instrument: 'USDT', balance: 723.49765952, savings: false, syncIds: ['okx_trading'] },
+      { id: 'okx_funding', type: AccountType.investment, title: 'OKX Funding', instrument: 'USDT', balance: 0, savings: false, syncIds: ['okx_funding'] },
+      { id: 'okx_savings', type: AccountType.investment, title: 'OKX Savings', instrument: 'USDT', balance: 452.95799248, savings: true, syncIds: ['okx_savings'] }
     ])
   })
 

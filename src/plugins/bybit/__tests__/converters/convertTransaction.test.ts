@@ -3,13 +3,12 @@ import { AccountOrCard, AccountType } from '../../../../types/zenmoney'
 import { CardTransaction } from '../../models'
 
 const bybitCardAccount: AccountOrCard = {
-  id: 'bybit_card',
-  type: AccountType.ccard,
-  title: 'Bybit Card',
-  instrument: 'USD',
+  id: 'bybit_funding',
+  type: AccountType.checking,
+  title: 'Bybit Funding',
+  instrument: 'USDT',
   balance: 100,
-  creditLimit: 0,
-  syncIds: ['bybit_card']
+  syncIds: ['bybit_funding']
 }
 
 function baseEntry (overrides: Partial<CardTransaction> = {}): CardTransaction {
@@ -40,7 +39,7 @@ function baseEntry (overrides: Partial<CardTransaction> = {}): CardTransaction {
 }
 
 describe('convertTransaction', () => {
-  it('converts the cleared-purchase example from the Bybit docs as a USD card charge with fees included', () => {
+  it('converts the cleared-purchase example from the Bybit docs into the USDT wallet unit', () => {
     // Sample fields mirror
     //   https://bybit-exchange.github.io/docs/v5/bybit-card/asset-records
     const entry = baseEntry({
@@ -68,8 +67,8 @@ describe('convertTransaction', () => {
       date: new Date(1672211918471),
       movements: [{
         id: 'TXN20230101001',
-        account: { id: 'bybit_card' },
-        invoice: null,
+        account: { id: 'bybit_funding' },
+        invoice: { sum: -101.5, instrument: 'USD' },
         sum: -100,
         fee: -1.5
       }],
@@ -84,7 +83,7 @@ describe('convertTransaction', () => {
     })
   })
 
-  it('keeps a paid-currency invoice when it differs from the USD card account currency', () => {
+  it('keeps a paid-currency invoice when it differs from the USDT wallet unit', () => {
     const entry = baseEntry({
       basicAmount: 108,
       basicCurrency: 'USD',
@@ -95,7 +94,7 @@ describe('convertTransaction', () => {
     const tx = convertTransaction(entry, bybitCardAccount)
     expect(tx?.movements[0]).toEqual({
       id: 'TXN1',
-      account: { id: 'bybit_card' },
+      account: { id: 'bybit_funding' },
       invoice: { sum: -92.75, instrument: 'EUR' },
       sum: -108,
       fee: 0
@@ -143,9 +142,9 @@ describe('convertTransaction', () => {
     }
   })
 
-  it('omits the invoice when transaction currency equals account currency', () => {
+  it('omits the invoice when transaction currency equals the USDT account unit', () => {
     const entry = baseEntry({
-      paidCurrency: 'USD',
+      paidCurrency: 'USDT',
       transactionAmount: 50,
       basicAmount: 51.25
     })

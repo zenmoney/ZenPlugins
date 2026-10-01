@@ -18,7 +18,7 @@ export function createAccounts (label: string, wallets: WalletBalance[]): Accoun
   const idPrefix = slug(prefix)
   return wallets.map(wallet => {
     const id = `${idPrefix}_${slug(wallet.wallet)}`
-    return { id, type: AccountType.investment, title: `${prefix} ${wallet.wallet}`, instrument: 'USD', balance: Number(wallet.valueUsdt.toFixed(8)), savings: wallet.savings, syncIds: [id] }
+    return { id, type: AccountType.investment, title: `${prefix} ${wallet.wallet}`, instrument: 'USDT', balance: Number(wallet.valueUsdt.toFixed(8)), savings: wallet.savings, syncIds: [id] }
   })
 }
 
