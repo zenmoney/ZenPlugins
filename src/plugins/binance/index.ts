@@ -7,6 +7,10 @@ import { parseSettlementAssets } from '../../common/settlementAssets'
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   const credentials = login(preferences)
+  // Keep the legacy Binance IDs when the label is empty. A distinct label lets
+  // multiple API keys for separate Binance users/accounts avoid auto-matching.
+  const configuredLabel = preferences.accountLabel?.trim()
+  const accountLabel = configuredLabel == null || configuredLabel === '' ? 'Binance' : configuredLabel
   const selection = { spot: true, funding: true, earn: true }
   const [spot, funding, flexible, lockedEarn, prices, wallets] = await Promise.all([
     fetchSpotBalances(credentials),
@@ -16,7 +20,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     fetchPrices(credentials.baseUrl),
     fetchWalletBalances(credentials)
   ])
-  const accounts = createAccounts('Binance', spot, funding, flexible, lockedEarn, prices, selection, wallets, true)
+  const accounts = createAccounts(accountLabel, spot, funding, flexible, lockedEarn, prices, selection, wallets, true)
   const transactions: Transaction[] = []
   if (preferences.syncTransactions !== false) {
     const settlementAssets = parseSettlementAssets(preferences.externalTransferAssets)
@@ -24,11 +28,11 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     // Fetch the heavier history endpoints sequentially. Binance assigns very
     // different request weights to wallet, Pay and Earn APIs; a large initial
     // sync must not create an avoidable burst and trigger an IP ban.
-    transactions.push(...convertExternalStablecoinTransfers('Binance', await fetchCapitalTransfers(credentials, fromDate, until), selection, true, settlementAssets))
-    transactions.push(...convertPayTransfers('Binance', await fetchPayTransfers(credentials, fromDate, until), selection, true, settlementAssets))
-    transactions.push(...convertC2CTransfers('Binance', await fetchC2CTransfers(credentials, fromDate, until), selection, true, settlementAssets))
-    transactions.push(...convertInternalTransfers('Binance', await fetchInternalTransfers(credentials, fromDate, until), selection, true, settlementAssets))
-    transactions.push(...convertEarnTransfers('Binance', await fetchEarnTransfers(credentials, fromDate, until), selection, true, settlementAssets))
+    transactions.push(...convertExternalStablecoinTransfers(accountLabel, await fetchCapitalTransfers(credentials, fromDate, until), selection, true, settlementAssets))
+    transactions.push(...convertPayTransfers(accountLabel, await fetchPayTransfers(credentials, fromDate, until), selection, true, settlementAssets))
+    transactions.push(...convertC2CTransfers(accountLabel, await fetchC2CTransfers(credentials, fromDate, until), selection, true, settlementAssets))
+    transactions.push(...convertInternalTransfers(accountLabel, await fetchInternalTransfers(credentials, fromDate, until), selection, true, settlementAssets))
+    transactions.push(...convertEarnTransfers(accountLabel, await fetchEarnTransfers(credentials, fromDate, until), selection, true, settlementAssets))
   }
   return {
     accounts,
