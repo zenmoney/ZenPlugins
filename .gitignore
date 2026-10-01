@@ -47,7 +47,7 @@ Thumbs.db
 # production
 /build
 /dist
-/log
+/logs/
 /.webpack-cache
 
 # misc
@@ -60,8 +60,6 @@ Thumbs.db
 
 # repository docs/plans
 AGENT.md
-AGENTS.md
-*PLAN*.md
 plans/archive/
 **/plans/archive/
 

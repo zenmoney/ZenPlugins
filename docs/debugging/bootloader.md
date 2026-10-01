@@ -4,7 +4,7 @@ Bootloader runs a locally hosted plugin inside the real Zenmoney application and
 
 ## Usage
 
-1. Build and install the `bootloader` plugin in Zenmoney.
+1. In the Zenmoney application, add a bank connection and choose **Дзен-мани**. This installs/selects the Bootloader integration; its application-facing name differs from the repository plugin ID `bootloader`.
 2. Start the target plugin:
 
    ```sh
@@ -13,6 +13,8 @@ Bootloader runs a locally hosted plugin inside the real Zenmoney application and
 
 3. Open `http://localhost:5050` to see the Bootloader UI.
 4. Enter the development machine IP in the bootloader plugin settings and start a scrape.
+
+Keep the phone and development machine on a network where the phone can reach the server on port `5050`. `localhost` in step 3 is for the development machine; the phone uses that machine's network IP.
 
 The `serverIp` bootloader preference is required. Enter only the development machine IP address, for example `192.168.1.10`. Hostnames and URLs are rejected.
 
