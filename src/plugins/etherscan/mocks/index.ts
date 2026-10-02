@@ -8,6 +8,9 @@ import { Preferences } from '../types'
 
 export const preferencesMock: Preferences = {
   chain: 1,
+  chainEthereum: true,
+  chainBsc: false,
+  chainArbitrum: false,
   apiKey: 'API_KEY',
   account: '1,2'
 }
