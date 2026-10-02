@@ -8,7 +8,17 @@ import {
   QPayWalletTransaction
 } from './models'
 
-const USD_STABLECOINS = new Set(['USDT', 'USDC'])
+const ASSET_INSTRUMENTS: Record<string, string> = {
+  USDT: 'USDT',
+  USDC: 'USD',
+  USDR: 'USD',
+  AUSDT: 'USD',
+  USDQ: 'USD',
+  EURR: 'EUR',
+  EURQ: 'EUR',
+  // One XAUT represents one troy ounce; the shared adapter handles native grams.
+  XAUT: 'XAU'
+}
 
 const NETWORK_TITLES: Record<string, string> = {
   'evm:1': 'Ethereum',
@@ -22,9 +32,10 @@ function finiteNumberOrNull (value: string | number | null | undefined): number 
   return Number.isFinite(parsed) ? parsed : null
 }
 
+/** Preserve native token instruments, with underlying units for unsupported tokens. */
 export function normalizeInstrument (asset: string): string {
   const normalized = asset.trim().toUpperCase()
-  return USD_STABLECOINS.has(normalized) ? 'USD' : normalized
+  return ASSET_INSTRUMENTS[normalized] ?? normalized
 }
 
 export function walletAccountId (network: string, address: string, asset: string): string {
@@ -279,6 +290,13 @@ function cardEntries (groups: QPayCardTransactions[]): CardTransactionEntry[] {
   })))
 }
 
+function cardTransferDenomination (asset: string): string {
+  // Observed USDT wallet debits and USD card top-ups use equal nominal amounts.
+  // This comparison is only for matching; accounts retain their native instruments.
+  const instrument = normalizeInstrument(asset)
+  return instrument === 'USDT' ? 'USD' : instrument
+}
+
 function matchCardTopUp (
   walletTransaction: QPayWalletTransaction,
   entries: CardTransactionEntry[],
@@ -300,7 +318,7 @@ function matchCardTopUp (
     const cardDate = epochDate(transaction.created_at)
     const cardInstrument = normalizedString(transaction.currency)
     if (cardAmount == null || cardDate == null || cardInstrument == null ||
-      normalizeInstrument(cardInstrument) !== normalizeInstrument(walletInstrument) ||
+      cardTransferDenomination(cardInstrument) !== cardTransferDenomination(walletInstrument) ||
       Math.abs(cardAmount - walletAmount) > 0.000001) {
       continue
     }
@@ -334,7 +352,7 @@ function matchCardPurchaseTopUp (
     if (entry.cardId !== purchasedCardId || usedCardTransactions.has(transaction) ||
       !isPostedCardTransaction(transaction) || transaction.type?.trim().toUpperCase() !== 'TOP_UP' ||
       cardAmount == null || cardAmount <= 0 || cardAmount > walletCost || cardDate == null || cardInstrument == null ||
-      normalizeInstrument(cardInstrument) !== normalizeInstrument(walletInstrument)) {
+      cardTransferDenomination(cardInstrument) !== cardTransferDenomination(walletInstrument)) {
       continue
     }
     const distance = Math.abs(cardDate.getTime() - walletDate.getTime())
