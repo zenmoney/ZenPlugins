@@ -1,6 +1,6 @@
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { ZPAPIError } from '../../errors'
-import { fetchAccounts, fetchTransactions, isLikelyAuthGateError, login, normalizeStoredAuth } from './api'
+import { fetchAccounts, fetchTransactions, isLikelyAuthGateError, isSessionDeadlineError, login, normalizeStoredAuth, recoverAuthFromCookieStore, withSessionDeadline } from './api'
 import { convertAccounts, convertTransaction } from './converters'
 
 function getFallbackFromDate (preferences, toDate) {
@@ -26,78 +26,59 @@ function createForegroundReauthError (isInBackground) {
   )
 }
 
-function resetStoredAuth () {
-  ZenMoney.setData('auth', null)
+function storeAuth (state) {
+  ZenMoney.setData('auth', state.auth)
   ZenMoney.saveData()
 }
 
-function rethrowForegroundReauthIfNeeded (error, isInBackground) {
-  if (isLikelyAuthGateError(error)) {
-    throw createForegroundReauthError(isInBackground)
+async function saveCookieStore () {
+  if (typeof ZenMoney.saveCookies === 'function') {
+    await withSessionDeadline(() => ZenMoney.saveCookies(), 'cookie store save')
   }
-  throw error
 }
 
 async function withForegroundReauthRetry (fn, state) {
-  try {
-    return await fn(state.auth)
-  } catch (error) {
-    if (!isLikelyAuthGateError(error)) {
-      throw error
-    }
-
-    resetStoredAuth()
-    if (state.isInBackground) {
-      throw createForegroundReauthError(true)
-    }
-
-    state.auth = await login()
-    ZenMoney.setData('auth', state.auth)
-    ZenMoney.saveData()
-
-    try {
-      return await fn(state.auth)
-    } catch (retryError) {
-      resetStoredAuth()
-      rethrowForegroundReauthIfNeeded(retryError, state.isInBackground)
-    }
-  }
-}
-
-async function getAuthorizedAccounts (isInBackground) {
-  const state = {
-    auth: normalizeStoredAuth(ZenMoney.getData('auth')),
-    isInBackground
-  }
-
-  if (state.auth) {
-    try {
-      const apiAccounts = await fetchAccounts(state.auth)
-      ZenMoney.setData('auth', state.auth)
-      ZenMoney.saveData()
-      return { state, apiAccounts }
-    } catch (error) {
-      if (!isLikelyAuthGateError(error)) {
-        throw error
+  let attemptedRecovery = false
+  let confirmedAuthGate = false
+  let originalAuthError
+  // At most one silent recovery and one interactive login per operation.
+  while (true) {
+    if (state.auth) {
+      try {
+        return await fn(state.auth)
+      } catch (error) {
+        originalAuthError = error
+        confirmedAuthGate = isLikelyAuthGateError(error)
+        if (!confirmedAuthGate && !isLikelyAuthGateError(error, { allowAuthSuspect: !state.isInBackground })) {
+          throw error
+        }
       }
-      resetStoredAuth()
     }
-  }
 
-  if (isInBackground) {
-    throw createForegroundReauthError(true)
-  }
+    if (!attemptedRecovery) {
+      attemptedRecovery = true
+      const recoveredAuth = await recoverAuthFromCookieStore(state.auth, { allowAuthSuspect: !state.isInBackground })
+      if (recoveredAuth) {
+        state.auth = recoveredAuth
+        storeAuth(state)
+        continue
+      }
+    }
 
-  state.auth = await login()
-  ZenMoney.setData('auth', state.auth)
-  ZenMoney.saveData()
+    if (confirmedAuthGate) {
+      state.auth = null
+      storeAuth(state)
+    }
+    if (state.isInBackground || state.didInteractiveLogin) {
+      if (!confirmedAuthGate && originalAuthError) {
+        throw originalAuthError
+      }
+      throw createForegroundReauthError(state.isInBackground)
+    }
 
-  try {
-    const apiAccounts = await fetchAccounts(state.auth)
-    return { state, apiAccounts }
-  } catch (error) {
-    resetStoredAuth()
-    rethrowForegroundReauthIfNeeded(error, isInBackground)
+    state.didInteractiveLogin = true
+    state.auth = await login()
+    storeAuth(state)
   }
 }
 
@@ -107,37 +88,65 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
   toDate = toDate || new Date()
   fromDate = fromDate || getFallbackFromDate(preferences, toDate)
 
-  const { state, apiAccounts } = await getAuthorizedAccounts(isInBackground)
+  if (typeof ZenMoney.restoreCookies === 'function') {
+    try {
+      await withSessionDeadline(() => ZenMoney.restoreCookies(), 'cookie store restore')
+    } catch (error) {
+      if (isSessionDeadlineError(error)) {
+        throw error
+      }
+      console.warn('Bank Hapoalim cookie store restore failed; trying persisted auth')
+    }
+  }
+  const state = {
+    auth: normalizeStoredAuth(ZenMoney.getData('auth')),
+    isInBackground,
+    didInteractiveLogin: false
+  }
   const accounts = []
   const seenAccountIds = new Set()
   const transactions = []
 
-  for (const { mainProduct, account } of convertAccounts(apiAccounts)) {
-    if (seenAccountIds.has(account.id)) {
-      continue
-    }
-    seenAccountIds.add(account.id)
-    accounts.push(account)
+  try {
+    const apiAccounts = await withForegroundReauthRetry(fetchAccounts, state)
+    for (const { mainProduct, account } of convertAccounts(apiAccounts)) {
+      if (seenAccountIds.has(account.id)) {
+        continue
+      }
+      seenAccountIds.add(account.id)
+      accounts.push(account)
 
-    if (!mainProduct || ZenMoney.isAccountSkipped(account.id)) {
-      continue
-    }
+      if (!mainProduct || ZenMoney.isAccountSkipped(account.id)) {
+        continue
+      }
 
-    const apiTransactions = await withForegroundReauthRetry(
-      async auth => await fetchTransactions(auth, mainProduct, fromDate, toDate),
-      state
-    )
+      const apiTransactions = await withForegroundReauthRetry(
+        async auth => await fetchTransactions(auth, mainProduct, fromDate, toDate),
+        state
+      )
 
-    for (const apiTransaction of apiTransactions) {
-      const transaction = convertTransaction(apiTransaction, account)
-      if (transaction) {
-        transactions.push(transaction)
+      for (const apiTransaction of apiTransactions) {
+        const transaction = convertTransaction(apiTransaction, account)
+        if (transaction) {
+          transactions.push(transaction)
+        }
       }
     }
+  } catch (error) {
+    storeAuth(state)
+    try {
+      await saveCookieStore()
+    } catch (saveError) {
+      console.warn('Bank Hapoalim cookie store save failed after sync error')
+    }
+    throw error
   }
-
-  ZenMoney.setData('auth', state.auth)
-  ZenMoney.saveData()
+  storeAuth(state)
+  try {
+    await saveCookieStore()
+  } catch (error) {
+    console.warn('Bank Hapoalim cookie store save failed after successful sync; auth snapshot is saved')
+  }
 
   if (isFirstRun && ZenMoney.alert) {
     await ZenMoney.alert('לקבלת תוצאות מיטביות, אנו ממליצים לא לסנכרן כרטיסי כאל, ישראקרט ומקס דרך הבנק אלא ישירות דרך חברות האשראי.')
