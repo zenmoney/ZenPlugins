@@ -39,7 +39,7 @@ Missing examples are evidence gaps, not non-applicability. Use relevant existing
 - Invalid amounts, signs, currency, dates, or movement structure.
 - Unstable identifiers causing duplicates or incorrect matching across runs.
 - Separate income/expense records that should form a confirmed transfer.
-- Lost or incorrectly guessed merchant, location, purpose, status, or fee information, subject to the explicit comment-preservation exception for grouped internal transfers in [COMMENT-002](comments.md#comment-002-exclude-technical-identifiers-and-duplication).
+- Lost or incorrectly guessed merchant, location, purpose, status, or fee information, subject to the [merchant representation contract](../transactions.md#merchant-and-comment) and the explicit comment-preservation exception for grouped internal transfers in [COMMENT-002](comments.md#comment-002-exclude-technical-identifiers-and-duplication).
 
 Confirmed user-input mistakes are deliberate UI errors, not unknown protocol failures. User-skipped accounts and the narrow previously investigated terminal-entity omission follow [the scrape contract](../contract.md#completeness-and-failures) and [error policy](../../errors.md). They are not general fallback mechanisms.
 

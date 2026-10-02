@@ -10,7 +10,7 @@ Applies to scrape output. Exact shapes: [zenmoney.ts](../../../src/types/zenmone
 | `date` | Valid operation `Date`; preserve the original operation date when settlement also provides it |
 | `movements` | Exactly one movement for income/expense, exactly two for a transfer |
 | `merchant` | Structured merchant/counterparty, unparsed merchant, or `null` |
-| `comment` | Useful additional human-readable information or `null` |
+| `comment` | Useful operation explanation, purpose, human message, or `null` |
 
 Do not conflate the transaction with an individual bank record: a transfer can be described by separate records that must be grouped. Do not use settlement as proof of a new independent purchase. Dates and lifecycle behavior are specified in [amounts and statuses](quality/amounts-and-statuses.md).
 
@@ -32,11 +32,13 @@ Incoming funds are positive, outgoing funds negative. A charged fee is negative 
 
 `Merchant` contains `title`, nullable `city`, `country`, `mcc`, `location`, and optional bank `category`. `title` is the store/service name, the recipient of an outgoing P2P transfer, or the sender of an incoming payment when available. A known name with unknown place is still a structured merchant with null place fields.
 
-`NonParsedMerchant` contains `fullTitle`, nullable `mcc` and `location`, and optional `category`. Use it only when field boundaries cannot be reliably identified. `location` has `latitude` and `longitude`. MCC is numeric; bank category is a string fallback when no MCC is supplied. Do not derive MCC from a name.
+`NonParsedMerchant` contains `fullTitle`, nullable `mcc` and `location`, and optional `category`. `fullTitle` holds merchant text with unresolved name/place boundaries; selection follows [MERCHANT-001](quality/merchants.md#merchant-001-preserve-known-field-boundaries). `location` has `latitude` and `longitude`. MCC is numeric; bank category is a string fallback when no MCC is supplied. Do not derive MCC from a name.
 
 Country representations documented by the domain include alpha-2, alpha-3, numeric strings, and names. Preserve confirmed country information; do not guess a country from a weak suffix match. Parsing rules live in [merchant quality](quality/merchants.md).
 
-`merchant: null` means no known merchant or no external counterparty in an internal transfer. External transfers/P2P retain the known counterparty under [transfer classification](quality/transfers.md#transfer-001-classify-by-the-financial-movement). Comment selection and the grouped-internal-transfer exception follow [comment quality](quality/comments.md).
+Merchant name/place fields and `comment` follow [MERCHANT-002's cleanup rule](quality/merchants.md#merchant-002-normalize-after-structural-parsing).
+
+`merchant` MUST be `null` when neither a nonblank `title` nor a nonblank `fullTitle` is available after cleanup. Blank strings count as absent; MCC, category, place, or coordinates alone do not support a merchant without a name. Internal transfers have no external counterparty. External transfers/P2P retain the known counterparty under [transfer classification](quality/transfers.md#transfer-001-classify-by-the-financial-movement). Comment selection and the grouped-internal-transfer exception follow [comment quality](quality/comments.md).
 
 ## Extended transactions and grouping
 

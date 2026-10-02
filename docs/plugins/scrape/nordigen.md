@@ -22,7 +22,7 @@ Many European banks use Nordigen (GoCardless) as an aggregator. These plugins sh
 **Common customizations**:
 
 - Handle useful purposes from `remittanceInformationUnstructuredArray` as comments (many banks use this instead of `remittanceInformationUnstructured`); do not treat the purpose as a merchant name
-- Clean up merchant names (semicolons, extra spaces)
+- Apply [text cleanup](quality/merchants.md#merchant-002-normalize-after-structural-parsing) to merchant fields and comments using evidence from the bank's format
 - Custom outer transfer parsing (P2P, bank transfers with IBAN)
 - Custom `parseInnerTransfer` — only when standard logic doesn't work (e.g., bank uses non-standard codes like `TRANSFER`/`EXCHANGE`)
 - Verify all transfers, including P2P/Bizum, against [transfer quality](quality/transfers.md); calling a shared parser does not establish correctness

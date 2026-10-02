@@ -4,38 +4,52 @@ Applies to transaction counterparty data. Field meanings are in the [transaction
 
 ## MERCHANT-001 Preserve known field boundaries
 
-The converter MUST produce `Merchant` when source fields or a confirmed format reliably identify the name, city, or country. A known name with unknown place uses `title` and null place fields. Use `NonParsedMerchant.fullTitle` only when the combined string cannot be reliably separated; use `merchant: null` when information is absent.
+The converter MUST produce `Merchant` when source fields or the observed bank format identify the merchant name separately from any city/country. Missing place information uses null place fields and does not make a known name unparsed.
 
-Parsing MUST preserve reliable structure already supplied by the bank or established by an earlier parser. A later parser MAY make it more specific using confirmed evidence, but MUST NOT merge known fields back into `fullTitle`, erase a known name/place, or discard enrichment merely because another part of the description is ambiguous. An unresolved city does not make a separately supplied merchant name unresolved. Correcting a field whose meaning was previously misidentified requires source evidence and a regression test.
+Apply the [observed-format generalization rule](../../../project/testing.md#bank-parsing-and-interpretation): observed name-only text uses `title` within the same source field, format, and operation class, including when extracted from a transaction description. Use `NonParsedMerchant.fullTitle` only when name/place boundaries remain ambiguous after inspecting relevant fields and applying supported parsing. Missing place data, an unimplemented parser, or hypothetical counterexamples do not justify `fullTitle`; record actual unresolved boundaries.
+
+Parsing MUST preserve reliable structure supplied by the bank or an earlier parser: do not merge known fields back into `fullTitle`, erase a known name/place, or discard enrichment because another field is ambiguous. Use a known name to help parse other descriptions; the converter MUST add city, country, or other enrichment when the evidence supports it. Correcting a field whose meaning was previously misidentified requires source evidence and a regression test.
 
 Inspect all available relevant source fields together: separate counterparty fields, structured and unstructured remittance, every remittance-array item, additional information, and merchant enrichment. Assemble the most complete and structured result supported by that evidence. Selecting one preferred field MUST NOT discard complementary information from another; separate merchant identity/place from useful purpose under the [comment rules](comments.md). Completeness does not mean copying technical text, duplicating information, or guessing missing structure.
 
 | Source evidence | Expected result |
 | --- | --- |
 | Separate merchant name and place fields | Preserve that boundary; parse place only at confirmed delimiters/country boundaries |
+| Observed examples establish that a field or extracted fragment contains only a name, such as `G. SHOP`, with no contrary evidence in that format/class | Use `title: "G. SHOP"` with null unknown place fields, including when the source is a transaction description |
+| A real counterexample shows mixed name/place text in a previously name-only format | Refine parsing using the distinguishing evidence; use `fullTitle` for the affected ambiguous form when the boundary remains unresolved |
 | Confirmed `SHOP_NAME / CITY / COUNTRY` layout | Separate title, city, and country |
 | Confirmed `AMAZON*MARKETPLACE//SEATTLE/US` layout | Parse according to this format, preserving the merchant name |
 | Consistent `MCDONALDS       MOSCOW     RU` layout with country evidence | Parse meaningful whitespace separators before normalization |
-| `MCDONALDS MOSCOW RU` without a confirmed grammar | Keep `fullTitle`; do not guess word boundaries |
+| Name/place boundaries in `MCDONALDS MOSCOW RU` remain unresolved after checking source fields and supported parsing | Keep `fullTitle`; do not guess word boundaries |
 | A slash or repeated space occurs inside a real name | The character alone is not proof of a separator |
-| Name is known, city is partly unresolved | Keep the confirmed name and unresolved city part intact |
+| Name is known and the city field is identified, but its text cannot be parsed further | Keep the confirmed name and city text intact |
 | Bank supplies `creditorName: "ROSSMANN 138"`; confirmed description format contains `ROSSMANN 138 WARSZAWA` | Preserve `title: "ROSSMANN 138"` and extract `city: "WARSZAWA"` at the known name boundary; a single space is not a reason to downgrade to `fullTitle` |
-| Bank supplies a reliable name, but the remaining description has no confirmed place meaning | Preserve that `title` with null unknown place fields; keep useful unresolved text under the comment rules |
+| `title: "JMP S.A. BIEDRONKA JMP S.A."` is known; a longer merchant description includes `BIEDRONKA 5238` but supplies no confirmed place | Retain the known title with null unknown city/country; a longer description is not a reason to use `fullTitle` |
 | Bank or an earlier parser supplies separate title/city/country and MCC | Retain those fields when cleaning a service prefix or adding other details |
 | A confirmed merchant/place boundary leaves punctuation inside the place, such as `GIJON/XIXON` | Keep that punctuation within the field; it is not another boundary by itself |
 
-Apply the [observed-format generalization rule](../../../project/testing.md#bank-parsing-and-interpretation). A country-like suffix without a reasonably identifiable boundary remains ambiguous; preserve unresolved information.
-
 ## MERCHANT-002 Normalize after structural parsing
 
-Inspect the raw string before collapsing whitespace. After extracting fields, use only `value.replace(/\s+/g, ' ').trim()` unless stronger cleanup is proven safe for the format. Do not apply a broad regex to unrelated operation classes.
+Applies to converted `merchant.title`, `merchant.fullTitle`, `merchant.city`, `merchant.country`, and transaction `comment`. These fields MUST be cleaned of text known to be technical in the observed format. Choosing `fullTitle` does not exempt the string from cleanup; cleanup alone does not establish name/place boundaries.
 
-Remove identified POS/ECOM prefixes, terminal IDs, and service tails only where proven technical. MUST NOT strip apparent location markers such as `Gorod`, `G`, `G.`, or `S` without evidence; they can belong to a name/place. Preserve observed counterexamples in tests.
+Inspect the raw string and parse structural boundaries before collapsing whitespace or removing separators. After parsing and selecting useful text, whitespace in merchant fields and comments MAY be normalized with `value.replace(/\s+/g, ' ').trim()`. Remove known technical padding, filler characters, POS/ECOM prefixes, terminal IDs, service tails, and their boundary markers where the format supports it. Do not apply cleanup to unrelated fields, formats, or operation classes without evidence of the same technical role.
+
+Punctuation is not garbage merely because it appears at a boundary. Preserve meaningful initials, abbreviations, names, place punctuation, and user text. MUST NOT strip apparent location markers such as `Gorod`, `G`, `G.`, or `S` without evidence; they can belong to a name/place.
+
+| Source evidence (illustrative) | Expected result |
+| --- | --- |
+| `BLUE MEDIA SPÓŁKA AKCYJNA .`, with the final ` .` established as filler | Remove that filler; retain `BLUE MEDIA SPÓŁKA AKCYJNA` |
+| A combined merchant/place string remains ambiguous but has a known technical suffix | Clean the suffix and keep the remaining string in `fullTitle` |
+| A parsed city, country, or useful comment ends with a known filler/separator in that field's format | Remove it from that field too; preserve the useful value |
+| `G. SHOP`, `CANAL+ Polska S.A.`, `GIJON/XIXON`, or an invoice reference `2026/09` | Preserve the meaningful punctuation; none justifies a general punctuation blacklist |
+| A value is blank or contains only confirmed technical text | Use null for emptied city/country/comment; merchant presence follows the [nonblank-name contract](../transactions.md#merchant-and-comment) |
+
+Cleanup applies to converted output, not to rewriting raw source records or fixtures; preserve those under [fixture rules](../../../project/fixtures.md). It does not change the separate rules for [runtime log sanitization](../../../debugging/log-sanitization.md) or [verbatim bank error messages](../../errors.md#bank-messages-and-terminal-scope).
 
 ## MERCHANT-003 Retain enrichment and counterparty identity
 
-Preserve MCC, bank category where applicable, country, city, and coordinates when available. Do not discard known enrichment merely because the title is unparsed. Do not invent MCC or geolocation from a merchant-name guess.
+Within a non-null merchant, preserve MCC, bank category where applicable, country, city, and coordinates when available. Do not discard known enrichment merely because the title is unparsed. Do not invent MCC or geolocation from a merchant-name guess.
 
 For an outgoing external transfer, including external P2P, use the known recipient; for incoming money, the known sender. Check account membership before treating P2P as external. Internal transfers normally have no external merchant. A payment purpose belongs in `comment`, not in a fabricated merchant title. Preserve useful user text under the [comment rules](comments.md).
 
-Verification: full transactions cover structured/unparsed/absent merchants, significant whitespace, misleading delimiters, short tokens, separate fields, enrichment, and P2P direction where supported. Include observed known-name/single-space and ambiguous-place cases; check that successive parsers retain structure and useful comments. Missing bank samples remain gaps under the evidence rule.
+Verification: full transactions cover the table cases, enrichment, P2P direction, and successive parsers retaining known structure and useful comments where supported. Check cleanup in each affected text field, including blank/emptied names with otherwise known enrichment. Missing bank samples remain gaps under the evidence rule.
