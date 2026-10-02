@@ -25,6 +25,20 @@ The Card is a payment instrument, not an independent wallet with a reliable sepa
   transaction IDs from Bybit. The aggregate financial query is retained because
   it is the mode accepted by the live Kazakhstan Card API.
 - Pending authorizations are imported as holds; declined and reversal records are skipped so they cannot be double-counted.
+- An authorization does not move money out of Bybit yet: the coin is sold at once and the fiat is parked in Funding with a zero
+  transferable balance until the merchant clears the purchase, about a day and a half later. That parked fiat is therefore subtracted from
+  the Funding balance for as long as the matching hold is imported, so the same money is not reported twice. Authorizations are
+  read over a fixed fourteen-day window rather than the synchronization window: the same set has to be imported and subtracted, and
+  tying it to the requested history would make the balance jump between a first run and a daily one. Fourteen days is what ZenMoney
+  asks for anyway, and an ample margin over the day and a half an authorization was observed to need.
+- The deduction is applied to Funding whichever wallet settles the card. That is where the parked fiat was observed on a
+  Funding-settled account; an account paying from Flexible Earn was not available to check.
+- Bybit's authorization and clearing records for one purchase share neither `txnId` nor `orderNo`, so the plugin does not try to
+  pair them. ZenMoney merges a hold with the cleared operation on its own.
+- `totalFees` covers only the fees Bybit reports on the fiat side. The markup it keeps when selling crypto for that fiat is absent
+  from every Card API field and from the convert history, so it is left to the **Crypto-to-fiat conversion fee** preference. With
+  it unset, card purchases are imported for less than the wallet actually paid. The current cost is visible in the Bybit app under
+  *Crypto used*: divide the crypto spent by the fiat it produced.
 - Merchant, MCC, city and country are retained where Bybit provides them.
 - The Card API does not disclose the actual *Paying With* setting. The plugin therefore asks the user to choose **Flexible Earn** or **Funding** and never guesses from a current balance. Set it to the same source selected in Bybit.
 
