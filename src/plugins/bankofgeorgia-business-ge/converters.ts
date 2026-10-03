@@ -1,4 +1,4 @@
-import { Account as ZenMoneyAccount, AccountType, Transaction as ZenMoneyTransaction, Movement as TransactionMovement } from '../../types/zenmoney'
+import { Account as ZenMoneyAccount, AccountType, Transaction as ZenMoneyTransaction, ExtendedTransaction, Movement as TransactionMovement } from '../../types/zenmoney'
 import { Account, AccountRecord, Record } from './models'
 
 export function convertToZenMoneyAccount (account: Account): ZenMoneyAccount {
@@ -49,7 +49,7 @@ function addMatchingConversion (record: AccountRecord, transaction: ZenMoneyTran
     transaction.movements.push(createMovement(matchingRecord, matchingRecord.EntryAmount))
   }
 }
-export function convertToZenMoneyTransaction (record: AccountRecord, allRecords: AccountRecord[]): ZenMoneyTransaction {
+export function convertToZenMoneyTransaction (record: AccountRecord, allRecords: AccountRecord[]): ExtendedTransaction {
   const mccMatch = record.EntryComment.match(/MCC:\s*(\d{4})/)
 
   let mcc: number | null = null
@@ -57,7 +57,7 @@ export function convertToZenMoneyTransaction (record: AccountRecord, allRecords:
     mcc = parseInt(mccMatch[1])
   }
 
-  const transaction: ZenMoneyTransaction = {
+  const transaction: ExtendedTransaction = {
     hold: false,
     date: new Date(record.EntryDate),
     movements: [createMovement(record, record.EntryAmount)],
@@ -113,6 +113,14 @@ export function convertToZenMoneyTransaction (record: AccountRecord, allRecords:
     case 'PLC': // automatic currency conversion
       addMatchingConversion(record, transaction, allRecords)
       break
+
+    case 'CLN': { // collection order (inkaso): forced conversion between own accounts and its fees
+      const counterparty = record.EntryAmount > 0 ? record.SenderDetails : record.BeneficiaryDetails
+      transaction.merchant = counterparty.Name === '' ? null : { city: null, country: null, mcc, title: counterparty.Name, location: null }
+      // both legs of a conversion share DocumentKey, adjustTransactions merges them into a transfer
+      transaction.groupKeys = [String(record.DocumentKey)]
+      break
+    }
 
     default:
       throw new Error(`Unknown DocumentProductGroup: ${record.DocumentProductGroup}`)
