@@ -1,4 +1,4 @@
-import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError, UserInteractionError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError, UserInteractionError } from '../../errors'
 import { parsePdf } from '../../common/pdfUtils'
 import { convertCard, convertCardTransaction, convertCredit, convertDeposit, convertPaymentHistoryTransaction } from './converters'
 import { fetchApi, type ApiResponse } from './fetchApi'
@@ -131,7 +131,6 @@ const assertSuccess = <T extends ErrorResponse>(response: ApiResponse<T>, contex
   if (response.status >= 200 && response.status < 300) return response.body
 
   console.error(`[BELARUSBANK:${context}] HTTP ${response.status}`, getErrorInfo(response.body))
-  if (response.status >= 500) throw new TemporaryUnavailableError()
   if (context === 'CARD_TRANSACTIONS' && String(getErrorInfo(response.body)?.code ?? '') === '1094') {
     throw new CardTransactionsUnavailableError(getErrorMessage(response.body, 'Операции по карте временно недоступны'))
   }
@@ -216,7 +215,6 @@ const tryRefresh = async (login: string, auth: AuthState): Promise<AuthState | n
 
   if (response.status >= 200 && response.status < 300) return saveAuth(login, response.body, auth)
   if ([400, 401, 403].includes(response.status)) return null
-  if (response.status >= 500) throw new TemporaryUnavailableError()
 
   throw new BankMessageError(getErrorMessage(response.body, `Ошибка обновления сессии Беларусбанка (HTTP ${response.status})`))
 }
@@ -230,7 +228,6 @@ const tryDirectLogin = async (preferences: PreferenceInput): Promise<AuthState |
 
   if (response.status >= 200 && response.status < 300) return saveAuth(preferences.login.trim(), response.body)
   if ([400, 401, 403].includes(response.status)) return null
-  if (response.status >= 500) throw new TemporaryUnavailableError()
 
   throw new BankMessageError(getErrorMessage(response.body, `Ошибка доверенного входа Беларусбанка (HTTP ${response.status})`))
 }
@@ -245,7 +242,6 @@ const tryTrustedLogin = async (preferences: PreferenceInput): Promise<AuthState 
 
   if (!(preparation.status >= 200 && preparation.status < 300)) {
     if ([400, 401, 403].includes(preparation.status)) return null
-    if (preparation.status >= 500) throw new TemporaryUnavailableError()
     throw new BankMessageError(getErrorMessage(preparation.body, `Ошибка доверенного входа Беларусбанка (HTTP ${preparation.status})`))
   }
 
@@ -259,7 +255,6 @@ const tryTrustedLogin = async (preferences: PreferenceInput): Promise<AuthState 
 
   if (confirmation.status >= 200 && confirmation.status < 300) return saveAuth(preferences.login.trim(), confirmation.body)
   if ([400, 401, 403].includes(confirmation.status)) return null
-  if (confirmation.status >= 500) throw new TemporaryUnavailableError()
 
   throw new BankMessageError(getErrorMessage(confirmation.body, `Ошибка подтверждения доверенного входа Беларусбанка (HTTP ${confirmation.status})`))
 }
@@ -279,11 +274,12 @@ const loginWithSms = async (preferences: PreferenceInput, isInBackground: boolea
     const message = getErrorMessage(preparation.body, 'Не удалось войти в Беларусбанк')
 
     if (code === '1011' || /логин|парол|зарегистр|login|password/i.test(message)) {
-      throw new InvalidLoginOrPasswordError(message)
+      const link = ZenMoney.application.platform === 'ios' ? 'https://apps.apple.com/by/app/belarusbank/id6773332798' : 'https://play.google.com/store/apps/details?id=by.softclub.belarusbank'
+      throw new BankMessageError(`Для синхронизации необходимо зарегистрироваться в новом приложении Беларусбанка: ${link}`)
     }
 
-    if (preparation.status >= 500) throw new TemporaryUnavailableError()
-    throw new BankMessageError(message)
+    if (preparation.status >= 500) throw new Error()
+    throw new Error(message)
   }
 
   if (typeof preparation.body.requestId !== 'string' || preparation.body.requestId.length === 0) {
@@ -325,7 +321,6 @@ const loginWithSms = async (preferences: PreferenceInput, isInBackground: boolea
   if (!(confirmation.status >= 200 && confirmation.status < 300)) {
     const message = getErrorMessage(confirmation.body, 'Неверный код подтверждения Беларусбанка')
     if (confirmation.status === 400 || confirmation.status === 401) throw new InvalidOtpCodeError(message)
-    if (confirmation.status >= 500) throw new TemporaryUnavailableError()
     throw new BankMessageError(message)
   }
 
@@ -420,8 +415,6 @@ export const getStatementTransactions = async (
     ...authOptions(auth)
   })
   if (!(response.status >= 200 && response.status < 300)) {
-    console.error(`[BELARUSBANK:STATEMENT] HTTP ${response.status}`)
-    if (response.status >= 500) throw new TemporaryUnavailableError()
     throw new BankMessageError(`Не удалось получить выписку Беларусбанка (HTTP ${response.status})`)
   }
   if (!(response.body instanceof ArrayBuffer)) throw new Error('Belarusbank statement response is not binary')

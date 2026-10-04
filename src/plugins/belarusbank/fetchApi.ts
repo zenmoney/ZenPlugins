@@ -54,7 +54,7 @@ export const fetchApi = async <T>(path: string, options: RequestOptions = {}): P
         body: options.body,
         stringify: options.rawStringBody === true ? (body: unknown): string => String(body) : JSON.stringify,
         binaryResponse: options.binaryResponse,
-        log: false,
+        log: true,
         sanitizeRequestLog: {
           headers: {
             Authorization: true
@@ -93,6 +93,5 @@ export const fetchApi = async <T>(path: string, options: RequestOptions = {}): P
     }
   }
 
-  console.error('[BELARUSBANK:API] Request failed after retries')
   throw new TemporaryUnavailableError()
 }
