@@ -100,7 +100,9 @@ async function authorizeInWebView (url, state) {
     webView.goto(url, { waitUntil: 'commit' }).catch(rejectAuthorized)
     return await authorized
   } finally {
-    await webView.close()
+    setTimeout(async () => {
+      await webView.close()
+    }, 0)
   }
 }
 
