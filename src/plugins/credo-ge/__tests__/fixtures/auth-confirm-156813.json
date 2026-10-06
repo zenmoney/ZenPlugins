@@ -1,0 +1,11 @@
+{
+  "data": null,
+  "message": "ResponseContent:  ResponseStatusCode: InternalServerError",
+  "detailsMessage": null,
+  "externalState": "Ok",
+  "state": "BadRequest",
+  "errorCode": "RESULT_EMPTY",
+  "validationErrors": null,
+  "isAuth": false,
+  "warning": null
+}

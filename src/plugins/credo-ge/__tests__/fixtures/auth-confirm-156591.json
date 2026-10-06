@@ -1,0 +1,11 @@
+{
+  "data": null,
+  "message": null,
+  "detailsMessage": null,
+  "externalState": "Ok",
+  "state": "BadRequest",
+  "errorCode": "INVALID_INPUT_DATA",
+  "validationErrors": null,
+  "isAuth": false,
+  "warning": null
+}

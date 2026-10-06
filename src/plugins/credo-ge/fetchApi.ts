@@ -306,11 +306,16 @@ export async function authConfirm (otp: string | null, operationId: string): Pro
   const response = await fetchJson(IEBaseUrl + confirmPath, {
     method: 'POST',
     body: payload,
+    sanitizeRequestLog: { body: { TwoFactorHandle: true } },
     sanitizeResponseLog: { body: { data: { operationData: true } } }
   })
-  if (response.status !== 200) {
-    throw new TemporaryError('2FA challenge failed!')
-  }
+  const token = getOptString(response.body, 'data.operationData.token')
+  console.assert(response.status === 200 && token !== undefined && token.length > 0,
+    'Unexpected Credo authentication confirmation response', {
+      status: response.status,
+      errorCode: getOptString(response.body, 'errorCode'),
+      state: getOptString(response.body, 'state')
+    })
   const result = response.body as AuthConfirmResponse
   return result
 }
