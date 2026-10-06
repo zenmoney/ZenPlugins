@@ -1,3 +1,4 @@
+import '../../polyfills/url'
 import { defaultsDeep } from 'lodash'
 import forge from 'node-forge'
 import { stringify } from 'querystring'
