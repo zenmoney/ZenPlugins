@@ -1,4 +1,4 @@
-import { Account as ZenMoneyAccount, AccountType, Transaction as ZenMoneyTransaction, ExtendedTransaction, Movement as TransactionMovement } from '../../types/zenmoney'
+import { Account as ZenMoneyAccount, AccountType, ExtendedTransaction, Movement as TransactionMovement } from '../../types/zenmoney'
 import { Account, AccountRecord, Record } from './models'
 
 export function convertToZenMoneyAccount (account: Account): ZenMoneyAccount {
@@ -38,18 +38,7 @@ function createCounterpartyMovement (record: AccountRecord, sum: number, fee = 0
   }
 }
 
-function addMatchingConversion (record: AccountRecord, transaction: ZenMoneyTransaction, allRecords: AccountRecord[]): void {
-  const matchingRecord = allRecords.find(r =>
-    r.DocumentProductGroup === 'PLC' &&
-    r.AccountID !== record.AccountID &&
-    r.EntryDate === record.EntryDate &&
-    r.DocumentNomination === record.DocumentNomination
-  )
-  if (matchingRecord != null) {
-    transaction.movements.push(createMovement(matchingRecord, matchingRecord.EntryAmount))
-  }
-}
-export function convertToZenMoneyTransaction (record: AccountRecord, allRecords: AccountRecord[]): ExtendedTransaction {
+export function convertToZenMoneyTransaction (record: AccountRecord): ExtendedTransaction {
   const mccMatch = record.EntryComment.match(/MCC:\s*(\d{4})/)
 
   let mcc: number | null = null
@@ -115,8 +104,9 @@ export function convertToZenMoneyTransaction (record: AccountRecord, allRecords:
     case 'TRN': // card payment
       break
 
-    case 'PLC': // automatic currency conversion
-      addMatchingConversion(record, transaction, allRecords)
+    case 'PLC': // automatic currency conversion between sub-accounts of the same IBAN
+      // both legs share DocumentKey, adjustTransactions merges them into a transfer
+      transaction.groupKeys = [String(record.DocumentKey)]
       break
 
     case 'CLN': { // collection order (inkaso): forced conversion between own accounts and its fees

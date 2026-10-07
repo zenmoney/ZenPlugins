@@ -320,12 +320,12 @@ describe('convertToZenMoneyTransaction: collection order (CLN)', () => {
     ['collection fee', collectionFee, { ...collectionFeeOutcome, groupKeys: ['10000000002'] }],
     ['conversion fee', conversionFee, { ...conversionFeeOutcome, groupKeys: ['10000000003'] }]
   ])('converts %s', (_, record, expected) => {
-    expect(convertToZenMoneyTransaction(record, records)).toEqual(expected)
+    expect(convertToZenMoneyTransaction(record)).toEqual(expected)
   })
 
   it('merges both legs of the conversion into a transfer and keeps fees as expenses', () => {
     const transactions = adjustTransactions({
-      transactions: records.map(record => convertToZenMoneyTransaction(record, records))
+      transactions: records.map(record => convertToZenMoneyTransaction(record))
     })
     expect(transactions).toEqual([
       {
@@ -345,7 +345,7 @@ describe('convertToZenMoneyTransaction: collection order (CLN)', () => {
     ['GEL', gelLeg, gelIncome]
   ])('keeps the %s leg as is when the other leg is not in the statement', (_, record, expected) => {
     const transactions = adjustTransactions({
-      transactions: [convertToZenMoneyTransaction(record, [record])]
+      transactions: [convertToZenMoneyTransaction(record)]
     })
     expect(transactions).toEqual([expected])
   })
