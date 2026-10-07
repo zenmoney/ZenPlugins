@@ -126,6 +126,7 @@ const mergeStatementAndPaymentHistory = (
 }
 
 export const scrape: ScrapeFunc<PreferenceInput> = async ({ preferences, fromDate, toDate, isInBackground }) => {
+  ZenMoney.locale = 'ru'
   clearLegacyTransactionIdState()
   const auth = await authenticate(preferences, isInBackground)
   console.log('[BELARUSBANK:AUTH] Success')

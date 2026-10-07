@@ -39,6 +39,22 @@ describe('Belarusbank scrape', () => {
     })
   })
 
+  it('preserves an authentication failure and stops before loading financial data [model]', async () => {
+    // Model the entrypoint invariant independently of a bank response format.
+    const error = new Error('Model authentication failure')
+    mockAuthenticate.mockRejectedValue(error)
+
+    await expect(scrape({
+      preferences: { login: 'test-login', password: 'test-password' },
+      fromDate: new Date('2026-10-01T00:00:00Z'),
+      toDate: new Date('2026-10-03T00:00:00Z'),
+      isFirstRun: true,
+      isInBackground: false
+    })).rejects.toBe(error)
+    expect(mockGetProducts).not.toHaveBeenCalled()
+    expect(ZenMoney.locale).toBe('ru')
+  })
+
   it('loads the full statement first and supplements it with general payment history', async () => {
     const auth: AuthState = {
       login: 'test-login',
