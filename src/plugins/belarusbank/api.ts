@@ -1,5 +1,4 @@
-import { BankMessageError, TemporaryUnavailableError, UserInteractionError } from '../../errors'
-import get from '../../types/get'
+import { BankMessageError, InvalidOtpCodeError, UserInteractionError } from '../../errors'
 import { parsePdf } from '../../common/pdfUtils'
 import { convertCard, convertCardTransaction, convertCredit, convertDeposit, convertPaymentHistoryTransaction } from './converters'
 import { fetchApi, type ApiResponse } from './fetchApi'
@@ -126,36 +125,12 @@ const getErrorMessage = (body: ErrorResponse | null | undefined, fallback: strin
   return errorInfo?.errorDescription ?? errorInfo?.errorText ?? fallback
 }
 
-const getAuthErrorCode = (body: unknown): string => {
-  const code = get(body, 'errorInfo.code') ?? get(body, 'error.errorInfo.code')
-  if (typeof code === 'number' && Number.isFinite(code)) return String(code)
-  if (typeof code === 'string' && /^\d+$/.test(code)) return code
-  return 'unknown'
-}
-
-const isLoginRejected = (body: unknown): boolean => ['1011', '1042'].includes(getAuthErrorCode(body))
-
-const failAuthentication = async (response: ApiResponse<unknown>, stage: string, isInBackground: boolean): Promise<never> => {
-  const code = getAuthErrorCode(response.body)
-  if (!isInBackground) {
-    if (code === '1011') {
-      await ZenMoney.alert('Зарегистрируйтесь в новом приложении Belarusbank или на сайте https://ib.asb.by. Затем укажите логин и пароль от нового онлайн-банка в настройках подключения Дзен-мани и повторите синхронизацию.')
-    } else if (code === '1042') {
-      await ZenMoney.alert('Беларусбанк отклонил логин или пароль. Проверьте их на https://ib.asb.by, затем исправьте в настройках подключения Дзен-мани. Используйте пароль онлайн-банка Belarusbank.')
-    }
-  }
-
-  // Keep authentication failures reportable while the new integration is being diagnosed.
-  throw new Error(`Belarusbank authentication failed during ${stage} (HTTP ${response.status}; code ${code})`)
-}
-
 export class CardTransactionsUnavailableError extends BankMessageError {}
 
 const assertSuccess = <T extends ErrorResponse>(response: ApiResponse<T>, context: string): T => {
   if (response.status >= 200 && response.status < 300) return response.body
 
   console.error(`[BELARUSBANK:${context}] HTTP ${response.status}`, getErrorInfo(response.body))
-  if (response.status >= 500) throw new TemporaryUnavailableError()
   if (context === 'CARD_TRANSACTIONS' && String(getErrorInfo(response.body)?.code ?? '') === '1094') {
     throw new CardTransactionsUnavailableError(getErrorMessage(response.body, 'Операции по карте временно недоступны'))
   }
@@ -240,10 +215,11 @@ const tryRefresh = async (login: string, auth: AuthState): Promise<AuthState | n
 
   if (response.status >= 200 && response.status < 300) return saveAuth(login, response.body, auth)
   if ([400, 401, 403].includes(response.status)) return null
-  return await failAuthentication(response, 'session refresh', true)
+
+  throw new BankMessageError(getErrorMessage(response.body, `Ошибка обновления сессии Беларусбанка (HTTP ${response.status})`))
 }
 
-const tryDirectLogin = async (preferences: PreferenceInput, isInBackground: boolean): Promise<AuthState | null> => {
+const tryDirectLogin = async (preferences: PreferenceInput): Promise<AuthState | null> => {
   const response = await fetchApi<LoginResponse>('users/auth/login', {
     method: 'POST',
     body: makeLoginRequest(preferences),
@@ -251,12 +227,12 @@ const tryDirectLogin = async (preferences: PreferenceInput, isInBackground: bool
   })
 
   if (response.status >= 200 && response.status < 300) return saveAuth(preferences.login.trim(), response.body)
-  if (isLoginRejected(response.body)) return await failAuthentication(response, 'direct login', isInBackground)
   if ([400, 401, 403].includes(response.status)) return null
-  return await failAuthentication(response, 'direct login', isInBackground)
+
+  throw new BankMessageError(getErrorMessage(response.body, `Ошибка доверенного входа Беларусбанка (HTTP ${response.status})`))
 }
 
-const tryTrustedLogin = async (preferences: PreferenceInput, isInBackground: boolean): Promise<AuthState | null> => {
+const tryTrustedLogin = async (preferences: PreferenceInput): Promise<AuthState | null> => {
   const preparation = await fetchApi<LoginPreparationResponse>('users/auth/login/preparation', {
     method: 'POST',
     query: { loginMode: 'PIN' },
@@ -265,9 +241,8 @@ const tryTrustedLogin = async (preferences: PreferenceInput, isInBackground: boo
   })
 
   if (!(preparation.status >= 200 && preparation.status < 300)) {
-    if (isLoginRejected(preparation.body)) return await failAuthentication(preparation, 'PIN login preparation', isInBackground)
     if ([400, 401, 403].includes(preparation.status)) return null
-    return await failAuthentication(preparation, 'PIN login preparation', isInBackground)
+    throw new BankMessageError(getErrorMessage(preparation.body, `Ошибка доверенного входа Беларусбанка (HTTP ${preparation.status})`))
   }
 
   if (typeof preparation.body.requestId !== 'string' || preparation.body.requestId.length === 0) return null
@@ -279,9 +254,9 @@ const tryTrustedLogin = async (preferences: PreferenceInput, isInBackground: boo
   })
 
   if (confirmation.status >= 200 && confirmation.status < 300) return saveAuth(preferences.login.trim(), confirmation.body)
-  if (isLoginRejected(confirmation.body)) return await failAuthentication(confirmation, 'PIN login confirmation', isInBackground)
   if ([400, 401, 403].includes(confirmation.status)) return null
-  return await failAuthentication(confirmation, 'PIN login confirmation', isInBackground)
+
+  throw new BankMessageError(getErrorMessage(confirmation.body, `Ошибка подтверждения доверенного входа Беларусбанка (HTTP ${confirmation.status})`))
 }
 
 const loginWithSms = async (preferences: PreferenceInput, isInBackground: boolean): Promise<AuthState> => {
@@ -294,7 +269,17 @@ const loginWithSms = async (preferences: PreferenceInput, isInBackground: boolea
   })
 
   if (!(preparation.status >= 200 && preparation.status < 300)) {
-    return await failAuthentication(preparation, 'SMS login preparation', isInBackground)
+    const errorInfo = getErrorInfo(preparation.body)
+    const code = String(errorInfo?.code ?? '')
+    const message = getErrorMessage(preparation.body, 'Не удалось войти в Беларусбанк')
+
+    if (code === '1011' || /логин|парол|зарегистр|login|password/i.test(message)) {
+      const link = ZenMoney.application.platform === 'ios' ? 'https://apps.apple.com/by/app/belarusbank/id6773332798' : 'https://play.google.com/store/apps/details?id=by.softclub.belarusbank'
+      throw new BankMessageError(`Для синхронизации необходимо зарегистрироваться в новом приложении Беларусбанка: ${link}`)
+    }
+
+    if (preparation.status >= 500) throw new Error()
+    throw new Error(message)
   }
 
   if (typeof preparation.body.requestId !== 'string' || preparation.body.requestId.length === 0) {
@@ -308,7 +293,7 @@ const loginWithSms = async (preferences: PreferenceInput, isInBackground: boolea
       time: 120000
     })
     codeWord = answer?.trim()
-    if (codeWord == null || codeWord.length === 0) throw new Error('Belarusbank code word was not provided')
+    if (codeWord == null || codeWord.length === 0) throw new InvalidOtpCodeError('Кодовое слово не введено')
   }
 
   const code = await ZenMoney.readLine('Введите 6-значный код из SMS от Беларусбанка', {
@@ -316,7 +301,7 @@ const loginWithSms = async (preferences: PreferenceInput, isInBackground: boolea
     time: 120000
   })
   const normalizedCode = code?.trim()
-  if (normalizedCode == null || normalizedCode.length === 0) throw new Error('Belarusbank confirmation code was not provided')
+  if (normalizedCode == null || normalizedCode.length === 0) throw new InvalidOtpCodeError('Код из SMS не введён')
 
   const confirmationPayload = {
     requestId: preparation.body.requestId,
@@ -334,13 +319,14 @@ const loginWithSms = async (preferences: PreferenceInput, isInBackground: boolea
   })
 
   if (!(confirmation.status >= 200 && confirmation.status < 300)) {
-    return await failAuthentication(confirmation, 'SMS login confirmation', isInBackground)
+    const message = getErrorMessage(confirmation.body, 'Неверный код подтверждения Беларусбанка')
+    if (confirmation.status === 400 || confirmation.status === 401) throw new InvalidOtpCodeError(message)
+    throw new BankMessageError(message)
   }
 
   return saveAuth(preferences.login.trim(), confirmation.body)
 }
 
-/** Authenticates without retrying a confirmed login rejection and keeps failures reportable. */
 export const authenticate = async (preferences: PreferenceInput, isInBackground: boolean): Promise<AuthState> => {
   const normalizedLogin = preferences.login.trim()
   const stored = loadAuth()
@@ -350,10 +336,10 @@ export const authenticate = async (preferences: PreferenceInput, isInBackground:
     if (refreshed != null) return refreshed
   }
 
-  const direct = await tryDirectLogin(preferences, isInBackground)
+  const direct = await tryDirectLogin(preferences)
   if (direct != null) return direct
 
-  const trusted = await tryTrustedLogin(preferences, isInBackground)
+  const trusted = await tryTrustedLogin(preferences)
   if (trusted != null) return trusted
 
   return await loginWithSms(preferences, isInBackground)
@@ -429,8 +415,6 @@ export const getStatementTransactions = async (
     ...authOptions(auth)
   })
   if (!(response.status >= 200 && response.status < 300)) {
-    console.error(`[BELARUSBANK:STATEMENT] HTTP ${response.status}`)
-    if (response.status >= 500) throw new TemporaryUnavailableError()
     throw new BankMessageError(`Не удалось получить выписку Беларусбанка (HTTP ${response.status})`)
   }
   if (!(response.body instanceof ArrayBuffer)) throw new Error('Belarusbank statement response is not binary')

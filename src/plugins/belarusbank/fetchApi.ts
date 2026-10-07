@@ -1,4 +1,5 @@
 import { fetch, fetchJson } from '../../common/network'
+import { TemporaryUnavailableError } from '../../errors'
 import { sanitize } from '../../common/sanitize'
 import { BASE_API_URL } from './models'
 
@@ -72,7 +73,7 @@ const makeUrl = (path: string, query: RequestOptions['query']): string => {
   return `${BASE_API_URL}${path}${parameters.length > 0 ? `?${parameters}` : ''}`
 }
 
-/** Requests an endpoint with sanitized diagnostics and preserves exhausted network errors. */
+/** Requests an endpoint with sanitized diagnostics. */
 export const fetchApi = async <T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> => {
   const headers: Record<string, string> = {
     Accept: options.accept ?? 'application/json, text/plain, */*',
@@ -95,6 +96,7 @@ export const fetchApi = async <T>(path: string, options: RequestOptions = {}): P
         body: options.body,
         stringify: options.rawStringBody === true ? (body: unknown): string => String(body) : JSON.stringify,
         binaryResponse: options.binaryResponse,
+        log: true,
         sanitizeRequestLog: {
           url: { query: sanitizeRequestPayload },
           headers: sanitizeHeaders,
@@ -114,11 +116,12 @@ export const fetchApi = async <T>(path: string, options: RequestOptions = {}): P
         }
       }
     } catch (error) {
-      if (!(error instanceof Error) || !NETWORK_ERROR_PATTERN.test(error.message) || attempt === maxAttempts) {
+      if (!(error instanceof Error) || !NETWORK_ERROR_PATTERN.test(error.message)) {
         throw error
       }
+      if (attempt === maxAttempts) break
     }
   }
 
-  throw new Error('Belarusbank request did not return a response')
+  throw new TemporaryUnavailableError()
 }

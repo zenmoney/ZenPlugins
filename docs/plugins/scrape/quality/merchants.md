@@ -24,7 +24,8 @@ Inspect all available relevant source fields together: separate counterparty fie
 | A slash or repeated space occurs inside a real name | The character alone is not proof of a separator |
 | Name is known and the city field is identified, but its text cannot be parsed further | Keep the confirmed name and city text intact |
 | Bank supplies `creditorName: "ROSSMANN 138"`; confirmed description format contains `ROSSMANN 138 WARSZAWA` | Preserve `title: "ROSSMANN 138"` and extract `city: "WARSZAWA"` at the known name boundary; a single space is not a reason to downgrade to `fullTitle` |
-| `title: "JMP S.A. BIEDRONKA JMP S.A."` is known; a longer merchant description includes `BIEDRONKA 5238` but supplies no confirmed place | Retain the known title with null unknown city/country; a longer description is not a reason to use `fullTitle` |
+| `JMP S.A. BIEDRONKA JMP S.A. BIEDRONKA 5238` follows `<legal entity> <brand> <legal entity> <outlet>`; another field supplies `BIEDRONKA 5238` | Identify the repeated `JMP S.A.` blocks and extract the brand between them: `title: "BIEDRONKA"`; unknown city/country remain null |
+| Only the outlet name `BIEDRONKA 5238` is available, with no supported brand boundary | Keep `title: "BIEDRONKA 5238"`; removing digits does not establish a brand |
 | Bank or an earlier parser supplies separate title/city/country and MCC | Retain those fields when cleaning a service prefix or adding other details |
 | A confirmed merchant/place boundary leaves punctuation inside the place, such as `GIJON/XIXON` | Keep that punctuation within the field; it is not another boundary by itself |
 
@@ -36,8 +37,14 @@ Inspect the raw string and parse structural boundaries before collapsing whitesp
 
 Punctuation is not garbage merely because it appears at a boundary. Preserve meaningful initials, abbreviations, names, place punctuation, and user text. MUST NOT strip apparent location markers such as `Gorod`, `G`, `G.`, or `S` without evidence; they can belong to a name/place.
 
+The converter SHOULD select `merchant.title` from the operation's relevant fields for the same counterparty in this order: **brand, trading name, legal entity name**. Use separately supplied names or extract them from the observed structure; do not infer a brand by trimming legal forms, outlet numbers, or other meaningful name parts. Among variants of the selected name, preserve supported brand spelling; otherwise prefer mixed case over all-uppercase or all-lowercase, ignoring punctuation when comparing readability. Select an available spelling rather than mechanically changing case.
+
 | Source evidence (illustrative) | Expected result |
 | --- | --- |
+| Fields supply `ACME SERVICES S.A.` and `Acme Services, SA.` as equivalent names of the same counterparty, with no established brand spelling | Prefer `Acme Services, SA.` for its mixed case |
+| The creditor is `ACME ENERGY, S.A.` and the same operation's confirmed invoice layout supplies `Acme Energy, Factura: 42` | Use `title: 'Acme Energy'` and `comment: 'Factura: 42'` |
+| Source evidence identifies `IKEA`, `IBM`, or `eBay` as the brand spelling, alongside mechanically recased variants | Preserve the supported brand spelling |
+| The only supported name is an all-uppercase legal name | Preserve the supplied spelling and legal form |
 | `BLUE MEDIA SPÓŁKA AKCYJNA .`, with the final ` .` established as filler | Remove that filler; retain `BLUE MEDIA SPÓŁKA AKCYJNA` |
 | A combined merchant/place string remains ambiguous but has a known technical suffix | Clean the suffix and keep the remaining string in `fullTitle` |
 | A parsed city, country, or useful comment ends with a known filler/separator in that field's format | Remove it from that field too; preserve the useful value |
