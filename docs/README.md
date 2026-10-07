@@ -25,7 +25,7 @@ Read the listed pages or sections once. Combine routes only when the task crosse
 | Device reproduction | [Bootloader](debugging/bootloader.md) |
 | Protocol research | [Research guide](development/protocol-research.md) and affected integration notes |
 | Nordigen integration | [Shared-provider rules](plugins/scrape/nordigen.md), plus the route for the actual change |
-| Git or hosting operations | [Identity](project/workflow.md#repository-identity), [branches](project/workflow.md#branches-and-submission); for MR/PR creation/update, also [submission checks](project/workflow.md#submission-checks) and [completion criteria](project/workflow.md#completion-criteria) |
+| Git or hosting operations | [Identity](project/workflow.md#repository-identity), [access](project/workflow.md#git-and-hosting-access), [branches and PR/MR state](project/workflow.md#branches-and-submission); for GitLab, [SSH operations](project/gitlab.md); for PR/MR creation/update, also [submission checks](project/workflow.md#submission-checks) and [completion criteria](project/workflow.md#completion-criteria) |
 | Documentation | [Maintenance](project/documentation.md) |
 
 For code changes, also read [working sequence](project/workflow.md#working-sequence), [style](project/style.md), and [verification](project/testing.md#verification-for-code-changes). Test layout and layer-specific matrices are references for the affected tests. Read [fixture rules](project/fixtures.md) before copying source data.
