@@ -1,3 +1,4 @@
+import type { PluginUi, ReadLineOptions } from '../common/ui'
 import type { restoreCookies, saveCookies } from '../common/network/cookies'
 import type { addTrustedCertificates } from '../common/network/tls'
 
@@ -12,17 +13,14 @@ export interface ZenMoneyApi {
 
   isAccountSkipped: (id: string) => boolean
 
+  /** @deprecated Use ui.readLine from common/ui. */
   readLine: (
     text: string,
-    options?: {
-      image?: Uint8Array
-      /** Password variants are supported by the native Android input mapper. */
-      inputType?: 'number' | 'text' | 'textPassword' | 'numberPassword'
-      time?: number
-    }
-  ) => Promise<string | null>
+    options?: ReadLineOptions & { time?: number }
+  ) => ReturnType<PluginUi['readLine']>
 
-  alert: (text: string) => Promise<void>
+  /** @deprecated Use ui.alert from common/ui. */
+  alert: PluginUi['alert']
 
   /** @deprecated Use cookieJar from common/network. */
   setCookie: (
@@ -72,9 +70,11 @@ export interface ZenMoneyApi {
   }
   locale: string
 
-  pickDocuments: (mimeTypes: string[], allowMultipleSelection: boolean) => Promise<Blob[]>
+  /** @deprecated Use ui.pickDocuments from common/ui. */
+  pickDocuments: (mimeTypes: string[], allowMultipleSelection: boolean) => ReturnType<PluginUi['pickDocuments']>
 
-  takePicture: (format: string) => Promise<Blob | null>
+  /** @deprecated Use ui.takePicture from common/ui. */
+  takePicture: (format: string) => ReturnType<PluginUi['takePicture']>
 
   logEvent: (type: string, data?: Record<string, unknown>) => void
 }

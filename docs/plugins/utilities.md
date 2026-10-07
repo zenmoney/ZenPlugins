@@ -19,7 +19,8 @@ Reference index. Read only the helper involved in your task; behavior and availa
 | Transaction grouping | [adjustTransactions](../../src/common/transactionGroupHandler.js), [transfer rules](scrape/quality/transfers.md) |
 | PDF input | [pdfUtils](../../src/common/pdfUtils.js) |
 | Debug checkpoints | [Debug](../../src/common/debug/index.js), [Bootloader](../debugging/bootloader.md#plugin-debug-api) |
-| Prompts and storage | [Runtime](runtime.md), [ZenMoney declarations](../../src/types/index.d.ts) |
+| Prompts, file selection, camera, visibility and theme | [`ui`](../../src/common/ui.ts), [UI runtime contract](runtime.md#background-execution-and-ui) |
+| Plugin storage | [Runtime](runtime.md#state-and-lifecycle), [ZenMoney declarations](../../src/types/index.d.ts) |
 
 Helpers related to accounts and transactions apply to scrape plugins; sharing a runtime does not make those domain concepts mandatory for other plugin types.
 

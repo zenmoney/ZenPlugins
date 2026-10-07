@@ -14,13 +14,13 @@ Any unclassified failure MUST stop the whole synchronization, including failures
 
 ## `ZPAPIError` subclasses
 
-Use only existing subclasses for their documented UI semantics; never instantiate `ZPAPIError` directly or define plugin-specific subclasses. Credential/OTP rejection requires a stable bank code/state or an exact previously investigated response; incidental words or generic HTTP status codes do not establish it.
+Use only existing subclasses for their documented UI semantics; never instantiate `ZPAPIError` directly or define plugin-specific subclasses. Server-side credential/OTP rejection requires a stable bank code/state or an exact previously investigated response; incidental words or generic HTTP status codes do not establish it.
 
 | Class | Required meaning |
 | --- | --- |
 | `InvalidPreferencesError` | Malformed/unsupported settings the user must correct; redirects to preferences and suppresses log submission |
 | `InvalidLoginOrPasswordError` | Confirmed login/password/PIN rejection; generic 400/401 is insufficient |
-| `InvalidOtpCodeError` | Entered OTP is incorrect or expired; expiry requires requesting/entering a new code. Delivery failure, missing confirmation state, or text containing `OTP` is insufficient |
+| `InvalidOtpCodeError` | Required OTP was not provided, or entered OTP is incorrect or expired; expiry requires requesting/entering a new code. Delivery failure, missing confirmation state, or text containing `OTP` is insufficient |
 | `TemporaryError` | Stable, recognized condition with a precise reason it will clear itself or a concrete action the user can take; explain the action/retry timing where relevant |
 | `BankMessageError` | Verbatim human-facing bank instruction or confirmed global terminal message, under the rules below |
 | `UserInteractionError` | Background control signal, without a custom message; follow [runtime](runtime.md#background-execution-and-ui) and [authentication](authentication.md) for proactive guards |
@@ -53,6 +53,7 @@ For affected classifications, use [focused test scope](../project/testing.md#foc
 - Every temporary branch's self-resolution or user action.
 - Verbatim human-facing bank text versus technical/unsafe text; real fixtures for terminal scope, both one entity and nothing syncable.
 - Unknown per-entity and network/loading failures; every deliberately swallowed server condition versus an unexpected one that must propagate.
-- Unsupported flows, assertions, and required absent input as ordinary errors; optional input's supported continuation.
+- Unsupported flows and assertions as ordinary errors.
+- Required absent input with an error appropriate to the operation; optional input's supported continuation.
 
 Evidence rules and missing samples follow [testing](../project/testing.md#verification-for-code-changes). Authorization-specific coverage is in [authentication](authentication.md#verification); scrape completeness and skips are in the [scrape contract](scrape/contract.md).

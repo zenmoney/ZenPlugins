@@ -11,8 +11,8 @@ The [ZenMoney declarations](../../src/types/index.d.ts) define the global API; t
 | Facility | API / source | Usage |
 | --- | --- | --- |
 | Plugin state | `getData`, `setData`, `saveData`, `clearData` | Connection-scoped persistent plugin data |
-| User input | `readLine`, `alert` | Asynchronous UI; `readLine` may return `null`, including timeout |
-| Files and camera | `pickDocuments`, `takePicture` | User-selected input |
+| User input | [`ui.readLine`, `ui.alert`](../../src/common/ui.ts) | Asynchronous prompts and alerts |
+| Files and camera | [`ui.pickDocuments`, `ui.takePicture`](../../src/common/ui.ts) | User-selected input |
 | Cookies | [`cookieJar`, `saveCookies`, `restoreCookies`](../../src/common/network/index.ts) | Shared HTTP cookies and explicit persistence |
 | TLS | [Shared TLS options and `addTrustedCertificates`](../../src/common/network/tls.ts) | Required service-specific certificate configuration |
 | Environment | `device`, `application`, `locale` | Device/app metadata and plugin language |
@@ -20,7 +20,9 @@ The [ZenMoney declarations](../../src/types/index.d.ts) define the global API; t
 | Networking and WebView | [Shared helper index](utilities.md) | HTTP, TCP, WebSocket and WebView; [sanitization](../debugging/log-sanitization.md) applies |
 | Account selection | `isAccountSkipped(id)` | Facility used by the [scrape contract](scrape/contract.md#skipped-accounts) |
 
-`readLine` accepts text and optional `inputType`, image, and timeout in milliseconds. It returns `null` on timeout and does not provide a typed reason distinguishing cancellation from timeout. `takePicture` may also return `null`. Handle absent input according to the plugin's workflow: if the input is optional or a supported continuation exists, continue. If the plugin cannot continue without the input, fail validation with `console.assert(input !== null, 'Required input was not provided')` (or `assert`) and let the ordinary error propagate. Do not send absent input as an unchecked credential or return incomplete data as success. Do not invent a cancellation reason the host did not provide. Test both optional continuation and required-input termination where supported.
+Import `ui` from `src/common/ui` for prompts, alerts, file selection and camera capture.
+
+`ui.readLine` and `ui.takePicture` may return `null`. Handle this before using the result; if the input is required, stop with an [error appropriate to the operation](errors.md). For `readLine`, `null` does not distinguish cancellation from timeout.
 
 ## State and lifecycle
 
@@ -39,6 +41,10 @@ The [browser state implementation](../../src/ZPAPI.pluginData.js) tracks whether
 Receipt-specific completion and fast code preview follow the [receipt operation contract](receipt-fetchers/contract.md#loader-lifecycle).
 
 ## Background execution and UI
+
+`ui.visibilityState` reports whether the application UI is `visible` or `hidden`. The `visibilitychange` event fires only when that value changes; changes in application activity while it remains visible do not trigger listeners, including `once`. Subscriptions follow the shared [event semantics](#event-emitters).
+
+`ui.theme` returns the current application theme (`light` or `dark`). Accessing an unavailable UI capability throws `IncompatibleVersionError`.
 
 `isInBackground: true` means that the plugin is running without access to user interaction. For scrape and [receipt retrieval](receipt-fetchers/contract.md#operations), it is an entrypoint argument. Other types must define how they receive the same execution context. The restriction applies to every UI operation, including prompts, alerts, file selection, camera capture, and interactive WebViews, whether or not authentication is involved.
 
