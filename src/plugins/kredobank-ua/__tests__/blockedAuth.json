@@ -1,0 +1,11 @@
+{
+  "source": {
+    "log": 118478,
+    "build": 78
+  },
+  "status": 403,
+  "body": {
+    "errorMessageKey": "account_temporary_locked_by_sp",
+    "errorDescription": "User is blocked"
+  }
+}
