@@ -1,0 +1,1238 @@
+{
+  "source": {
+    "log": 155413,
+    "build": 167,
+    "endpoints": [
+      "/product/accountlite",
+      "/product/cardlite",
+      "/product/deposit",
+      "/product/v2/loan",
+      "/product/transactions"
+    ],
+    "redactions": [
+      "Public fixture: personal names, phone numbers, account/card identifiers and transaction references are consistently replaced; record structure, formats and relationships are preserved. Credentials remain redacted."
+    ]
+  },
+  "products": {
+    "accounts": [
+      {
+        "id": 80000000001,
+        "currency": "UAH",
+        "name": "ЗП De Luxe картковий",
+        "alias": "ЗП De Luxe картковий",
+        "iban": "UA263510058000000000000000001",
+        "productCode": "2620_198K",
+        "type": "CARD_ACCOUNT",
+        "balance": {
+          "sum": 3112.93,
+          "currency": "UAH"
+        },
+        "isDefault": true,
+        "openingDate": 1738015200000
+      },
+      {
+        "id": 80000000002,
+        "currency": "USD",
+        "name": "ЗП De Luxe картковий",
+        "alias": "ЗП De Luxe картковий",
+        "iban": "UA963510058000000000000000002",
+        "productCode": "2620_198V",
+        "type": "CARD_ACCOUNT",
+        "balance": {
+          "sum": 22800,
+          "currency": "USD"
+        },
+        "isDefault": false,
+        "openingDate": 1739743200000
+      }
+    ],
+    "cards": [
+      {
+        "id": 80000000005,
+        "currency": "UAH",
+        "name": "MC WORLD DEBIT WHITE",
+        "alias": "MC WORLD DEBIT WHITE",
+        "accountId": 80000000001,
+        "pan": "535432****8003",
+        "cardType": "MC WORLD DEBIT WHITE",
+        "status": "ACTIVE",
+        "svbo": "FG",
+        "paymentSystem": "MASTERCARD",
+        "holderName": "<string[12]>",
+        "expirationDate": 1832882400000,
+        "walletToken": null,
+        "menuResourceId": "b9c49e90-c49a-7338-29d7-95ada59b0d24",
+        "resourceId": "997d1a25-41a9-6a15-b08a-97d39ad595b8",
+        "canTokenize": true,
+        "virtual": false
+      },
+      {
+        "id": 80000000006,
+        "currency": "UAH",
+        "name": "MASTERCARD PLATINUM",
+        "alias": "MASTERCARD PLATINUM",
+        "accountId": 80000000001,
+        "pan": "535129****8004",
+        "cardType": "MASTERCARD PLATINUM",
+        "status": "ACTIVE",
+        "svbo": "F5",
+        "paymentSystem": "MASTERCARD",
+        "holderName": "<string[12]>",
+        "expirationDate": 1848603600000,
+        "walletToken": null,
+        "menuResourceId": "9ab9b6e4-23e2-095c-ffbc-5335598a8a7f",
+        "resourceId": "fb3faabe-7fe5-2e86-378b-3660cdf3c23f",
+        "canTokenize": true,
+        "virtual": false
+      },
+      {
+        "id": 80000000003,
+        "currency": "USD",
+        "name": "MC WORLD VIRTUAL",
+        "alias": "MC WORLD VIRTUAL",
+        "accountId": 80000000002,
+        "pan": "535432****8001",
+        "cardType": "MC WORLD VIRTUAL",
+        "status": "ACTIVE",
+        "svbo": "O3",
+        "paymentSystem": "MASTERCARD",
+        "holderName": "<string[12]>",
+        "expirationDate": 1835388000000,
+        "walletToken": null,
+        "menuResourceId": "c55492fe-7a09-4225-e3ab-888b41c1f821",
+        "resourceId": "997d1a25-41a9-6a15-b08a-97d39ad595b8",
+        "canTokenize": true,
+        "virtual": true
+      },
+      {
+        "id": 80000000004,
+        "currency": "USD",
+        "name": "MC PLATINUM VIRTUAL",
+        "alias": "MC PLATINUM VIRTUAL",
+        "accountId": 80000000002,
+        "pan": "535129****8002",
+        "cardType": "MC PLATINUM VIRTUAL",
+        "status": "ACTIVE",
+        "svbo": "OP",
+        "paymentSystem": "MASTERCARD",
+        "holderName": "<string[12]>",
+        "expirationDate": 1848603600000,
+        "walletToken": null,
+        "menuResourceId": "7e890500-5ccf-1851-b23f-74de409799ee",
+        "resourceId": "fb3faabe-7fe5-2e86-378b-3660cdf3c23f",
+        "canTokenize": true,
+        "virtual": true
+      }
+    ],
+    "deposits": [],
+    "loans": []
+  },
+  "transactions": [
+    {
+      "id": "80000000007",
+      "alias": "Комісія за переказ грошових коштів на картковий рахунок через MasterCard\\Visa UKRSIBOnline",
+      "name": "Комісія за переказ грошових коштів на картковий рахунок через MasterCard\\Visa UKRSIBOnline",
+      "documentNumber": "80000000007",
+      "phone": null,
+      "merchantName": null,
+      "mcc": null,
+      "fxRate": null,
+      "addressId": null,
+      "type": "EXPENSE",
+      "operationType": "ACCOUNT_PAYMENT",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "80000003",
+        "name": "Комісії банку",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1788767534000,
+      "operationAmount": {
+        "sum": 4,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1788767534000,
+      "postAmount": null,
+      "sender": {
+        "name": null,
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": null,
+        "bankMfo": null,
+        "bankName": null
+      },
+      "receiver": {
+        "name": null,
+        "account": null,
+        "accountNumber": "UA693510058000000000000000003",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "09807750",
+        "bankMfo": "351005",
+        "bankName": "АТ \"УКРСИББАНК\""
+      },
+      "parameters": null,
+      "external": true,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "6dbd3fb3-2bbd-5267-bba0-a9615ca124b1",
+        "iconMinifiedResourceId": "7f826e9a-6fd2-69f8-91a7-4365d9d3ba54",
+        "iconSmallResourceId": "13f72770-0f42-96a6-fc84-cbd77d770d5e"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": null,
+      "uetr": null
+    },
+    {
+      "id": "80000000008",
+      "alias": "Комісія за переказ грошових коштів на картковий рахунок через MasterCard\\Visa UKRSIBOnline",
+      "name": "Комісія за переказ грошових коштів на картковий рахунок через MasterCard\\Visa UKRSIBOnline",
+      "documentNumber": "80000000008",
+      "phone": null,
+      "merchantName": null,
+      "mcc": null,
+      "fxRate": null,
+      "addressId": null,
+      "type": "EXPENSE",
+      "operationType": "ACCOUNT_PAYMENT",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "80000003",
+        "name": "Комісії банку",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1789541756000,
+      "operationAmount": {
+        "sum": 7,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1789541756000,
+      "postAmount": null,
+      "sender": {
+        "name": null,
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": null,
+        "bankMfo": null,
+        "bankName": null
+      },
+      "receiver": {
+        "name": null,
+        "account": null,
+        "accountNumber": "UA693510058000000000000000003",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "09807750",
+        "bankMfo": "351005",
+        "bankName": "АТ \"УКРСИББАНК\""
+      },
+      "parameters": null,
+      "external": true,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "6dbd3fb3-2bbd-5267-bba0-a9615ca124b1",
+        "iconMinifiedResourceId": "7f826e9a-6fd2-69f8-91a7-4365d9d3ba54",
+        "iconSmallResourceId": "13f72770-0f42-96a6-fc84-cbd77d770d5e"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": null,
+      "uetr": null
+    },
+    {
+      "id": "80000000009",
+      "alias": "Зарахування коштів на карт.рах. за операцією переказ коштів в терміналі MONO011 за картою 535432******8003, код авторизації 800001, від 15.09.2026",
+      "name": "Зарахування коштів на карт.рах. за операцією переказ коштів в терміналі MONO011 за картою 535432******8003, код авторизації 800001, від 15.09.2026",
+      "documentNumber": "80000000009",
+      "phone": null,
+      "merchantName": "MONO011\\UA\\KYIV\\Head Off\\MONODirect",
+      "mcc": "6536",
+      "fxRate": null,
+      "addressId": null,
+      "type": "INCOME",
+      "operationType": "CARD_PAYMENT",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "800000002",
+        "name": "Перекази на картку",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1789454942000,
+      "operationAmount": {
+        "sum": 400,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1789454942000,
+      "postAmount": null,
+      "sender": {
+        "name": null,
+        "account": null,
+        "accountNumber": null,
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": null,
+        "bankMfo": "351005",
+        "bankName": null
+      },
+      "receiver": {
+        "name": null,
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "UA263510058000000000000000001"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": {
+          "id": "80000000005",
+          "number": "535432******8003",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "svbo": "STUB!!!",
+          "paymentSystem": "MASTERCARD",
+          "name": "MC WORLD DEBIT WHITE",
+          "savedCard": false
+        },
+        "cardNumber": "535432******8003",
+        "foreignCard": null,
+        "inn": null,
+        "bankMfo": null,
+        "bankName": null
+      },
+      "parameters": [
+        {
+          "label": "AUTH_CODE",
+          "value": "800001"
+        }
+      ],
+      "external": true,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "fe59e933-3dce-0e81-898e-b1fe3f5495e0",
+        "iconMinifiedResourceId": "7810be24-13c5-1ae7-5fc4-8e4d39535f71",
+        "iconSmallResourceId": "f058a042-96cd-2d3a-0dcf-3901e852ed2a"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": "80000000010",
+      "uetr": null
+    },
+    {
+      "id": "80000000011",
+      "alias": "Заробітна плата та аванси від ТОВ \"ПРИКЛАД-СЕРВІС УКРАЇНА\"",
+      "name": "Заробітна плата та аванси від ТОВ \"ПРИКЛАД-СЕРВІС УКРАЇНА\"",
+      "documentNumber": "80000000011",
+      "phone": null,
+      "merchantName": null,
+      "mcc": null,
+      "fxRate": null,
+      "addressId": null,
+      "type": "INCOME",
+      "operationType": "ACCOUNT_PAYMENT",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "80000004",
+        "name": "Зарплата та соціальні надходження",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1790676023000,
+      "operationAmount": {
+        "sum": 38990.61,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1790676023000,
+      "postAmount": null,
+      "sender": {
+        "name": null,
+        "account": null,
+        "accountNumber": "UA423510058000000000000000004",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "09807750",
+        "bankMfo": "351005",
+        "bankName": "АТ \"УКРСИББАНК\""
+      },
+      "receiver": {
+        "name": null,
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": null,
+        "bankMfo": null,
+        "bankName": null
+      },
+      "parameters": null,
+      "external": true,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "1960aa20-aaa0-0c48-b077-c32c4d5a26e5",
+        "iconMinifiedResourceId": "937862aa-aa68-181d-abc9-8c379c9fa6b6",
+        "iconSmallResourceId": "11863beb-2e06-4508-a901-7449413a07a1"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": null,
+      "uetr": null
+    },
+    {
+      "id": "520431051E6546D0024DAE39FF357FCB",
+      "alias": "Дистанційне розпорядження на купівлю іноземної валюти USD за курсом 44.83, сума операції 430 USD",
+      "name": "Дистанційне розпорядження на купівлю іноземної валюти USD за курсом 44.83, сума операції 430 USD",
+      "documentNumber": "800000001",
+      "phone": null,
+      "merchantName": null,
+      "mcc": null,
+      "fxRate": 44.83,
+      "addressId": null,
+      "type": "EXPENSE",
+      "operationType": "FX",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "80000001",
+        "name": "Переказ між власними рахунками",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1789455075199,
+      "operationAmount": {
+        "sum": 19276.9,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1789455075199,
+      "postAmount": {
+        "sum": 430,
+        "currency": "USD"
+      },
+      "sender": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "8000000001",
+        "bankMfo": "351005",
+        "bankName": "АТ «УКРСИББАНК»"
+      },
+      "receiver": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000002",
+          "number": "UA963510058000000000000000002",
+          "amount": {
+            "sum": 19276.9,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA963510058000000000000000002",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "09807750",
+        "bankMfo": "351005",
+        "bankName": "АТ \"УКРСИББАНК\""
+      },
+      "parameters": null,
+      "external": false,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "c01c0aa6-dac5-6a19-2753-925f087a2ca1",
+        "iconMinifiedResourceId": "f6e51eeb-7f3a-0723-b611-cd6622fbe32c",
+        "iconSmallResourceId": "9b7043f9-9a5a-5809-4a64-9be3feca8e44"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": null,
+      "uetr": null
+    },
+    {
+      "id": "80000000012",
+      "alias": "Заробітна плата та аванси від ТОВ \"ПРИКЛАД-СЕРВІС УКРАЇНА\"",
+      "name": "Заробітна плата та аванси від ТОВ \"ПРИКЛАД-СЕРВІС УКРАЇНА\"",
+      "documentNumber": "80000000012",
+      "phone": null,
+      "merchantName": null,
+      "mcc": null,
+      "fxRate": null,
+      "addressId": null,
+      "type": "INCOME",
+      "operationType": "ACCOUNT_PAYMENT",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "80000004",
+        "name": "Зарплата та соціальні надходження",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1789368310000,
+      "operationAmount": {
+        "sum": 19778.97,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1789368310000,
+      "postAmount": null,
+      "sender": {
+        "name": null,
+        "account": null,
+        "accountNumber": "UA423510058000000000000000004",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "09807750",
+        "bankMfo": "351005",
+        "bankName": "АТ \"УКРСИББАНК\""
+      },
+      "receiver": {
+        "name": null,
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": null,
+        "bankMfo": null,
+        "bankName": null
+      },
+      "parameters": null,
+      "external": true,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "1960aa20-aaa0-0c48-b077-c32c4d5a26e5",
+        "iconMinifiedResourceId": "937862aa-aa68-181d-abc9-8c379c9fa6b6",
+        "iconSmallResourceId": "11863beb-2e06-4508-a901-7449413a07a1"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": null,
+      "uetr": null
+    },
+    {
+      "id": "80000000013",
+      "alias": "Дистанційне розпорядження на купівлю іноземної валюти USD за курсом 44.83, сума операції 430 USD",
+      "name": "Дистанційне розпорядження на купівлю іноземної валюти USD за курсом 44.83, сума операції 430 USD",
+      "documentNumber": "800000001",
+      "phone": null,
+      "merchantName": null,
+      "mcc": null,
+      "fxRate": 44.83,
+      "addressId": null,
+      "type": "INCOME",
+      "operationType": "FX",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "80000002",
+        "name": "Перерахування між своїми рахунками",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1789455075199,
+      "operationAmount": {
+        "sum": 430,
+        "currency": "USD"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1789455075199,
+      "postAmount": {
+        "sum": 19276.9,
+        "currency": "UAH"
+      },
+      "sender": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 430,
+            "currency": "USD"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "09807750",
+        "bankMfo": "351005",
+        "bankName": "АТ \"УКРСИББАНК\""
+      },
+      "receiver": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000002",
+          "number": "UA963510058000000000000000002",
+          "amount": {
+            "sum": 0,
+            "currency": "USD"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA963510058000000000000000002",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "8000000001",
+        "bankMfo": "351005",
+        "bankName": "АТ «УКРСИББАНК»"
+      },
+      "parameters": null,
+      "external": false,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "c01c0aa6-dac5-6a19-2753-925f087a2ca1",
+        "iconMinifiedResourceId": "f6e51eeb-7f3a-0723-b611-cd6622fbe32c",
+        "iconSmallResourceId": "9b7043f9-9a5a-5809-4a64-9be3feca8e44"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": null,
+      "uetr": null
+    },
+    {
+      "id": "97266CA76AAB0A6EEE960BB4CE9DD331",
+      "alias": "Дистанційне розпорядження на купівлю іноземної валюти USD за курсом 45.14, сума операції 800 USD",
+      "name": "Дистанційне розпорядження на купівлю іноземної валюти USD за курсом 45.14, сума операції 800 USD",
+      "documentNumber": "800000003",
+      "phone": null,
+      "merchantName": null,
+      "mcc": null,
+      "fxRate": 45.14,
+      "addressId": null,
+      "type": "EXPENSE",
+      "operationType": "FX",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "80000001",
+        "name": "Переказ між власними рахунками",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1790708564315,
+      "operationAmount": {
+        "sum": 36112,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1790708564315,
+      "postAmount": {
+        "sum": 800,
+        "currency": "USD"
+      },
+      "sender": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "8000000001",
+        "bankMfo": "351005",
+        "bankName": "АТ «УКРСИББАНК»"
+      },
+      "receiver": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000002",
+          "number": "UA963510058000000000000000002",
+          "amount": {
+            "sum": 36112,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA963510058000000000000000002",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "09807750",
+        "bankMfo": "351005",
+        "bankName": "АТ \"УКРСИББАНК\""
+      },
+      "parameters": null,
+      "external": false,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "c01c0aa6-dac5-6a19-2753-925f087a2ca1",
+        "iconMinifiedResourceId": "f6e51eeb-7f3a-0723-b611-cd6622fbe32c",
+        "iconSmallResourceId": "9b7043f9-9a5a-5809-4a64-9be3feca8e44"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": null,
+      "uetr": null
+    },
+    {
+      "id": "80000000014",
+      "alias": "Погашення несанкціонованої заборгованості непогашеної у строк відповідно до Договору №80000000000001 від 17.02.2025",
+      "name": "Погашення несанкціонованої заборгованості непогашеної у строк відповідно до Договору №80000000000001 від 17.02.2025",
+      "documentNumber": "80000000014",
+      "phone": null,
+      "merchantName": null,
+      "mcc": null,
+      "fxRate": null,
+      "addressId": null,
+      "type": "EXPENSE",
+      "operationType": "ACCOUNT_PAYMENT",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "80000005",
+        "name": "Інші витрати",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1789939904000,
+      "operationAmount": {
+        "sum": 165.68,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1789939904000,
+      "postAmount": null,
+      "sender": {
+        "name": null,
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": null,
+        "bankMfo": null,
+        "bankName": null
+      },
+      "receiver": {
+        "name": null,
+        "account": null,
+        "accountNumber": "UA153510058000000000000000005",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "09807750",
+        "bankMfo": "351005",
+        "bankName": "АТ \"УКРСИББАНК\""
+      },
+      "parameters": null,
+      "external": true,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "9f7a93ee-6d9e-4016-2021-48d92a3bf7cb",
+        "iconMinifiedResourceId": "5faf5969-310f-5f6b-a63a-81b625b8283e",
+        "iconSmallResourceId": "419355b5-08b6-042c-cd9e-d8f515f230cc"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": null,
+      "uetr": null
+    },
+    {
+      "id": "80000000015",
+      "alias": "Дистанційне розпорядження на купівлю іноземної валюти USD за курсом 45.14, сума операції 800 USD",
+      "name": "Дистанційне розпорядження на купівлю іноземної валюти USD за курсом 45.14, сума операції 800 USD",
+      "documentNumber": "800000003",
+      "phone": null,
+      "merchantName": null,
+      "mcc": null,
+      "fxRate": 45.14,
+      "addressId": null,
+      "type": "INCOME",
+      "operationType": "FX",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "80000002",
+        "name": "Перерахування між своїми рахунками",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1790708564315,
+      "operationAmount": {
+        "sum": 800,
+        "currency": "USD"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1790708564315,
+      "postAmount": {
+        "sum": 36112,
+        "currency": "UAH"
+      },
+      "sender": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 800,
+            "currency": "USD"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "09807750",
+        "bankMfo": "351005",
+        "bankName": "АТ \"УКРСИББАНК\""
+      },
+      "receiver": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000002",
+          "number": "UA963510058000000000000000002",
+          "amount": {
+            "sum": 0,
+            "currency": "USD"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA963510058000000000000000002",
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": null,
+        "inn": "8000000001",
+        "bankMfo": "351005",
+        "bankName": "АТ «УКРСИББАНК»"
+      },
+      "parameters": null,
+      "external": false,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": false,
+      "canSplit": true,
+      "canSaveTemplate": false,
+      "canSaveStandingOrder": false,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "c01c0aa6-dac5-6a19-2753-925f087a2ca1",
+        "iconMinifiedResourceId": "f6e51eeb-7f3a-0723-b611-cd6622fbe32c",
+        "iconSmallResourceId": "9b7043f9-9a5a-5809-4a64-9be3feca8e44"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": null,
+      "uetr": null
+    },
+    {
+      "id": "120383842C132E469646900A468472DA",
+      "alias": "Переказ на карту 444111****8005",
+      "name": "Переказ на карту 444111****8005",
+      "documentNumber": "800000004",
+      "phone": null,
+      "merchantName": null,
+      "mcc": "6538",
+      "fxRate": null,
+      "addressId": null,
+      "type": "EXPENSE",
+      "operationType": "CARD_TRANSFER",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "800000005",
+        "name": "Перекази між картками",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1789454817404,
+      "operationAmount": {
+        "sum": 700,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1789454817404,
+      "postAmount": null,
+      "sender": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": {
+          "id": "80000000006",
+          "number": "535129******8004",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "svbo": "STUB!!!",
+          "paymentSystem": "MASTERCARD",
+          "name": "MASTERCARD PLATINUM",
+          "savedCard": false
+        },
+        "cardNumber": "535129******8004",
+        "foreignCard": null,
+        "inn": "8000000001",
+        "bankMfo": "351005",
+        "bankName": "АТ «УКРСИББАНК»"
+      },
+      "receiver": {
+        "name": null,
+        "account": null,
+        "accountNumber": null,
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": {
+          "expiration": null,
+          "id": "80000000000000001",
+          "name": "Олексій Приклад",
+          "number": "44411110****8005",
+          "paymentSystem": "VISA",
+          "savedCard": false
+        },
+        "inn": null,
+        "bankMfo": null,
+        "bankName": null
+      },
+      "parameters": [
+        {
+          "label": "AUTH_CODE",
+          "value": "800002"
+        }
+      ],
+      "external": true,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": true,
+      "canSplit": true,
+      "canSaveTemplate": true,
+      "canSaveStandingOrder": true,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "7422eddc-230d-780a-9602-2fea3d870790",
+        "iconMinifiedResourceId": "f35e01df-9e69-6c35-da8c-a4824821d6de",
+        "iconSmallResourceId": "f1f3c70d-2118-60ce-964f-d1b813821430"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": "80000000016",
+      "uetr": null
+    },
+    {
+      "id": "5D9FDA9AFC7A6BC6B858EA643FD31EBD",
+      "alias": "Переказ на карту 444111******8006",
+      "name": "Переказ на карту 444111******8006",
+      "documentNumber": "800000006",
+      "phone": null,
+      "merchantName": null,
+      "mcc": "6538",
+      "fxRate": null,
+      "addressId": null,
+      "type": "EXPENSE",
+      "operationType": "CARD_TRANSFER",
+      "status": "COMPLETED",
+      "statusDetails": null,
+      "category": {
+        "categoryId": null,
+        "id": "800000005",
+        "name": "Перекази між картками",
+        "parentCategoryId": null,
+        "status": "ACTIVE",
+        "type": null
+      },
+      "operationDate": 1788706746644,
+      "operationAmount": {
+        "sum": 400,
+        "currency": "UAH"
+      },
+      "blockDate": null,
+      "blockAmount": null,
+      "postDate": 1788706746644,
+      "postAmount": null,
+      "sender": {
+        "name": "Приклад Олег Петрович",
+        "account": {
+          "id": "80000000001",
+          "number": "UA263510058000000000000000001",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "type": "CARD_ACCOUNT",
+          "name": "ЗП De Luxe картковий"
+        },
+        "accountNumber": "UA263510058000000000000000001",
+        "card": {
+          "id": "80000000006",
+          "number": "535129******8004",
+          "amount": {
+            "sum": 0,
+            "currency": "UAH"
+          },
+          "svbo": "STUB!!!",
+          "paymentSystem": "MASTERCARD",
+          "name": "MASTERCARD PLATINUM",
+          "savedCard": false
+        },
+        "cardNumber": "535129******8004",
+        "foreignCard": null,
+        "inn": "8000000001",
+        "bankMfo": "351005",
+        "bankName": "АТ «УКРСИББАНК»"
+      },
+      "receiver": {
+        "name": null,
+        "account": null,
+        "accountNumber": null,
+        "card": null,
+        "cardNumber": null,
+        "foreignCard": {
+          "expiration": null,
+          "id": "80000000000000002",
+          "name": "моно черная",
+          "number": "444111****8006",
+          "paymentSystem": "VISA",
+          "savedCard": false
+        },
+        "inn": null,
+        "bankMfo": null,
+        "bankName": null
+      },
+      "parameters": [
+        {
+          "label": "AUTH_CODE",
+          "value": "800003"
+        }
+      ],
+      "external": true,
+      "manual": false,
+      "splitted": false,
+      "canPrint": true,
+      "canRepeat": true,
+      "canSplit": true,
+      "canSaveTemplate": true,
+      "canSaveStandingOrder": true,
+      "canSaveSubscription": false,
+      "canApplyForSimilarTransactions": false,
+      "transactionCategoryImage": {
+        "iconLargeResourceId": "7422eddc-230d-780a-9602-2fea3d870790",
+        "iconMinifiedResourceId": "f35e01df-9e69-6c35-da8c-a4824821d6de",
+        "iconSmallResourceId": "f1f3c70d-2118-60ce-964f-d1b813821430"
+      },
+      "canEReceipt": false,
+      "clientDescription": null,
+      "externalOperationId": "80000000017",
+      "uetr": null
+    }
+  ]
+}

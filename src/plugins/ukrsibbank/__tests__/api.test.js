@@ -1,5 +1,7 @@
+import suspendedLogin from './suspendedLogin.json'
 import SHA256 from 'crypto-js/sha256'
 import {
+  BankMessageError,
   InvalidLoginOrPasswordError,
   InvalidOtpCodeError,
   TemporaryError,
@@ -193,6 +195,27 @@ describe('UKRSIB online 2.0 authorization', () => {
 
     expect(error).toBeInstanceOf(InvalidLoginOrPasswordError)
     expect(error.message).toBe('Неправильний номер телефону або пароль')
+  })
+
+  it('passes through the exact bank instruction for restoring suspended access', async () => {
+    mockFetchJson
+      .mockResolvedValueOnce(response(undefined, 200, { authorization: 'verify-authorization' }))
+      .mockResolvedValueOnce(response(suspendedLogin, 406))
+    const error = await captureError(api.login(credentials, false, {}))
+    expect(error).toBeInstanceOf(BankMessageError)
+    expect(error.bankMessage).toBe(suspendedLogin.description)
+  })
+
+  it.each([
+    { ...suspendedLogin, errorCode: '2508' },
+    { ...suspendedLogin, description: 'Client is suspended; diagnostic trace only' }
+  ])('keeps nearby suspended-login responses reportable: %j', async body => {
+    mockFetchJson
+      .mockResolvedValueOnce(response(undefined, 200, { authorization: 'verify-authorization' }))
+      .mockResolvedValueOnce(response(body, 406))
+    const error = await captureError(api.login(credentials, false, {}))
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
   })
 
   it('keeps a nearby login error reportable even when its text mentions wrong credentials', async () => {

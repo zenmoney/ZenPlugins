@@ -55,6 +55,34 @@ describe('UKRSIB scrape orchestration', () => {
     jest.clearAllMocks()
   })
 
+  // [model] Selection is tested on domain plans/movements, independently of bank response formats.
+  it('[model] keeps a confirmed transfer when its first side is skipped but its other side is active', async () => {
+    const accounts = [{ id: 'outcome', instrument: 'UAH' }, { id: 'income', instrument: 'USD' }]
+    mockConvertAccounts.mockReturnValue(accounts.map(account => ({ account })))
+    ZenMoney.isAccountSkipped.mockImplementation(id => id === 'outcome')
+    const transaction = {
+      date: new Date('2026-08-01T00:00:00Z'),
+      hold: false,
+      movements: [
+        { id: 'out', account: { id: 'outcome' }, sum: -410, fee: 0, invoice: null },
+        { id: 'in', account: { id: 'income' }, sum: 10, fee: 0, invoice: null }
+      ],
+      merchant: null,
+      comment: null
+    }
+    mockConvertTransaction.mockReturnValue(transaction)
+    await expect(scrape({ preferences: {}, fromDate: new Date(0), toDate: new Date(1), isInBackground: false })).resolves.toEqual({ accounts, transactions: [transaction] })
+    expect(mockFetchTransactions).toHaveBeenCalledTimes(1)
+  })
+
+  it('[model] skips the shared history when every account is skipped', async () => {
+    ZenMoney.isAccountSkipped.mockReturnValue(true)
+    await expect(scrape({ preferences: {}, fromDate: new Date(0), toDate: new Date(1), isInBackground: false })).resolves.toEqual({
+      accounts: [{ id: 'account-1', instrument: 'UAH' }], transactions: []
+    })
+    expect(mockFetchTransactions).not.toHaveBeenCalled()
+  })
+
   it('uses Ukrainian UI, persists hot-auth state and fetches the global history once', async () => {
     const result = await scrape({
       preferences: { login: '+380991112233', password: 'password' },
@@ -67,7 +95,7 @@ describe('UKRSIB scrape orchestration', () => {
     expect(mockLogin).toHaveBeenCalledWith(expect.any(Object), false, {
       auth: { old: true },
       device: { old: true }
-    })
+    }, expect.any(Function))
     expect(mockFetchTransactions).toHaveBeenCalledTimes(1)
     expect(ZenMoney.setData).toHaveBeenCalledWith('auth', expect.objectContaining({ authorization: 'authorization' }))
     expect(mockAdjustTransactions).toHaveBeenCalledWith(expect.objectContaining({

@@ -371,11 +371,23 @@ function getToolId (side, name) {
 
 function createPlansLookup (plans) {
   const lookup = new Map()
+  const accountsByIban = new Map()
   for (const plan of plans) {
+    for (const value of plan.account.syncIds) {
+      const iban = normalizeIdentifier(value)
+      if (/^UA\d{27}$/.test(iban)) {
+        const previous = accountsByIban.get(iban)
+        accountsByIban.set(iban, previous === undefined || previous?.id === plan.account.id ? plan.account : null)
+      }
+    }
     for (const productId of plan.fetchParams.productIds) lookup.set(`product:${productId}`, plan.account)
     for (const cardId of plan.fetchParams.cardIds) lookup.set(`card:${cardId}`, plan.account)
   }
   return side => {
+    // Observed FX responses may repeat the local technical ID while retaining the correct counterpart IBAN.
+    const iban = normalizeIdentifier(side?.accountNumber || getToolObject(side, 'account')?.number)
+    const accountByIban = accountsByIban.get(iban)
+    if (accountByIban) return accountByIban
     const accountId = getToolId(side, 'account') || normalizeText(side?.accountId)
     const cardId = getToolId(side, 'card') || normalizeText(side?.cardId)
     return (accountId && lookup.get(`product:${accountId}`)) ||
@@ -410,7 +422,18 @@ function getAccountAmount (apiTransaction) {
   return preferred || apiTransaction.operationAmount
 }
 
-function createMovement (apiTransaction, account, sign, id = apiTransaction.id, amount = getAccountAmount(apiTransaction)) {
+function getFxAmount (apiTransaction, account) {
+  const amounts = enumValue(apiTransaction.status) === 'PROCESSING'
+    ? [apiTransaction.blockAmount, apiTransaction.postAmount, apiTransaction.operationAmount]
+    : [apiTransaction.postAmount, apiTransaction.operationAmount, apiTransaction.blockAmount]
+  const amount = amounts.find(amount => getAmountCurrency(amount) === account.instrument)
+  console.assert(amount, 'UKRSIB currency exchange amount is missing for account currency', {
+    transactionId: String(apiTransaction.id), accountId: account.id, accountInstrument: account.instrument
+  })
+  return amount
+}
+
+function createMovement (apiTransaction, account, sign, id = apiTransaction.id, amount = enumValue(apiTransaction.operationType) === 'FX' ? getFxAmount(apiTransaction, account) : getAccountAmount(apiTransaction)) {
   const accountAmount = getAmountValue(amount, 'transaction.accountAmount')
   const accountAmountCurrency = getAmountCurrency(amount) || account.instrument
   const operationAmount = getAmountValue(apiTransaction.operationAmount, 'transaction.operationAmount')
@@ -444,7 +467,9 @@ function getSideAmount (side) {
 }
 
 function createCounterpartyMovement (apiTransaction, account, sign) {
-  let amount = getSideAmount(sign > 0 ? apiTransaction.receiver : apiTransaction.sender)
+  let amount = enumValue(apiTransaction.operationType) === 'FX'
+    ? getFxAmount(apiTransaction, account)
+    : getSideAmount(sign > 0 ? apiTransaction.receiver : apiTransaction.sender)
   const operationCurrency = getAmountCurrency(apiTransaction.operationAmount)
   if (!amount && operationCurrency === account.instrument) amount = apiTransaction.operationAmount
   console.assert(amount, 'UKRSIB internal transfer counterparty amount is missing', {
@@ -551,7 +576,7 @@ function createTransferGroupKeys (apiTransaction) {
   const amount = getAmountValue(apiTransaction.operationAmount, 'transaction.operationAmount')
   const currency = getAmountCurrency(apiTransaction.operationAmount)
   return [
-    reference ? `ukrsib:reference:${reference}` : null,
+    reference ? `ukrsib:${enumValue(apiTransaction.operationType) === 'FX' ? 'fx:' : ''}reference:${reference}` : null,
     `ukrsib:fallback:${date.toISOString().slice(0, 10)}:${currency}:${Math.abs(amount)}`
   ]
 }
@@ -600,6 +625,24 @@ export function convertTransaction (apiTransaction, plans) {
     movements,
     merchant,
     comment: createComment(apiTransaction, merchant, isInternalTransfer),
-    ...isInternalTransfer && !counterpartyAccount && { groupKeys: createTransferGroupKeys(apiTransaction) }
+    ...isInternalTransfer && (!counterpartyAccount || operationType === 'FX') && { groupKeys: createTransferGroupKeys(apiTransaction) }
   }
+}
+
+export function mergeCurrencyExchanges (transactions) {
+  if (transactions.length !== 2 || transactions.some(transaction =>
+    transaction.movements.length !== 2 || transaction.movements.some(movement => !movement.account.id))) return null
+
+  const [first, second] = transactions
+  const reference = first.groupKeys?.[0]
+  if (!reference?.startsWith('ukrsib:fx:reference:') || reference !== second.groupKeys?.[0] || first.hold !== second.hold ||
+    first.date.getTime() !== second.date.getTime() ||
+    first.movements[0].account.id === second.movements[0].account.id ||
+    Math.sign(first.movements[0].sum) === Math.sign(second.movements[0].sum)) return null
+
+  if (!first.movements.every(movement => second.movements.some(other =>
+    movement.account.id === other.account.id && movement.sum === other.sum && movement.fee === other.fee))) return null
+
+  const [outcome, income] = first.movements[0].sum < 0 ? [first, second] : [second, first]
+  return [{ ...outcome, movements: [outcome.movements[0], income.movements[0]] }]
 }
