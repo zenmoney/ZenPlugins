@@ -108,7 +108,8 @@ describe('PUMB scrape', () => {
     expect(mockLogin).toHaveBeenCalledWith(
       { login: '380501234567', password: '1234' },
       false,
-      { auth: legacyAuth, legacyDevice }
+      { auth: legacyAuth, legacyDevice },
+      expect.any(Function)
     )
     expect(storage.auth).toBe(session.authState)
     expect(mockConvertAccounts).toHaveBeenCalledWith(rawProducts)

@@ -62,8 +62,8 @@ export function validatePreferences ({ login, password }) {
     throw new InvalidPreferencesError('Введіть коректний номер телефону у форматі 380XXXXXXXXX')
   }
   const pin = typeof password === 'string' ? password.trim() : ''
-  if (!/^\d{4}$/.test(pin)) {
-    throw new InvalidPreferencesError('PIN-код застосунку ПУМБ має складатися з 4 цифр')
+  if (!/^\d{4,5}$/.test(pin)) {
+    throw new InvalidPreferencesError('PIN-код застосунку ПУМБ має складатися з 4 або 5 цифр')
   }
   return { login: phone, password: pin }
 }
@@ -75,7 +75,7 @@ function getLoginHash (login) {
 export function generateDevice (login) {
   return {
     deviceId: '',
-    hardwareID: getLoginHash(login).slice(0, 16)
+    hardwareID: getLoginHash(login || '').slice(0, 16)
   }
 }
 
@@ -89,7 +89,8 @@ function makeColdAuthState (persistedState, login) {
   const storedDevice = asRecord(storedAuth?.device) || asRecord(persistedState?.legacyDevice)
   return {
     schemaVersion: AUTH_SCHEMA_VERSION,
-    loginHash: getLoginHash(login),
+    login,
+    loginHash: getLoginHash(login || ''),
     device: {
       deviceId: '',
       hardwareID: normalizeHardwareId(storedDevice, login)
@@ -101,12 +102,14 @@ function makeColdAuthState (persistedState, login) {
 export function normalizeAuthState (persistedState, login) {
   const source = asRecord(persistedState?.auth)
   const device = asRecord(source?.device)
-  const loginHash = getLoginHash(login)
-  if (source?.schemaVersion !== AUTH_SCHEMA_VERSION || source.loginHash !== loginHash || device == null) {
+  const savedLogin = getPhoneNumber(source?.login) || (source?.loginHash === getLoginHash(login || '') ? login : null)
+  const loginHash = getLoginHash(savedLogin || login || '')
+  if (source?.schemaVersion !== AUTH_SCHEMA_VERSION || !savedLogin || device == null) {
     return makeColdAuthState(persistedState, login)
   }
   return {
     schemaVersion: AUTH_SCHEMA_VERSION,
+    login: savedLogin,
     loginHash,
     device: {
       deviceId: typeof device.deviceId === 'string' ? device.deviceId : '',
@@ -174,13 +177,8 @@ async function completeAuthentication (login, device, initialResult, isInBackgro
       inputType: 'number',
       time: 120000
     })
-    if (otp == null) {
-      throw new UserInteractionError()
-    }
+    console.assert(typeof otp === 'string' && otp.trim(), 'Required OTP input was not provided')
     const normalizedOtp = otp.trim()
-    if (!normalizedOtp) {
-      throw new InvalidOtpCodeError('Введіть код підтвердження')
-    }
     const result = await fetchAuthenticationOtp(login, normalizedOtp, additionalCheck.correlationId, device)
     return validateAuthenticationResult(result)
   }
@@ -194,6 +192,7 @@ async function completeAuthentication (login, device, initialResult, isInBackgro
 function makeAuthState (previousAuth, result) {
   return {
     schemaVersion: AUTH_SCHEMA_VERSION,
+    login: previousAuth.login,
     loginHash: previousAuth.loginHash,
     device: { ...previousAuth.device },
     authKey: typeof result.authKey === 'string' && result.authKey ? result.authKey : previousAuth.authKey
@@ -221,7 +220,7 @@ async function closeConnectionSafely (connection, context) {
   }
 }
 
-export async function coldAuth (preferences, authSeed, isInBackground) {
+export async function coldAuth (preferences, authSeed, isInBackground, onAuth = async () => {}) {
   const auth = {
     ...authSeed,
     device: {
@@ -252,6 +251,7 @@ export async function coldAuth (preferences, authSeed, isInBackground) {
       resultType: result.__typename || null,
       userType: result.userType || null
     })
+    await onAuth(authState)
     await closeConnectionSafely(connection, 'after cold authentication')
     connection = null
     const authenticatedConnection = await openAuthenticatedConnection(result.token, auth.device.deviceId)
@@ -262,11 +262,12 @@ export async function coldAuth (preferences, authSeed, isInBackground) {
   }
 }
 
-export async function hotAuth (preferences, auth, isInBackground) {
+export async function hotAuth (preferences, auth, isInBackground, onAuth = async () => {}) {
   try {
     const initialResult = await fetchAuthenticationByBiometry(preferences.login, auth.authKey, auth.device)
     const result = await completeAuthentication(preferences.login, auth.device, initialResult, isInBackground)
     const authState = makeAuthState(auth, result)
+    await onAuth(authState)
     const connection = await openAuthenticatedConnection(result.token, auth.device.deviceId)
     return makeSession(authState, result, connection)
   } catch (error) {
@@ -274,12 +275,11 @@ export async function hotAuth (preferences, auth, isInBackground) {
   }
 }
 
-export async function login (rawPreferences, isInBackground, persistedState = {}) {
-  const preferences = validatePreferences(rawPreferences)
-  const auth = normalizeAuthState(persistedState, preferences.login)
+export async function login (rawPreferences, isInBackground, persistedState = {}, onAuth = async () => {}) {
+  const auth = normalizeAuthState(persistedState, getPhoneNumber(rawPreferences.login))
   if (auth.authKey && auth.device.deviceId) {
     try {
-      return await hotAuth(preferences, auth, isInBackground)
+      return await hotAuth({ login: auth.login }, auth, isInBackground, onAuth)
     } catch (error) {
       if (!(error instanceof SessionExpiredError)) {
         throw error
@@ -290,7 +290,8 @@ export async function login (rawPreferences, isInBackground, persistedState = {}
       })
     }
   }
-  return coldAuth(preferences, auth, isInBackground)
+  const preferences = validatePreferences(rawPreferences)
+  return coldAuth(preferences, makeColdAuthState(persistedState, preferences.login), isInBackground, onAuth)
 }
 
 export async function logout (session) {
