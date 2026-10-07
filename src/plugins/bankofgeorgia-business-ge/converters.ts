@@ -83,6 +83,11 @@ export function convertToZenMoneyTransaction (record: AccountRecord, allRecords:
       break
 
     case 'CCO':
+      if (mcc != null) {
+        // card payment in a foreign currency, charged to the account with conversion
+        transaction.movements[0].invoice = { sum: -record.DocumentSourceAmount, instrument: record.DocumentSourceCurrency }
+        break
+      }
       // currency exchange between accounts
       transaction.movements.push(
         {
