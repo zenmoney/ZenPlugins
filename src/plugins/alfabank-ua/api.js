@@ -1,10 +1,10 @@
 import { flatten, uniqBy } from 'lodash'
 import qs from 'querystring'
 import { dateInTimezone, toISODateString } from '../../common/dateUtils'
-import { fetch, ParseError } from '../../common/network'
+import { fetch } from '../../common/network'
 import { retry, RetryError } from '../../common/retry'
 import { generateRandomString } from '../../common/utils'
-import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
+import { InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryError, UserInteractionError } from '../../errors'
 
 const BASE_URL = 'https://superapp.sensebank.com.ua/mob'
 const COMMON_HEADERS = {
@@ -35,10 +35,17 @@ function parseResponseBody (body) {
   }
 }
 
+function maskCardNumberForLog (value) {
+  return typeof value === 'string' && /^\d{12,19}$/.test(value)
+    ? `${value.slice(0, 6)}${'*'.repeat(value.length - 10)}${value.slice(-4)}`
+    : value
+}
+
 async function fetchApi (url, options, auth) {
   const sanitizeRequestLog = {
     ...url === '/auth' && {
       body: {
+        client_secret: true,
         deviceToken: true,
         fingerPrint: true,
         access_token: true,
@@ -51,20 +58,28 @@ async function fetchApi (url, options, auth) {
         passport_issue_date: true
       }
     },
-    headers: { Authorization: true },
-    ...options?.sanitizeRequestLog
+    ...options?.sanitizeRequestLog,
+    headers: { ...options?.sanitizeRequestLog?.headers, Authorization: true, authorization: true, Cookie: true, cookie: true }
   }
   const sanitizeResponseLog = {
     headers: {
+      ...options?.sanitizeResponseLog?.headers,
+      authorization: true,
+      Authorization: true,
       'set-cookie': true,
-      'Set-Cookie': true,
-      ...options?.sanitizeResponseLog?.headers
+      'Set-Cookie': true
     },
     body: url === '/device/token'
       ? true
       : {
-          ...url === '/auth' && { access_token: true, refresh_token: true },
-          ...options?.sanitizeResponseLog?.body
+          ...options?.sanitizeResponseLog?.body,
+          ...url === '/auth' && { access_token: true, refresh_token: true, firstName: true, photoURI: true },
+          payload: options?.sanitizeResponseLog?.body?.payload === true
+            ? true
+            : {
+                ...options?.sanitizeResponseLog?.body?.payload,
+                cards: { cardNumber: maskCardNumberForLog }
+              }
         }
   }
   let result
@@ -84,33 +99,23 @@ async function fetchApi (url, options, auth) {
           sanitizeResponseLog
         })
 
-        if (['shortcut.error.service.call', 'access.unauthenticated', 'fail.general.error'].some(x => response.body?.code === x) ||
-          ['unauthorized'].some(x => response.body?.error === x)) {
-          throw new TemporaryUnavailableError()
-        }
-
         return response
       },
-      // eslint-disable-next-line camelcase
-      predicate: (x) => (typeof x) !== 'string',
+      predicate: response => typeof response.body !== 'string' || response.status !== 200,
       maxAttempts: 2,
       delayMs: 1000
     })
   } catch (e) {
-    let lastResponse
     if (e instanceof RetryError) {
-      lastResponse = e.failedResults[e.failedResults.length - 1]
-    } else if (e instanceof ParseError) {
-      lastResponse = e.response
-    }
-    if ([502, 503, 504].some(x => lastResponse?.status === x)) {
-      throw new TemporaryUnavailableError()
+      console.assert(false, 'Unexpected Sense API response after retry', responseSummary(e.failedResults[e.failedResults.length - 1]))
     }
     throw e
   }
+  console.assert(result.body !== null && typeof result.body === 'object', 'Unexpected Sense API response', responseSummary(result))
   if (result.body.error_description === 'oauth.exception.client.blocked') {
     const blockedTill = new Date(parseInt(result.body.blocked_till))
-    throw new BankMessageError(`Подключение заблокировано до ${blockedTill.toISOString()}`)
+    console.assert(Number.isFinite(blockedTill.getTime()), 'Sense block expiry is invalid')
+    throw new TemporaryError(`Підключення заблоковано до ${blockedTill.toISOString()}. Повторіть синхронізацію після цього часу.`)
   }
 
   return result
@@ -123,11 +128,11 @@ function validatePreferences (rawPreferences) {
   }
 
   if (!preferences.phone) {
-    throw new InvalidPreferencesError('Неправильный формат номера телефона')
+    throw new InvalidPreferencesError('Неправильний формат номера телефону')
   }
 
   if (!preferences.birthDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    throw new InvalidPreferencesError('Неправильный формат даты рождения')
+    throw new InvalidPreferencesError('Неправильний формат дати народження')
   }
 
   return preferences
@@ -136,25 +141,21 @@ function validatePreferences (rawPreferences) {
 async function askPinCode () {
   let pinCode
   while (!pinCode || !pinCode?.match(/^\d{6}$/)) {
-    pinCode = await ZenMoney.readLine('Введите пин-код от приложения Альфа-Банк Sense. ' +
-      'Если не помните его, придумайте новый код из шести цифр. ' +
-      'Используйте этот новый пин-код для входа в приложение банка.', { inputType: 'number' })
+    pinCode = await ZenMoney.readLine('Введіть PIN-код застосунку Sense. ' +
+      'Якщо ви його не пам’ятаєте, придумайте новий код із шести цифр. ' +
+      'Використовуйте цей новий PIN-код для входу в застосунок банку.', { inputType: 'number' })
+    console.assert(pinCode !== null, 'Required PIN input was not provided')
   }
   return pinCode
 }
 
 function assertResponseCodeOk (response) {
-  if (response?.body?.code !== 'OK') {
-    console.warn('Sense API returned an unexpected response', responseSummary(response))
-    throw new TemporaryUnavailableError()
-  }
+  console.assert(response.status === 200 && response.body?.code === 'OK', 'Unexpected Sense API response', responseSummary(response))
 }
 
 function assertResponseAccessToken (response) {
-  if (typeof response?.body?.access_token !== 'string' || !response.body.access_token) {
-    console.warn('Sense authentication returned an unexpected response', responseSummary(response))
-    throw new TemporaryUnavailableError()
-  }
+  console.assert(response.status === 200 && typeof response.body?.access_token === 'string' && response.body.access_token,
+    'Unexpected Sense API response during authentication', responseSummary(response))
 }
 
 function responseSummary (response) {
@@ -194,7 +195,7 @@ export async function getDeviceToken (auth) {
   return response.body.payload.deviceToken
 }
 
-async function coldAuth (preferences, auth) {
+async function coldAuth (preferences, auth, isInBackground) {
   let response = await fetchApi('/auth', {
     method: 'POST',
     body: {
@@ -212,7 +213,7 @@ async function coldAuth (preferences, auth) {
     }
   })
   if (response.body.error_description === 'oauth.exception.redirect.onboarding') {
-    throw new InvalidPreferencesError('Пожалуйста, скачайте и пройдите регистрацию в новом приложении банка Sense SuperApp')
+    throw new InvalidPreferencesError('Завантажте застосунок Sense SuperApp і зареєструйтеся в ньому')
   }
   if (response.body.error_description === 'oauth.exception.client.not.found') {
     throw new InvalidLoginOrPasswordError()
@@ -220,6 +221,7 @@ async function coldAuth (preferences, auth) {
 
   assertResponseAccessToken(response)
   auth.accessToken = response.body.access_token
+  if (isInBackground) throw new UserInteractionError()
   response = await fetchApi('/otp/login', {
     method: 'POST',
     body: {
@@ -230,12 +232,10 @@ async function coldAuth (preferences, auth) {
   }, auth)
   assertResponseCodeOk(response)
 
-  const smsCode = await ZenMoney.readLine('Введите код отправленный вам в SMS-сообщении',
+  const smsCode = await ZenMoney.readLine('Введіть код із SMS',
     { inputType: 'number', time: response.body.payload.expiry * 1000 })
 
-  if (!smsCode) {
-    throw new InvalidOtpCodeError()
-  }
+  console.assert(typeof smsCode === 'string' && smsCode.trim(), 'Required OTP input was not provided')
 
   response = await fetchApi('/auth', {
     method: 'POST',
@@ -259,11 +259,13 @@ async function coldAuth (preferences, auth) {
     case 'card': {
       let cardNumberPart = ''
       while (!cardNumberPart?.match(/^\d{4}$/)) {
-        cardNumberPart = await ZenMoney.readLine('Введите последние 4 цифры номера карты')
+        cardNumberPart = await ZenMoney.readLine('Введіть останні 4 цифри номера картки')
+        console.assert(cardNumberPart !== null, 'Required card input was not provided')
       }
       let cardCvv = ''
       while (!cardCvv?.match(/^\d{3}$/)) {
-        cardCvv = await ZenMoney.readLine('Введите CVV код')
+        cardCvv = await ZenMoney.readLine('Введіть CVV-код')
+        console.assert(cardCvv !== null, 'Required card input was not provided')
       }
 
       response = await fetchApi('/auth', {
@@ -279,14 +281,15 @@ async function coldAuth (preferences, auth) {
         }
       })
       if (response.body.error_description === 'oauth.exception.bad.credentials') {
-        throw new TemporaryError('Вы ввели неверные данные карты, проверьте и попробуйте снова')
+        throw new TemporaryError('Перевірте дані картки та повторіть спробу')
       }
       break
     }
     case 'passport_issue_date': {
       let passportIssueDate = ''
       while (!passportIssueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        passportIssueDate = await ZenMoney.readLine('Введите дату выдачи паспорта в формате гггг-мм-дд')
+        passportIssueDate = await ZenMoney.readLine('Введіть дату видачі паспорта у форматі рррр-мм-дд')
+        console.assert(passportIssueDate !== null, 'Required identity input was not provided')
       }
 
       response = await fetchApi('/auth', {
@@ -302,7 +305,7 @@ async function coldAuth (preferences, auth) {
       })
 
       if (response.body.error_description === 'oauth.exception.bad.credentials') {
-        throw new InvalidOtpCodeError('Неверная дата выдачи паспорта')
+        throw new TemporaryError('Перевірте дату видачі паспорта та повторіть спробу')
       }
       break
     }
@@ -326,15 +329,12 @@ async function coldAuth (preferences, auth) {
       access_token: auth.accessToken
     }
   })
-  if (response.body?.error === 'server_error') {
-    throw new InvalidOtpCodeError('Неверный пин-код')
-  }
   assertResponseAccessToken(response)
   auth.accessToken = response.body.access_token
   auth.refreshToken = response.body.refresh_token // idk, we don't use it
 }
 
-async function warmAuth (auth) {
+async function warmAuth (auth, onAuth) {
   let response = await fetchApi('/auth', {
     method: 'POST',
     body: {
@@ -353,6 +353,7 @@ async function warmAuth (auth) {
 
   assertResponseAccessToken(response)
   auth.accessToken = response.body.access_token
+  await onAuth(auth)
 
   response = await retry({
     getter: async () => {
@@ -379,7 +380,7 @@ async function warmAuth (auth) {
       if (response.body.error_description?.match(/oauth.exception.bad.credentials/i)) {
         return false
       }
-      console.assert(false, 'unexpected response', response)
+      console.assert(false, 'Unexpected Sense authentication response', responseSummary(response))
     },
     maxAttempts: 2,
     delayMs: 0
@@ -388,17 +389,17 @@ async function warmAuth (auth) {
   auth.accessToken = response.body.access_token
 }
 
-export async function login (rawPreferences, auth) {
-  const preferences = validatePreferences(rawPreferences)
-
+export async function login (rawPreferences, auth, isInBackground = false, onAuth = async () => {}) {
   if (auth.accessToken) {
-    await warmAuth(auth)
+    await warmAuth(auth, onAuth)
   }
 
   if (!auth.accessToken) {
+    const preferences = validatePreferences(rawPreferences)
     auth.deviceToken = await getDeviceToken(auth)
-    await coldAuth(preferences, auth)
+    await coldAuth(preferences, auth, isInBackground)
   }
+  await onAuth(auth)
   return auth
 }
 

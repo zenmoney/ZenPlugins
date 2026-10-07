@@ -3,33 +3,33 @@
     <EditTextPreference
         key="phone"
         obligatory="true"
-        title="Номер телефона"
-        dialogTitle="Номер телефона"
+        title="Номер телефону"
+        dialogTitle="Номер телефону"
         positiveButtonText="ОК"
-        negativeButtonText="Отмена"
+        negativeButtonText="Скасувати"
         summary="||{@s}"
     />
     <EditTextPreference
         key="birthDate"
-        title="Дата рождения"
-        dialogTitle="Дата рождения"
-        dialogMessage="Формат: гггг-мм-дд"
+        title="Дата народження"
+        dialogTitle="Дата народження"
+        dialogMessage="Формат: рррр-мм-дд"
         inputType="text"
         summary="||{@s}"
         positiveButtonText="ОК"
-        negativeButtonText="Отмена"
+        negativeButtonText="Скасувати"
         obligatory="true">
     </EditTextPreference>
     <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"
-        title="С какой даты загружать операции"
+        title="З якої дати завантажувати операції"
         defaultValue="2018-01-01T00:00:00.000Z"
-        dialogTitle="Дата начала загрузки"
-        dialogMessage="Введите дату, с которой загружать операции"
+        dialogTitle="Дата початку завантаження"
+        dialogMessage="Введіть дату, з якої завантажувати операції"
         positiveButtonText="ОК"
-        negativeButtonText="Отмена"
+        negativeButtonText="Скасувати"
         summary="|startDate|{@s}"
     />
 </PreferenceScreen>

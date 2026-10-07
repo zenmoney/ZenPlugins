@@ -299,6 +299,8 @@ function convertUsualTransaction (apiTransaction, account) {
   };
 
   [
+    parseSafeTransfer,
+    parseCashTransfer,
     parseInnerTransfer,
     parseTransfer,
     parsePaymentMerchant,
@@ -306,6 +308,25 @@ function convertUsualTransaction (apiTransaction, account) {
   ].some(parser => parser(transaction, apiTransaction, account, invoice))
 
   return transaction
+}
+
+function parseSafeTransfer (transaction, apiTransaction) {
+  if (!['Поповнення Дохідного сейфу', 'Зняття з Дохідного сейфу'].includes(apiTransaction.operationName)) return false
+  transaction.comment = apiTransaction.operationName
+  return true
+}
+
+function parseCashTransfer (transaction, apiTransaction, account, invoice) {
+  if (apiTransaction.operationName !== 'Операції в АТМ' || getFilterOption(apiTransaction.filterData, 'operationType') !== 'Банкоматы') return false
+  const cashAmount = transaction.movements[0].invoice || invoice
+  transaction.movements.push({
+    id: null,
+    account: { type: 'cash', instrument: cashAmount.instrument, company: null, syncIds: null },
+    invoice: null,
+    sum: -cashAmount.sum,
+    fee: 0
+  })
+  return true
 }
 
 function parseInnerTransfer (transaction, apiTransaction, account, invoice) {

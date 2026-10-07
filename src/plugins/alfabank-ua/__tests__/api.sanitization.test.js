@@ -1,5 +1,5 @@
 import { getDeviceToken } from '../api'
-import { TemporaryUnavailableError } from '../../../errors'
+import { ZPAPIError } from '../../../errors'
 
 function makeResponse (body, headers = {}) {
   const entries = Object.entries(headers)
@@ -42,8 +42,9 @@ describe('Sense device token safety', () => {
     const wafHtml = '<html><body>This page cannot be displayed</body></html>'
     global.fetch = jest.fn().mockResolvedValue(makeResponse(wafHtml, { 'set-cookie': wafCookie }))
 
-    await expect(getDeviceToken({ device: { fingerPrint: 'private-fingerprint' } }))
-      .rejects.toBeInstanceOf(TemporaryUnavailableError)
+    const error = await getDeviceToken({ device: { fingerPrint: 'private-fingerprint' } }).catch(error => error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
 
     const log = JSON.stringify([...debugSpy.mock.calls, ...warnSpy.mock.calls])
     expect(log).not.toContain(wafCookie)
