@@ -1,3 +1,4 @@
+import { convertHeadersToPlainObject } from '../../../../common/network/logging'
 import { DenizBankApi, denizBankApi, Session } from '../../api'
 
 const API_RESPONSE = {
@@ -40,8 +41,10 @@ describe('fetchCardTransactions', () => {
 
     mockFetchApi.mockResolvedValue({
       url: '',
+      ok: true,
       status: 200,
-      headers: {},
+      statusText: 'OK',
+      headers: convertHeadersToPlainObject({}),
       body: API_RESPONSE
     })
 

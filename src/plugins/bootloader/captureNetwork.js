@@ -35,6 +35,7 @@ export function installNetworkCapture ({ transport, config }) {
   if (!config?.enabled || typeof global.fetch !== 'function') {
     return
   }
+  const cookieJarDescriptor = Object.getOwnPropertyDescriptor(global.fetch, 'cookieJar')
   const originalFetch = global.fetch.bind(global)
   let nextRequestId = 1
   global.fetch = async function (url, options = {}) {
@@ -92,5 +93,8 @@ export function installNetworkCapture ({ transport, config }) {
       })
     }
     return response
+  }
+  if (cookieJarDescriptor) {
+    Object.defineProperty(global.fetch, 'cookieJar', cookieJarDescriptor)
   }
 }

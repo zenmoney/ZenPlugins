@@ -1,3 +1,4 @@
+import { convertHeadersToPlainObject } from '../../../common/network/logging'
 import { TemporaryError } from '../../../errors'
 import { ParseError } from '../../../common/network'
 
@@ -85,7 +86,7 @@ describe('Click authentication', () => {
   it('turns malformed JSON into a retryable user-facing error', async () => {
     mockFetchHistory.mockRejectedValue(new ParseError(
       'Could not parse response',
-      { status: 200, url: 'https://api.click.uz/evo/', headers: {}, body: '<html>' },
+      { ok: true, status: 200, statusText: 'OK', url: 'https://api.click.uz/evo/', headers: convertHeadersToPlainObject({}), body: '<html>' },
       new Error('Unexpected token')
     ))
 

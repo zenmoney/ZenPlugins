@@ -1,7 +1,7 @@
 import { Base64 } from 'jshashes'
 import { parse, stringify } from 'querystring'
-import { convertHeadersToPlainObject, fetchJson, generateRequestLogId } from '../../common/network'
-import { sanitizeUrlContainingObject } from '../../common/sanitize'
+import { fetchJson } from '../../common/network'
+import { WebView } from '../../common/webView'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
 import { TemporaryUnavailableError } from '../../errors'
@@ -52,28 +52,8 @@ async function callGate (url, options = {}, predicate = () => true) {
   return response
 }
 
-function logWebViewNavigation (navigation) {
-  console.debug('request', sanitizeUrlContainingObject({
-    id: generateRequestLogId(),
-    url: navigation.url,
-    method: navigation.method || 'GET',
-    headers: convertHeadersToPlainObject(navigation.headers)
-  }, {
-    url: {
-      query: {
-        state: true,
-        client_id: true,
-        redirect_uri: true,
-        scope_parameters: true,
-        code: true,
-        session_state: true
-      }
-    }
-  }))
-}
-
 async function authorizeInWebView (url, state) {
-  const webView = new ZenMoney.WebView({
+  const webView = new WebView({
     tls: {
       ca: getTrustedCertificates()
     }
@@ -85,8 +65,7 @@ async function authorizeInWebView (url, state) {
     resolveAuthorized = resolve
     rejectAuthorized = reject
   })
-  webView.navigationPolicy = navigation => {
-    logWebViewNavigation(navigation)
+  webView.navigationPolicy = WebView.createNavigationPolicy(navigation => {
     const i = navigation.url.indexOf(redirectUriWithoutProtocol)
     if (i < 0) {
       return undefined // LOAD
@@ -94,7 +73,13 @@ async function authorizeInWebView (url, state) {
     const params = parse(navigation.url.substring(i + redirectUriWithoutProtocol.length + 1))
     resolveAuthorized(params.code && params.state === state ? { code: params.code } : { error: params })
     return true // BLOCK
-  }
+  }, {
+    sanitizeRequestLog: {
+      url: {
+        query: { state: true, client_id: true, redirect_uri: true, scope_parameters: true, code: true, session_state: true }
+      }
+    }
+  })
   try {
     await webView.show()
     webView.goto(url, { waitUntil: 'commit' }).catch(rejectAuthorized)
