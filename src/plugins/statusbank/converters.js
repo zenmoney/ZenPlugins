@@ -8,6 +8,32 @@ export const TransactionSource = Object.freeze({
   latestOperations: 'latest-operations'
 })
 
+export function convertAccounts (products) {
+  return products.map(product => {
+    if (product.ProductType?.[0] === 'MS' && product.Balance?.[0] == null &&
+      product.LinkedProductType?.[0] === 'ACCOUNT') {
+      const linkedAccounts = products.filter(candidate =>
+        candidate.ProductType?.[0] === 'ACCOUNT' && candidate.Id?.[0] === product.LinkedProductId?.[0])
+      console.assert(linkedAccounts.length <= 1, 'Ambiguous linked card account', { productId: product.Id?.[0] })
+      const linkedAccount = linkedAccounts[0]
+      if (linkedAccount != null) {
+        console.assert(linkedAccount.Currency?.[0] === product.Currency?.[0],
+          'Linked card account currency mismatch', { productId: product.Id?.[0] })
+        return convertAccount({ ...product, Balance: linkedAccount.Balance })
+      }
+    }
+    return convertAccount(product)
+  }).filter(account => account !== null)
+}
+
+function getBalance (product) {
+  const value = product.Balance?.[0]
+  if (value == null) return null
+  const balance = Number(value.replace(/,/g, '.'))
+  console.assert(value.trim() !== '' && Number.isFinite(balance), 'Invalid account balance', { productId: product.Id?.[0] })
+  return balance
+}
+
 export function convertAccount (ob) {
   const productType = ob.ProductType[0]
   if (productType === 'MS' && ob.Enabled && ob.Enabled[0] === 'N') {
@@ -26,7 +52,7 @@ export function convertAccount (ob) {
       currencyCode: ob.Currency[0],
       cardNumber: ob.No[0],
       instrument: codeToCurrencyLookup[ob.Currency[0]],
-      balance: Number.parseFloat((ob.Balance[0].replace(/,/g, '.') || 0.0)),
+      balance: getBalance(ob),
       syncID: [ob.No[0].slice(-4)],
       productId: ob.Id[0],
       productType: ob.ProductType[0],
@@ -42,7 +68,7 @@ export function convertAccount (ob) {
       title: (ob.CustomName?.[0] || ob.ProductTypeName[0]) + ' ' + accountNumber,
       currencyCode: ob.Currency[0],
       instrument: codeToCurrencyLookup[ob.Currency[0]],
-      balance: Number.parseFloat((ob.Balance[0].replace(/,/g, '.') || 0.0)),
+      balance: getBalance(ob),
       syncID: [accountNumber],
       productId: ob.Id[0],
       productType: ob.ProductType[0],
