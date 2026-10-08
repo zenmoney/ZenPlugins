@@ -5,8 +5,8 @@ Reference index. Read only the helper involved in your task; behavior and availa
 | Need | Source |
 | --- | --- |
 | HTTP, JSON, WebView interception | [typed network helpers](../../src/common/network/index.ts) |
-| TLS configuration | `addTrustedCertificates`, shared `TlsOptions` and defaults in [network/tls.ts](../../src/common/network/tls.ts) |
-| WebSocket | [protocol helper](../../src/common/protocols/webSocket.js) |
+| TLS configuration | [Certificate defaults](#tls-defaults), registration and `TlsOptions` in [network/tls.ts](../../src/common/network/tls.ts) |
+| WebSocket transport and request/response client | [WebSocket contract](websocket.md), [WebSocket](../../src/common/network/webSocket.ts), [WebSocketRequestClient](../../src/common/network/webSocketRequestClient.ts) |
 | TCP transport | [Socket contract](socket.md), [constructor and types](../../src/common/network/socket.ts) |
 | Request/response masking | [sanitize](../../src/common/sanitize.js), [required masking policy](../debugging/log-sanitization.md) |
 | Cookies | Global `cookieJar` and persistence functions in [network](../../src/common/network/index.ts); [fetch with a separate jar](../../src/common/cookie/fetchCookie.js) |
@@ -21,9 +21,13 @@ Reference index. Read only the helper involved in your task; behavior and availa
 
 Helpers related to accounts and transactions apply to scrape plugins; sharing a runtime does not make those domain concepts mandatory for other plugin types.
 
+## TLS defaults
+
+[`addTrustedCertificates`](../../src/common/network/tls.ts) sets trusted CA defaults for HTTP, WebSocket and WebView. HTTP and WebSocket also use client PFX registered through `setClientPfx`. Each request or session takes a snapshot; explicit `tls`, including `{}`, replaces these defaults.
+
 ## Network headers
 
-HTTP responses use [NetworkHeaders](../../src/common/network/logging.ts). Their header names are lowercase; accessor methods are non-enumerable, and name lookup ignores case. Normalization applies even with logging disabled and never masks caller-visible values.
+HTTP responses and WebSocket upgrade responses use [NetworkHeaders](../../src/common/network/logging.ts). Their header names are lowercase; accessor methods are non-enumerable, and name lookup ignores case. Normalization applies even with logging disabled and never masks caller-visible values.
 
 `fetch` forwards request headers unchanged. `fetchJson` combines its JSON defaults with the supplied headers using object spread: exact-key overrides replace defaults, while differently cased keys remain distinct. To disable its JSON transformations, explicitly pass `parse: undefined` or `stringify: undefined`.
 

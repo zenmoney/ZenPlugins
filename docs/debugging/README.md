@@ -15,6 +15,8 @@ Use the [task map](../README.md#choose-a-task) for review scope and the [quality
 | Reproduce native UI, state, certificates, or device behavior | [Bootloader](bootloader.md) |
 | Understand a changed service protocol | [Protocol research](../development/protocol-research.md) |
 
+The [browser WebSocket proxy](../../scripts/debugServers/webServer.js) disables upstream certificate verification and does not apply native TLS options. Verify certificate configuration on a device with [Bootloader](bootloader.md).
+
 ## Triage before implementation
 
 1. Define the relevant plugin, builds, users/cohorts, and reported behavior. Collect and read all logs in that relevant set before code edits; do not fix only the first representative failure.

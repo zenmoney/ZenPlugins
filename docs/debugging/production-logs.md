@@ -21,9 +21,9 @@ Request IDs correlate events within the log/run; they are not bank transaction i
 
 ## What is and is not captured
 
-Shared HTTP helpers log by default. `log: false` disables their events and mask evaluation. Direct `global.fetch`, raw TCP and manual diagnostics do not inherit this logging path.
+Shared HTTP and WebSocket helpers log by default. `log: false` disables their events and mask evaluation. WebSocket records [handshakes and client messages](../plugins/websocket.md). Direct `global.fetch`, raw TCP and manual diagnostics do not inherit this logging path.
 
-`sanitizeRequestLog` and `sanitizeResponseLog` affect logs only. No fields are masked automatically, including authorization and cookies. HTTP masks support nested URL query masks; see also [header normalization](../plugins/utilities.md#network-headers). A plugin may define endpoint defaults, but custom masks must preserve required protection. Inspect actual emitted logs under the [sanitization test rules](log-sanitization.md#required-sanitization-tests).
+`sanitizeRequestLog` and `sanitizeResponseLog` affect logs only. No fields are masked automatically, including authorization and cookies. HTTP and WebSocket handshake masks support nested URL query masks; see also [header normalization](../plugins/utilities.md#network-headers). A plugin may define endpoint defaults, but custom masks must preserve required protection. Inspect actual emitted logs under the [sanitization test rules](log-sanitization.md#required-sanitization-tests).
 
 Masking policy and test cases belong to [sanitization](log-sanitization.md); user-visible text follows [errors](../plugins/errors.md).
 
