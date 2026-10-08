@@ -7,7 +7,7 @@ Reference index. Read only the helper involved in your task; behavior and availa
 | HTTP, JSON, WebView interception | [typed network helpers](../../src/common/network/index.ts) |
 | TLS configuration | [Certificate defaults](#tls-defaults), registration and `TlsOptions` in [network/tls.ts](../../src/common/network/tls.ts) |
 | WebSocket transport and request/response client | [WebSocket contract](websocket.md), [WebSocket](../../src/common/network/webSocket.ts), [WebSocketRequestClient](../../src/common/network/webSocketRequestClient.ts) |
-| TCP transport | [Socket contract](socket.md), [constructor and types](../../src/common/network/socket.ts) |
+| WebView / TCP transport | [WebView and its policy factory](webview.md), [Socket](socket.md); constructors and types in [webView.ts](../../src/common/webView.ts) and [socket.ts](../../src/common/network/socket.ts) |
 | Request/response masking | [sanitize](../../src/common/sanitize.js), [required masking policy](../debugging/log-sanitization.md) |
 | Cookies | Global `cookieJar` and persistence functions in [network](../../src/common/network/index.ts); [fetch with a separate jar](../../src/common/cookie/fetchCookie.js) |
 | Retry | [retry](../../src/common/retry.js); use only for understood retryable states |
@@ -31,4 +31,4 @@ HTTP responses and WebSocket upgrade responses use [NetworkHeaders](../../src/co
 
 `fetch` forwards request headers unchanged. `fetchJson` combines its JSON defaults with the supplied headers using object spread: exact-key overrides replace defaults, while differently cased keys remain distinct. To disable its JSON transformations, explicitly pass `parse: undefined` or `stringify: undefined`.
 
-Intercepted requests receive the original headers. Request logs preserve names and values apart from explicit masks. When applying an object mask to a `Headers` collection, repeated values with the same name are joined with `, ` before masking, as in response normalization; pair arrays keep their separate entries. Header names in object masks ignore case; function masks receive the original request headers. Logging controls and masking defaults are defined in [production logs](../debugging/production-logs.md#what-is-and-is-not-captured).
+WebView navigation policies and intercepted requests receive the original headers. Request logs preserve names and values apart from explicit masks. When applying an object mask to a `Headers` collection, repeated values with the same name are joined with `, ` before masking, as in response normalization; pair arrays keep their separate entries. Header names in object masks ignore case; function masks receive the original request headers. Logging controls and masking defaults are defined in [production logs](../debugging/production-logs.md#what-is-and-is-not-captured).

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { IncompatibleVersionError } from '../../errors'
 import { bufferToHex, isDebug } from '../utils'
-import type { CookieJar as InterceptedCookieJar } from 'fetch-cookie'
+import { wrapWebView, WebViewInstance, WebViewNavigationAction } from '../webView'
 import get from '../../types/get'
 import { convertHeadersToPlainObject, generateRequestLogId, sanitizeNetworkLog } from './logging'
 import type { NetworkHeaders } from './logging'
@@ -55,11 +55,7 @@ export interface InterceptedRequest {
 }
 
 /** Common capabilities available on legacy hosts and in the browser fallback. */
-export interface InterceptedWebView {
-  cookieJar: InterceptedCookieJar
-}
-
-type WebViewNavigationAction = undefined | true | 2
+export type InterceptedWebView = Pick<WebViewInstance, 'cookieJar'>
 
 type WebViewCompletion<T> = (error?: unknown, result?: T | null) => void
 type CloseableInterceptedWebView<T> = InterceptedWebView & { close?: WebViewCompletion<T> | null }
@@ -83,7 +79,7 @@ type NativeOpenWebView = <T>(
   headers: HeadersInit | undefined,
   intercept: (request: InterceptedRequest, complete: WebViewCompletion<T>) => WebViewNavigationAction | Promise<WebViewNavigationAction>,
   complete: WebViewCompletion<T>,
-  options: { configure: (webView: CloseableInterceptedWebView<T>) => Promise<void> }
+  options: { configure: (webView: WebViewInstance | CloseableInterceptedWebView<T>) => Promise<void> }
 ) => void
 
 export class ParseError {
@@ -214,11 +210,12 @@ export async function openWebViewAndInterceptRequest<T> ({ url, headers, log, sa
         setCookie: async () => { throw new IncompatibleVersionError() }
       }
     }
+    let hasPolicyLogger = false
     return await new Promise<T | null | undefined>((resolve, reject) => {
       openWebView<T>(url, headers, (request, callback): WebViewNavigationAction | Promise<WebViewNavigationAction> => {
         assert(webView !== null, 'WebView already completed')
         webView.close = callback
-        const shouldLog = log !== false
+        const shouldLog = !hasPolicyLogger && log !== false
         const id = shouldLog && generateRequestLogId()
         shouldLog && console.debug('request', sanitizeNetworkLog({
           id,
@@ -272,9 +269,13 @@ export async function openWebViewAndInterceptRequest<T> ({ url, headers, log, sa
         }
       }, {
         configure: async (wv) => {
+          if ('navigationPolicy' in wv) {
+            wrapWebView(wv, { log, sanitizeRequestLog })
+            hasPolicyLogger = true
+          }
           assert(webView !== null, 'WebView already completed')
           const close = webView.close
-          webView = wv
+          webView = wv as CloseableInterceptedWebView<T>
           webView.close = close
           if (configure != null) {
             await configure(webView)
