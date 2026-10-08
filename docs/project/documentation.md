@@ -6,6 +6,8 @@ Use ordinary Markdown in `docs`. Plugin types share runtime rules; each owns its
 
 Ownership follows [document responsibilities](../README.md#document-responsibilities): TypeScript owns shapes, contracts/quality pages own semantics and decisions, guides own procedures, and existing integration notes/tests own bank observations. Type comments stay short and link to the rule.
 
+Document the current public API, without migration history or explanations of omitted internal APIs. For APIs modeled on a standard or library, link to its documentation and describe only meaningful differences and plugin-specific behavior; leave signatures and field shapes to TypeScript. Do not link to host repositories or native implementation files.
+
 Each page states its scope. [The index](../README.md#choose-a-task) owns conditional reading routes; `AGENTS.md` is a short entrypoint. Do not duplicate routes or make reference links recursively required.
 
 Keep one full statement of each rule. Elsewhere, link to its section and state only when it applies. Avoid repeating a decision table unless the repetition adds a distinct verification condition. Preserve requirement strength, scope, exceptions, counterexamples, and unique examples when shortening; do not create a second summary document that can drift.

@@ -1,41 +1,38 @@
-declare namespace ZenMoney {
-  function setData (name: string, data: unknown): void
+import type { restoreCookies, saveCookies } from '../common/network/cookies'
+import type { addTrustedCertificates } from '../common/network/tls'
 
-  function getData (name: string, defaultValue?: unknown): unknown
+export interface ZenMoneyApi {
+  setData: (name: string, data: unknown) => void
 
-  // Persist data after setData
-  function saveData (): void
+  getData: (name: string, defaultValue?: unknown) => unknown
 
-  // Clear persistent storage
-  function clearData (): void
+  saveData: () => void
 
-  // User can choose to skip loading transactions on specific accounts (in settings)
-  // So we can check it before loading transactions and optimize that useless work
-  function isAccountSkipped (id: string): boolean
+  clearData: () => void
 
-  // Ask user some additional data, with message text
-  // inputType defaults to text
-  // expiration time in milliseconds, after expiration returns null
-  function readLine (
+  isAccountSkipped: (id: string) => boolean
+
+  readLine: (
     text: string,
     options?: {
       image?: Uint8Array
       inputType?: 'number' | 'text'
       time?: number
     }
-  ): Promise<string | null>
+  ) => Promise<string | null>
 
-  // Alert with some message
-  function alert (text: string): Promise<void>
+  alert: (text: string) => Promise<void>
 
-  function setCookie (
+  /** @deprecated Use cookieJar from common/network. */
+  setCookie: (
     domain: string,
     name: string,
     value: string | null,
     params?: { path?: string, secure?: string, expires?: string }
-  ): Promise<void>
+  ) => Promise<void>
 
-  function getCookies (): Promise<Array<{
+  /** @deprecated Use cookieJar from common/network. */
+  getCookies: () => Promise<Array<{
     name: string
     value: string
     domain: string
@@ -45,19 +42,19 @@ declare namespace ZenMoney {
     expires: string | null
   }>>
 
-  function restoreCookies (): Promise<void>
+  /** @deprecated Import restoreCookies from common/network. */
+  restoreCookies: typeof restoreCookies
 
-  function saveCookies (): Promise<void>
+  /** @deprecated Import saveCookies from common/network. */
+  saveCookies: typeof saveCookies
 
-  function clearCookies (): Promise<void>
+  /** @deprecated Use cookieJar.removeAllCookies() from common/network. */
+  clearCookies: () => Promise<void>
 
-  // mTLS authentication
-  function setClientPfx (pfx: Uint8Array | null, domain: string): void
+  /** @deprecated Import addTrustedCertificates from common/network/tls. */
+  trustCertificates: (...args: Parameters<typeof addTrustedCertificates>) => void
 
-  // enforce trust to TLS certificates
-  function trustCertificates (certs: string[]): void
-
-  const device: {
+  readonly device: {
     id: string
     manufacturer: string
     model: string
@@ -67,18 +64,23 @@ declare namespace ZenMoney {
       version: string
     }
   }
-  const application: {
+  readonly application: {
     platform: string
     version: string
     build: string
   }
-  let locale: string
+  locale: string
 
-  function pickDocuments (mimeTypes: string[], allowMultipleSelection: boolean): Promise<Blob[]>
+  pickDocuments: (mimeTypes: string[], allowMultipleSelection: boolean) => Promise<Blob[]>
 
-  function takePicture (format: string): Promise<Blob | null>
+  takePicture: (format: string) => Promise<Blob | null>
 
-  function logEvent (type: string, data?: Record<string, unknown>): void
+  logEvent: (type: string, data?: Record<string, unknown>) => void
 }
 
-declare function assert (condition: boolean, ...args: unknown[]): asserts condition
+declare global {
+  // A global var also declares globalThis.ZenMoney, which host mocks replace.
+  var ZenMoney: ZenMoneyApi
+
+  function assert (condition: boolean, ...args: unknown[]): asserts condition
+}

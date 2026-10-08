@@ -4,7 +4,7 @@ Read when investigating requests, responses, failures, or log sanitization. Prod
 
 ## Logging path
 
-The shared [network helper](../../src/common/network.js) logs a request with `console.debug('request', ...)` before `global.fetch`. It logs a response or transport failure under the same generated request ID. `fetchJson` adds JSON serialization/parsing and default headers on top of that helper.
+The shared [network helper](../../src/common/network/index.ts) logs a request with `console.debug('request', ...)` before `global.fetch`. It logs a response or transport failure under the same generated request ID. `fetchJson` adds JSON serialization/parsing and default headers on top of that helper.
 
 [consoleAdapter](../../src/consoleAdapter.js) formats console arguments and forwards supported methods to `ZenMoney.trace(message, methodName)` when installed. A native console can use a host-specific implementation; [polyfills](../../src/polyfills.js) choose the runtime path. A failed `console.assert` throws. Application log collection/submission is outside the network helper; the shared [error policy](../plugins/errors.md) controls whether failures retain the send-log path.
 
@@ -21,9 +21,9 @@ Request IDs correlate events within the log/run; they are not bank transaction i
 
 ## What is and is not captured
 
-`log: false` disables this helper's request/response events. Calls directly to `global.fetch`, service-specific sockets, and manually written diagnostics do not automatically inherit this logging/masking path. WebView interception has its own logged request path in the same network module.
+Shared HTTP helpers log by default. `log: false` disables their events and mask evaluation. Direct `global.fetch`, raw TCP and manual diagnostics do not inherit this logging path.
 
-`sanitizeRequestLog` and `sanitizeResponseLog` are explicit mask options. The helper passes `false` when a mask is absent; it is not a universal automatic secret detector. A plugin may define a shared endpoint wrapper with defaults, but custom masks must preserve those defaults. Inspect actual emitted logs in tests.
+`sanitizeRequestLog` and `sanitizeResponseLog` affect logs only. No fields are masked automatically, including authorization and cookies. HTTP masks support nested URL query masks; see also [header normalization](../plugins/utilities.md#network-headers). A plugin may define endpoint defaults, but custom masks must preserve required protection. Inspect actual emitted logs under the [sanitization test rules](log-sanitization.md#required-sanitization-tests).
 
 Masking policy and test cases belong to [sanitization](log-sanitization.md); user-visible text follows [errors](../plugins/errors.md).
 

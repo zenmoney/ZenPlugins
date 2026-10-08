@@ -1,5 +1,5 @@
-import { ParseError, fetch, parseHeaderParameters } from './network'
-import { parseXml } from './xmlUtils'
+import { ParseError, fetch, parseHeaderParameters } from './index'
+import { parseXml } from '../xmlUtils'
 
 describe('parseXml', () => {
   it('parses xml plain object', () => {
@@ -462,8 +462,9 @@ describe('fetch error sanitization', () => {
     }
 
     expect(error).toBeInstanceOf(ParseError)
+    // [model] The JS wrapper exposes a standalone error class with enumerable diagnostics.
+    expect(error).not.toBeInstanceOf(Error)
     expect(error.response.body).toBe('<html>sensitive response</html>')
-    expect(Object.keys(error)).not.toContain('response')
-    expect(Object.keys(error)).toContain('cause')
+    expect(Object.keys(error)).toEqual(['cause', 'stack', 'message'])
   })
 })

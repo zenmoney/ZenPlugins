@@ -99,4 +99,4 @@ The State section observes `getData`, `setData`, `clearData`, and `saveData` and
 
 ## Network capture
 
-Bootloader wraps `global.fetch` after the hosted bundle is evaluated. This captures requests made through `src/common/network.js` and direct `global.fetch` calls. Response bodies are recorded when the plugin consumes them through `text()` or `arrayBuffer()`; an unconsumed streaming response has metadata but no captured body.
+Bootloader wraps `global.fetch` after the hosted bundle is evaluated. This captures requests made through `src/common/network/index.ts` and direct `global.fetch` calls. Response bodies are recorded when the plugin consumes them through `text()` or `arrayBuffer()`; an unconsumed streaming response has metadata but no captured body.

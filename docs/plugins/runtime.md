@@ -4,20 +4,20 @@ Read when using platform facilities or changing an entrypoint, persistence, or i
 
 ## Execution environment and API references
 
-Production bundles execute inside the Zenmoney application on the user's device. The browser development harness emulates that environment; it is not proof of native compatibility. Do not depend on Node filesystem/process facilities or browser DOM APIs simply because they exist on a development machine.
+Plugins execute inside the Zenmoney application. Do not depend on Node filesystem/process facilities or browser DOM APIs in plugin code.
 
-The checked-in [ZenMoney declarations](../../src/types/index.d.ts) describe the typed global API. [Polyfills](../../src/polyfills.js), [browser API implementation](../../src/ZPAPI.js), and [network helpers](../../src/common/network.js) document additional implementation details. Some host APIs and feature flags used by existing code are not in the declarations; an observed browser method is not automatically a guarantee on every native build.
+The [ZenMoney declarations](../../src/types/index.d.ts) define the global API; the [shared helper index](utilities.md) locates the network APIs.
 
 | Facility | API / source | Usage |
 | --- | --- | --- |
 | Plugin state | `getData`, `setData`, `saveData`, `clearData` | Connection-scoped persistent plugin data |
 | User input | `readLine`, `alert` | Asynchronous UI; `readLine` may return `null`, including timeout |
-| Files and camera | `pickDocuments`, `takePicture` | User-selected input; do not assume support on every host |
-| Cookies | `getCookies`, `setCookie`, `restoreCookies`, `saveCookies`, `clearCookies` | Session transport and its persistence |
-| TLS | `setClientPfx`, `trustCertificates` | Required service-specific certificate configuration |
+| Files and camera | `pickDocuments`, `takePicture` | User-selected input |
+| Cookies | [`cookieJar`, `saveCookies`, `restoreCookies`](../../src/common/network/index.ts) | Shared HTTP cookies and explicit persistence |
+| TLS | [Shared TLS options and `addTrustedCertificates`](../../src/common/network/tls.ts) | Required service-specific certificate configuration |
 | Environment | `device`, `application`, `locale` | Device/app metadata and plugin language |
 | Diagnostics | `console.*`, `ZenMoney.trace`, `logEvent` | Logs and explicitly supported events |
-| Networking | Shared `fetch`, `fetchJson`, WebView and WebSocket helpers | See [utilities](utilities.md) and [sanitization](../debugging/log-sanitization.md) |
+| Networking and WebView | [Shared helper index](utilities.md) | HTTP, TCP, WebSocket and WebView; [sanitization](../debugging/log-sanitization.md) applies |
 | Account selection | `isAccountSkipped(id)` | Facility used by the [scrape contract](scrape/contract.md#skipped-accounts) |
 
 `readLine` accepts text and optional `inputType`, image, and timeout in milliseconds. It returns `null` on timeout and does not provide a typed reason distinguishing cancellation from timeout. `takePicture` may also return `null`. Handle absent input according to the plugin's workflow: if the input is optional or a supported continuation exists, continue. If the plugin cannot continue without the input, fail validation with `console.assert(input !== null, 'Required input was not provided')` (or `assert`) and let the ordinary error propagate. Do not send absent input as an unchecked credential or return incomplete data as success. Do not invent a cancellation reason the host did not provide. Test both optional continuation and required-input termination where supported.
@@ -29,6 +29,8 @@ The checked-in [ZenMoney declarations](../../src/types/index.d.ts) describe the 
 Store only data necessary for later invocations. Keep transient handles and live sessions separate. Version state when a migration needs it. The timing and validity of auth persistence are defined once in [authentication](authentication.md).
 
 Cookie persistence follows the same [entrypoint boundary](architecture.md#boundaries); cookie transport belongs to `fetchApi`. Never expose stored state or credentials in ordinary diagnostics.
+
+The exported `cookieJar` shares HTTP cookies with `fetch`. Jar changes affect requests immediately; await `saveCookies()` to persist them. `restoreCookies()` replaces working cookies with the saved set. Invalid saved data fails before replacing working cookies.
 
 The [browser state implementation](../../src/ZPAPI.pluginData.js) tracks whether persistence was requested. [Bootloader state overrides](../debugging/bootloader.md#plugin-data) are development controls, not production persistence guarantees.
 
@@ -46,8 +48,6 @@ Verify that background runs complete without interaction when supported. Otherwi
 
 Plugin-authored diagnostics are English; user-facing text and `ZenMoney.locale` follow the [language policy](../project/style.md#language-and-audience). A failed runtime `console.assert` throws an ordinary `Error`; it does not merely print a warning. See [errors](errors.md) and [production logs](../debugging/production-logs.md).
 
-## Capabilities and compatibility
+## Event emitters
 
-Check the specific capability used by an existing shared helper. For example, the network helper checks `ZenMoney.features.binaryResponseBody` before binary requests. Do not infer feature support solely from OS or application version, or invent a new feature-flag name without a host contract.
-
-Use `IncompatibleVersionError` only for a confirmed required capability/version mismatch. Unsupported protocol behavior is an ordinary reportable failure, not a platform version error. Verify host-dependent behavior in the application using Bootloader; browser mocks cannot validate native certificate handling, UI availability, or device-bound authentication.
+The shared event API uses a subset of [Node.js EventEmitter](https://nodejs.org/api/events.html#class-eventemitter), defined by the [shared interface](../../src/common/events.ts). The behavioral differences are listener `this` binding to `globalThis` and an unhandled `error` event not throwing automatically. Handle errors explicitly in the owning operation.
