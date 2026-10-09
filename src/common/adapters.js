@@ -3,9 +3,13 @@ import _ from 'lodash'
 import de from '../../locales/de.json'
 import en from '../../locales/en.json'
 import es from '../../locales/es.json'
+import esAR from '../../locales/es_AR.json'
+import fr from '../../locales/fr.json'
 import he from '../../locales/he.json'
+import it from '../../locales/it.json'
 import pl from '../../locales/pl.json'
 import pt from '../../locales/pt.json'
+import ptBR from '../../locales/pt_BR.json'
 import ru from '../../locales/ru.json'
 import uk from '../../locales/uk.json'
 import {
@@ -32,9 +36,13 @@ i18n.init({
     ['de', de],
     ['en', en],
     ['es', es],
+    ['es-AR', esAR],
+    ['fr', fr],
     ['he', he],
+    ['it', it],
     ['pl', pl],
     ['pt', pt],
+    ['pt-BR', ptBR],
     ['ru', ru],
     ['uk', uk]
   ].map(([lang, translation]) => [

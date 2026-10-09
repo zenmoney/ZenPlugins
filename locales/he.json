@@ -4,7 +4,7 @@
   "zenPlugin_fetchingDataError": "שגיאה בטעינת נתונים",
   "zenPlugin_finished": "הסינכרון עם הבנק הושלם. אין פעולות חדשות.",
   "zenPlugin_finishedWithCount": "הסינכרון עם הבנק הושלם. פעולות חדשות: %1$d",
-  "zenPlugin_incompatibleVersionError": "ברשותך גרסה ישנה של אפליקציית Zenmoney. כדי שהתוסף יפעל כראוי, עדכן את היישום לגירסה האחרונה.",
+  "zenPlugin_incompatibleVersionError": "בדקו שיש לכם את הגרסה העדכנית ביותר של האפליקציה:\n— אם יש עדכון זמין, התקינו אותו (לחצו על „עדכון“).\n— אם עדיין אין עדכון, אין צורך לעשות דבר כרגע — פשוט המתינו לעדכון הבא.",
   "zenPlugin_invalidLoginOrPasswordError": "שם משתמש או סיסמא שגויים",
   "zenPlugin_invalidOtpCodeError": "הזנת קוד שגוי. נסה שוב את חיבור הסינכרון.",
   "zenPlugin_invalidPreferencesError": "בדוק בבקשה את הנתונים שהזנת.",

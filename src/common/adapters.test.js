@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { BankMessageError, IncompatibleVersionError, InvalidLoginOrPasswordError, InvalidOtpCodeError } from '../errors'
 import {
   adaptScrapeToGlobalApi,
   convertTimestampToDate,
@@ -133,6 +134,78 @@ describe('adaptScrapeToGlobalApi', () => {
     }))
     await promise.rejects.toBe(expectedError)
     await promise.rejects.toMatchObject(expectedErrorData)
+  })
+})
+
+describe('error localization [model]', () => {
+  // Model the adapter's locale selection and formatting without bank responses.
+  beforeEach(() => {
+    global.ZenMoney = {
+      getPreferences: jest.fn(),
+      setResult: jest.fn()
+    }
+  })
+
+  it.each([
+    ['fr', 'Identifiant ou mot de passe bancaire incorrect'],
+    ['fr_FR', 'Identifiant ou mot de passe bancaire incorrect'],
+    ['it', 'Nome utente o password della banca non corretti'],
+    ['es', 'El usuario o la contraseña del banco son incorrectos'],
+    ['es_AR', 'Nombre de usuario o contraseña del banco incorrectos'],
+    ['es-AR', 'Nombre de usuario o contraseña del banco incorrectos'],
+    ['pt', 'Login ou palavra-passe do banco incorretos'],
+    ['pt_BR', 'Login ou senha do banco incorreta'],
+    ['pt-BR', 'Login ou senha do banco incorreta'],
+    ['ja', 'Incorrect bank login or password'],
+    [undefined, 'Неверный логин или пароль от банка']
+  ])('localizes credential errors for %s', async (locale, message) => {
+    global.ZenMoney.locale = locale
+    const error = new InvalidLoginOrPasswordError()
+
+    await adaptScrapeToGlobalApi(async () => { throw error })()
+
+    expect(global.ZenMoney.setResult).toHaveBeenCalledWith(error)
+    expect(error).toMatchObject({ message, fatal: true, allowRetry: true })
+  })
+
+  it('falls back from a missing regional translation to the base language', async () => {
+    global.ZenMoney.locale = 'es_AR'
+    const error = new InvalidOtpCodeError()
+
+    await adaptScrapeToGlobalApi(async () => { throw error })()
+
+    expect(error.message).toBe('El código no es correcto. Inténtalo de nuevo: pulsa «Conectar» e introduce un código nuevo.')
+  })
+
+  it('interpolates bank messages with line breaks and clean French spacing', async () => {
+    global.ZenMoney.locale = 'fr'
+    const bankMessage = 'Confirm access in the bank app.'
+    const error = new BankMessageError(bankMessage)
+
+    await adaptScrapeToGlobalApi(async () => { throw error })()
+
+    expect(global.ZenMoney.setResult).toHaveBeenCalledWith(error)
+    expect(error.message).toBe(`Une erreur s’est produite lors de la synchronisation bancaire.\n\nMessage de la banque : ${bankMessage}`)
+    expect(error.bankMessage).toBe(bankMessage)
+  })
+
+  it('uses the updated app version instructions', async () => {
+    global.ZenMoney.locale = 'ru'
+    const error = new IncompatibleVersionError()
+
+    await adaptScrapeToGlobalApi(async () => { throw error })()
+
+    expect(error.message).toBe('Проверьте в сторе, стоит ли у вас последняя версия приложения:\n— Если есть новая версия, поставьте её (нажмите «Обновить»).\n— Если новой версии пока нет — ничего делать не нужно, просто дождитесь ближайшего обновления.')
+  })
+
+  it('preserves an explicit plugin-authored message', async () => {
+    global.ZenMoney.locale = 'fr'
+    const message = 'Vérifiez votre identifiant bancaire.'
+    const error = new InvalidLoginOrPasswordError(message)
+
+    await adaptScrapeToGlobalApi(async () => { throw error })()
+
+    expect(error.message).toBe(message)
   })
 })
 
