@@ -1,0 +1,15 @@
+{
+  "source": {
+    "logId": 157368,
+    "plugin": "bcc-kz",
+    "build": 73,
+    "endpoint": "GET_EXT_STATEMENT",
+    "note": "Complete response body; no personal data or credentials."
+  },
+  "status": 200,
+  "body": {
+    "success": false,
+    "timeout": "YES",
+    "reason": "Превышено время бездействия системы"
+  }
+}

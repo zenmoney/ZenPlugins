@@ -252,7 +252,7 @@ function convertCreditCard (apiAccount) {
     savings: false,
     available: getBalance(apiAccount),
     creditLimit: apiAccount.credit_limit,
-    totalAmountDue: parseFloat(apiAccount.details.debt_info.grace_amount),
+    totalAmountDue: apiAccount.details == null ? null : parseFloat(apiAccount.details.debt_info.grace_amount),
     gracePeriodEndDate: apiAccount.paydate ? parseDate(apiAccount.paydate) : null,
     ...virtual
   }

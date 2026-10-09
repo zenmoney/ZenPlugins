@@ -1,10 +1,10 @@
-import { find } from 'lodash'
+import { defaultsDeep, find } from 'lodash'
 import { stringify } from 'querystring'
 import { dateInTimezone } from '../../common/dateUtils'
 import { fetch, ParseError } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
-import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryError } from '../../errors'
+import { InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryError, UserInteractionError } from '../../errors'
 
 const MAIN_URL = 'https://m.bcc.kz/mb/!pkg_w_mb_main.operation'
 const AUTH_URL = 'https://m.bcc.kz/auth/realms/bank/protocol/openid-connect/token'
@@ -101,7 +101,19 @@ async function fetchAuthApi (options) {
       ...options?.headers
     },
     stringify,
-    parse: (body) => body === '' ? undefined : JSON.parse(body)
+    parse: (body) => body === '' ? undefined : JSON.parse(body),
+    sanitizeResponseLog: defaultsDeep({}, options?.sanitizeResponseLog, {
+      headers: { 'set-cookie': true },
+      body: {
+        access_token: true,
+        refresh_token: true,
+        token: true,
+        session_code: true,
+        session_state: true,
+        mbsessionid: true,
+        provider_response: { session_code: true, mbsessionid: true }
+      }
+    })
   })
 }
 
@@ -210,7 +222,7 @@ async function coldAuth (token) {
     throw new InvalidOtpCodeError(response.body.reason ?? undefined)
   }
   assertSuccessAuthResponse(response)
-  console.assert(response.body.verified, 'unexpected response after sms confirmation', response)
+  console.assert(response.body.verified, 'unexpected response after sms confirmation', { status: response.status, verified: response.body.verified })
 
   return {
     verified: response.body.verified,
@@ -240,7 +252,7 @@ async function postAuth (auth) {
     }
   })
 
-  console.assert(response?.body?.access_token, 'unexpected auth connect response', response)
+  console.assert(response?.body?.access_token, 'unexpected auth connect response', { status: response.status })
 
   return {
     accessToken: response.body.access_token,
@@ -250,10 +262,13 @@ async function postAuth (auth) {
 }
 
 function assertSuccessAuthResponse (response) {
-  console.assert(response?.body?.success, 'unexpected auth response', response)
+  console.assert(response?.body?.success, 'unexpected auth response', { status: response.status, success: response.body?.success })
 }
 
-export async function login (rawPreferences, auth) {
+export async function login (rawPreferences, auth, isInBackground = false) {
+  if (isInBackground) {
+    throw new UserInteractionError()
+  }
   const preferences = validatePreferences(rawPreferences)
 
   const { verified, token } = await preAuth(preferences, auth)
@@ -267,6 +282,33 @@ export async function login (rawPreferences, auth) {
   await setMbsessionCookie(auth)
   if (auth.mbsessionId && typeof ZenMoney.saveCookies === 'function') {
     await ZenMoney.saveCookies()
+  }
+}
+
+export class SessionExpiredError extends Error {}
+
+export async function withAuthRecovery (preferences, auth, action, { isInBackground = false, onAuth = () => {} } = {}, deps = { login }) {
+  const authenticate = async () => {
+    if (isInBackground) {
+      throw new UserInteractionError()
+    }
+    await deps.login(preferences, auth)
+    onAuth(auth)
+  }
+  const hadCachedAuth = Boolean(auth?.accessToken)
+  if (!hadCachedAuth) {
+    await authenticate()
+  }
+  try {
+    return await action()
+  } catch (error) {
+    if (!(error instanceof SessionExpiredError) || !hadCachedAuth) {
+      throw error
+    }
+    delete auth.accessToken
+    delete auth.sessionCode
+    await authenticate()
+    return await action()
   }
 }
 
@@ -287,7 +329,7 @@ function createAuthenticatedMainUrl (auth, params) {
 async function fetchMainApi (auth, params) {
   const url = createAuthenticatedMainUrl(auth, params)
 
-  return await fetch(url, {
+  const response = await fetch(url, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
@@ -295,11 +337,21 @@ async function fetchMainApi (auth, params) {
     },
     parse: (body) => body === '' ? undefined : JSON.parse(body),
     sanitizeRequestLog: {
+      url: { query: { session_code: true } },
       headers: {
         Authorization: true
       }
+    },
+    sanitizeResponseLog: {
+      url: { query: { session_code: true } },
+      headers: { 'set-cookie': true },
+      body: { reason: { card: { holder: true }, other_card: { token: true } } }
     }
   })
+  if (response.body?.success === false && response.body?.timeout === 'YES') {
+    throw new SessionExpiredError('BCC session expired')
+  }
+  return response
 }
 
 export async function fetchAccounts (auth) {
@@ -314,10 +366,6 @@ export async function fetchAccounts (auth) {
     action: 'ACCOUNTS_ADDITIONAL_INFO',
     level: '0'
   })
-  if (typeof accountsAdditionalInfoResponse.body.reason === 'string' &&
-    accountsAdditionalInfoResponse.body.reason?.indexOf(/Произошла ошибка, идентификатор ошибки/) >= 0) {
-    throw new BankMessageError(accountsAdditionalInfoResponse.body.reason)
-  }
   assertSuccessResponse(accountsAdditionalInfoResponse)
   const accountsAdditionalData = accountsAdditionalInfoResponse.body.reason.accounts_info
 
@@ -393,7 +441,7 @@ async function fetchTransactionsChunk (auth, product, accountId, fromDate, toDat
     date_end: formatDate(toDate),
     ...(product.productType === 'ccard' && { cardacc: '1' })
   })
-  if (response.body.reason === 'Вы не являетесь владельцем счета') {
+  if (response.body?.reason === 'Вы не являетесь владельцем счета') {
     return []
   }
   assertSuccessResponse(response)
@@ -433,7 +481,7 @@ function dateDiffInDays (fromDate, toDate) {
 }
 
 function assertSuccessResponse (response) {
-  console.assert(response.body.success, 'unexpected response', response)
+  console.assert(response.body?.success, 'unexpected response', { status: response.status, success: response.body?.success })
 }
 
 function setStructType (data, structType) {
