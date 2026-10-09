@@ -1,3 +1,4 @@
+import { convertHeadersToPlainObject } from '../../../common/network/logging'
 import { FetchResponse } from '../../../common/network'
 import { ProductKind, Session } from '../models'
 
@@ -23,9 +24,11 @@ function makeOperation (id: string): unknown {
 
 function makeResponse (operations: unknown[]): FetchResponse {
   return {
+    ok: true,
     status: 200,
+    statusText: 'OK',
     url: 'https://psl.pskb.com/mobileService/3.0/json/pfmTape',
-    headers: {},
+    headers: convertHeadersToPlainObject({}),
     body: {
       response: {
         result: 0,

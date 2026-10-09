@@ -8,8 +8,8 @@ describe('BingX accounts', () => {
       { wallet: 'Fund / Spot', valueUsdt: 636.19996441, savings: false },
       { wallet: 'Grid Bots', valueUsdt: 61.76, savings: true }
     ])).toEqual([
-      { id: 'bingx_fund_spot', type: AccountType.investment, title: 'BingX Fund / Spot', instrument: 'USD', balance: 636.19996441, savings: false, syncIds: ['bingx_fund_spot'] },
-      { id: 'bingx_grid_bots', type: AccountType.investment, title: 'BingX Grid Bots', instrument: 'USD', balance: 61.76, savings: true, syncIds: ['bingx_grid_bots'] }
+      { id: 'bingx_fund_spot', type: AccountType.investment, title: 'BingX Fund / Spot', instrument: 'USDT', balance: 636.19996441, savings: false, syncIds: ['bingx_fund_spot'] },
+      { id: 'bingx_grid_bots', type: AccountType.investment, title: 'BingX Grid Bots', instrument: 'USDT', balance: 61.76, savings: true, syncIds: ['bingx_grid_bots'] }
     ])
   })
 

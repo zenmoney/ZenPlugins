@@ -24,7 +24,7 @@ describe('MEXC balance conversion', () => {
       id: 'mexc_spot',
       type: AccountType.investment,
       title: 'MEXC Spot',
-      instrument: 'USD',
+      instrument: 'USDT',
       balance: 6102,
       savings: false,
       syncIds: ['mexc_spot']

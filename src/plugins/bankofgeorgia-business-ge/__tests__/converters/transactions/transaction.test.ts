@@ -359,6 +359,92 @@ describe('convertToZenMoneyTransaction', () => {
       }
     ],
 
+    // Business Online statement record captured from the API. Sanitized: names, tax ids, account numbers,
+    // ids and the merchant name replaced; amounts scaled by a common factor; card digits replaced with zeros.
+    [
+      'card payment in a foreign currency',
+      {
+        Currency: 'GEL',
+        AccountID: 'GE00BG0000000000000000GEL',
+        BeneficiaryDetails: {
+          AccountNumber: 'GE00BG0000000000000001',
+          BankCode: 'BAGAGE22',
+          BankName: 'სს "საქართველოს ბანკი"',
+          Inn: '000000002',
+          Name: 'ბენეფიციარი'
+        },
+        DocComment: null,
+        DocumentActualDate: '2026-05-18T00:00:00',
+        DocumentBeneficiaryInstitution: null,
+        DocumentBranch: '502',
+        DocumentCorrespondentAccountNumber: 'GE00BG0000000000000001',
+        DocumentCorrespondentBankCode: 'BAGAGE22',
+        DocumentCorrespondentBankName: 'სს "საქართველოს ბანკი"',
+        DocumentDepartment: 'CEN217',
+        DocumentDestinationAmount: 35.84,
+        DocumentDestinationCurrency: 'GEL',
+        DocumentExpiryDate: '2026-05-19T00:00:00',
+        DocumentInformation: 'გადახდა - თანხა: GBP 9.81; MCC: 4111; მერჩანტის დასახელება: SHOP NAME; ავტორიზაციის თარიღი: 17/05/2026 14:09:56; ბარათის ნომერი: 00000*******0000; ავტორიზაციის კოდი: 000000',
+        DocumentIntermediaryInstitution: null,
+        DocumentKey: 10000000101.0,
+        DocumentNomination: 'გადახდა - თანხა: GBP 9.81; MCC: 4111; მერჩანტის დასახელება: SHOP NAME; ავტორიზაციის თარიღი: 17/05/2026 14:09:56; ბარათის ნომერი: 00000*******0000; ავტორიზაციის კოდი: 000000',
+        DocumentPayee: null,
+        DocumentPayerInn: '000000003',
+        DocumentPayerName: 'ბენეფიციარი',
+        DocumentProductGroup: 'CCO',
+        DocumentRate: 3.5838,
+        DocumentRateLimit: 3.5838,
+        DocumentReceiveDate: '2026-05-18T00:00:00',
+        DocumentRegistrationRate: 3.5838,
+        DocumentSenderInstitution: null,
+        DocumentSourceAmount: 10.0,
+        DocumentSourceCurrency: 'GBP',
+        DocumentTreasuryCode: null,
+        DocumentValueDate: null,
+        EntryAccountNumber: '00000000000000000002',
+        EntryAccountPoint: 'CENTRAL000',
+        EntryAmount: -35.84,
+        EntryAmountBase: 35.84,
+        EntryAmountCredit: 0.0,
+        EntryAmountCreditBase: null,
+        EntryAmountDebit: 35.84,
+        EntryAmountDebitBase: 35.84,
+        EntryComment: 'გადახდა - თანხა: GBP 9.81; MCC: 4111; მერჩანტის დასახელება: SHOP NAME; ავტორიზაციის თარიღი: 17/05/2026 14:09:56; ბარათის ნომერი: 00000*******0000; ავტორიზაციის კოდი: 000000',
+        EntryDate: '2026-05-18T00:00:00',
+        EntryDepartment: 'CEN217',
+        EntryDocumentNumber: '0000000000000101',
+        EntryId: 100000000101.0,
+        SenderDetails: {
+          AccountNumber: 'GE00BG0000000000000000GEL',
+          BankCode: 'BAGAGE22',
+          BankName: 'სს "საქართველოს ბანკი"',
+          Inn: '000000001',
+          Name: 'სახელი გვარი'
+        }
+      },
+      {
+        hold: false,
+        date: new Date('2026-05-18T00:00:00'),
+        movements: [
+          {
+            id: '100000000101',
+            account: { id: 'GE00BG0000000000000000GEL' },
+            sum: -35.84,
+            fee: 0,
+            invoice: { sum: -10, instrument: 'GBP' }
+          }
+        ],
+        merchant: {
+          country: null,
+          city: null,
+          title: 'ბენეფიციარი',
+          mcc: 4111,
+          location: null
+        },
+        comment: 'გადახდა - თანხა: GBP 9.81; MCC: 4111; მერჩანტის დასახელება: SHOP NAME; ავტორიზაციის თარიღი: 17/05/2026 14:09:56; ბარათის ნომერი: 00000*******0000; ავტორიზაციის კოდი: 000000'
+      }
+    ],
+
     [
       'fee',
       {

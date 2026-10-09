@@ -7,7 +7,7 @@ import {
   fetchLatestOperations,
   parseLatestOperations
 } from './api'
-import { convertAccount, convertLinkedAccountSource, convertTransaction, deduplicateTransactions, TransactionSource } from './converters'
+import { convertAccounts, convertLinkedAccountSource, convertTransaction, deduplicateTransactions, TransactionSource } from './converters'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
@@ -53,9 +53,7 @@ async function loadTransactions (token, source, fromDate, toDate) {
 
 async function loadAccountsAndSources (token) {
   const products = await fetchAccounts(token)
-  const accounts = products
-    .map(convertAccount)
-    .filter(account => account !== null)
+  const accounts = convertAccounts(products)
   const visibleAccountIds = new Set(accounts.map(account => account.id))
   const linkedAccounts = products
     .map(convertLinkedAccountSource)

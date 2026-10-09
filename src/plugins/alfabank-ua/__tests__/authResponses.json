@@ -1,0 +1,66 @@
+{
+  "device": {
+    "access_token": "<string[36]>",
+    "token_type": "bearer",
+    "expires_in": 600,
+    "scope": "access_code touchId access_recovery_otp",
+    "deviceStatus": "TRUSTED",
+    "firstName": "Олексій",
+    "photoURI": "https://superapp.sensebank.com.ua/mob/client/photo/DEFAULT.png"
+  },
+  "deviceSource": {
+    "log": 98817,
+    "build": 144,
+    "endpoint": "/mob/auth"
+  },
+  "identification": {
+    "access_token": "<string[36]>",
+    "token_type": "bearer",
+    "expires_in": 600,
+    "scope": "login_otp",
+    "firstName": "Лук'ян",
+    "photoURI": "https://superapp.sensebank.com.ua/mob/client/photo/DEFAULT.png"
+  },
+  "identificationSource": {
+    "log": 115442,
+    "build": 145,
+    "endpoint": "/mob/auth"
+  },
+  "passport": {
+    "access_token": "<string[36]>",
+    "token_type": "bearer",
+    "expires_in": 600,
+    "scope": "passport_issue_date",
+    "description": "Введи дату выдачи украинского паспорта",
+    "title": "Когда тебе выдали паспорт?"
+  },
+  "passportSource": {
+    "log": 115442,
+    "build": 145,
+    "endpoint": "/mob/auth",
+    "status": 200
+  },
+  "createAccessCode": {
+    "access_token": "<string[36]>",
+    "token_type": "bearer",
+    "expires_in": 600,
+    "scope": "create_access_code"
+  },
+  "createAccessCodeSource": {
+    "log": 115442,
+    "build": 145,
+    "endpoint": "/mob/auth",
+    "status": 200
+  },
+  "serverError": {
+    "error": "server_error",
+    "error_description": "Internal Server Error"
+  },
+  "serverErrorSource": {
+    "log": 99928,
+    "build": 144,
+    "endpoint": "/mob/auth",
+    "status": 500
+  },
+  "publicFixtureNote": "Public fixture: personal names, phone numbers, account/card identifiers and transaction references are consistently replaced; record structure, formats and relationships are preserved. Credentials remain redacted."
+}

@@ -7,16 +7,15 @@ These plugins do the job.
 
 ---
 - Plugins in this repository are developed by the community.
-- All new plugins must be created in TypeScript according to our guidelines.
+- All new plugins must be created in TypeScript according to our [architecture and conventions](docs/plugins/architecture.md).
 - In simple words, the plugin requests the bank to get your accounts and transactions,
 then converts them into our unified format.
-- Plugins are downloaded to the app and run entirely on your device.
-  Thus, your bank credentials are stored securely and do not leave your device.
+- Plugins are downloaded to the app, run on your device, and contact the
+  configured service for authentication and data.
 
-Some banks have an open API with documentation. For example, in Europe,
-there is PSD2 Directive, so all European banks have a standardized API.
-In all other cases, we have to reverse-engineer banking websites
-or mobile apps to create a JS plugin.
+Integrations can use documented APIs, banking websites or mobile protocols,
+public ledgers, and user-selected statements. The supported data and interaction
+flow depend on the integration.
 
 ## Contribution
 We are always looking to expand the coverage of our plugins, but
@@ -24,4 +23,11 @@ if your bank is still unsupported, and you have skills in TypeScript + basic rev
 you can help us — create a plugin by yourself.
 So after a successful merge, all users will be able to use it.
 
-To get started, look at our [documentation](./docs/README.md).
+Start with the [documentation by task](docs/README.md), the
+[plugin creation guide](docs/development/new-plugin.md), and the
+[contribution workflow](docs/project/workflow.md).
+
+The [shared runtime](docs/plugins/runtime.md) applies to all plugin types.
+Account and transaction synchronization follows the
+[scrape contract](docs/plugins/scrape/contract.md) and
+[data quality requirements](docs/plugins/scrape/quality/README.md).

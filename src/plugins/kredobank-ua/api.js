@@ -4,7 +4,7 @@ import { createDateIntervals, dateInTimezone } from '../../common/dateUtils'
 import { fetch } from '../../common/network'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { generateRandomString } from '../../common/utils'
-import { InvalidLoginOrPasswordError, InvalidOtpCodeError } from '../../errors'
+import { InvalidLoginOrPasswordError, UserInteractionError } from '../../errors'
 
 const BASE_URL = 'https://online.kredobank.com.ua/ibank/api'
 const COMMON_HEADERS = {
@@ -12,10 +12,8 @@ const COMMON_HEADERS = {
 }
 
 async function askOtpCode () {
-  const otp = await ZenMoney.readLine('Введите код из смс', { inputType: 'number' })
-  if (!otp) {
-    throw new InvalidOtpCodeError()
-  }
+  const otp = await ZenMoney.readLine('Введіть код із SMS', { inputType: 'number' })
+  console.assert(typeof otp === 'string' && otp.trim(), 'Required OTP input was not provided')
   return otp
 }
 
@@ -47,7 +45,20 @@ async function fetchApi (url, options, auth) {
       ...options?.sanitizeRequestLog,
       headers: {
         ...options?.sanitizeRequestLog?.headers,
-        Authorization: true
+        Authorization: true,
+        authorization: true,
+        Cookie: true,
+        cookie: true
+      }
+    },
+    sanitizeResponseLog: {
+      ...options?.sanitizeResponseLog,
+      headers: {
+        ...options?.sanitizeResponseLog?.headers,
+        authorization: true,
+        Authorization: true,
+        'set-cookie': true,
+        'Set-Cookie': true
       }
     },
     stringify: JSON.stringify,
@@ -55,7 +66,16 @@ async function fetchApi (url, options, auth) {
   })
 }
 
-async function coldAuth ({ login, password }, auth) {
+function authResponseContext (response) {
+  return {
+    status: response.status,
+    errorCode: response.body?.errorMessageKey,
+    hasAuthorization: Boolean(response.headers.authorization),
+    isAuthCompleted: response.body?.isAuthCompleted
+  }
+}
+
+async function coldAuth ({ login, password }, auth, isInBackground) {
   let response = await fetchApi(`/v1/individual/light/auth/login/login-password/${auth.device.deviceId}`, {
     method: 'POST',
     body: {
@@ -70,16 +90,21 @@ async function coldAuth ({ login, password }, auth) {
     }
   })
 
-  if (response.body.errorMessageKey === 'wrong_login_and_password_credentials' ||
-      (response.body.errorMessageKey === 'account_temporary_locked' && response.body.errorDescription === 'Wrong Credentials')) {
+  if (response.body?.errorMessageKey === 'wrong_login_and_password_credentials' ||
+      (response.body?.errorMessageKey === 'account_temporary_locked' && response.body?.errorDescription === 'Wrong Credentials')) {
     throw new InvalidLoginOrPasswordError()
   }
 
+  console.assert(response.status === 200 && typeof response.body?.isAuthCompleted === 'boolean', 'Unexpected Kredobank authentication response', authResponseContext(response))
   if (!response.body.isAuthCompleted) {
-    const username = response.body.userInfo.name
+    const username = response.body.userInfo?.name
     const authorization = response.headers.authorization
-    console.assert(username && authorization, '2fa cant get params', username, authorization)
+    console.assert(typeof username === 'string' && username && typeof authorization === 'string' && authorization, 'Kredobank OTP parameters are missing', {
+      hasUsername: Boolean(username),
+      hasAuthorization: Boolean(authorization)
+    })
 
+    if (isInBackground) throw new UserInteractionError()
     response = await fetchApi(`/v1/individual/light/auth/login/otp_sms/challenge?userName=${username}`, {
       method: 'GET',
       headers: {
@@ -88,8 +113,8 @@ async function coldAuth ({ login, password }, auth) {
       sanitizeRequestLog: { url: { query: { userName: true } }, headers: { Authorization: true } },
       sanitizeResponseLog: { url: { query: { userName: true } } }
     })
-    const challengeId = response.body.challengeId
-    console.assert(challengeId, 'cant get challenge id', response)
+    const challengeId = response.body?.challengeId
+    console.assert(challengeId, 'Kredobank OTP challenge is missing', authResponseContext(response))
 
     response = await fetchApi('/v1/individual/light/auth/login/otp_sms/response', {
       method: 'POST',
@@ -100,15 +125,15 @@ async function coldAuth ({ login, password }, auth) {
         authValue: await askOtpCode(),
         challenge: { challengeId }
       },
-      sanitizeRequestLog: { headers: { Authorization: true }, body: { authValue: true, challenge: true } },
+      sanitizeRequestLog: { headers: { Authorization: true }, body: { authValue: true } },
       sanitizeResponseLog: {
         headers: { authorization: true },
         body: { profileAttributes: true, userInfo: true }
       }
     })
-    console.assert(response.body.isAuthCompleted, 'auth not completed after otp', response)
+    console.assert(response.body?.isAuthCompleted === true, 'Kredobank authentication did not complete after OTP', authResponseContext(response))
   }
-  console.assert(response.headers.authorization, 'cant get auth token', response)
+  console.assert(response.headers.authorization, 'Kredobank authorization token is missing', authResponseContext(response))
   auth.accessToken = response.headers.authorization
 }
 
@@ -125,7 +150,7 @@ async function warmAuth (auth) {
     }
   }, auth)
 
-  console.assert(response.body.isAuthCompleted, 'expected authed', response)
+  console.assert(response.status === 200 && response.body?.isAuthCompleted === true && response.headers.authorization, 'Unexpected Kredobank authentication response', authResponseContext(response))
 
   auth.accessToken = response.headers.authorization
 }
@@ -139,19 +164,21 @@ async function checkSession (auth) {
     }
   }, auth)
 
-  console.assert(response.body.isAuthCompleted, 'expected authed', response)
+  console.assert(response.status === 200 && response.body?.isAuthCompleted === true && response.headers.authorization, 'Unexpected Kredobank authentication response', authResponseContext(response))
 
   auth.accessToken = response.headers.authorization
 }
 
-export async function login (preferences, auth) {
+export async function login (preferences, auth, isInBackground = false, onAuth = async () => {}) {
   if (!auth.accessToken) {
-    await coldAuth(preferences, auth)
+    await coldAuth(preferences, auth, isInBackground)
   } else {
     await warmAuth(auth)
   }
 
+  await onAuth(auth)
   await checkSession(auth)
+  await onAuth(auth)
 }
 
 async function fetchProductDetails (product, contractType, auth) {

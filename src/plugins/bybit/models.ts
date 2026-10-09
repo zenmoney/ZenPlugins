@@ -13,6 +13,9 @@ export interface Preferences {
   // `auto` is retained solely to produce a migration error for old local
   // preferences created before the plugin required an explicit choice.
   cardPaymentSource?: 'auto' | 'earn' | 'funding'
+  // Percentage Bybit keeps when it sells crypto for the fiat a card purchase
+  // needs. It is not reported by any API field; see parseCardConversionFeePercent.
+  cardConversionFeePercent?: string
 }
 
 export interface Auth {

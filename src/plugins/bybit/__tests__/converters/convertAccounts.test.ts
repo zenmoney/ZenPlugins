@@ -5,6 +5,7 @@ import {
   BYBIT_FUNDING_ACCOUNT_ID,
   createFlexibleEarnAccount,
   createFundingAccount,
+  createUnifiedAccount,
   convertEarnTransfers,
   convertExternalTransfers,
   convertInternalTransfers,
@@ -13,6 +14,14 @@ import {
 } from '../../converters'
 
 describe('Bybit wallet accounts', () => {
+  it('stores the Unified wallet in the shared USDT accounting unit', () => {
+    expect(createUnifiedAccount({ totalEquity: 123.45 })).toMatchObject({
+      id: 'bybit_unified',
+      instrument: 'USDT',
+      balance: 123.45
+    })
+  })
+
   it('keeps Funding as a separate wallet balance', () => {
     expect(createFundingAccount([
       { coin: 'USDT', walletBalance: 10, transferBalance: 9.5 },
@@ -21,7 +30,7 @@ describe('Bybit wallet accounts', () => {
       id: BYBIT_FUNDING_ACCOUNT_ID,
       type: AccountType.checking,
       title: 'Bybit Funding',
-      instrument: 'USD',
+      instrument: 'USDT',
       balance: 14.55,
       syncIds: [BYBIT_FUNDING_ACCOUNT_ID]
     })
@@ -35,7 +44,7 @@ describe('Bybit wallet accounts', () => {
       id: BYBIT_FLEXIBLE_EARN_ACCOUNT_ID,
       type: AccountType.investment,
       title: 'Bybit Flexible Earn',
-      instrument: 'USD',
+      instrument: 'USDT',
       balance: 3300,
       savings: true,
       syncIds: [BYBIT_FLEXIBLE_EARN_ACCOUNT_ID]

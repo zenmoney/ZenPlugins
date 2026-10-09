@@ -1,7 +1,8 @@
 import { fetchAccounts, fetchTransactions, generateDevice, login } from './api'
 import { convertAccounts, convertTransaction } from './converters'
 
-export async function scrape ({ preferences, fromDate, toDate }) {
+export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
+  ZenMoney.locale = 'uk'
   toDate = toDate || new Date()
 
   let auth = ZenMoney.getData('auth')
@@ -10,9 +11,10 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     auth = { device: generateDevice() }
   }
 
-  await login(preferences, auth)
-  ZenMoney.setData('auth', auth)
-  ZenMoney.saveData()
+  await login(preferences, auth, isInBackground, updatedAuth => {
+    ZenMoney.setData('auth', updatedAuth)
+    ZenMoney.saveData()
+  })
 
   const accounts = []
   const transactions = []

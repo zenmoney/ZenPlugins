@@ -1,7 +1,8 @@
 import { fetchAccounts, fetchTransactions, login, generateDevice } from './api'
 import { convertAccounts, convertTransaction, duplicatesTransactions } from './converters'
 
-export async function scrape ({ preferences, fromDate, toDate }) {
+export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
+  ZenMoney.locale = 'uk'
   toDate = toDate || new Date()
 
   // upgrade
@@ -17,14 +18,15 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     auth = { device: generateDevice() }
   }
 
-  await login(preferences, auth)
-  ZenMoney.setData('auth', auth)
-  ZenMoney.saveData()
-  const accounts = []
+  await login(preferences, auth, isInBackground, updatedAuth => {
+    ZenMoney.setData('auth', updatedAuth)
+    ZenMoney.saveData()
+  })
+  const plans = convertAccounts(await fetchAccounts(auth))
+  const accounts = plans.map(plan => plan.account)
   const transactions = []
 
-  await Promise.all(convertAccounts(await fetchAccounts(auth)).map(async ({ account, product }) => {
-    accounts.push(account)
+  await Promise.all(plans.map(async ({ account, product }) => {
     if (ZenMoney.isAccountSkipped(account.id)) {
       return
     }

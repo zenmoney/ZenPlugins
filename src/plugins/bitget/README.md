@@ -1,6 +1,6 @@
 # Bitget
 
-Read-only Bitget wallet balances and external transfers for ZenMoney. The account overview endpoint returns the exchange-native Spot, Funding, Earn, Futures, Margin and Bots sections that are available for the connected account, already valued by Bitget in USDT.
+Read-only Bitget wallet balances and external transfers for ZenMoney. The account overview endpoint returns the exchange-native Spot, Funding, Earn, Futures, Margin and Bots sections that are available for the connected account, already valued by Bitget in USDT; ZenMoney wallet accounts use USDT as their instrument. USD-pegged stablecoin transfers use nominal 1:1 parity with USDT, an accounting convention rather than a guarantee that pegs never move.
 
 Create a Bitget API key in **API Management**, choose a passphrase, and enable read access only. Leave trading, transfers and withdrawals disabled. The plugin supports the documented Classic account overview; Bitget recommends Unified Trading Account for newly migrated users, which will be handled separately when its read-only wallet coverage is equivalent.
 

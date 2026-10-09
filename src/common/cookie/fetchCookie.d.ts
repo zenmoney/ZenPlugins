@@ -1,5 +1,5 @@
 import type { FetchOptions, FetchResponse, FetchFunc } from '../network'
-import { CookieJar, FetchCookieImpl } from 'fetch-cookie'
+import type { CookieJar, FetchCookieImpl } from 'fetch-cookie'
 
 export interface FetchCookieOptions extends FetchOptions {
   maxRedirect?: number

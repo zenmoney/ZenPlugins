@@ -19,7 +19,7 @@ export function createAccounts (label: string, wallets: WalletBalance[]): Accoun
       id,
       type: AccountType.investment,
       title: `${prefix} ${wallet.wallet}`,
-      instrument: 'USD',
+      instrument: 'USDT',
       balance: Number(wallet.valueUsdt.toFixed(8)),
       savings: wallet.savings,
       syncIds: [id]

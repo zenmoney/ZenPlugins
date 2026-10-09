@@ -76,16 +76,20 @@ export interface Location {
   longitude: number
 }
 
+/** Structured counterparty; see [merchant parsing and cleanup](../../docs/plugins/scrape/quality/merchants.md). */
 export interface Merchant {
   country: string | null
   city: string | null
+  /** Non-null, nonblank merchant name, separate from city/country. */
   title: string
   mcc: number | null // https://ru.wikipedia.org/wiki/Merchant_Category_Code
   location: Location | null
   category?: string
 }
 
+/** Counterparty with unresolved name/place boundaries; see [MERCHANT-001](../../docs/plugins/scrape/quality/merchants.md#merchant-001-preserve-known-field-boundaries). */
 export interface NonParsedMerchant {
+  /** Non-null, nonblank cleaned merchant text with unresolved name/place boundaries. */
   fullTitle: string
   mcc: number | null
   location: Location | null
@@ -107,7 +111,9 @@ export interface Transaction {
   hold: boolean | null
   date: Date
   movements: [Movement] | [Movement, Movement]
+  /** Counterparty representation follows the [merchant contract](../../docs/plugins/scrape/transactions.md#merchant-and-comment). */
   merchant: Merchant | NonParsedMerchant | null
+  /** Useful supplementary text; selection and cleanup follow [comment quality](../../docs/plugins/scrape/quality/comments.md). */
   comment: string | null
 }
 

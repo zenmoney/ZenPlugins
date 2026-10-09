@@ -1,6 +1,6 @@
 import forge from 'node-forge'
 import { fetch } from '../../common/network'
-import Connection from '../../common/protocols/webSocket'
+import { WebSocketRequestClient } from '../../common/network/webSocketRequestClient'
 import { delay, generateUUID } from '../../common/utils'
 
 const APP_VERSION = '2.338.05'
@@ -454,7 +454,7 @@ async function sendRequest (request, requestData, device, connection, sanitizeOp
       lang: 'UK'
     }
     const result = await withWebSocketTimeout(
-      connection.send(messageId, { body, ...sanitizeOptions }),
+      connection.request(messageId, { body, ...sanitizeOptions }),
       request?.cz?.functional || 'response',
       connection
     )
@@ -476,13 +476,13 @@ async function sendRequest (request, requestData, device, connection, sanitizeOp
 }
 
 export async function openUnauthenticatedConnection () {
-  const connection = new Connection()
+  const connection = new WebSocketRequestClient()
   await withWebSocketTimeout(connection.open(WEB_SOCKET_URL), 'connection opening', connection)
   return connection
 }
 
 export async function openAuthenticatedConnection (token, deviceId) {
-  const connection = new Connection()
+  const connection = new WebSocketRequestClient()
   await withWebSocketTimeout(connection.open(WEB_SOCKET_URL, {
     headers: { authorization: token, 'X-DEVICE-ID': deviceId },
     sanitizeRequestLog: { headers: { authorization: true, 'X-DEVICE-ID': true } },

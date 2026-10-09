@@ -4,8 +4,8 @@ Read-only synchronization of Bybit wallets and, optionally, Bybit Card transacti
 
 ## What the plugin creates
 
-- **Bybit Unified** — the USD equity reported by Bybit for the Unified wallet.
-- **Bybit Funding** — all non-zero Funding assets, valued in USD through Bybit's own Convert valuation.
+- **Bybit Unified** — the Unified wallet equity reported by Bybit, stored using ZenMoney's shared USDT accounting unit.
+- **Bybit Funding** — all non-zero Funding assets, valued in USDT through Bybit's own Convert valuation.
 - **Bybit Flexible Earn** — every Flexible Earn asset, valued in USDT with Bybit's own spot prices. The account is marked as savings.
 
 The Card is a payment instrument, not an independent wallet with a reliable separate balance. Enabling Card sync imports its purchases into the wallet chosen in the Card's *Paying With* settings, without creating a duplicate "Bybit Card" balance.
@@ -16,7 +16,7 @@ The Card is a payment instrument, not an independent wallet with a reliable sepa
 - Funding ↔ Unified transfers are imported as balanced transfers between the two ZenMoney accounts.
 - Flexible Earn subscriptions and redemptions are imported as balanced transfers between Flexible Earn and the source wallet selected by the user.
 - Bybit does not expose the destination wallet of an older external deposit or the source wallet of an older Earn order. The plugin therefore asks for both settings and never guesses.
-- USDT, USDC, FDUSD, TUSD and USD can be imported at their nominal amount. Non-stable assets remain included in the live USD account valuation, but are not represented as misleading historical USD cash flow without a trustworthy historical quote.
+- Crypto wallets use USDT as the shared accounting unit. Bybit's USD-reported equity and USD-pegged transfer amounts use nominal 1:1 USD/USDT parity; this is an accounting convention, not a guarantee that USD-pegged assets always trade exactly at parity. USDT, USDC, FDUSD, TUSD and USD transfers can be imported at nominal amount. Non-stable assets remain included in live USDT account valuation, but are not represented as historical USDT cash flow without a trustworthy historical quote.
 - The first synchronization reads the requested external history. Internal wallet and Flexible Earn history is limited to the latest 180 days to stay within Bybit API limits; later synchronizations continue incrementally from ZenMoney's last successful date.
 
 ## Card transactions
@@ -25,6 +25,20 @@ The Card is a payment instrument, not an independent wallet with a reliable sepa
   transaction IDs from Bybit. The aggregate financial query is retained because
   it is the mode accepted by the live Kazakhstan Card API.
 - Pending authorizations are imported as holds; declined and reversal records are skipped so they cannot be double-counted.
+- An authorization does not move money out of Bybit yet: the coin is sold at once and the fiat is parked in Funding with a zero
+  transferable balance until the merchant clears the purchase, about a day and a half later. That parked fiat is therefore subtracted from
+  the Funding balance for as long as the matching hold is imported, so the same money is not reported twice. Authorizations are
+  read over a fixed fourteen-day window rather than the synchronization window: the same set has to be imported and subtracted, and
+  tying it to the requested history would make the balance jump between a first run and a daily one. Fourteen days is what ZenMoney
+  asks for anyway, and an ample margin over the day and a half an authorization was observed to need.
+- The deduction is applied to Funding whichever wallet settles the card. That is where the parked fiat was observed on a
+  Funding-settled account; an account paying from Flexible Earn was not available to check.
+- Bybit's authorization and clearing records for one purchase share neither `txnId` nor `orderNo`, so the plugin does not try to
+  pair them. ZenMoney merges a hold with the cleared operation on its own.
+- `totalFees` covers only the fees Bybit reports on the fiat side. The markup it keeps when selling crypto for that fiat is absent
+  from every Card API field and from the convert history, so it is left to the **Crypto-to-fiat conversion fee** preference. With
+  it unset, card purchases are imported for less than the wallet actually paid. The current cost is visible in the Bybit app under
+  *Crypto used*: divide the crypto spent by the fiat it produced.
 - Merchant, MCC, city and country are retained where Bybit provides them.
 - The Card API does not disclose the actual *Paying With* setting. The plugin therefore asks the user to choose **Flexible Earn** or **Funding** and never guesses from a current balance. Set it to the same source selected in Bybit.
 

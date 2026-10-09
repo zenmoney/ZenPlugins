@@ -30,7 +30,10 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
   }
   let session
   try {
-    session = await login(preferences, isInBackground, persistedState)
+    session = await login(preferences, isInBackground, persistedState, authState => {
+      ZenMoney.setData('auth', authState)
+      ZenMoney.saveData()
+    })
     ZenMoney.setData('auth', session.authState)
     ZenMoney.saveData()
 

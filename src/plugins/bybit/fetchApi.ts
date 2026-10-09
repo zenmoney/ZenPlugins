@@ -22,6 +22,15 @@ const MIN_REQUEST_INTERVAL_MS = 500
 const INTERNAL_HISTORY_DAYS = 180
 let lastRequestAt = 0
 
+// Bybit rejects a signed request whose timestamp runs more than 1000 ms ahead of server time,
+// no matter how wide recv_window is: server_time - recv_window <= timestamp < server_time + 1000.
+// A device clock that is a couple of seconds fast therefore breaks every signed request, so we
+// measure the offset against Bybit's public clock instead of trusting the device.
+const CLOCK_SYNC_SAMPLES = 3
+// Stay away from the upper bound: recv_window leaves 20 seconds of room in the other direction.
+const TIMESTAMP_SAFETY_MARGIN_MS = 500
+let clockOffsetMs: number | null = null
+
 export interface CardTransactionPage {
   transactions: CardTransaction[]
   page: number
@@ -50,6 +59,44 @@ async function waitForRequestSlot (): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, waitMs))
   }
   lastRequestAt = Date.now()
+}
+
+interface ClockSample {
+  offsetMs: number
+  roundTripMs: number
+}
+
+async function measureClockOffset (baseUrl: string): Promise<ClockSample | null> {
+  const sentAt = Date.now()
+  const response = await fetchJson(`${baseUrl}/v5/market/time`, { method: 'GET' })
+  const receivedAt = Date.now()
+  const serverMs = getOptNumber(response.body, 'time') ??
+    Number(getOptString(response.body, 'result.timeSecond') ?? '') * 1000
+  if (!isFinite(serverMs) || serverMs <= 0) {
+    return null
+  }
+  return { offsetMs: serverMs - (sentAt + receivedAt) / 2, roundTripMs: receivedAt - sentAt }
+}
+
+export async function syncServerClock (baseUrl: string): Promise<number> {
+  // The midpoint estimate is only as good as the channel symmetry, so keep the sample
+  // with the smallest round trip instead of the last one.
+  let best: ClockSample | null = null
+  for (let i = 0; i < CLOCK_SYNC_SAMPLES; i++) {
+    let sample: ClockSample | null = null
+    try {
+      sample = await measureClockOffset(baseUrl)
+    } catch {
+      sample = null
+    }
+    if (sample !== null && (best === null || sample.roundTripMs < best.roundTripMs)) {
+      best = sample
+    }
+  }
+  // Keep the previous offset, or fall back to the raw device clock, when the public endpoint
+  // is unreachable: that is still better than failing the whole sync here.
+  clockOffsetMs = best?.offsetMs ?? clockOffsetMs ?? 0
+  return clockOffsetMs
 }
 
 export function buildQueryString (query: Record<string, string | number | undefined>): string {
@@ -87,7 +134,10 @@ async function callApi (creds: Credentials, request: BybitRequest, attempt = 0):
   await waitForRequestSlot()
 
   const { apiKey, apiSecret, baseUrl, siteId } = creds
-  const timestamp = Date.now().toString()
+  if (clockOffsetMs === null) {
+    await syncServerClock(baseUrl)
+  }
+  const timestamp = Math.round(Date.now() + (clockOffsetMs ?? 0) - TIMESTAMP_SAFETY_MARGIN_MS).toString()
 
   let url: string
   const options: FetchOptions = {
@@ -134,6 +184,14 @@ async function callApi (creds: Credentials, request: BybitRequest, attempt = 0):
     // 10003 invalid api key, 10004 invalid sign, 33004 api key expired, 10005 permission denied
     if (retCode === 10003 || retCode === 10004 || retCode === 33004 || retCode === 10005) {
       throw new InvalidPreferencesError(`Bybit: ${retMsg} (retCode=${retCode}). Recreate a read-only API key in Bybit Dashboard → API with Bybit Card, Earn, Wallet, and Exchange History permissions enabled.`)
+    }
+    // 10002 timestamp outside the receive window: the clock drifted away, resync and retry
+    if (retCode === 10002 && attempt < 2) {
+      await syncServerClock(baseUrl)
+      return await callApi(creds, request, attempt + 1)
+    }
+    if (retCode === 10002) {
+      throw new TemporaryError(`Bybit: ${retMsg} (retCode=${retCode}). The device clock is out of sync with Bybit servers.`)
     }
     // 10006 / 10018 rate-limit / ip ban
     if (retCode === 10006 && attempt < 4) {

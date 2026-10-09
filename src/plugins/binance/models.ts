@@ -1,6 +1,7 @@
 export interface Preferences {
   apiKey: string
   apiSecret: string
+  accountLabel?: string
   baseUrl?: string
   syncTransactions?: boolean
   externalTransferAssets?: string

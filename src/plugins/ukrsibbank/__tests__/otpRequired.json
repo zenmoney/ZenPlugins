@@ -1,0 +1,44 @@
+{
+  "status": 406,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "content-type": "application/json",
+    "server-timing": "dtRpid;desc=\"1264056418\", dtSInfo;desc=\"0\"",
+    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://www.google-analytics.com https://www.google-analytics.com https://ssl.google-analytics.com https://*.googleapis.com https://*.gstatic.com *.google.com https://*.ggpht.com *.googleusercontent.com https://www.googletagmanager.com blob:; object-src 'self'; style-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com; img-src 'self' https://www.google-analytics.com https://*.googleapis.com https://*.gstatic.com *.google.com *.google.com.ua *.googleusercontent.com data:; frame-src 'self' *.google.com; media-src 'self'; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com *.google.com https://*.gstatic.com https://www.google-analytics.com https://stats.g.doubleclick.net data: blob:; form-action 'self' https://3ds.ipay.ua;",
+    "authorization": "<string[1566]>",
+    "x-xss-protection": "1; mode=block",
+    "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD",
+    "set-cookie": "<string[351]>",
+    "access-control-max-age": "1209600",
+    "access-control-allow-headers": "origin, content-type, accept, authorization",
+    "otpid": "38658d8f-90b1-5da6-484c-68cb12e93b02",
+    "date": "Thu, 10 Sep 2026 20:48:56 GMT",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "access-control-allow-credentials": "true",
+    "connection": "keep-alive",
+    "content-length": "201",
+    "x-content-type-options": "nosniff",
+    "x-oneagent-js-injection": "true",
+    "x-frame-options": "SAMEORIGIN"
+  },
+  "body": {
+    "description": "OTP required",
+    "errorCode": "OTP_REQUIRED",
+    "errorData": {
+      "bundleId": null,
+      "expiredTimeout": 300,
+      "otpId": "38658d8f-90b1-5da6-484c-68cb12e93b02",
+      "otpLength": 5,
+      "resendTimeout": 60,
+      "type": "OTP"
+    }
+  },
+  "source": {
+    "log": 146179,
+    "build": 167,
+    "endpoint": "/auth/login",
+    "redactions": [
+      "Public fixture: personal names, phone numbers, account/card identifiers and transaction references are consistently replaced; record structure, formats and relationships are preserved. Credentials remain redacted."
+    ]
+  }
+}

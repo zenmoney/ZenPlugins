@@ -1,9 +1,9 @@
 const mockConnection = jest.fn()
 const mockFetch = jest.fn()
 
-jest.mock('../../../common/protocols/webSocket', () => ({
+jest.mock('../../../common/network/webSocketRequestClient', () => ({
   __esModule: true,
-  default: mockConnection
+  WebSocketRequestClient: mockConnection
 }))
 
 jest.mock('../../../common/network', () => ({ fetch: mockFetch }))
@@ -34,7 +34,7 @@ function makeConnection () {
     _socket: null,
     _callbacks: {},
     open: jest.fn().mockResolvedValue({ status: 101 }),
-    send: jest.fn().mockResolvedValue({ body: { data: { device_id: 'bank-device-id' } } }),
+    request: jest.fn().mockResolvedValue({ body: { data: { device_id: 'bank-device-id' } } }),
     close: jest.fn().mockResolvedValue(undefined)
   }
 }
@@ -132,7 +132,7 @@ describe('PUMB fetch API', () => {
     await closeConnection(publicConnection)
     await expect(openAuthenticatedConnection('jwt-token', 'bank-device-id')).resolves.toBe(authenticatedConnection)
 
-    expect(publicConnection.send.mock.calls[0][1].body).toMatchObject({
+    expect(publicConnection.request.mock.calls[0][1].body).toMatchObject({
       data: {
         app_version: '2.338.05',
         hardware_id: '0123456789abcdef',
@@ -228,7 +228,7 @@ describe('PUMB fetch API', () => {
 
   it('uses the application operations-history protocol and rejects a missing list', async () => {
     const connection = makeConnection()
-    connection.send.mockResolvedValueOnce({
+    connection.request.mockResolvedValueOnce({
       body: { data: { transactions_history_list: [{ source_system_id: 'operation-id' }] } }
     })
     const fromDate = new Date('2026-02-03T14:05:06.007Z')
@@ -240,7 +240,7 @@ describe('PUMB fetch API', () => {
       fromDate
     )).resolves.toEqual([{ source_system_id: 'operation-id' }])
 
-    expect(connection.send.mock.calls[0][1].body).toMatchObject({
+    expect(connection.request.mock.calls[0][1].body).toMatchObject({
       data: {
         current_account_ids: [101, 102],
         date_end: '03.02.2026T14:05:06.007Z',
@@ -250,7 +250,7 @@ describe('PUMB fetch API', () => {
       type: 'BUSINESS'
     })
 
-    connection.send.mockResolvedValueOnce({ body: { data: {} } })
+    connection.request.mockResolvedValueOnce({ body: { data: {} } })
     await expect(fetchOperationsHistory(
       connection,
       { sessionId: 'session-id', device },

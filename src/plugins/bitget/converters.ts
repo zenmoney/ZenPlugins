@@ -23,7 +23,7 @@ export function createAccounts (label: string, wallets: WalletBalance[]): Accoun
       id,
       type: AccountType.investment,
       title: `${titlePrefix} ${walletTitle}`,
-      instrument: 'USD',
+      instrument: 'USDT',
       balance: Number(wallet.valueUsdt.toFixed(8)),
       savings: ['bots', 'earn'].includes(wallet.accountType.toLowerCase()),
       syncIds: [id]

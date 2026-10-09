@@ -3,6 +3,7 @@ import SHA256 from 'crypto-js/sha256'
 import { fetchJson } from '../../common/network'
 import { generateUUID } from '../../common/utils'
 import {
+  BankMessageError,
   InvalidLoginOrPasswordError,
   InvalidOtpCodeError,
   InvalidPreferencesError,
@@ -14,6 +15,8 @@ const API_URL = 'https://online.ukrsibbank.com/clientendpoint'
 const APP_VERSION = '2.264.0'
 const AUTH_SCHEMA_VERSION = 1
 const PAGE_SIZE = 50
+const authUpdateCallbacks = new WeakMap()
+const SUSPENDED_ACCESS_MESSAGE = "Внаслідок тривалої відсутності входу в систему доступ був заблокований. Для відновлення доступу скористайтеся, будь ласка, сервісом відновлення паролю (кнопка «Я не пам'ятаю пароль») або зверніться на інформаційну лінію по номеру 729 (безкоштовно з мобільного)."
 const INVALID_LOGIN_CODES = new Set(['2071'])
 const TOKEN_REJECTION_CODES = new Set(['TOKEN_EXPIRED', 'TOKEN_INVALID', '2003', '2050'])
 const OTP_REQUIRED_CODES = new Set(['OTP_REQUIRED', '2020', '2021', '2048'])
@@ -130,11 +133,10 @@ function hashLogin (login) {
 function createAuthState (login, storedState = {}) {
   const storedAuth = storedState.auth || storedState
   const storedDevice = storedAuth.device || storedState.device || {}
-  const compatible = storedAuth.schemaVersion === AUTH_SCHEMA_VERSION &&
-    storedAuth.loginHash === hashLogin(login)
+  const compatible = storedAuth.schemaVersion === AUTH_SCHEMA_VERSION
   return {
     schemaVersion: AUTH_SCHEMA_VERSION,
-    loginHash: hashLogin(login),
+    loginHash: compatible && typeof storedAuth.loginHash === 'string' ? storedAuth.loginHash : hashLogin(login),
     device: normalizeDevice(storedDevice),
     authorization: compatible ? normalizeText(storedAuth.authorization) : null,
     refreshToken: compatible ? normalizeText(storedAuth.refreshToken) : null,
@@ -226,11 +228,18 @@ async function request (authState, path, options = {}) {
       }
     }
   })
-  updateAuthState(authState, response)
-
-  if (response.ok) return response.body
+  if (response.ok) {
+    updateAuthState(authState, response)
+    if (hasHotAuth(authState) && (response.headers.authorization || response.headers.refreshtoken)) {
+      await authUpdateCallbacks.get(authState)?.(authState)
+    }
+    return response.body
+  }
 
   const errorCode = getErrorCode(response.body)
+  if (path === '/auth/login' && response.status === 406 && errorCode === '2507' && response.body?.description === SUSPENDED_ACCESS_MESSAGE) {
+    throw new BankMessageError(response.body.description)
+  }
   if (path === '/auth/login' && INVALID_LOGIN_CODES.has(errorCode)) {
     throw new InvalidLoginOrPasswordError('Неправильний номер телефону або пароль')
   }
@@ -245,6 +254,8 @@ async function request (authState, path, options = {}) {
       status: response.status,
       errorCode
     })
+    // The observed OTP response rotates the challenge authorization; it is not a reusable session yet.
+    updateAuthState(authState, response)
     if (options.otpValue) {
       throw new InvalidOtpCodeError()
     }
@@ -258,7 +269,7 @@ async function request (authState, path, options = {}) {
       inputType: 'number',
       time: timeoutSeconds * 1000
     })
-    if (!normalizeText(code)) throw new InvalidOtpCodeError()
+    console.assert(normalizeText(code), 'Required OTP input was not provided')
     return request(authState, path, {
       ...options,
       otpId: otpData.otpId,
@@ -344,9 +355,9 @@ async function validatePostLoginActions (authState, isInBackground) {
   }
 }
 
-export async function login (preferences, isInBackground, storedState = {}) {
-  const credentials = validatePreferences(preferences)
-  const authState = createAuthState(credentials.login, storedState)
+export async function login (preferences, isInBackground, storedState = {}, onAuth = async () => {}) {
+  const authState = createAuthState('', storedState)
+  authUpdateCallbacks.set(authState, onAuth)
   if (hasHotAuth(authState)) {
     try {
       await refreshAuth(authState, isInBackground)
@@ -362,6 +373,8 @@ export async function login (preferences, isInBackground, storedState = {}) {
       authState.tokenValidUntil = null
     }
   }
+  const credentials = validatePreferences(preferences)
+  authState.loginHash = hashLogin(credentials.login)
   await coldAuth(credentials, authState, isInBackground)
   await validatePostLoginActions(authState, isInBackground)
   return { authState, isInBackground: Boolean(isInBackground) }

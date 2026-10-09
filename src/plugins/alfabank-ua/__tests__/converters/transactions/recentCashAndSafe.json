@@ -1,0 +1,1898 @@
+{
+  "cash-in": {
+    "source": {
+      "log": 116060,
+      "build": 145,
+      "endpoint": "https://superapp.sensebank.com.ua/mob/history/card/getall?productId=800001",
+      "redactions": [
+        "Public fixture: personal names, phone numbers, account/card identifiers and transaction references are consistently replaced; record structure, formats and relationships are preserved. Credentials remain redacted."
+      ]
+    },
+    "operation": {
+      "id": "8000000001-2",
+      "categoryPFM": false,
+      "description": "Банкоматы\nЗарплатная карта,•8002",
+      "iconUrl": "https://sensebank.com.ua/upload/primob/atm_2025.png",
+      "iconBg": "#FFFEFE",
+      "iconColor": null,
+      "categoryIconUrl": "https://sensebank.ua/upload/primob/categories_icon_2025/atm_2025.svg",
+      "iconSize": 40,
+      "orderId": null,
+      "operationDate": "2026-05-22T14:01:27+03:00",
+      "operationName": "Операції в АТМ",
+      "subjectAmount": 2700000,
+      "subjectAmountUah": null,
+      "subjectUnit": "UAH",
+      "targetAmount": null,
+      "targetUnit": null,
+      "allowedOperations": [],
+      "installment": null,
+      "filterData": [
+        {
+          "key": "incomeOutlay",
+          "value": "Доход"
+        },
+        {
+          "key": "operationSum",
+          "value": "2700000"
+        },
+        {
+          "key": "operationType",
+          "value": "Банкоматы"
+        },
+        {
+          "key": "operationCurrency",
+          "value": "Українська гривня"
+        },
+        {
+          "key": "account",
+          "value": "800001-CARD-UAH"
+        }
+      ],
+      "labels": null
+    },
+    "accountId": "800001",
+    "products": [
+      {
+        "availableFunds": 0,
+        "canBeClosed": false,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "B058F947B34E86868584D361857542E1",
+            "cardId": "800000001",
+            "cardMask": "5355xxxxxxxx8001",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8001",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2027-09-30",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555733",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000003",
+        "creditCardProductInfo": null,
+        "iban": "UA553003468000000000000000001",
+        "infoLink": null,
+        "isTerms": false,
+        "name": "Національний кешбек",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000001",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2024-09-02",
+        "subType": "diiamiu",
+        "tariffLink": "https://sensebank.ua/storage/files/Tafiffs_MadeInUkraine.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 1567600,
+        "canBeClosed": true,
+        "cardSafeInfo": {
+          "amount": 337,
+          "rate": 4
+        },
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "6CD84644CBF62E038890BC5829FE10CC",
+            "cardId": "800000004",
+            "cardMask": "4909xxxxxxxx8002",
+            "cardName": "Visa Signature",
+            "cardNumber": "490915******8002",
+            "cardStatus": "active",
+            "digitalCard": false,
+            "expireDate": "2029-05-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "49091500",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000005",
+        "creditCardProductInfo": null,
+        "iban": "UA283003468000000000000000002",
+        "infoLink": null,
+        "isTerms": true,
+        "name": "Пакет Black",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "800001",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": true,
+        "signDate": "2009-12-22",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_black.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 10866690,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "EE60B7C3794414091C3BADC2C535D268",
+            "cardId": "800000006",
+            "cardMask": "5355xxxxxxxx8003",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8003",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2030-07-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555714",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000007",
+        "creditCardProductInfo": {
+          "accountBalance": -4133310,
+          "creditLimit": 15000000,
+          "graceDebt": 1039567,
+          "installmentDebt": 1050000,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-08",
+          "nextPaymentDate": "2026-07-08",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 4133310
+        },
+        "iban": "UA983003468000000000000000003",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "RED 2.0",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000002",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "signDate": "2025-07-08",
+        "subType": null,
+        "tariffLink": "https://sensebank.ua/upload/mobile_tariffs/tariff_cc_redcard_2.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 0,
+        "canBeClosed": true,
+        "cardSafeInfo": {
+          "amount": 0,
+          "rate": 0.01
+        },
+        "cards": [],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000008",
+        "creditCardProductInfo": null,
+        "iban": "UA713003468000000000000000004",
+        "infoLink": null,
+        "isTerms": true,
+        "name": "Пакет Black",
+        "product": {
+          "productCurrency": "USD",
+          "productId": "80000003",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2023-11-24",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_black.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 0,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "1E2141046BDE6C331DB2BC2F5A39A40C",
+            "cardId": "80000004",
+            "cardMask": "4102xxxxxxxx8004",
+            "cardName": "Visa Rewards",
+            "cardNumber": "410232******8004",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2024-12-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "41023252",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000009",
+        "creditCardProductInfo": null,
+        "iban": "UA443003468000000000000000005",
+        "infoLink": null,
+        "isTerms": false,
+        "name": "єПідтримка",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000005",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2021-12-09",
+        "subType": "card_is_support",
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_diia_social.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 2950000,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "926D416EDAD70C203F9E034A02729E71",
+            "cardId": "800000010",
+            "cardMask": "5355xxxxxxxx8005",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8005",
+            "cardStatus": "blocked",
+            "digitalCard": true,
+            "expireDate": "2031-05-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555714",
+            "primary": true,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "7765F62ACBBF73C838849BF58CB768FF",
+            "cardId": "80000006",
+            "cardMask": "5355xxxxxxxx8006",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8006",
+            "cardStatus": "blocked",
+            "digitalCard": false,
+            "expireDate": "2026-06-30",
+            "fullBarCode": null,
+            "index": 2,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555714",
+            "primary": true,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "21991FF53303937F1BDEF25C789EC070",
+            "cardId": "800000011",
+            "cardMask": "4102xxxxxxxx8007",
+            "cardName": "Visa Classic",
+            "cardNumber": "410247******8007",
+            "cardStatus": "blocked",
+            "digitalCard": true,
+            "expireDate": "2026-06-30",
+            "fullBarCode": null,
+            "index": 3,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "41024740",
+            "primary": false,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "AA95A186E4977DB49DF99D191D873DFA",
+            "cardId": "800000012",
+            "cardMask": "4102xxxxxxxx8008",
+            "cardName": "Visa Classic",
+            "cardNumber": "410247******8008",
+            "cardStatus": "blocked",
+            "digitalCard": true,
+            "expireDate": "2031-05-31",
+            "fullBarCode": null,
+            "index": 4,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "41024740",
+            "primary": false,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000013",
+        "creditCardProductInfo": {
+          "accountBalance": 0,
+          "creditLimit": 2950000,
+          "graceDebt": 0,
+          "installmentDebt": null,
+          "minPayment": 0,
+          "nextBillingDate": "2026-06-30",
+          "nextPaymentDate": "2026-06-30",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 0
+        },
+        "iban": "UA173003468000000000000000006",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "RED",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000007",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "signDate": "2021-08-31",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_redcard_cross.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 10000,
+        "canBeClosed": true,
+        "cardSafeInfo": {
+          "amount": 0,
+          "rate": 0.01
+        },
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "058989416B2121867A61F8726FA39332",
+            "cardId": "800000014",
+            "cardMask": "4909xxxxxxxx8009",
+            "cardName": "Visa Signature",
+            "cardNumber": "490915******8009",
+            "cardStatus": "active",
+            "digitalCard": false,
+            "expireDate": "2028-07-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "49091500",
+            "primary": true,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "187046BD36101AE2C724520205D7AEDA",
+            "cardId": "800000015",
+            "cardMask": "4909xxxxxxxx8010",
+            "cardName": "Visa Signature",
+            "cardNumber": "490915******8010",
+            "cardStatus": "active",
+            "digitalCard": false,
+            "expireDate": "2028-07-31",
+            "fullBarCode": null,
+            "index": 2,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "49091500",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000016",
+        "creditCardProductInfo": null,
+        "iban": "UA873003468000000000000000007",
+        "infoLink": null,
+        "isTerms": true,
+        "name": "Пакет Black",
+        "product": {
+          "productCurrency": "EUR",
+          "productId": "8000001",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2019-10-15",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_black.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 14420913,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": "85101283720",
+            "cardGUID": "6F0C07567BD0108F6DE3B3BBF2001EF0",
+            "cardId": "800000017",
+            "cardMask": "4102xxxxxxxx8011",
+            "cardName": "Visa Rewards",
+            "cardNumber": "410232******8011",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2030-04-30",
+            "fullBarCode": "2792603827549",
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "41023251",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000018",
+        "creditCardProductInfo": {
+          "accountBalance": -579087,
+          "creditLimit": 15000000,
+          "graceDebt": 64525,
+          "installmentDebt": 514562,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-21",
+          "nextPaymentDate": "2026-07-21",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 579087
+        },
+        "iban": "UA603003468000000000000000008",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "Картка Вигода",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000008",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": 4,
+        "signDate": "2025-04-21",
+        "subType": "epithentr",
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_vygoda.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 5000000,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "99D6CCD2D7285ABB66FCE96ABFF230EC",
+            "cardId": "800000019",
+            "cardMask": "4028xxxxxxxx8012",
+            "cardName": "Visa Platinum",
+            "cardNumber": "402808******8012",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2029-10-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "40280820",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000020",
+        "creditCardProductInfo": {
+          "accountBalance": 0,
+          "creditLimit": 5000000,
+          "graceDebt": 0,
+          "installmentDebt": null,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-09",
+          "nextPaymentDate": "2026-07-09",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 0
+        },
+        "iban": "UA333003468000000000000000009",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "Картка Сaméléon",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000009",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": 0,
+        "signDate": "2024-10-09",
+        "subType": "cameleon",
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_cameleon.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 4450000,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "12809B3FF819524DF4A5EAA5CD342D40",
+            "cardId": "800000021",
+            "cardMask": "4102xxxxxxxx8013",
+            "cardName": "Visa Rewards",
+            "cardNumber": "410232******8013",
+            "cardStatus": "blocked",
+            "digitalCard": false,
+            "expireDate": "2030-01-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "41023212",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000022",
+        "creditCardProductInfo": {
+          "accountBalance": 0,
+          "creditLimit": 4450000,
+          "graceDebt": 0,
+          "installmentDebt": null,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-15",
+          "nextPaymentDate": "2026-07-15",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 0
+        },
+        "iban": "UA063003468000000000000000010",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "RED",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "8000002",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "signDate": "2019-10-15",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_redcard_cross.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      }
+    ]
+  },
+  "safe-out": {
+    "source": {
+      "log": 116060,
+      "build": 145,
+      "endpoint": "https://superapp.sensebank.com.ua/mob/history/card/getall?productId=800001",
+      "redactions": [
+        "Public fixture: personal names, phone numbers, account/card identifiers and transaction references are consistently replaced; record structure, formats and relationships are preserved. Credentials remain redacted."
+      ]
+    },
+    "operation": {
+      "id": "8000000002-2",
+      "categoryPFM": false,
+      "description": "Переводы\nЗарплатная карта,•8002",
+      "iconUrl": "https://sensebank.com.ua/upload/primob/depo_seif_2025.png",
+      "iconBg": null,
+      "iconColor": null,
+      "categoryIconUrl": "https://sensebank.ua/upload/primob/categories_icon_2025/perekaz_2025.svg",
+      "iconSize": 40,
+      "orderId": null,
+      "operationDate": "2026-05-14T03:39:49+03:00",
+      "operationName": "Зняття з Дохідного сейфу",
+      "subjectAmount": 308469,
+      "subjectAmountUah": null,
+      "subjectUnit": "UAH",
+      "targetAmount": null,
+      "targetUnit": null,
+      "allowedOperations": [],
+      "installment": null,
+      "filterData": [
+        {
+          "key": "incomeOutlay",
+          "value": "Доход"
+        },
+        {
+          "key": "operationSum",
+          "value": "308469"
+        },
+        {
+          "key": "operationType",
+          "value": "Переводы"
+        },
+        {
+          "key": "operationCurrency",
+          "value": "Українська гривня"
+        },
+        {
+          "key": "account",
+          "value": "800001-CARD-UAH"
+        }
+      ],
+      "labels": null
+    },
+    "accountId": "800001",
+    "products": [
+      {
+        "availableFunds": 0,
+        "canBeClosed": false,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "B058F947B34E86868584D361857542E1",
+            "cardId": "800000001",
+            "cardMask": "5355xxxxxxxx8001",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8001",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2027-09-30",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555733",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000003",
+        "creditCardProductInfo": null,
+        "iban": "UA553003468000000000000000001",
+        "infoLink": null,
+        "isTerms": false,
+        "name": "Національний кешбек",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000001",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2024-09-02",
+        "subType": "diiamiu",
+        "tariffLink": "https://sensebank.ua/storage/files/Tafiffs_MadeInUkraine.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 1567600,
+        "canBeClosed": true,
+        "cardSafeInfo": {
+          "amount": 337,
+          "rate": 4
+        },
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "6CD84644CBF62E038890BC5829FE10CC",
+            "cardId": "800000004",
+            "cardMask": "4909xxxxxxxx8002",
+            "cardName": "Visa Signature",
+            "cardNumber": "490915******8002",
+            "cardStatus": "active",
+            "digitalCard": false,
+            "expireDate": "2029-05-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "49091500",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000005",
+        "creditCardProductInfo": null,
+        "iban": "UA283003468000000000000000002",
+        "infoLink": null,
+        "isTerms": true,
+        "name": "Пакет Black",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "800001",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": true,
+        "signDate": "2009-12-22",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_black.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 10866690,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "EE60B7C3794414091C3BADC2C535D268",
+            "cardId": "800000006",
+            "cardMask": "5355xxxxxxxx8003",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8003",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2030-07-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555714",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000007",
+        "creditCardProductInfo": {
+          "accountBalance": -4133310,
+          "creditLimit": 15000000,
+          "graceDebt": 1039567,
+          "installmentDebt": 1050000,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-08",
+          "nextPaymentDate": "2026-07-08",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 4133310
+        },
+        "iban": "UA983003468000000000000000003",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "RED 2.0",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000002",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "signDate": "2025-07-08",
+        "subType": null,
+        "tariffLink": "https://sensebank.ua/upload/mobile_tariffs/tariff_cc_redcard_2.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 0,
+        "canBeClosed": true,
+        "cardSafeInfo": {
+          "amount": 0,
+          "rate": 0.01
+        },
+        "cards": [],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000008",
+        "creditCardProductInfo": null,
+        "iban": "UA713003468000000000000000004",
+        "infoLink": null,
+        "isTerms": true,
+        "name": "Пакет Black",
+        "product": {
+          "productCurrency": "USD",
+          "productId": "80000003",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2023-11-24",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_black.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 0,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "1E2141046BDE6C331DB2BC2F5A39A40C",
+            "cardId": "80000004",
+            "cardMask": "4102xxxxxxxx8004",
+            "cardName": "Visa Rewards",
+            "cardNumber": "410232******8004",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2024-12-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "41023252",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000009",
+        "creditCardProductInfo": null,
+        "iban": "UA443003468000000000000000005",
+        "infoLink": null,
+        "isTerms": false,
+        "name": "єПідтримка",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000005",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2021-12-09",
+        "subType": "card_is_support",
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_diia_social.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 2950000,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "926D416EDAD70C203F9E034A02729E71",
+            "cardId": "800000010",
+            "cardMask": "5355xxxxxxxx8005",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8005",
+            "cardStatus": "blocked",
+            "digitalCard": true,
+            "expireDate": "2031-05-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555714",
+            "primary": true,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "7765F62ACBBF73C838849BF58CB768FF",
+            "cardId": "80000006",
+            "cardMask": "5355xxxxxxxx8006",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8006",
+            "cardStatus": "blocked",
+            "digitalCard": false,
+            "expireDate": "2026-06-30",
+            "fullBarCode": null,
+            "index": 2,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555714",
+            "primary": true,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "21991FF53303937F1BDEF25C789EC070",
+            "cardId": "800000011",
+            "cardMask": "4102xxxxxxxx8007",
+            "cardName": "Visa Classic",
+            "cardNumber": "410247******8007",
+            "cardStatus": "blocked",
+            "digitalCard": true,
+            "expireDate": "2026-06-30",
+            "fullBarCode": null,
+            "index": 3,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "41024740",
+            "primary": false,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "AA95A186E4977DB49DF99D191D873DFA",
+            "cardId": "800000012",
+            "cardMask": "4102xxxxxxxx8008",
+            "cardName": "Visa Classic",
+            "cardNumber": "410247******8008",
+            "cardStatus": "blocked",
+            "digitalCard": true,
+            "expireDate": "2031-05-31",
+            "fullBarCode": null,
+            "index": 4,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "41024740",
+            "primary": false,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000013",
+        "creditCardProductInfo": {
+          "accountBalance": 0,
+          "creditLimit": 2950000,
+          "graceDebt": 0,
+          "installmentDebt": null,
+          "minPayment": 0,
+          "nextBillingDate": "2026-06-30",
+          "nextPaymentDate": "2026-06-30",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 0
+        },
+        "iban": "UA173003468000000000000000006",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "RED",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000007",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "signDate": "2021-08-31",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_redcard_cross.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 10000,
+        "canBeClosed": true,
+        "cardSafeInfo": {
+          "amount": 0,
+          "rate": 0.01
+        },
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "058989416B2121867A61F8726FA39332",
+            "cardId": "800000014",
+            "cardMask": "4909xxxxxxxx8009",
+            "cardName": "Visa Signature",
+            "cardNumber": "490915******8009",
+            "cardStatus": "active",
+            "digitalCard": false,
+            "expireDate": "2028-07-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "49091500",
+            "primary": true,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "187046BD36101AE2C724520205D7AEDA",
+            "cardId": "800000015",
+            "cardMask": "4909xxxxxxxx8010",
+            "cardName": "Visa Signature",
+            "cardNumber": "490915******8010",
+            "cardStatus": "active",
+            "digitalCard": false,
+            "expireDate": "2028-07-31",
+            "fullBarCode": null,
+            "index": 2,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "49091500",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000016",
+        "creditCardProductInfo": null,
+        "iban": "UA873003468000000000000000007",
+        "infoLink": null,
+        "isTerms": true,
+        "name": "Пакет Black",
+        "product": {
+          "productCurrency": "EUR",
+          "productId": "8000001",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2019-10-15",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_black.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 14420913,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": "85101283720",
+            "cardGUID": "6F0C07567BD0108F6DE3B3BBF2001EF0",
+            "cardId": "800000017",
+            "cardMask": "4102xxxxxxxx8011",
+            "cardName": "Visa Rewards",
+            "cardNumber": "410232******8011",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2030-04-30",
+            "fullBarCode": "2792603827549",
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "41023251",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000018",
+        "creditCardProductInfo": {
+          "accountBalance": -579087,
+          "creditLimit": 15000000,
+          "graceDebt": 64525,
+          "installmentDebt": 514562,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-21",
+          "nextPaymentDate": "2026-07-21",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 579087
+        },
+        "iban": "UA603003468000000000000000008",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "Картка Вигода",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000008",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": 4,
+        "signDate": "2025-04-21",
+        "subType": "epithentr",
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_vygoda.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 5000000,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "99D6CCD2D7285ABB66FCE96ABFF230EC",
+            "cardId": "800000019",
+            "cardMask": "4028xxxxxxxx8012",
+            "cardName": "Visa Platinum",
+            "cardNumber": "402808******8012",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2029-10-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "40280820",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000020",
+        "creditCardProductInfo": {
+          "accountBalance": 0,
+          "creditLimit": 5000000,
+          "graceDebt": 0,
+          "installmentDebt": null,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-09",
+          "nextPaymentDate": "2026-07-09",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 0
+        },
+        "iban": "UA333003468000000000000000009",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "Картка Сaméléon",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000009",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": 0,
+        "signDate": "2024-10-09",
+        "subType": "cameleon",
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_cameleon.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 4450000,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "12809B3FF819524DF4A5EAA5CD342D40",
+            "cardId": "800000021",
+            "cardMask": "4102xxxxxxxx8013",
+            "cardName": "Visa Rewards",
+            "cardNumber": "410232******8013",
+            "cardStatus": "blocked",
+            "digitalCard": false,
+            "expireDate": "2030-01-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "41023212",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000022",
+        "creditCardProductInfo": {
+          "accountBalance": 0,
+          "creditLimit": 4450000,
+          "graceDebt": 0,
+          "installmentDebt": null,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-15",
+          "nextPaymentDate": "2026-07-15",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 0
+        },
+        "iban": "UA063003468000000000000000010",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "RED",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "8000002",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "signDate": "2019-10-15",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_redcard_cross.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      }
+    ]
+  },
+  "safe-in": {
+    "source": {
+      "log": 116060,
+      "build": 145,
+      "endpoint": "https://superapp.sensebank.com.ua/mob/history/card/getall?productId=800001",
+      "redactions": [
+        "Public fixture: personal names, phone numbers, account/card identifiers and transaction references are consistently replaced; record structure, formats and relationships are preserved. Credentials remain redacted."
+      ]
+    },
+    "operation": {
+      "id": "8000000003-2",
+      "categoryPFM": false,
+      "description": "Переводы",
+      "iconUrl": "https://sensebank.com.ua/upload/primob/depo_seif_2025.png",
+      "iconBg": null,
+      "iconColor": null,
+      "categoryIconUrl": "https://sensebank.ua/upload/primob/categories_icon_2025/perekaz_2025.svg",
+      "iconSize": 40,
+      "orderId": null,
+      "operationDate": "2026-03-20T17:05:41+02:00",
+      "operationName": "Поповнення Дохідного сейфу",
+      "subjectAmount": -1200000,
+      "subjectAmountUah": null,
+      "subjectUnit": "UAH",
+      "targetAmount": null,
+      "targetUnit": null,
+      "allowedOperations": [],
+      "installment": null,
+      "filterData": [
+        {
+          "key": "incomeOutlay",
+          "value": "Расход"
+        },
+        {
+          "key": "operationSum",
+          "value": "-1200000"
+        },
+        {
+          "key": "operationType",
+          "value": "Переводы"
+        },
+        {
+          "key": "operationCurrency",
+          "value": "Українська гривня"
+        },
+        {
+          "key": "account",
+          "value": "800001-CARD-UAH"
+        }
+      ],
+      "labels": null
+    },
+    "accountId": "800001",
+    "products": [
+      {
+        "availableFunds": 0,
+        "canBeClosed": false,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "B058F947B34E86868584D361857542E1",
+            "cardId": "800000001",
+            "cardMask": "5355xxxxxxxx8001",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8001",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2027-09-30",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555733",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000003",
+        "creditCardProductInfo": null,
+        "iban": "UA553003468000000000000000001",
+        "infoLink": null,
+        "isTerms": false,
+        "name": "Національний кешбек",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000001",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2024-09-02",
+        "subType": "diiamiu",
+        "tariffLink": "https://sensebank.ua/storage/files/Tafiffs_MadeInUkraine.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 1567600,
+        "canBeClosed": true,
+        "cardSafeInfo": {
+          "amount": 337,
+          "rate": 4
+        },
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "6CD84644CBF62E038890BC5829FE10CC",
+            "cardId": "800000004",
+            "cardMask": "4909xxxxxxxx8002",
+            "cardName": "Visa Signature",
+            "cardNumber": "490915******8002",
+            "cardStatus": "active",
+            "digitalCard": false,
+            "expireDate": "2029-05-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "49091500",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000005",
+        "creditCardProductInfo": null,
+        "iban": "UA283003468000000000000000002",
+        "infoLink": null,
+        "isTerms": true,
+        "name": "Пакет Black",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "800001",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": true,
+        "signDate": "2009-12-22",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_black.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 10866690,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "EE60B7C3794414091C3BADC2C535D268",
+            "cardId": "800000006",
+            "cardMask": "5355xxxxxxxx8003",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8003",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2030-07-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555714",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000007",
+        "creditCardProductInfo": {
+          "accountBalance": -4133310,
+          "creditLimit": 15000000,
+          "graceDebt": 1039567,
+          "installmentDebt": 1050000,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-08",
+          "nextPaymentDate": "2026-07-08",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 4133310
+        },
+        "iban": "UA983003468000000000000000003",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "RED 2.0",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000002",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "signDate": "2025-07-08",
+        "subType": null,
+        "tariffLink": "https://sensebank.ua/upload/mobile_tariffs/tariff_cc_redcard_2.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 0,
+        "canBeClosed": true,
+        "cardSafeInfo": {
+          "amount": 0,
+          "rate": 0.01
+        },
+        "cards": [],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000008",
+        "creditCardProductInfo": null,
+        "iban": "UA713003468000000000000000004",
+        "infoLink": null,
+        "isTerms": true,
+        "name": "Пакет Black",
+        "product": {
+          "productCurrency": "USD",
+          "productId": "80000003",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2023-11-24",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_black.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 0,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "1E2141046BDE6C331DB2BC2F5A39A40C",
+            "cardId": "80000004",
+            "cardMask": "4102xxxxxxxx8004",
+            "cardName": "Visa Rewards",
+            "cardNumber": "410232******8004",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2024-12-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "41023252",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000009",
+        "creditCardProductInfo": null,
+        "iban": "UA443003468000000000000000005",
+        "infoLink": null,
+        "isTerms": false,
+        "name": "єПідтримка",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000005",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2021-12-09",
+        "subType": "card_is_support",
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_diia_social.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 2950000,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "926D416EDAD70C203F9E034A02729E71",
+            "cardId": "800000010",
+            "cardMask": "5355xxxxxxxx8005",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8005",
+            "cardStatus": "blocked",
+            "digitalCard": true,
+            "expireDate": "2031-05-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555714",
+            "primary": true,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "7765F62ACBBF73C838849BF58CB768FF",
+            "cardId": "80000006",
+            "cardMask": "5355xxxxxxxx8006",
+            "cardName": "World Debit Mastercard",
+            "cardNumber": "535557******8006",
+            "cardStatus": "blocked",
+            "digitalCard": false,
+            "expireDate": "2026-06-30",
+            "fullBarCode": null,
+            "index": 2,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "53555714",
+            "primary": true,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "21991FF53303937F1BDEF25C789EC070",
+            "cardId": "800000011",
+            "cardMask": "4102xxxxxxxx8007",
+            "cardName": "Visa Classic",
+            "cardNumber": "410247******8007",
+            "cardStatus": "blocked",
+            "digitalCard": true,
+            "expireDate": "2026-06-30",
+            "fullBarCode": null,
+            "index": 3,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "41024740",
+            "primary": false,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "AA95A186E4977DB49DF99D191D873DFA",
+            "cardId": "800000012",
+            "cardMask": "4102xxxxxxxx8008",
+            "cardName": "Visa Classic",
+            "cardNumber": "410247******8008",
+            "cardStatus": "blocked",
+            "digitalCard": true,
+            "expireDate": "2031-05-31",
+            "fullBarCode": null,
+            "index": 4,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "41024740",
+            "primary": false,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000013",
+        "creditCardProductInfo": {
+          "accountBalance": 0,
+          "creditLimit": 2950000,
+          "graceDebt": 0,
+          "installmentDebt": null,
+          "minPayment": 0,
+          "nextBillingDate": "2026-06-30",
+          "nextPaymentDate": "2026-06-30",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 0
+        },
+        "iban": "UA173003468000000000000000006",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "RED",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000007",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "signDate": "2021-08-31",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_redcard_cross.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 10000,
+        "canBeClosed": true,
+        "cardSafeInfo": {
+          "amount": 0,
+          "rate": 0.01
+        },
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "058989416B2121867A61F8726FA39332",
+            "cardId": "800000014",
+            "cardMask": "4909xxxxxxxx8009",
+            "cardName": "Visa Signature",
+            "cardNumber": "490915******8009",
+            "cardStatus": "active",
+            "digitalCard": false,
+            "expireDate": "2028-07-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "49091500",
+            "primary": true,
+            "readyForActivation": false
+          },
+          {
+            "barCode": null,
+            "cardGUID": "187046BD36101AE2C724520205D7AEDA",
+            "cardId": "800000015",
+            "cardMask": "4909xxxxxxxx8010",
+            "cardName": "Visa Signature",
+            "cardNumber": "490915******8010",
+            "cardStatus": "active",
+            "digitalCard": false,
+            "expireDate": "2028-07-31",
+            "fullBarCode": null,
+            "index": 2,
+            "mBankingPhone": null,
+            "mBankingStatus": false,
+            "prefixId": "49091500",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000016",
+        "creditCardProductInfo": null,
+        "iban": "UA873003468000000000000000007",
+        "infoLink": null,
+        "isTerms": true,
+        "name": "Пакет Black",
+        "product": {
+          "productCurrency": "EUR",
+          "productId": "8000001",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "salaryInfo": false,
+        "signDate": "2019-10-15",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_black.pdf",
+        "type": "debit"
+      },
+      {
+        "availableFunds": 14420913,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": "85101283720",
+            "cardGUID": "6F0C07567BD0108F6DE3B3BBF2001EF0",
+            "cardId": "800000017",
+            "cardMask": "4102xxxxxxxx8011",
+            "cardName": "Visa Rewards",
+            "cardNumber": "410232******8011",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2030-04-30",
+            "fullBarCode": "2792603827549",
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "41023251",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000018",
+        "creditCardProductInfo": {
+          "accountBalance": -579087,
+          "creditLimit": 15000000,
+          "graceDebt": 64525,
+          "installmentDebt": 514562,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-21",
+          "nextPaymentDate": "2026-07-21",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 579087
+        },
+        "iban": "UA603003468000000000000000008",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "Картка Вигода",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000008",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": 4,
+        "signDate": "2025-04-21",
+        "subType": "epithentr",
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_vygoda.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 5000000,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "99D6CCD2D7285ABB66FCE96ABFF230EC",
+            "cardId": "800000019",
+            "cardMask": "4028xxxxxxxx8012",
+            "cardName": "Visa Platinum",
+            "cardNumber": "402808******8012",
+            "cardStatus": "active",
+            "digitalCard": true,
+            "expireDate": "2029-10-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "40280820",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000020",
+        "creditCardProductInfo": {
+          "accountBalance": 0,
+          "creditLimit": 5000000,
+          "graceDebt": 0,
+          "installmentDebt": null,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-09",
+          "nextPaymentDate": "2026-07-09",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 0
+        },
+        "iban": "UA333003468000000000000000009",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "Картка Сaméléon",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "80000009",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": 0,
+        "signDate": "2024-10-09",
+        "subType": "cameleon",
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_cameleon.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      },
+      {
+        "availableFunds": 4450000,
+        "canBeClosed": true,
+        "cardSafeInfo": null,
+        "cards": [
+          {
+            "barCode": null,
+            "cardGUID": "12809B3FF819524DF4A5EAA5CD342D40",
+            "cardId": "800000021",
+            "cardMask": "4102xxxxxxxx8013",
+            "cardName": "Visa Rewards",
+            "cardNumber": "410232******8013",
+            "cardStatus": "blocked",
+            "digitalCard": false,
+            "expireDate": "2030-01-31",
+            "fullBarCode": null,
+            "index": 1,
+            "mBankingPhone": "+380800000002",
+            "mBankingStatus": true,
+            "prefixId": "41023212",
+            "primary": true,
+            "readyForActivation": false
+          }
+        ],
+        "childServiceRestrictionInfo": null,
+        "childTasksAllowed": false,
+        "contractNumber": "800000022",
+        "creditCardProductInfo": {
+          "accountBalance": 0,
+          "creditLimit": 4450000,
+          "graceDebt": 0,
+          "installmentDebt": null,
+          "minPayment": 0,
+          "nextBillingDate": "2026-07-15",
+          "nextPaymentDate": "2026-07-15",
+          "overdueDebt": 0,
+          "overdueMessage": "",
+          "totalDebt": 0
+        },
+        "iban": "UA063003468000000000000000010",
+        "infoLink": "https://sensebank.com.ua/storage/files/personal-data-transfer-notice.pdf",
+        "isTerms": false,
+        "name": "RED",
+        "product": {
+          "productCurrency": "UAH",
+          "productId": "8000002",
+          "productType": "CARD"
+        },
+        "rateOnPositiveBalance": null,
+        "signDate": "2019-10-15",
+        "subType": null,
+        "tariffLink": "https://sensebank.com.ua/upload/mobile_tariffs/tariff_cc_redcard_cross.pdf",
+        "type": "credit",
+        "upsellInfo": true
+      }
+    ]
+  },
+  "cash-out": {
+    "source": {
+      "log": 131194,
+      "build": 154,
+      "endpoint": "https://superapp.sensebank.com.ua/mob/history/card/getall?productId=8000001",
+      "redactions": [
+        "Public fixture: personal names, phone numbers, account/card identifiers and transaction references are consistently replaced; record structure, formats and relationships are preserved. Credentials remain redacted."
+      ]
+    },
+    "operation": {
+      "id": "8000000004-2",
+      "categoryPFM": true,
+      "description": "Банкоматы\nДебетная карта,•8009",
+      "iconUrl": "https://sensebank.com.ua/upload/primob/atm_2025.png",
+      "iconBg": "#FFFEFE",
+      "iconColor": null,
+      "categoryIconUrl": "https://sensebank.ua/upload/primob/categories_icon_2025/atm_2025.svg",
+      "iconSize": 40,
+      "orderId": null,
+      "operationDate": "2026-03-23T21:58:23+02:00",
+      "operationName": "Операції в АТМ",
+      "subjectAmount": -10000,
+      "subjectAmountUah": -506778,
+      "subjectUnit": "EUR",
+      "targetAmount": null,
+      "targetUnit": null,
+      "allowedOperations": [
+        "RECEIPT"
+      ],
+      "installment": null,
+      "filterData": [
+        {
+          "key": "incomeOutlay",
+          "value": "Расход"
+        },
+        {
+          "key": "operationSum",
+          "value": "-10000"
+        },
+        {
+          "key": "operationType",
+          "value": "Банкоматы"
+        },
+        {
+          "key": "operationCurrency",
+          "value": "Євро"
+        },
+        {
+          "key": "account",
+          "value": "8000001-CARD-EUR"
+        }
+      ],
+      "labels": null
+    },
+    "accountId": "8000001",
+    "products": []
+  }
+}

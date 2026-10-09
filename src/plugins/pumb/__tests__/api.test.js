@@ -1,7 +1,9 @@
 import {
+  InvalidPreferencesError,
   InvalidLoginOrPasswordError,
   InvalidOtpCodeError,
-  UserInteractionError
+  UserInteractionError,
+  ZPAPIError
 } from '../../../errors'
 
 const mockOpenUnauthenticatedConnection = jest.fn()
@@ -100,6 +102,45 @@ describe('PUMB API orchestration', () => {
     mockFetchAuthenticationOtp.mockResolvedValue(makeAuthResult())
   })
 
+  // [model] Persisted credentials and rotated keys are lifecycle invariants, not bank-response fixtures.
+  it('[model] keeps working saved authorization when login and PIN preferences change', async () => {
+    const auth = makePersistedAuth()
+    await login({ login: '380992223344', password: 'changed-password' }, false, { auth })
+    expect(mockFetchAuthenticationByBiometry).toHaveBeenCalledWith('+380501234567', 'saved-auth-key', auth.device)
+    expect(mockFetchAuthenticationByPassword).not.toHaveBeenCalled()
+  })
+
+  it('[model] uses current credentials for cold auth after an explicit rejection', async () => {
+    mockFetchAuthenticationByBiometry.mockRejectedValueOnce(new SessionExpiredError())
+    await login({ login: '380992223344', password: '01234' }, false, { auth: makePersistedAuth() })
+    expect(mockFetchAuthenticationByPassword).toHaveBeenCalledWith('+380992223344', '01234', expect.any(Object))
+  })
+
+  it.each([true, false])('[model] persists the confirmed auth key before the socket fails, hot: %s', async hot => {
+    const failure = new Error('Authenticated socket failed')
+    const persist = jest.fn()
+    mockOpenAuthenticatedConnection.mockImplementationOnce(async () => {
+      expect(persist).toHaveBeenCalledWith(expect.objectContaining({ authKey: 'new-auth-key', login: '+380501234567' }))
+      throw failure
+    })
+    await expect(login(preferences, false, hot ? { auth: makePersistedAuth() } : {}, persist)).rejects.toBe(failure)
+    expect(persist).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([null, ''])('[model] keeps absent required OTP input reportable: %s', async otp => {
+    mockFetchAuthenticationByPassword.mockResolvedValueOnce(makeAuthResult({
+      token: null,
+      authKey: null,
+      sessionId: null,
+      additionalCheck: { __typename: 'AuthenticationOtpAdditionalCheck', correlationId: 'correlation-id' }
+    }))
+    ZenMoney.readLine.mockResolvedValueOnce(otp)
+    const error = await login(preferences, false, {}).catch(error => error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(mockFetchAuthenticationOtp).not.toHaveBeenCalled()
+  })
+
   it.each([
     ['+380501234567', '+380501234567'],
     ['380501234567', '+380501234567'],
@@ -109,6 +150,20 @@ describe('PUMB API orchestration', () => {
       login: expected,
       password: '1234'
     })
+  })
+
+  // User reports 145689, 145842, 147186 and 154504 confirm the five-digit app PIN.
+  // [model] Input validation preserves leading zeroes and rejects malformed preferences.
+  it.each(['1234', '01234'])('preserves the complete app PIN %s', pin => {
+    expect(validatePreferences({ login: '380501234567', password: ` ${pin} ` })).toEqual({
+      login: '+380501234567',
+      password: pin
+    })
+  })
+
+  it.each(['123', '123456', '12a45', ''])('rejects a malformed app PIN %s', password => {
+    expect(() => validatePreferences({ login: '380501234567', password })).toThrow(InvalidPreferencesError)
+    expect(() => validatePreferences({ login: '380501234567', password })).toThrow('PIN-код застосунку ПУМБ має складатися з 4 або 5 цифр')
   })
 
   it('migrates legacy state to cold auth without writing storage from api', async () => {

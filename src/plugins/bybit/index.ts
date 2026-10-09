@@ -20,9 +20,12 @@ import {
   convertExternalTransfers,
   convertInternalTransfers,
   convertTransaction,
+  parseCardConversionFeePercent,
   parseTransferAssets,
   selectCardSettlementAccount,
-  selectCardTransactionsForImport
+  selectCardTransactionsForImport,
+  sumPendingCardHolds,
+  withPendingCardHoldsDeducted
 } from './converters'
 import { Preferences } from './models'
 
@@ -34,6 +37,12 @@ function withoutSkippedAccounts (transactions: Transaction[]): Transaction[] {
 
 export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, toDate }) => {
   const auth = await login(preferences)
+  const shouldSyncCard = preferences.syncCard !== false
+  // Validated before any request, so a typo costs a message and not a whole
+  // synchronization — but only when the card is actually being imported.
+  const cardConversionFeePercent = shouldSyncCard
+    ? parseCardConversionFeePercent(preferences.cardConversionFeePercent)
+    : 0
 
   const [balances, convertUsdtValues, flexibleEarnPositions, unifiedWallet] = await Promise.all([
     fetchAccounts(auth.credentials),
@@ -61,7 +70,6 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
       ...convertEarnTransfers(earn, preferences.earnTransferAccount ?? 'funding', transferAssets)
     )
   }
-  const shouldSyncCard = preferences.syncCard !== false
   if (!shouldSyncCard) {
     return {
       accounts: [unifiedAccount, fundingAccount, flexibleEarnAccount],
@@ -83,14 +91,25 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   }
 
   const financialEntries = await fetchFinancialTransactions(auth.credentials, fromDate, endDate)
-  const authorizationEntries = await fetchAuthorizationTransactions(auth.credentials, fromDate, endDate)
+  const authorizationEntries = await fetchAuthorizationTransactions(auth.credentials, endDate)
   const entries = selectCardTransactionsForImport(financialEntries, authorizationEntries)
   for (const entry of entries) {
-    const transaction = convertTransaction(entry, cardSettlementAccount)
+    const transaction = convertTransaction(entry, cardSettlementAccount, cardConversionFeePercent)
     if (transaction != null) {
       transactions.push(transaction)
     }
   }
 
-  return { accounts: [unifiedAccount, fundingAccount, flexibleEarnAccount], transactions: withoutSkippedAccounts(transactions) }
+  // Every open authorization is imported as a hold above while its money is
+  // still sitting in Funding as parked fiat. Reporting both leaves the balance
+  // overstated until the purchase clears.
+  const fundingAccountWithoutHolds = withPendingCardHoldsDeducted(
+    fundingAccount,
+    sumPendingCardHolds(authorizationEntries)
+  )
+
+  return {
+    accounts: [unifiedAccount, fundingAccountWithoutHolds, flexibleEarnAccount],
+    transactions: withoutSkippedAccounts(transactions)
+  }
 }
