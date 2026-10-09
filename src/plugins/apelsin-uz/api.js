@@ -477,8 +477,8 @@ export async function getAccountsTransactions (accounts, fromDate, toDate) {
     if (!ZenMoney.isAccountSkipped(account.id)) {
       const endpoint = '/account/statement?' +
         'id=' + account.id + '&' +
-        'startDate=' + fromDate + '&' +
-        'endDate=' + toDate
+        'dateFrom=' + fromDate + '&' +
+        'dateTo=' + toDate
 
       const response = await fetchJson(baseUrl + endpoint, {
         method: 'GET',
