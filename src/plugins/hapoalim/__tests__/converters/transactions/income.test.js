@@ -188,7 +188,7 @@ describe('convertTransaction', () => {
         validityDate: 20200305,
         comments: null,
         commentExistenceSwitch: 0,
-        accountName: 'דמידוב קיריל ו/או גורבצביץ יבגניה',
+        accountName: 'לקוח לדוגמה',
         contraBankNumber: 12,
         contraBranchNumber: 469,
         contraAccountNumber: 219033,
@@ -223,6 +223,16 @@ describe('convertTransaction', () => {
       }
     ]
   ])('converts income', (apiTransaction, transaction) => {
-    expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'ILS' })).toEqual(transaction)
+    // Historical fixture provenance does not identify its endpoint; the FX-deal
+    // shaped case tests the explicit FX source conservatively in ILS only.
+    const sourceType = apiTransaction.formattedExecutingDate ? 'foreignCurrencyAccount' : 'account'
+    expect(convertTransaction(apiTransaction, { id: 'account', instrument: 'ILS' }, sourceType)).toEqual(transaction)
+    // Mutate the complete observed record, not a guessed alternate bank schema.
+    expect(() => convertTransaction({ ...apiTransaction, transactionType: 'UNKNOWN' }, { id: 'account', instrument: 'ILS' }, sourceType)).toThrow(/status/)
+    expect(() => convertTransaction({ ...apiTransaction, rejectedDataEventPertainingIndication: 'Y' }, { id: 'account', instrument: 'ILS' }, sourceType)).toThrow(/status/)
+    expect(convertTransaction({ ...apiTransaction, activityDescription: ' ' }, { id: 'account', instrument: 'ILS' }, sourceType)).toEqual({ ...transaction, merchant: null })
+    if (sourceType === 'foreignCurrencyAccount') {
+      expect(() => convertTransaction(apiTransaction, { id: 'account', instrument: 'USD' }, sourceType)).toThrow(/instrument/)
+    }
   })
 })
