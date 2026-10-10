@@ -1,6 +1,7 @@
 import { convertTransaction } from '../../../converters'
 
 describe('convertTransaction', () => {
+  // Legacy zero-effect rows are omitted only after validating money, date and status.
   it.each([
     [
       {

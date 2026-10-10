@@ -19,7 +19,7 @@ describe('convertAccounts', () => {
           mymailEntitlementSwitch: 1,
           partyAccountInvolvementCode: 1,
           partyPreferredIndication: 0,
-          productLabel: 'פלדמן סופי עדי',
+          productLabel: 'לקוח לדוגמה',
           serviceAuthorizationDesc: 'פעולות ומידע',
           details: {
             currentAccountCreditFrame: 0.0,
@@ -60,5 +60,8 @@ describe('convertAccounts', () => {
     ]
   ])('converts account', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
+    expect(convertAccounts(apiAccounts.map(account => ({ ...account, details: { ...account.details, currentBalance: -5 } }))))
+      .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, balance: -5 } })))
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, details: null })))).toThrow(expect.objectContaining({ context: { field: 'currentBalance', structType: 'checking' } }))
   })
 })

@@ -115,7 +115,7 @@ describe('convertAccounts', () => {
             payoffInterval: 'month',
             payoffStep: 1,
             percent: 3,
-            startBalance: 43123.2,
+            startBalance: 44350,
             startDate: new Date('2019-06-01T00:00:00.000+02:00'),
             syncIds: [
               '5204349370941-201'
@@ -136,7 +136,7 @@ describe('convertAccounts', () => {
             payoffInterval: 'month',
             payoffStep: 1,
             percent: 3,
-            startBalance: 19086.85,
+            startBalance: 19630,
             startDate: new Date('2019-06-01T00:00:00.000+02:00'),
             syncIds: [
               '5204349370941-202'
@@ -233,7 +233,7 @@ describe('convertAccounts', () => {
             payoffInterval: 'month',
             payoffStep: 1,
             percent: 3,
-            startBalance: 71598.49,
+            startBalance: 73635,
             startDate: new Date('2019-06-01T00:00:00.000+02:00'),
             syncIds: [
               '5208349370834-201'
@@ -247,5 +247,45 @@ describe('convertAccounts', () => {
     ]
   ])('converts mortgage', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
+    expect(convertAccounts([...apiAccounts, ...apiAccounts])).toEqual(accounts)
+    for (const account of apiAccounts.filter(account => account.subLoanData.length > 1)) {
+      const partial = { ...account, subLoansCounter: 1, subLoanData: account.subLoanData.slice(0, 1), revaluedBalance: account.subLoanData[0].revaluedBalance }
+      expect(() => convertAccounts([account, partial])).toThrow('conflicting account identity')
+    }
+    // Within one mortgage, repeated part IDs must not collapse half the declared debt.
+    expect(() => convertAccounts(apiAccounts.map(account => {
+      const part = account.subLoanData[0]
+      return { ...account, subLoansCounter: 2, subLoanData: [{ ...part }, { ...part }], revaluedBalance: 2 * part.revaluedBalance }
+    }))).toThrow(expect.objectContaining({ context: { structType: 'mortgage', field: 'subLoanData.subLoansSerialId' } }))
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, subLoanData: account.subLoanData.map((part, index) => ({ ...part, revaluedBalance: index === 0 ? 1000 : part.revaluedBalance })) }))))
+      .toThrow(expect.objectContaining({ context: { structType: 'mortgage', field: 'revaluedBalance' } }))
+    expect(convertAccounts(apiAccounts.map(account => ({ ...account, revaluedBalance: 0, subLoanData: account.subLoanData.map(part => ({ ...part, revaluedBalance: 0 })) }))))
+      .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, balance: 0 } })))
+    // A missing parent total cannot establish a reconciliation invariant.
+    for (const revaluedBalance of [undefined, null]) {
+      expect(convertAccounts(apiAccounts.map(account => ({ ...account, revaluedBalance })))).toEqual(accounts)
+    }
+    for (const revaluedBalance of ['x', NaN, Infinity, {}, -5]) {
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, revaluedBalance })))).toThrow(expect.objectContaining({ context: { field: 'revaluedBalance', structType: 'mortgage' } }))
+    }
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, subLoanData: account.subLoanData.map(part => ({ ...part, revaluedBalance: -5 })) })))).toThrow(expect.objectContaining({ context: { field: 'revaluedBalance', structType: 'mortgage' } }))
+    for (const title of [undefined, null, '', '   ', 5]) {
+      expect(convertAccounts(apiAccounts.map(account => ({ ...account, productLabel: title }))))
+        .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, title: 'משכנתא' } })))
+    }
+    expect(convertAccounts(apiAccounts.map(account => ({ ...account, productLabel: ' Sample mortgage ' }))))
+      .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, title: 'Sample mortgage' } })))
+    for (const part of [null, [], 'invalid', 1]) {
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, subLoanData: account.subLoanData.map(() => part) })))).toThrow('unexpected mortgage part')
+    }
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, mortgageLoanSerialId: undefined })))).toThrow(/identity/)
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, subLoanData: account.subLoanData.map(part => ({ ...part, subLoansSerialId: undefined })) })))).toThrow(/identity/)
+    expect(convertAccounts(apiAccounts.map(account => ({ ...account, subLoanData: account.subLoanData.map(part => ({ ...part, validityInterestRate: null })) })))).toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, percent: null } })))
+    for (const rate of [undefined, NaN]) {
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, subLoanData: account.subLoanData.map(part => ({ ...part, validityInterestRate: rate })) })))).toThrow(/amount/)
+    }
+    for (const principal of [0, -1]) {
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, subLoanData: account.subLoanData.map(part => ({ ...part, subLoansPrincipalAmount: principal })) })))).toThrow(/principal/)
+    }
   })
 })
