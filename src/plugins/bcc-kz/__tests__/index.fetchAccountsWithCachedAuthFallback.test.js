@@ -1,6 +1,7 @@
-import { fetchAccountsWithCachedAuthFallback } from '../index'
+import { SessionExpiredError, withAuthRecovery } from '../api'
 
-describe('fetchAccountsWithCachedAuthFallback', () => {
+// Model callbacks verify auth control flow without assuming bank response formats.
+describe('[model] withAuthRecovery', () => {
   it('uses saved token when fetchAccounts succeeds', async () => {
     const auth = {
       device: { deviceId: 'saved-device' },
@@ -10,10 +11,12 @@ describe('fetchAccountsWithCachedAuthFallback', () => {
     const fetchAccounts = jest.fn().mockResolvedValue(['ok'])
     const login = jest.fn()
 
-    const result = await fetchAccountsWithCachedAuthFallback(
+    const result = await withAuthRecovery(
       { phone: '87000000000', password: 'x' },
       auth,
-      { fetchAccounts, login }
+      () => fetchAccounts(auth),
+      {},
+      { login }
     )
 
     expect(result).toEqual(['ok'])
@@ -28,14 +31,16 @@ describe('fetchAccountsWithCachedAuthFallback', () => {
       sessionCode: 'expired-session'
     }
     const fetchAccounts = jest.fn()
-      .mockRejectedValueOnce(new Error('expired'))
+      .mockRejectedValueOnce(new SessionExpiredError())
       .mockResolvedValueOnce(['ok-after-login'])
     const login = jest.fn().mockResolvedValue(undefined)
 
-    const result = await fetchAccountsWithCachedAuthFallback(
+    const result = await withAuthRecovery(
       { phone: '87000000000', password: 'x' },
       auth,
-      { fetchAccounts, login }
+      () => fetchAccounts(auth),
+      {},
+      { login }
     )
 
     expect(result).toEqual(['ok-after-login'])

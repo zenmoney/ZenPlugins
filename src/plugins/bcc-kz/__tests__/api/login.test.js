@@ -36,7 +36,10 @@ describe('bcc-kz login auth flow', () => {
     global.fetch = jest.fn()
   })
 
+  afterEach(() => { jest.restoreAllMocks() })
+
   it('sends web auth payload with lowercase action in PASS and TOKEN', async () => {
+    const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
     global.fetch
       .mockResolvedValueOnce(makeNetworkResponse({ success: true, verified: false, token: 'otp-token' }))
       .mockResolvedValueOnce(makeNetworkResponse({ success: true, verified: true }))
@@ -55,6 +58,11 @@ describe('bcc-kz login auth flow', () => {
     )
 
     expect(global.fetch).toHaveBeenCalledTimes(3)
+    // Model secrets verify actual network logging without defining a bank format.
+    const log = JSON.stringify(debug.mock.calls)
+    for (const secret of ['test-password', 'otp-token', 'bearer-token', 'session-code', 'mb-session-id']) {
+      expect(log).not.toContain(secret)
+    }
 
     const passBody = parse(global.fetch.mock.calls[0][1].body)
     expect(passBody.action).toBe('SIGN')

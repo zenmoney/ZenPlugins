@@ -4,7 +4,7 @@
   "zenPlugin_fetchingDataError": "This bank connection is temporarily unavailable. Please, try later.",
   "zenPlugin_finished": "Sync finished. No new transactions.",
   "zenPlugin_finishedWithCount": "New transactions synced: %1$d",
-  "zenPlugin_incompatibleVersionError": "You have an old version of the Zenmoney app. Update it to the latest version to make it work properly.",
+  "zenPlugin_incompatibleVersionError": "Check that you have the latest version of the app:\n— If there’s a new version available, install it (tap “Update”).\n— If there’s no update yet, you don’t need to do anything for now — just wait for the next one.",
   "zenPlugin_invalidLoginOrPasswordError": "Incorrect bank login or password",
   "zenPlugin_invalidOtpCodeError": "The code is incorrect. Try again — tap \"Connect\" and enter a new code.",
   "zenPlugin_invalidPreferencesError": "Please check the entered data.",

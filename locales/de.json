@@ -1,4 +1,5 @@
 {
+  "zenPlugin_incompatibleVersionError": "Prüfen Sie, ob Sie die neueste Version der App haben:\n— Wenn ein Update verfügbar ist, installieren Sie es (tippen Sie auf „Aktualisieren“).\n— Wenn noch kein Update verfügbar ist, müssen Sie vorerst nichts tun — warten Sie einfach auf das nächste.",
   "zenPlugin_nordigenNoAccountsToSyncError": "Alle synchronisierten Konten bei dieser Bank sind geschlossen oder vorübergehend inaktiv. Verknüpfen Sie die Bank erneut und wählen Sie neue Konten für die Synchronisierung aus.",
   "zenPlugin_nordigenRequestLimitExceededError": "Die Bank begrenzt die Anzahl der Aktualisierungen pro Tag. Die nächste Aktualisierung ist morgen möglich.",
   "zenPlugin_notImplementedError": "Diese Verbindung ist noch nicht aktiv, aber wir arbeiten daran. Sie können uns dabei unterstützen, indem Sie uns ein Fehlerprotokoll senden.",
