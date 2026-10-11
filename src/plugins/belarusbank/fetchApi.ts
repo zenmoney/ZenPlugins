@@ -116,7 +116,7 @@ export const fetchApi = async <T>(path: string, options: RequestOptions = {}): P
         }
       }
     } catch (error) {
-      if (!(error instanceof Error) || !NETWORK_ERROR_PATTERN.test(error.message)) {
+      if (options.retry === false || !(error instanceof Error) || !NETWORK_ERROR_PATTERN.test(error.message)) {
         throw error
       }
       if (attempt === maxAttempts) break

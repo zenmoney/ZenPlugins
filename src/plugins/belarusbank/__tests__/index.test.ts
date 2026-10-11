@@ -41,7 +41,9 @@ describe('Belarusbank scrape', () => {
 
   it('preserves an authentication failure and stops before loading financial data [model]', async () => {
     // Model the entrypoint invariant independently of a bank response format.
-    const error = new Error('Model authentication failure')
+    const saved = { sessionToken: 'model-saved', refreshToken: 'model-saved-refresh', tokenType: 'Bearer' }
+    pluginData.set('belarusbankAuth', saved)
+    const error = new Error('[auth/hot] Model authentication failure')
     mockAuthenticate.mockRejectedValue(error)
 
     await expect(scrape({
@@ -52,7 +54,32 @@ describe('Belarusbank scrape', () => {
       isInBackground: false
     })).rejects.toBe(error)
     expect(mockGetProducts).not.toHaveBeenCalled()
+    expect(pluginData.get('belarusbankAuth')).toBe(saved)
+    expect(ZenMoney.setData).not.toHaveBeenCalled()
     expect(ZenMoney.locale).toBe('ru')
+  })
+
+  it('persists confirmed authorization before a later financial fetch failure [model]', async () => {
+    // Token rotation must survive unrelated data-loading failures; old preferences must not invalidate hot auth.
+    const stored = { sessionToken: 'model-old-session', refreshToken: 'model-old-refresh', tokenType: 'Bearer' }
+    const renewed = { sessionToken: 'model-new-session', refreshToken: 'model-new-refresh', tokenType: 'Bearer' }
+    pluginData.set('belarusbankAuth', stored)
+    mockAuthenticate.mockResolvedValue(renewed)
+    const error = new Error('[fetch/accounts] Model loading failure')
+    mockGetProducts.mockImplementation(async () => {
+      expect(pluginData.get('belarusbankAuth')).toEqual(renewed)
+      expect(ZenMoney.saveData).toHaveBeenCalled()
+      throw error
+    })
+
+    await expect(scrape({
+      preferences: { login: 'changed-login', password: 'changed-password' },
+      fromDate: new Date('2026-10-01T00:00:00Z'),
+      isFirstRun: false,
+      isInBackground: true
+    })).rejects.toBe(error)
+    expect(mockAuthenticate).toHaveBeenCalledWith(stored, true)
+    expect(pluginData.get('belarusbankAuth')).toEqual(renewed)
   })
 
   it('loads the full statement first and supplements it with general payment history', async () => {
@@ -104,7 +131,7 @@ describe('Belarusbank scrape', () => {
     )
     expect(mockGetStatementTransactions.mock.invocationCallOrder[0]).toBeLessThan(mockGetGeneralPaymentHistory.mock.invocationCallOrder[0])
     expect(mockGetCardTransactions).not.toHaveBeenCalled()
-    expect(ZenMoney.setData).not.toHaveBeenCalled()
+    expect(ZenMoney.setData).toHaveBeenCalledWith('belarusbankAuth', auth)
   })
 
   it('removes the legacy transaction-id state without creating a replacement', async () => {
@@ -123,9 +150,9 @@ describe('Belarusbank scrape', () => {
       isInBackground: true
     })
 
-    expect(ZenMoney.setData).toHaveBeenCalledTimes(1)
     expect(ZenMoney.setData).toHaveBeenCalledWith('belarusbankTransactionIds', undefined)
-    expect(ZenMoney.saveData).toHaveBeenCalledTimes(1)
+    expect(pluginData.get('belarusbankTransactionIds')).toBeUndefined()
+    expect(ZenMoney.saveData).toHaveBeenCalled()
   })
 
   it('adds general payment history without duplicating matching statement operations', async () => {

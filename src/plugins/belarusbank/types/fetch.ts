@@ -11,32 +11,6 @@ export interface ErrorResponse {
   }
 }
 
-export interface LoginRequest {
-  appVersion: string
-  deviceModel: string
-  deviceUid: string
-  login?: string
-  mobilePhone?: string
-  osType: string
-  osVersion: string
-  password: string
-  token: string
-}
-
-export interface LoginPreparationResponse extends ErrorResponse {
-  requestId: string
-  sendCodeResponse?: unknown
-  needCodeWord?: boolean
-}
-
-export interface LoginResponse extends ErrorResponse {
-  sessionToken?: string
-  token?: string
-  refreshToken?: string
-  firstName?: string
-  tokenType?: string
-}
-
 export type ApiMoney = string | number
 
 export interface Card {
