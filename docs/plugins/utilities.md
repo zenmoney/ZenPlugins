@@ -7,7 +7,7 @@ Reference index. Read only the helper involved in your task; behavior and availa
 | HTTP, JSON, WebView interception | [typed network helpers](../../src/common/network/index.ts) |
 | TLS configuration | [Certificate defaults](#tls-defaults), registration and `TlsOptions` in [network/tls.ts](../../src/common/network/tls.ts) |
 | WebSocket transport and request/response client | [WebSocket contract](websocket.md), [WebSocket](../../src/common/network/webSocket.ts), [WebSocketRequestClient](../../src/common/network/webSocketRequestClient.ts) |
-| WebView / TCP transport | [WebView and its policy factory](webview.md), [Socket](socket.md); constructors and types in [webView.ts](../../src/common/webView.ts) and [socket.ts](../../src/common/network/socket.ts) |
+| WebView / TCP transport | [WebView and its policy factory](../webview/README.md), [Socket](socket.md); constructors and types in [webView.ts](../../src/common/webView.ts) and [socket.ts](../../src/common/network/socket.ts) |
 | Request/response masking | [sanitize](../../src/common/sanitize.js), [required masking policy](../debugging/log-sanitization.md) |
 | Cookies | Global `cookieJar` and persistence functions in [network](../../src/common/network/index.ts); [fetch with a separate jar](../../src/common/cookie/fetchCookie.js) |
 | Retry | [retry](../../src/common/retry.js); use only for understood retryable states |

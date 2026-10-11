@@ -1,6 +1,6 @@
 import type { CookieJar } from 'fetch-cookie'
-import type { JSHandle, PageFunction, PageFunctionOn, Unboxed, WebViewInstance } from './webView'
-import { WebView } from './webView'
+import type { JSHandle, PageFunction, PageFunctionOn, Unboxed, WebViewInstance } from '../../webView'
+import { WebView } from '../../webView'
 
 declare function expectType<T> (value: T): void
 

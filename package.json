@@ -112,6 +112,7 @@
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
+      "\\.type-test\\.ts$",
       "\\.playwright\\.test\\.ts$"
     ],
     "testEnvironment": "node",

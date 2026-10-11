@@ -1,4 +1,4 @@
-import type { WebViewConstructor, WebViewGotoOptions, WebViewNavigationPolicy, WebViewOptions } from './webView'
+import type { WebViewConstructor, WebViewGotoOptions, WebViewNavigationPolicy, WebViewOptions } from '../../webView'
 import fetchCookie from 'fetch-cookie'
 
 const originalZenMoney = global.ZenMoney
@@ -53,8 +53,8 @@ describe('[model] WebView constructor and TLS defaults', () => {
     jest.resetModules()
     jest.clearAllMocks()
     installHost()
-    jest.requireActual('../polyfills/fetch')
-    WebView = jest.requireActual<typeof import('./webView')>('./webView').WebView
+    jest.requireActual('../../../polyfills/fetch')
+    WebView = jest.requireActual<typeof import('../../webView')>('../../webView').WebView
   })
 
   afterEach(() => {
@@ -75,7 +75,7 @@ describe('[model] WebView constructor and TLS defaults', () => {
   it('works without loading the fetch polyfill and leaves the host constructor untouched', () => {
     jest.resetModules()
     installHost()
-    const { WebView } = jest.requireActual<typeof import('./webView')>('./webView')
+    const { WebView } = jest.requireActual<typeof import('../../webView')>('../../webView')
     const page = new WebView()
     expect(page).toBeInstanceOf(NativeWebView)
     expect(Reflect.get(ZenMoney, 'WebView')).toBe(NativeWebView)
@@ -201,7 +201,7 @@ describe('[model] WebView constructor and TLS defaults', () => {
   })
 
   it('shares public certificate registration with HTTP and modern WebView defaults', async () => {
-    const { addTrustedCertificates } = jest.requireActual<typeof import('./network/tls')>('./network/tls')
+    const { addTrustedCertificates } = jest.requireActual<typeof import('../../network/tls')>('../../network/tls')
     expect(ZenMoney.trustCertificates).toBe(addTrustedCertificates)
     await addTrustedCertificates(Object.freeze(['model-public-ca']))
     ZenMoney.trustCertificates(['model-legacy-ca'])
@@ -218,10 +218,10 @@ describe('[model] WebView constructor and TLS defaults', () => {
     jest.resetModules()
     installHost()
     Reflect.deleteProperty(global.ZenMoney, 'WebView')
-    jest.requireActual('../polyfills/fetch')
-    WebView = jest.requireActual<typeof import('./webView')>('./webView').WebView
+    jest.requireActual('../../../polyfills/fetch')
+    WebView = jest.requireActual<typeof import('../../webView')>('../../webView').WebView
     expect('WebView' in ZenMoney).toBe(false)
-    const { IncompatibleVersionError } = jest.requireActual<typeof import('../errors')>('../errors')
+    const { IncompatibleVersionError } = jest.requireActual<typeof import('../../../errors')>('../../../errors')
     expect(() => new WebView()).toThrow(IncompatibleVersionError)
   })
 

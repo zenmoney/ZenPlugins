@@ -1,8 +1,8 @@
-import { openWebViewAndInterceptRequest, RequestInterceptMode } from './index'
-import { IncompatibleVersionError } from '../../errors'
-import { wrapWebView } from '../webView'
-import type { WebViewInstance, WebViewNavigation, WebViewNavigationPolicy } from '../webView'
-import type { InterceptedRequest } from './index'
+import { openWebViewAndInterceptRequest, RequestInterceptMode } from '../../network'
+import { IncompatibleVersionError } from '../../../errors'
+import { wrapWebView } from '../../webView'
+import type { WebViewInstance, WebViewNavigation, WebViewNavigationPolicy } from '../../webView'
+import type { InterceptedRequest } from '../../network'
 
 // [model] The native legacy adapter configures its session before assigning a policy.
 describe('[model] legacy WebView logging', () => {

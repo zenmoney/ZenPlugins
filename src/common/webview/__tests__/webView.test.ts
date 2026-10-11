@@ -1,5 +1,5 @@
-import { createNavigationPolicy, wrapWebView } from './webView'
-import type { WebViewInstance, WebViewNavigation, WebViewNavigationPolicy } from './webView'
+import { createNavigationPolicy, wrapWebView } from '../../webView'
+import type { WebViewInstance, WebViewNavigation, WebViewNavigationPolicy } from '../../webView'
 
 // [model] Native navigation dispatch, including goto, owns request logging.
 describe('[model] WebView request logging', () => {
