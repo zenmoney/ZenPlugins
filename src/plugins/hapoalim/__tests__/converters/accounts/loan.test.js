@@ -127,5 +127,24 @@ describe('convertAccounts', () => {
     ]
   ])('converts loan', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, debtAmount: -5 })))).toThrow(expect.objectContaining({ context: { field: 'debtAmount', structType: 'loan' } }))
+    expect(convertAccounts(apiAccounts.map(account => ({ ...account, debtAmount: 0 }))))
+      .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, balance: 0 } })))
+    for (const title of [undefined, null, '', '   ', 5]) {
+      expect(convertAccounts(apiAccounts.map(account => ({ ...account, productNickName: title }))))
+        .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, title: 'אַשׁרַאי' } })))
+    }
+    expect(convertAccounts(apiAccounts.map(account => ({ ...account, productNickName: ' Sample loan ' }))))
+      .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, title: 'Sample loan' } })))
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, creditCurrencyCode: 19 })))).toThrow(/currency/)
+    expect(convertAccounts(apiAccounts.map(account => ({ ...account, interestRate: null })))).toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, percent: null } })))
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, interestRate: NaN })))).toThrow(/amount/)
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, interestRate: undefined })))).toThrow(expect.objectContaining({ context: { field: 'interestRate', structType: 'loan' } }))
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, details: null })))).toThrow(expect.objectContaining({ context: { field: 'details', structType: 'loan' } }))
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, unitedCreditTypeCode: undefined })))).toThrow(/identity/)
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, creditSerialNumber: undefined })))).toThrow(/identity/)
+    for (const principal of [0, -1]) {
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, originalLoanPrincipalAmount: principal })))).toThrow(/principal/)
+    }
   })
 })

@@ -1,193 +1,87 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-describe('hapoalim api runtime harness', () => {
-  let login
-  let fetchMock
-  let fetchJsonMock
-  let consoleSpies
+// [model] Synthetic HTTP envelopes exercise real network parsing and redaction,
+// not bank response schemas or product availability.
+describe('[model] hapoalim network privacy and failure visibility', () => {
+  const originalFetch = global.fetch
+  const originalHost = global.ZenMoney
+  let spies
 
   beforeEach(() => {
     jest.resetModules()
-    jest.clearAllMocks()
-    consoleSpies = ['debug', 'info', 'log', 'warn', 'error'].map(method =>
-      jest.spyOn(console, method).mockImplementation(() => {})
-    )
-
-    fetchMock = jest.fn().mockResolvedValue({
-      status: 200,
-      url: 'https://login.bankhapoalim.co.il/portalserver/HomePage',
-      headers: {},
-      body: 'window.bnhpApp = { restContext: "/pib" }'
-    })
-    fetchJsonMock = jest.fn().mockResolvedValue({
-      status: 200,
-      url: 'https://login.bankhapoalim.co.il/ServerServices/general/accounts?lang=he',
-      headers: {},
-      body: [{ accountNumber: '1' }, { accountNumber: '2' }]
-    })
-
-    jest.doMock('../../../common/network', () => {
-      const actual = jest.requireActual('../../../common/network')
-      return {
-        ...actual,
-        fetch: fetchMock,
-        fetchJson: fetchJsonMock,
-        ParseError: class ParseError extends Error {}
-      }
-    })
+    jest.dontMock('../../../common/network')
+    jest.dontMock('../../../common/network/cookies')
+    spies = ['debug', 'info', 'log', 'warn', 'error'].map(method => jest.spyOn(console, method).mockImplementation(() => {}))
   })
 
   afterEach(() => {
-    for (const spy of consoleSpies) {
-      spy.mockRestore()
-    }
+    for (const spy of spies) spy.mockRestore()
+    global.fetch = originalFetch
+    global.ZenMoney = originalHost
   })
 
-  it('closes the configured WebView from cookie-jar polling through the actual network helper', async () => {
-    const originalSetTimeout = global.setTimeout
-    const originalClearTimeout = global.clearTimeout
-    const scheduledCallbacks = []
-    let cookieJarReads = 0
+  it('does not log authenticated portal HTML through the real network helper', async () => {
+    const marker = 'SENSITIVE_MODEL_PORTAL_MARKER'
+    global.fetch = jest.fn(async url => ({
+      status: 200,
+      url,
+      headers: new Map([['content-type', url.includes('/accounts?') ? 'application/json' : 'text/html']]),
+      text: async () => url.includes('/accounts?') ? '[]' : `<html>${marker}<script>restContext: "/pib"</script></html>`
+    }))
+    global.ZenMoney = {}
+    Object.defineProperty(global.fetch, 'cookieJar', { value: { serialize: async () => ({ cookies: [{ key: 'SMSESSION', value: 'fictional-session', domain: '.bankhapoalim.co.il', path: '/' }] }) } })
+    const { recoverAuthFromCookieStore } = require('../api')
+    expect((await recoverAuthFromCookieStore(null)).restContext).toBe('pib')
+    const logs = JSON.stringify(spies.flatMap(spy => spy.mock.calls))
+    expect(logs).not.toContain(marker)
+    expect(logs).not.toContain('fictional-session')
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+  })
 
-    global.setTimeout = jest.fn((callback) => {
-      scheduledCallbacks.push(callback)
-      return scheduledCallbacks.length
+  it('rejects the whole result on an unknown optional-endpoint failure without exposing HTML or cookies', async () => {
+    const marker = 'FICTIONAL_OPTIONAL_SECRET_MARKER'
+    global.fetch = jest.fn(async url => {
+      const optional = url.includes('/foreign-currency/')
+      return {
+        status: 200,
+        url: optional ? `${url}&token=${marker}` : url,
+        headers: new Map(optional
+          ? [['content-type', 'text/html'], ['set-cookie', `SMSESSION=${marker}; Path=/`]]
+          : [['content-type', 'application/json']]),
+        text: async () => optional
+          ? `<html>${marker}</html>`
+          : JSON.stringify(url.includes('/accounts?')
+            ? [{ bankNumber: 12, branchNumber: 702, accountNumber: 1001 }]
+            : {})
+      }
     })
-    global.clearTimeout = jest.fn()
-
-    global.ZenMoney = {
-      features: {
-        webViewConfiguration: true
-      },
-      getCookies: jest.fn().mockResolvedValue([]),
-      saveCookies: jest.fn().mockResolvedValue(undefined),
-      openWebView: jest.fn((url, headers, onRequest, onComplete, options) => {
-        const webView = {
-          cookieJar: {
-            getCookieString: jest.fn(async (cookieUrl) => {
-              if (cookieUrl.includes('/ServerServices/general/accounts')) {
-                cookieJarReads++
-                return cookieJarReads >= 2
-                  ? 'TS=poll-ts; XSRF-TOKEN=poll-xsrf'
-                  : ''
-              }
-              return ''
-            })
-          }
-        }
-
-        Promise.resolve(options.configure(webView))
-          .then(async () => {
-            const mode = await onRequest({
-              url: 'https://static.example.com/challenge',
-              headers: {}
-            }, (error, result) => onComplete(error, result))
-            expect(mode).toBeUndefined()
-          })
-          .catch(error => onComplete(error))
-      })
-    }
-
-    login = require('../api').login
-
-    try {
-      const authPromise = login()
-
-      expect(scheduledCallbacks).toHaveLength(1)
-      await scheduledCallbacks.shift()()
-      expect(scheduledCallbacks).toHaveLength(1)
-      await scheduledCallbacks.shift()()
-
-      const auth = await authPromise
-      expect(fetchJsonMock).toHaveBeenCalled()
-      expect(global.ZenMoney.getCookies).not.toHaveBeenCalled()
-      expect(auth.cookieHeader).toContain('TS=poll-ts')
-      expect(auth.cookieHeader).toContain('XSRF-TOKEN=poll-xsrf')
-      expect(auth.restContext).toBe('pib')
-    } finally {
-      global.setTimeout = originalSetTimeout
-      global.clearTimeout = originalClearTimeout
-    }
+    global.ZenMoney = {}
+    const { fetchAccounts } = require('../api')
+    const error = await fetchAccounts({ cookieHeader: 'SMSESSION=fictional', restContext: 'pib' }).catch(error => error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error.message).toBe('Bank Hapoalim returned an unexpected response instead of JSON.')
+    expect(JSON.stringify(error)).not.toContain(marker)
+    const logs = JSON.stringify(spies.flatMap(spy => spy.mock.calls))
+    expect(logs).not.toContain(marker)
+    expect(logs).toContain('account endpoint failed: foreign currency')
   })
 
-  it('recovers configured WebView auth after native close when the cookie jar was already captured', async () => {
-    global.ZenMoney = {
-      features: {
-        webViewConfiguration: true
-      },
-      getCookies: jest.fn().mockResolvedValue([]),
-      saveCookies: jest.fn().mockResolvedValue(undefined),
-      openWebView: jest.fn((url, headers, onRequest, onComplete, options) => {
-        const webView = {
-          cookieJar: {
-            getCookieString: jest.fn(async (cookieUrl) => {
-              if (cookieUrl.includes('/portalserver/HomePage')) {
-                return 'TS=jar-ts; XSRF-TOKEN=jar-xsrf'
-              }
-              return ''
-            })
-          }
-        }
-
-        Promise.resolve(options.configure(webView))
-          .then(async () => {
-            await onRequest({
-              url: 'https://login.bankhapoalim.co.il/portalserver/HomePage',
-              headers: {}
-            }, () => {})
-            onComplete(new Error('WebView closed'))
-          })
-          .catch(error => onComplete(error))
-      })
-    }
-
-    login = require('../api').login
-
-    const auth = await login()
-
-    expect(global.ZenMoney.getCookies).not.toHaveBeenCalled()
-    expect(fetchJsonMock).toHaveBeenCalled()
-    expect(auth.cookieHeader).toContain('TS=jar-ts')
-    expect(auth.cookieHeader).toContain('XSRF-TOKEN=jar-xsrf')
-    expect(auth.restContext).toBe('pib')
-  })
-
-  it('keeps the legacy cookie-store recovery path for older app versions', async () => {
-    const originalSetTimeout = global.setTimeout
-
-    global.setTimeout = jest.fn((callback) => {
-      callback()
-      return 1
-    })
-
-    global.ZenMoney = {
-      features: {},
-      getCookies: jest.fn()
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([
-          { domain: '.bankhapoalim.co.il', name: 'SMSESSION', value: 'closed-session' },
-          { domain: '.bankhapoalim.co.il', name: 'XSRF-TOKEN', value: 'closed-xsrf' }
-        ]),
-      saveCookies: jest.fn().mockResolvedValue(undefined),
-      openWebView: jest.fn((url, headers, onRequest, onComplete) => {
-        onComplete(new Error('WebView closed'))
-      })
-    }
-
-    login = require('../api').login
-
-    try {
-      const auth = await login()
-
-      expect(global.ZenMoney.saveCookies).toHaveBeenCalled()
-      expect(global.ZenMoney.getCookies).toHaveBeenCalledTimes(3)
-      expect(fetchJsonMock).toHaveBeenCalled()
-      expect(auth.cookieHeader).toContain('SMSESSION=closed-session')
-      expect(auth.cookieHeader).toContain('XSRF-TOKEN=closed-xsrf')
-      expect(auth.restContext).toBe('pib')
-    } finally {
-      global.setTimeout = originalSetTimeout
-    }
+  it('does not include unknown bank error descriptions or state in reportable errors', async () => {
+    const marker = 'MODEL_PRIVATE_ERROR_DESCRIPTION'
+    global.fetch = jest.fn(async url => ({
+      status: 401,
+      url,
+      headers: new Map([['content-type', 'application/json']]),
+      text: async () => JSON.stringify({ flow: marker, state: marker, error: { errCode: 'MODEL_ERROR', errDesc: marker } })
+    }))
+    global.ZenMoney = {}
+    Object.defineProperty(global.fetch, 'cookieJar', { value: { serialize: async () => ({ cookies: [{ key: 'SMSESSION', value: 'model', domain: '.bankhapoalim.co.il', path: '/' }] }) } })
+    const { recoverAuthFromCookieStore, isLikelyAuthGateError } = require('../api')
+    const error = await recoverAuthFromCookieStore(null).catch(error => error)
+    expect(isLikelyAuthGateError(error)).toBe(false)
+    expect(error.responseSummary.errCode).toBe('MODEL_ERROR')
+    expect(JSON.stringify(error)).not.toContain(marker)
+    expect(JSON.stringify(spies.flatMap(spy => spy.mock.calls))).not.toContain(marker)
+    expect(JSON.stringify(spies.flatMap(spy => spy.mock.calls))).toContain('MODEL_ERROR')
   })
 })

@@ -1,10 +1,12 @@
-import { flatten } from 'lodash'
 import qs from 'querystring'
 import * as setCookie from 'set-cookie-parser'
-import { TemporaryError } from '../../errors'
-import { toISODateString } from '../../common/dateUtils'
-import { fetch, fetchJson, ParseError, openWebViewAndInterceptRequest } from '../../common/network'
+import { UserInteractionError } from '../../errors'
+import { dateInTimezone, toISODateString } from '../../common/dateUtils'
+import { fetch, fetchJson, ParseError } from '../../common/network'
+import { cookieJar } from '../../common/network/cookies'
+import { WebView } from '../../common/webView'
 import { generateRandomString } from '../../common/utils'
+import { sanitize } from '../../common/sanitize'
 
 const OFFICIAL_BASE_URL = 'https://login.bankhapoalim.co.il'
 const OFFICIAL_COOKIE_DOMAINS = [
@@ -20,7 +22,6 @@ const WEB_SUCCESS_PATTERNS = [
   /\/ng--portals\/rb\/he\//i,
   /\/ng-portals\/rb\/he\//i
 ]
-const WEB_LOGIN_INCOMPLETE_MESSAGE = 'Could not complete Bank Hapoalim web login. Finish the bank login in the opened page and retry sync.'
 const PORTAL_PAGE_PATHS = [
   '/portalserver/HomePage',
   '/ng-portals-bt/rb/he/homepage',
@@ -54,52 +55,53 @@ const OFFICIAL_TRANSACTION_PAGE_UUID = '/current-account/transactions'
 const OFFICIAL_TRANSACTION_LIMIT = 1000
 const COOKIE_STORE_POLL_INTERVAL_MS = 1000
 const COOKIE_STORE_POLL_TIMEOUT_MS = 10 * 60 * 1000
-const COOKIE_STORE_RECOVERY_RETRY_COUNT = 5
-const COOKIE_STORE_RECOVERY_RETRY_DELAY_MS = 250
+const SESSION_OPERATION_TIMEOUT_MS = 15000
+const sessionDeadlineErrors = new WeakSet()
+const authUpdateCallbacks = new WeakMap()
+const missingRestContexts = new WeakMap()
+const authGateVerifiers = new WeakMap()
 const OFFICIAL_AUTH_COOKIE_NAMES = new Set([
   'SMSESSION',
   'XSRF-TOKEN',
   'TS'
 ])
-const OFFICIAL_COOKIE_PROBE_URLS = [
-  WEB_LOGIN_URL,
-  `${OFFICIAL_BASE_URL}/ServerServices/general/accounts?lang=he`,
-  ...PORTAL_PAGE_PATHS.map(path => `${OFFICIAL_BASE_URL}${path}`)
-]
 
 function summarizeResponse (response) {
   return response
     ? {
         status: response.status,
-        url: response.url,
-        contentType: response.headers?.['content-type'],
-        flow: response.body?.flow,
-        state: response.body?.state,
-        errCode: response.body?.error?.errCode,
-        errDesc: response.body?.error?.errDesc
+        url: sanitizeOfficialUrlForLog(response.url),
+        contentType: getHeaderValue(response.headers, 'content-type'),
+        isLoginPage: isOfficialLoginPageResponse(response),
+        errCode: typeof response.body?.error?.errCode === 'string' ? response.body.error.errCode : null
       }
     : null
 }
 
-function throwTemporary (message, response) {
+function throwResponseError (message, response, verify) {
   console.warn(message, summarizeResponse(response))
-  const error = new TemporaryError(message)
+  const error = new Error(message)
   error.responseSummary = summarizeResponse(response)
+  if (verify && isLikelyAuthGateError(error)) authGateVerifiers.set(error, verify)
   throw error
 }
 
-function ensure (condition, message, response) {
+function ensure (condition, message, response, verify) {
   if (!condition) {
-    throwTemporary(message, response)
+    throwResponseError(message, response, verify)
   }
+}
+
+export function getAuthGateVerifier (error) {
+  return authGateVerifiers.get(error)
 }
 
 async function safeFetch (label, fn) {
   try {
     return await fn()
   } catch (error) {
-    console.warn(`optional account endpoint failed: ${label}`, error?.responseSummary || error?.response || error?.message || error)
-    return []
+    console.warn(`account endpoint failed: ${label}`, error?.responseSummary || summarizeResponse(error?.response) || { errorType: error?.name || 'Error' })
+    throw error
   }
 }
 
@@ -166,15 +168,16 @@ function mergeSetCookieHeaders (currentCookieHeader, setCookieHeader) {
     return currentCookieHeader
   }
 
-  const nextCookies = setCookie.parse(setCookie.splitCookiesString(setCookieHeader))
-    .reduce((result, cookie) => {
-      if (cookie?.name) {
-        result[cookie.name] = cookie.value
-      }
-      return result
-    }, {})
-
-  const mergedCookies = { ...parseCookieHeader(currentCookieHeader), ...nextCookies }
+  const mergedCookies = parseCookieHeader(currentCookieHeader)
+  for (const cookie of setCookie.parse(setCookie.splitCookiesString(setCookieHeader), { decodeValues: false })) {
+    if (!cookie?.name) continue
+    // Max-Age overrides Expires; an explicit revocation must not revive a stale token.
+    const expired = Number.isFinite(cookie.maxAge)
+      ? cookie.maxAge <= 0
+      : cookie.expires instanceof Date && cookie.expires.getTime() <= Date.now()
+    if (cookie.value === '' || expired) delete mergedCookies[cookie.name]
+    else mergedCookies[cookie.name] = cookie.value
+  }
   return Object.entries(mergedCookies)
     .map(([name, value]) => `${name}=${value}`)
     .join('; ')
@@ -198,10 +201,68 @@ function isOfficialCookieDomain (domain) {
 function sanitizeOfficialUrlForLog (rawUrl) {
   try {
     const url = new URL(rawUrl)
-    return `${url.origin}${url.pathname}`
+    const path = url.pathname.replace(/(\/credit-and-mortgage\/(?:v3\/)?loans)\/.*/, '$1/<id>')
+    const visibleQuery = new Set(['retrievalStartDate', 'retrievalEndDate', 'numItemsPerPage', 'sortCode', 'currencyCodeList', 'detailedAccountTypeCodeList', 'type', 'view'])
+    for (const [key, value] of url.searchParams) {
+      if (!visibleQuery.has(key)) url.searchParams.set(key, sanitize(value, true))
+    }
+    return `${url.origin}${path}${url.search}`
   } catch (error) {
     return null
   }
+}
+
+const FINANCIAL_LOG_FIELDS = new Set([
+  'currentBalance', 'currentAccountCreditFrame', 'creditLimitAmount', 'pendingBalance', 'withdrawalBalance',
+  'eventAmount', 'eventActivityTypeCode', 'transactionType', 'rejectedDataEventPertainingIndication',
+  'eventDate', 'valueDate', 'formattedEventDate', 'formattedValueDate', 'formattedExecutingDate',
+  'currencyCode', 'currencySwiftCode', 'currencyLongDescription', 'detailedAccountTypeCode',
+  'creditCurrencyCode', 'debtAmount', 'originalLoanPrincipalAmount', 'interestRate',
+  'revaluedTotalAmount', 'revaluedBalance', 'principalAmount', 'adjustedInterest',
+  'subLoansCounter', 'subLoansPrincipalAmount', 'validityInterestRate',
+  'formattedAgreementOpeningDate', 'formattedPaymentDate', 'formattedStartDate', 'formattedEndDate',
+  'interestCreditingMethodDescription', 'interestPaymentDescription', 'depositingMethodDescription',
+  'activityDescription', 'activityTypeCode', 'textCode', 'englishActionDesc',
+  'depositSerialId', 'agreementOpeningDate', 'creditSerialNumber', 'unitedCreditTypeCode',
+  'mortgageLoanSerialId', 'subLoansSerialId', 'formattedLoanEndDate', 'formattedCalculatedEndDate',
+  'referenceNumber', 'serialNumber', 'expandedEventDate',
+  'transactionResultCode', 'numItemsPerPage', 'retrievalMinDate', 'retrievalMaxDate',
+  'formattedRetrievalMinDate', 'formattedRetrievalMaxDate', 'outputArrayRecordSum1', 'outputArrayRecordSum2', 'outputArrayRecordSum3', 'outputArrayRecordSum4',
+  'messageCode', 'severity', 'recordSerialNumber', 'expendedExecutingDate', 'eventNumber', 'executingDate',
+  'originalEventCreateDate', 'formattedOriginalEventCreateDate', 'eventSerialNumber', 'referenceCatenatedNumber', 'originalEventKey', 'originalSystemId',
+  'bankNumber', 'branchNumber', 'contraBankNumber', 'contraBranchNumber', 'contraAccountTypeCode', 'internalLinkCode', 'dataGroupCode',
+  'loanBalanceAmount', 'actualPrincipalBalance', 'interestAmount', 'currentInterestPercent',
+  'arrearsAmount', 'arrearTotalAmount', 'arrearsLinkageAmount', 'prepaymentCommissionTotalAmount',
+  'paymentWithoutArrears', 'paymentAmount', 'nextPaymentAmount',
+  'principalBalanceAmount', 'principalLinkageAmount', 'amountAndLinkageOfPrincipal', 'interestLinkageAmount',
+  'interestAndLinkageTotalAmount', 'deferredInterestAmount', 'deferredInterestLinkageAmount', 'amountAndLinkageOfInterestDeferred',
+  'linkageBaseDescription', 'timeUnitDescription', 'differentDateIndication', 'eventId', 'recordNumber', 'tableNumber',
+  'startDate', 'endDate', 'calculatedEndDate', 'validityDate', 'formattedValidityDate', 'lastEventDate', 'formattedLastEventDate',
+  'savingPeriod', 'actualDepositingTotalNumber', 'depositingMethodCode', 'interestPaymentMethodCode', 'interestPaymentMethodDescription',
+  'interestCalculatingMethodDescription', 'additionEnablingIndication', 'renewalCounter', 'requestedRenewalNumber',
+  'shortProductName', 'shortSavingDepositName', 'creditTypeDescription', 'interestTypeDescription', 'linkageTypeDescription', 'linkageTypeCode',
+  'revaluationCurrencyCode', 'displayedRevaluationCurrencyCode', 'totalRevaluatedCurrentBalance', 'revaluatedCurrentBalance', 'lastBalance',
+  'errCode', 'errorCode', 'status'
+])
+
+function sanitizeFinancialBody (value, parentKey = null) {
+  if (value == null) return value
+  if (Array.isArray(value)) return value.map(item => sanitizeFinancialBody(item, parentKey))
+  if (!value || typeof value !== 'object') return sanitize(value, true)
+  return Object.fromEntries(Object.entries(value).map(([key, field]) => {
+    if (key === 'commentExistenceSwitch' && (field === 0 || field === 1)) return [key, field]
+    if (key === 'code') {
+      const isSelectorCode = ['currencyCode', 'detailedAccountTypeCode'].includes(parentKey) && Number.isFinite(field)
+      return [key, isSelectorCode || field === 'STEPUPOTP' ? field : sanitize(field, true)]
+    }
+    // A whitelisted child name must never unmask an auth/personal subtree.
+    const privateField = /auth|token|cookie|password|otp|credential|secret|signature|session|jwt|sms|verification|challenge|mfa|twoFactor|passport|phone|email|address|avatar|photo|customer|owner|beneficiary|comment|productLabel|accountName|(?:^|_)pin(?:$|_)/i.test(key)
+    return [key, privateField
+      ? sanitize(field, true)
+      : FINANCIAL_LOG_FIELDS.has(key) && (field === null || ['string', 'number', 'boolean'].includes(typeof field))
+        ? field
+        : field && typeof field === 'object' ? sanitizeFinancialBody(field, key) : sanitize(field, true)]
+  }))
 }
 
 function getCookieHeaderNames (cookieHeader) {
@@ -270,20 +331,27 @@ function compareCookieStoreEntries (leftCookie, rightCookie) {
   return String(leftCookie?.name || '').localeCompare(String(rightCookie?.name || ''))
 }
 
-function summarizeOfficialCookieStore (cookies) {
-  return (Array.isArray(cookies) ? cookies : [])
-    .filter(isOfficialCookieStoreEntry)
-    .map(cookie => `${cookie.domain || ''}:${cookie.name}`)
-    .sort()
-}
-
-function buildCookieHeaderFromCookieStore (cookies) {
+function buildCookieHeaderFromCookieStore (cookies, requestUrl = null) {
   if (!Array.isArray(cookies)) {
     return ''
   }
 
   const selectedCookiesByName = (cookies || [])
     .filter(isOfficialCookieStoreEntry)
+    .filter(cookie => {
+      if (!requestUrl) {
+        return true
+      }
+      const expiresAt = cookie.expires == null ? null : new Date(cookie.expires).getTime()
+      if (expiresAt != null && (!Number.isFinite(expiresAt) || expiresAt <= Date.now())) {
+        return false
+      }
+      const url = new URL(requestUrl)
+      const domain = String(cookie.domain || '').replace(/^\./, '').toLowerCase()
+      const path = typeof cookie.path === 'string' && cookie.path.startsWith('/') ? cookie.path : '/'
+      return (domain === '' || url.hostname === domain || url.hostname.endsWith(`.${domain}`)) &&
+        (url.pathname === path || url.pathname.startsWith(path.endsWith('/') ? path : `${path}/`))
+    })
     .sort(compareCookieStoreEntries)
     .reduce((result, cookie) => {
       if (!result.has(cookie.name)) {
@@ -298,96 +366,11 @@ function buildCookieHeaderFromCookieStore (cookies) {
 }
 
 function isOfficialUrl (url) {
-  return typeof url === 'string' && url.indexOf(OFFICIAL_BASE_URL) === 0
-}
-
-function buildWebViewCookieProbeUrls (requestUrl) {
-  const probeUrls = []
-  if (isOfficialUrl(requestUrl)) {
-    probeUrls.push(requestUrl)
+  try {
+    return new URL(url).origin === OFFICIAL_BASE_URL
+  } catch (error) {
+    return false
   }
-  for (const probeUrl of OFFICIAL_COOKIE_PROBE_URLS) {
-    if (!probeUrls.includes(probeUrl)) {
-      probeUrls.push(probeUrl)
-    }
-  }
-  return probeUrls
-}
-
-function hasWebViewCookieJar (webView) {
-  return typeof webView?.cookieJar?.getCookieString === 'function'
-}
-
-async function buildCookieHeaderFromWebViewCookieJar (webView, requestUrl, { logErrors = true } = {}) {
-  if (!hasWebViewCookieJar(webView)) {
-    return ''
-  }
-
-  let cookieHeader = ''
-  for (const probeUrl of buildWebViewCookieProbeUrls(requestUrl)) {
-    try {
-      cookieHeader = mergeCookieHeaders(cookieHeader, await webView.cookieJar.getCookieString(probeUrl))
-    } catch (error) {
-      if (logErrors) {
-        console.warn('failed to read Bank Hapoalim cookies from WebView cookie jar', {
-          url: sanitizeOfficialUrlForLog(probeUrl),
-          message: error?.message || error
-        })
-      }
-    }
-  }
-  return cookieHeader
-}
-
-async function updateAuthFromWebViewCookieJar (
-  auth,
-  webView,
-  {
-    requestUrl = null,
-    requireSessionCookie = false,
-    logMissingAuth = true,
-    logErrors = true
-  } = {}
-) {
-  const cookieHeader = await buildCookieHeaderFromWebViewCookieJar(webView, requestUrl, { logErrors })
-  if (!cookieHeader) {
-    if (logMissingAuth) {
-      console.warn('Bank Hapoalim WebView cookie jar has no official cookies')
-    }
-    return auth
-  }
-
-  const cookieNames = getCookieHeaderNames(cookieHeader)
-  const hasLikelyAuthCookie = hasLikelyOfficialAuthCookie(cookieHeader)
-  if (!hasLikelyAuthCookie) {
-    if (logMissingAuth) {
-      console.warn('Bank Hapoalim WebView cookie jar has no likely auth cookies', {
-        cookieNames
-      })
-    }
-    return auth
-  }
-  if (requireSessionCookie && !hasOfficialSessionCookie(cookieHeader)) {
-    if (logMissingAuth) {
-      console.warn('Bank Hapoalim WebView cookie jar has no session cookie', {
-        cookieNames
-      })
-    }
-    return auth
-  }
-
-  const nextAuth = { ...auth }
-  nextAuth.cookieHeader = mergeCookieHeaders(nextAuth.cookieHeader, cookieHeader)
-  nextAuth.xsrfToken = getCookieValue(nextAuth.cookieHeader, 'XSRF-TOKEN') || nextAuth.xsrfToken
-  nextAuth.restContext = nextAuth.restContext || extractRestContextFromUrl(requestUrl)
-  if (nextAuth.cookieHeader !== auth.cookieHeader || nextAuth.xsrfToken !== auth.xsrfToken) {
-    console.log('Bank Hapoalim WebView cookie jar auth snapshot', {
-      requestUrl: sanitizeOfficialUrlForLog(requestUrl),
-      cookieNames,
-      hasXsrfToken: Boolean(nextAuth.xsrfToken)
-    })
-  }
-  return nextAuth
 }
 
 function normalizeRestContext (value) {
@@ -435,95 +418,20 @@ function extractRestContextFromText (text) {
   return null
 }
 
-function updateAuthFromRequest (auth, request) {
-  const nextAuth = { ...auth }
-  const cookieHeader = getHeaderValue(request?.headers, 'cookie') || getHeaderValue(request?.headers, 'Cookie')
-  if (cookieHeader) {
-    nextAuth.cookieHeader = mergeCookieHeaders(nextAuth.cookieHeader, cookieHeader)
-    nextAuth.xsrfToken = getCookieValue(nextAuth.cookieHeader, 'XSRF-TOKEN') || nextAuth.xsrfToken
-  }
-
-  nextAuth.restContext = nextAuth.restContext || extractRestContextFromUrl(request?.url)
-  return nextAuth
-}
-
 function updateAuthFromResponse (auth, response) {
   const nextAuth = { ...auth }
   const setCookieHeader = getHeaderValue(response?.headers, 'set-cookie') || getHeaderValue(response?.headers, 'Set-Cookie')
   if (setCookieHeader) {
     nextAuth.cookieHeader = mergeSetCookieHeaders(nextAuth.cookieHeader, setCookieHeader)
-    nextAuth.xsrfToken = getCookieValue(nextAuth.cookieHeader, 'XSRF-TOKEN') || nextAuth.xsrfToken
+    const hasXsrfUpdate = setCookie.parse(setCookie.splitCookiesString(setCookieHeader), { decodeValues: false })
+      .some(cookie => cookie.name === 'XSRF-TOKEN')
+    nextAuth.xsrfToken = hasXsrfUpdate
+      ? getCookieValue(nextAuth.cookieHeader, 'XSRF-TOKEN')
+      : getCookieValue(nextAuth.cookieHeader, 'XSRF-TOKEN') || nextAuth.xsrfToken
   }
 
   nextAuth.restContext = nextAuth.restContext || extractRestContextFromUrl(response?.url)
   return nextAuth
-}
-
-async function updateAuthFromCookieStore (auth, { requireSessionCookie = false, logMissingAuth = true } = {}) {
-  if (!ZenMoney?.getCookies) {
-    return auth
-  }
-
-  try {
-    if (ZenMoney?.saveCookies) {
-      try {
-        await ZenMoney.saveCookies()
-      } catch (error) {
-        console.warn('failed to flush Bank Hapoalim cookies before reading cookie store', error?.message || error)
-      }
-    }
-
-    const cookies = await ZenMoney.getCookies()
-    const officialCookieStore = summarizeOfficialCookieStore(cookies)
-    const cookieHeader = buildCookieHeaderFromCookieStore(cookies)
-    if (!cookieHeader) {
-      if (logMissingAuth) {
-        console.warn('Bank Hapoalim cookie store has no official cookies')
-      }
-      return auth
-    }
-
-    const cookieNames = getCookieHeaderNames(cookieHeader)
-    const hasLikelyAuthCookie = hasLikelyOfficialAuthCookie(cookieHeader)
-    if (officialCookieStore.length > 0 && (logMissingAuth || hasLikelyAuthCookie)) {
-      console.log('Bank Hapoalim cookie store contains official cookies', officialCookieStore)
-    }
-    if (!hasLikelyAuthCookie) {
-      if (logMissingAuth) {
-        console.warn('Bank Hapoalim cookie store has no likely auth cookies', {
-          cookieNames
-        })
-      }
-      return auth
-    }
-    if (requireSessionCookie && !hasOfficialSessionCookie(cookieHeader)) {
-      if (logMissingAuth) {
-        console.warn('Bank Hapoalim cookie store has no session cookie', {
-          cookieNames
-        })
-      }
-      return auth
-    }
-
-    const nextAuth = { ...auth }
-    nextAuth.cookieHeader = mergeCookieHeaders(nextAuth.cookieHeader, cookieHeader)
-    nextAuth.xsrfToken = getCookieValue(nextAuth.cookieHeader, 'XSRF-TOKEN') || nextAuth.xsrfToken
-    console.log('Bank Hapoalim cookie store auth snapshot', {
-      cookieNames,
-      hasXsrfToken: Boolean(nextAuth.xsrfToken)
-    })
-    return nextAuth
-  } catch (error) {
-    console.warn('failed to read Bank Hapoalim cookies from ZenMoney cookie store', error?.message || error)
-    return auth
-  }
-}
-
-function waitForMs (delayMs) {
-  if (!(delayMs > 0) || typeof setTimeout !== 'function') {
-    return Promise.resolve()
-  }
-  return new Promise(resolve => setTimeout(resolve, delayMs))
 }
 
 function summarizeAuthSnapshot (auth) {
@@ -535,103 +443,25 @@ function summarizeAuthSnapshot (auth) {
   }
 }
 
-async function recoverVerifiedAuth (
-  auth,
-  {
-    attempts = 1,
-    delayMs = 0,
-    source = 'current-auth'
-  } = {}
-) {
-  const nextAuth = auth
-
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    if (nextAuth.cookieHeader !== '' && await hasAuthenticatedAccountsAccess(nextAuth)) {
-      if (attempt > 0) {
-        console.log('Bank Hapoalim auth verification recovered after retry', {
-          source,
-          attempt: attempt + 1,
-          ...summarizeAuthSnapshot(nextAuth)
-        })
-      }
-      return {
-        auth: nextAuth,
-        verified: true
-      }
-    }
-    if (attempt < attempts - 1) {
-      await waitForMs(delayMs)
-    }
-  }
-
-  if (nextAuth.cookieHeader !== '') {
-    console.warn('Bank Hapoalim auth verification retries exhausted', {
-      source,
-      attempts,
-      ...summarizeAuthSnapshot(nextAuth)
-    })
-  }
-
-  return {
-    auth: nextAuth,
-    verified: false
-  }
-}
-
-async function recoverVerifiedAuthFromCookieStore (
-  auth,
-  {
-    attempts = 1,
-    delayMs = 0,
-    requireSessionCookie = false,
-    logMissingAuth = true
-  } = {}
-) {
-  let nextAuth = auth
-
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    nextAuth = await updateAuthFromCookieStore(nextAuth, {
-      requireSessionCookie,
-      logMissingAuth: logMissingAuth && attempt === attempts - 1
-    })
-    if (nextAuth.cookieHeader !== '' && await hasAuthenticatedAccountsAccess(nextAuth)) {
-      return {
-        auth: nextAuth,
-        verified: true
-      }
-    }
-    if (attempt < attempts - 1) {
-      await waitForMs(delayMs)
-    }
-  }
-
-  return {
-    auth: nextAuth,
-    verified: false
-  }
-}
-
-async function hasAuthenticatedAccountsAccess (auth) {
-  try {
-    const response = await fetchOfficialJson('/ServerServices/general/accounts?lang=he', auth, { log: false })
-    const hasAccess = response.status === 200 && Array.isArray(response.body)
-    console.log('Bank Hapoalim accounts access probe', {
-      status: response.status,
-      hasAccountsArray: hasAccess,
-      accountCount: hasAccess ? response.body.length : null
-    })
-    return hasAccess
-  } catch (error) {
-    console.warn('Bank Hapoalim accounts access probe failed', error?.responseSummary || error?.response?.status || error?.message || error)
-    return false
-  }
-}
-
-function applyAuthUpdate (targetAuth, nextAuth) {
+async function applyAuthUpdate (targetAuth, nextAuth) {
+  const changed = targetAuth.cookieHeader !== nextAuth.cookieHeader ||
+    targetAuth.xsrfToken !== nextAuth.xsrfToken || targetAuth.restContext !== nextAuth.restContext
   targetAuth.cookieHeader = nextAuth.cookieHeader
   targetAuth.xsrfToken = nextAuth.xsrfToken
   targetAuth.restContext = nextAuth.restContext
   targetAuth.acquiredAt = nextAuth.acquiredAt
+  if (changed && authUpdateCallbacks.has(targetAuth)) {
+    await authUpdateCallbacks.get(targetAuth)({ ...targetAuth })
+  }
+}
+
+export async function withAuthUpdates (auth, onAuthUpdate, operation) {
+  authUpdateCallbacks.set(auth, onAuthUpdate)
+  try {
+    return await operation(auth)
+  } finally {
+    authUpdateCallbacks.delete(auth)
+  }
 }
 
 function restoreAuth (rawAuth) {
@@ -654,14 +484,127 @@ export function normalizeStoredAuth (rawAuth) {
   return restoreAuth(rawAuth)
 }
 
+function isOfficialLoginUrl (rawUrl) {
+  if (typeof rawUrl !== 'string' || rawUrl === '') {
+    return false
+  }
+  try {
+    const url = new URL(rawUrl, OFFICIAL_BASE_URL)
+    return url.origin === OFFICIAL_BASE_URL &&
+      (/^\/(?:ng-portals|ng-portals-bt|ng--portals)\/auth(?:\/|$)/i.test(url.pathname) ||
+        (url.pathname === '/cgi-bin/poalwwwc' && url.searchParams.get('reqName') === 'getLogonPage'))
+  } catch (error) {
+    return false
+  }
+}
+
+function isOfficialLoginPageResponse (response) {
+  return isOfficialLoginUrl(response?.url) ||
+    (response?.status >= 300 && response?.status < 400 && isOfficialLoginUrl(getHeaderValue(response.headers, 'location')))
+}
+
 export function isLikelyAuthGateError (error) {
   const response = error?.responseSummary || error?.response
-  const contentType = String(response?.contentType || response?.headers?.['content-type'] || '')
+  const code = response?.errCode || response?.body?.error?.errCode
+  // STEPUPOTP was observed in the official Hapoalim flow; generic statuses are not proof.
+  return (response?.status === 401 && code === 'STEPUPOTP') ||
+    (response?.status >= 200 && response?.status < 500 &&
+      (response?.isLoginPage === true || isOfficialLoginPageResponse(response)))
+}
 
-  return error instanceof ParseError ||
-    response?.status === 401 ||
-    response?.status === 403 ||
-    /text\/html/i.test(contentType)
+export function isSessionDeadlineError (error) {
+  return sessionDeadlineErrors.has(error)
+}
+
+export async function withSessionDeadline (operation, label) {
+  let timeoutId
+  try {
+    return await Promise.race([
+      Promise.resolve().then(operation),
+      new Promise((resolve, reject) => {
+        timeoutId = setTimeout(() => {
+          const error = new Error(`Bank Hapoalim ${label} timed out`)
+          sessionDeadlineErrors.add(error)
+          reject(error)
+        }, SESSION_OPERATION_TIMEOUT_MS)
+      })
+    ])
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+export async function recoverAuthFromCookieStore (storedAuth, { onAuthUpdate = async () => {}, verify } = {}) {
+  const snapshot = await withSessionDeadline(() => cookieJar.serialize(), 'cookie store read')
+  ensure(Array.isArray(snapshot?.cookies), 'unexpected cookie store snapshot')
+  const cookies = snapshot.cookies.map(({ key, ...cookie }) => ({ ...cookie, name: key }))
+  const auth = createEmptyAuth()
+  auth.cookieHeader = buildCookieHeaderFromCookieStore(cookies, `${OFFICIAL_BASE_URL}/ServerServices/general/accounts`)
+  if (!hasLikelyOfficialAuthCookie(auth.cookieHeader)) {
+    console.log('Bank Hapoalim silent recovery: no usable auth cookies')
+    return null
+  }
+  auth.xsrfToken = getCookieValue(auth.cookieHeader, 'XSRF-TOKEN')
+
+  const previousAuth = normalizeStoredAuth(storedAuth)
+  if (!auth.xsrfToken && previousAuth?.xsrfToken) {
+    const session = getCookieValue(auth.cookieHeader, 'SMSESSION')
+    const hasJarXsrfRecord = cookies.some(cookie => cookie?.name === 'XSRF-TOKEN' &&
+      (!cookie.domain || isOfficialCookieDomain(cookie.domain)))
+    if (hasJarXsrfRecord || !session || session !== getCookieValue(previousAuth.cookieHeader, 'SMSESSION')) {
+      console.log('Bank Hapoalim silent recovery: no safely reusable XSRF token')
+      return null
+    }
+    // Reuse only the token from the same session, never mix identities or stale cookies.
+    const xsrfCookie = parseCookieHeader(previousAuth.cookieHeader)['XSRF-TOKEN']
+    if (xsrfCookie) {
+      auth.cookieHeader = mergeCookieHeaders(auth.cookieHeader, `XSRF-TOKEN=${xsrfCookie}`)
+    }
+    auth.xsrfToken = previousAuth.xsrfToken
+  }
+
+  try {
+    await withSessionDeadline(
+      () => fetchOfficialAccounts(auth, { log: false }),
+      'silent accounts verification'
+    )
+    if (verify) await withSessionDeadline(() => verify(auth), 'silent challenged request verification')
+  } catch (error) {
+    if (!isLikelyAuthGateError(error)) {
+      throw error
+    }
+    console.log('Bank Hapoalim silent recovery: bank rejected stored cookies')
+    return null
+  }
+
+  await onAuthUpdate({ ...auth })
+  let active = true
+  const contextAuth = { ...auth }
+  try {
+    await withSessionDeadline(() => withAuthUpdates(contextAuth, async updated => {
+      if (active) await onAuthUpdate(updated)
+    }, auth => ensureRestContext(auth, { isActive: () => active })), 'silent portal context discovery')
+    await applyAuthUpdate(auth, contextAuth)
+  } finally {
+    active = false
+  }
+  auth.restContext = auth.restContext || normalizeRestContext(storedAuth?.restContext)
+  await onAuthUpdate({ ...auth })
+  console.log('Bank Hapoalim silent recovery: accounts access verified', summarizeAuthSnapshot(auth))
+  return auth
+}
+
+async function fetchOfficialAccounts (auth, options) {
+  try {
+    const response = await fetchOfficialJson('/ServerServices/general/accounts?lang=he', auth, options)
+    ensure(response.status === 200 && Array.isArray(response.body), 'unexpected accounts response', response)
+    return response
+  } catch (error) {
+    if (error && typeof error === 'object') {
+      error.isAccountsResponse = true
+    }
+    throw error
+  }
 }
 
 function createRequestUuid () {
@@ -685,6 +628,12 @@ function buildOfficialHeaders (auth, headers, { includeXsrf = false } = {}) {
 }
 
 async function fetchOfficialJson (path, auth, options = {}) {
+  // Replay only this read request, not a full transaction import or a guessed OTP API.
+  const verify = candidate => fetchOfficialJson(path, candidate, {
+    ...options,
+    log: false,
+    headers: { ...options.headers, ...options.headers?.uuid ? { uuid: createRequestUuid() } : {} }
+  })
   const {
     headers,
     includeXsrf = false,
@@ -693,35 +642,53 @@ async function fetchOfficialJson (path, auth, options = {}) {
     ...rest
   } = options
 
-  const response = await fetchJson(OFFICIAL_BASE_URL + path, {
-    method: 'GET',
-    ...rest,
-    headers: buildOfficialHeaders(auth, headers, { includeXsrf }),
-    sanitizeRequestLog: {
-      ...sanitizeRequestLog,
-      headers: {
-        Cookie: true,
-        cookie: true,
-        'X-XSRF-TOKEN': true,
-        ...sanitizeRequestLog?.headers
+  let response
+  try {
+    response = await withSessionDeadline(() => fetchJson(OFFICIAL_BASE_URL + path, {
+      method: 'GET',
+      ...rest,
+      headers: buildOfficialHeaders(auth, headers, { includeXsrf }),
+      sanitizeRequestLog: {
+        ...sanitizeRequestLog,
+        url: sanitizeOfficialUrlForLog,
+        headers: {
+          Cookie: true,
+          cookie: true,
+          Authorization: true,
+          'X-XSRF-TOKEN': true,
+          ...sanitizeRequestLog?.headers
+        }
+      },
+      sanitizeResponseLog: {
+        ...sanitizeResponseLog,
+        body: sanitizeFinancialBody,
+        url: sanitizeOfficialUrlForLog,
+        headers: {
+          'set-cookie': true,
+          Authorization: true,
+          'X-XSRF-TOKEN': true,
+          location: true,
+          ...sanitizeResponseLog?.headers
+        }
       }
-    },
-    sanitizeResponseLog: {
-      ...sanitizeResponseLog,
-      headers: {
-        'set-cookie': true,
-        ...sanitizeResponseLog?.headers
-      }
+    }), 'HTTP request')
+  } catch (error) {
+    if (error instanceof ParseError) {
+      // JSON.parse messages can contain a prefix of authenticated HTML.
+      throwResponseError('Bank Hapoalim returned an unexpected response instead of JSON.', error.response, verify)
     }
-  })
+    throw error
+  }
 
-  applyAuthUpdate(auth, updateAuthFromResponse(auth, response))
+  ensure(response.status >= 200 && response.status < 300 && !isOfficialLoginPageResponse(response), 'unexpected HTTP response', response, verify)
+  await applyAuthUpdate(auth, updateAuthFromResponse(auth, response))
   return response
 }
 
 async function fetchOfficialText (path, auth) {
-  const response = await fetch(OFFICIAL_BASE_URL + path, {
+  const response = await withSessionDeadline(() => fetch(OFFICIAL_BASE_URL + path, {
     method: 'GET',
+    log: false,
     headers: {
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       Cookie: auth.cookieHeader
@@ -737,30 +704,37 @@ async function fetchOfficialText (path, auth) {
         'set-cookie': true
       }
     }
-  })
+  }), 'HTTP request')
 
-  applyAuthUpdate(auth, updateAuthFromResponse(auth, response))
+  ensure((response.status === 404 || (response.status >= 200 && response.status < 300)) && !isOfficialLoginPageResponse(response), 'unexpected portal response', response,
+    candidate => fetchOfficialText(path, candidate))
+  await applyAuthUpdate(auth, updateAuthFromResponse(auth, response))
   return response
 }
 
-async function ensureRestContext (auth) {
+async function ensureRestContext (auth, { isActive = () => true } = {}) {
   if (auth.restContext) {
     return auth.restContext
   }
+  if (missingRestContexts.get(auth) === auth.cookieHeader) return null
 
   for (const path of PORTAL_PAGE_PATHS) {
-    try {
-      const response = await fetchOfficialText(path, auth)
-      const restContext = extractRestContextFromText(response.body)
-      if (restContext) {
-        auth.restContext = restContext
-        return restContext
-      }
-    } catch (error) {
-      console.warn('failed to probe portal page for rest context', path, error?.responseSummary || error?.message || error)
+    if (!isActive()) {
+      return null
+    }
+    const response = await fetchOfficialText(path, auth)
+    if (!isActive()) {
+      return null
+    }
+    if (response.status === 404) continue
+    const restContext = extractRestContextFromText(response.body)
+    if (restContext) {
+      await applyAuthUpdate(auth, { ...auth, restContext })
+      return restContext
     }
   }
 
+  if (isActive()) missingRestContexts.set(auth, auth.cookieHeader)
   return null
 }
 
@@ -770,581 +744,262 @@ function getCurrentAccountBasePath (auth) {
     : '/ServerServices/current-account'
 }
 
-function createWebViewLoginDiagnostics (flow) {
-  return {
-    flow,
-    sawAnyInterceptedRequest: false,
-    sawOfficialRequest: false,
-    sawAuthenticatedPortalRequest: false,
-    lastInterceptedUrl: null,
-    cookieJarPollAttemptCount: 0,
-    cookieJarPollWithoutCloseCount: 0,
-    lastCookieJarCookieNames: [],
-    lastCompletionSource: null,
-    lastAccountsAccessVerified: false,
-    webViewCloseRequested: false
-  }
+function authSessionIdentity (cookieHeader) {
+  return ['SMSESSION', 'XSRF-TOKEN'].map(name => getCookieValue(cookieHeader, name) || '').join('\n')
 }
 
-function summarizeWebViewLoginDiagnostics (diagnostics, auth, error) {
-  return {
-    ...diagnostics,
-    lastInterceptedUrl: sanitizeOfficialUrlForLog(diagnostics.lastInterceptedUrl) || diagnostics.lastInterceptedUrl,
-    auth: summarizeAuthSnapshot(auth),
-    error: error?.message || error || null
-  }
-}
+export async function login ({
+  isInBackground = false,
+  allowInteraction = true,
+  skipHidden = false,
+  verify,
+  interactionError,
+  onAuthUpdate = async () => {},
+  onInteraction = () => {}
+} = {}) {
+  const webView = new WebView()
+  const diagnostics = { stage: 'created', lastUrl: null, cookieNames: [], probeCount: 0 }
+  let failure
+  let failed = false
+  let result
+  let stoppedError
+  let rejectStopped
+  let deadlineId
+  let listenerAttached = false
+  let probeInFlight = false
+  let verifiedAuth = null
+  let closedError = null
+  let resolveClosed
+  let loggedStepUp = false
+  const closed = new Promise(resolve => { resolveClosed = resolve })
+  const stopped = new Promise((resolve, reject) => { rejectStopped = reject })
+  stopped.catch(() => {})
 
-async function captureOfficialSessionFromConfiguredWebView () {
-  if (!ZenMoney?.openWebView) {
-    throw new TemporaryError('Bank Hapoalim login requires WebView support in the ZenMoney app.')
-  }
-
-  let auth = createEmptyAuth()
-  const diagnostics = createWebViewLoginDiagnostics('configured-webview')
-  let authCaptureInFlight = false
-  let cookieJarPollingStarted = false
-  let cookieJarPollingStopped = false
-  let cookieJarPollingTimeoutId = null
-  let cookieJarPollingStartedAt = 0
-  let webViewCloseRequested = false
-  let closeWebView = null
-
-  function stopCookieJarPolling () {
-    cookieJarPollingStopped = true
-    if (cookieJarPollingTimeoutId != null && typeof clearTimeout === 'function') {
-      clearTimeout(cookieJarPollingTimeoutId)
+  function stop (error) {
+    if (!stoppedError) {
+      stoppedError = error
+      rejectStopped(error)
     }
-    cookieJarPollingTimeoutId = null
   }
 
-  function closeWebViewWithAuth (close, nextAuth, source) {
-    if (webViewCloseRequested) {
-      return
-    }
-    webViewCloseRequested = true
-    diagnostics.webViewCloseRequested = true
-    diagnostics.lastCompletionSource = source
-    auth = nextAuth
-    stopCookieJarPolling()
-    console.log('Bank Hapoalim WebView auth captured', {
-      source,
-      cookieNames: getCookieHeaderNames(auth.cookieHeader),
-      hasXsrfToken: Boolean(auth.xsrfToken)
-    })
-    close(null, { auth })
+  function onClose () {
+    if (closedError) return
+    // The native event has no reason: renderer failures must retain Send log.
+    closedError = new Error('Bank Hapoalim WebView closed before authentication completed')
+    resolveClosed(null)
+    if (!probeInFlight && !verifiedAuth) stop(closedError)
   }
 
-  async function tryCloseWithVerifiedAuth ({ close, nextAuth, verifyAccountsAccess, source }) {
-    if (authCaptureInFlight || webViewCloseRequested) {
-      return false
-    }
-
-    authCaptureInFlight = true
+  async function run (operation, label, timeout = SESSION_OPERATION_TIMEOUT_MS, allowClosed = false) {
+    if (stoppedError) throw stoppedError
+    let timeoutId
     try {
-      if (nextAuth.cookieHeader === '') {
-        return false
-      }
-      if (verifyAccountsAccess) {
-        diagnostics.lastAccountsAccessVerified = await hasAuthenticatedAccountsAccess(nextAuth)
-        if (!diagnostics.lastAccountsAccessVerified) {
-          diagnostics.lastCompletionSource = `${source}:accounts-access-not-ready`
-          return false
-        }
-      }
-      if (!verifyAccountsAccess && !hasOfficialSessionCookie(nextAuth.cookieHeader)) {
-        return false
-      }
-      closeWebViewWithAuth(close, nextAuth, source)
-      return true
-    } catch (error) {
-      console.warn('failed to complete Bank Hapoalim WebView login from verified auth', error?.message || error)
-      return false
-    } finally {
-      authCaptureInFlight = false
-    }
-  }
-
-  async function tryCompleteFromWebViewCookieJar ({
-    close,
-    webView,
-    requestUrl,
-    requireSessionCookie,
-    verifyAccountsAccess,
-    source
-  }) {
-    if (authCaptureInFlight || webViewCloseRequested) {
-      return false
-    }
-
-    if (source === 'webview-cookie-jar-poll') {
-      diagnostics.cookieJarPollAttemptCount++
-    }
-    if (!close) {
-      diagnostics.cookieJarPollWithoutCloseCount++
-      return false
-    }
-
-    const nextAuth = await updateAuthFromWebViewCookieJar(auth, webView, {
-      requestUrl,
-      requireSessionCookie,
-      logMissingAuth: source !== 'webview-cookie-jar-poll',
-      logErrors: source !== 'webview-cookie-jar-poll'
-    })
-    diagnostics.lastCookieJarCookieNames = getCookieHeaderNames(nextAuth.cookieHeader)
-    if (nextAuth.cookieHeader !== '') {
-      auth = nextAuth
-    }
-    const isComplete = requireSessionCookie
-      ? hasOfficialSessionCookie(nextAuth.cookieHeader)
-      : nextAuth.cookieHeader !== ''
-    if (!isComplete) {
-      return false
-    }
-
-    return await tryCloseWithVerifiedAuth({
-      close,
-      nextAuth,
-      verifyAccountsAccess,
-      source
-    })
-  }
-
-  function scheduleCookieJarPoll (webView) {
-    if (cookieJarPollingStopped || webViewCloseRequested || typeof setTimeout !== 'function' || !hasWebViewCookieJar(webView)) {
-      return
-    }
-    if (Date.now() - cookieJarPollingStartedAt > COOKIE_STORE_POLL_TIMEOUT_MS) {
-      console.warn('Bank Hapoalim WebView cookie jar polling timed out', summarizeWebViewLoginDiagnostics(diagnostics, auth))
-      return
-    }
-
-    cookieJarPollingTimeoutId = setTimeout(async () => {
-      try {
-        cookieJarPollingTimeoutId = null
-        const isComplete = await tryCompleteFromWebViewCookieJar({
-          close: closeWebView,
-          webView,
-          requireSessionCookie: false,
-          verifyAccountsAccess: true,
-          source: 'webview-cookie-jar-poll'
+      return await Promise.race([
+        Promise.resolve().then(() => {
+          if (stoppedError) throw stoppedError
+          return operation()
+        }),
+        stopped,
+        ...allowClosed ? [closed] : [],
+        new Promise((resolve, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Bank Hapoalim ' + label + ' timed out')), timeout)
         })
-        if (!isComplete) {
-          scheduleCookieJarPoll(webView)
-        }
-      } catch (error) {
-        console.warn('Bank Hapoalim WebView cookie jar polling failed', summarizeWebViewLoginDiagnostics(diagnostics, auth, error))
-      }
-    }, COOKIE_STORE_POLL_INTERVAL_MS)
+      ])
+    } finally {
+      clearTimeout(timeoutId)
+    }
   }
 
-  function startCookieJarPolling (webView) {
-    if (cookieJarPollingStarted || !hasWebViewCookieJar(webView)) {
-      return
+  async function readCookies (allowClosed = false) {
+    diagnostics.stage = 'reading WebView cookies'
+    const header = await run(
+      () => webView.cookieJar.getCookieString(OFFICIAL_BASE_URL + '/ServerServices/general/accounts?lang=he'),
+      'WebView cookie read', SESSION_OPERATION_TIMEOUT_MS, allowClosed
+    )
+    if (allowClosed && closedError) return null
+    ensure(typeof header === 'string', 'unexpected WebView cookie header')
+    diagnostics.cookieNames = getCookieHeaderNames(header)
+    return header
+  }
+
+  async function probe (cookieHeader) {
+    if (!hasLikelyOfficialAuthCookie(cookieHeader)) return { auth: null, retryCookies: null }
+    const candidate = createEmptyAuth()
+    // WebView and HTTP cookies are separate: pass this scoped native snapshot explicitly.
+    candidate.cookieHeader = cookieHeader
+    candidate.xsrfToken = getCookieValue(cookieHeader, 'XSRF-TOKEN')
+    diagnostics.stage = 'verifying accounts'
+    diagnostics.probeCount++
+    try {
+      probeInFlight = true
+      await run(() => fetchOfficialAccounts(candidate, { log: false }), 'WebView accounts verification')
+      if (verify) {
+        diagnostics.stage = 'verifying challenged request'
+        await run(() => verify(candidate), 'WebView challenged request verification')
+      }
+    } catch (error) {
+      if (!isLikelyAuthGateError(error)) throw error
+      if (closedError) throw closedError
+      if (verify && !loggedStepUp) {
+        console.log('Bank Hapoalim step-up: waiting for bank confirmation')
+        loggedStepUp = true
+      }
+      return { auth: null, retryCookies: null }
+    } finally {
+      probeInFlight = false
     }
-    cookieJarPollingStarted = true
-    cookieJarPollingStartedAt = Date.now()
-    scheduleCookieJarPoll(webView)
+    verifiedAuth = candidate
+    if (closedError) {
+      return { auth: candidate, retryCookies: null }
+    }
+    const latestCookies = await readCookies(true)
+    if (closedError) return { auth: candidate, retryCookies: null }
+    if (authSessionIdentity(latestCookies) !== authSessionIdentity(cookieHeader) &&
+      authSessionIdentity(latestCookies) !== authSessionIdentity(candidate.cookieHeader)) {
+      console.log('Bank Hapoalim WebView session changed during accounts verification')
+      verifiedAuth = null
+      return { auth: null, retryCookies: latestCookies }
+    }
+    return { auth: candidate, retryCookies: null }
+  }
+
+  async function complete (auth) {
+    diagnostics.stage = 'persisting verified auth'
+    await run(() => onAuthUpdate({ ...auth }), 'verified auth persistence')
+    const contextAuth = { ...auth }
+    let contextActive = true
+    try {
+      diagnostics.stage = 'discovering portal context'
+      await run(() => withAuthUpdates(contextAuth, async updated => {
+        if (contextActive) await run(() => onAuthUpdate(updated), 'verified auth persistence')
+      }, auth => ensureRestContext(auth, { isActive: () => contextActive })), 'WebView portal context discovery')
+    } finally {
+      contextActive = false
+    }
+    await applyAuthUpdate(auth, contextAuth)
+    await run(() => onAuthUpdate({ ...auth }), 'verified auth persistence')
+    return auth
+  }
+
+  async function closeOwnedView () {
+    if (closedError) return
+    try {
+      await withSessionDeadline(() => webView.close(), 'WebView close')
+    } catch (error) {
+      // A new policy can race cleanup. Do not retry a still-running timed-out close.
+      if (isSessionDeadlineError(error)) throw error
+      await new Promise(resolve => setTimeout(resolve, 0))
+      let retryStage = 'reading closed state'
+      try {
+        const isClosed = await withSessionDeadline(() => webView.isClosed(), 'WebView closed state')
+        ensure(typeof isClosed === 'boolean', 'unexpected WebView closed state')
+        if (isClosed) return
+        retryStage = 'retrying close'
+        await withSessionDeadline(() => webView.close(), 'WebView close')
+      } catch (retryError) {
+        console.warn('Bank Hapoalim WebView close retry failed', {
+          stage: retryStage,
+          errorType: retryError?.name || 'Error',
+          timedOut: isSessionDeadlineError(retryError)
+        })
+        throw error
+      }
+    }
+  }
+
+  async function authorize () {
+    webView.on('close', onClose)
+    listenerAttached = true
+    deadlineId = setTimeout(() => stop(new Error('Bank Hapoalim WebView login timed out')), COOKIE_STORE_POLL_TIMEOUT_MS)
+    webView.navigationPolicy = WebView.createNavigationPolicy(navigation => {
+      diagnostics.lastUrl = sanitizeOfficialUrlForLog(navigation.url)
+      // Native policy must settle before presentation, cookie writes, navigation or closing.
+      return WebView.NavigationAction.LOAD
+    }, { sanitizeRequestLog: { url: sanitizeOfficialUrlForLog, headers: true } })
+
+    const initialCookies = await readCookies()
+    let hiddenCookies = initialCookies
+    if (!skipHidden && hasOfficialSessionCookie(hiddenCookies)) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const recovered = await probe(hiddenCookies)
+        if (recovered.auth) {
+          console.log('Bank Hapoalim hidden WebView session verified')
+          return await complete(recovered.auth)
+        }
+        if (!recovered.retryCookies) break
+        hiddenCookies = recovered.retryCookies
+        if (attempt === 2) throw new Error('Bank Hapoalim WebView session kept changing during verification')
+      }
+    }
+    if (isInBackground) throw new UserInteractionError()
+    if (!allowInteraction) throw interactionError || new Error('Bank Hapoalim session was rejected after interactive login')
+
+    onInteraction()
+    diagnostics.stage = 'showing bank login'
+    await run(() => webView.show(), 'WebView presentation')
+    diagnostics.stage = 'loading bank login'
+    await run(() => webView.goto(WEB_LOGIN_URL, { waitUntil: 'commit', timeout: 30000 }), 'WebView navigation', 30000)
+
+    let lastProbeIdentity = null
+    let nextProbeAt = 0
+    let retryDelay = COOKIE_STORE_POLL_INTERVAL_MS
+    while (true) {
+      const cookieHeader = await readCookies()
+      const pageUrl = await run(() => webView.url(), 'WebView URL read')
+      diagnostics.lastUrl = sanitizeOfficialUrlForLog(pageUrl)
+      const isPortal = isOfficialUrl(pageUrl) && WEB_SUCCESS_PATTERNS.some(pattern => pattern.test(pageUrl))
+      const sessionIdentity = authSessionIdentity(cookieHeader)
+      const probeIdentity = `${pageUrl}\n${sessionIdentity}`
+      const changedIdentity = probeIdentity !== lastProbeIdentity
+      // OTP can change server-side permissions without changing any cookie.
+      if (isPortal && (changedIdentity || Date.now() >= nextProbeAt)) {
+        if (changedIdentity) retryDelay = COOKIE_STORE_POLL_INTERVAL_MS
+        lastProbeIdentity = probeIdentity
+        const verified = await probe(cookieHeader)
+        if (verified.auth) return await complete(verified.auth)
+        nextProbeAt = Date.now() + retryDelay
+        retryDelay = Math.min(retryDelay * 2, 30000)
+      }
+      diagnostics.stage = 'waiting for bank login'
+      let pollId
+      try {
+        await run(() => new Promise(resolve => { pollId = setTimeout(resolve, COOKIE_STORE_POLL_INTERVAL_MS) }), 'WebView login poll')
+      } finally {
+        clearTimeout(pollId)
+      }
+    }
   }
 
   try {
-    const result = await openWebViewAndInterceptRequest({
-      url: WEB_LOGIN_URL,
-      log: false,
-      sanitizeRequestLog: {
-        headers: {
-          Cookie: true,
-          cookie: true,
-          'X-XSRF-TOKEN': true
-        }
-      },
-      configure: async (webView) => {
-        startCookieJarPolling(webView)
-      },
-      intercept: async function (request, webView) {
-        try {
-          diagnostics.sawAnyInterceptedRequest = true
-          diagnostics.lastInterceptedUrl = request?.url || null
-          const close = typeof this?.close === 'function' ? this.close.bind(this) : closeWebView
-          if (close) {
-            closeWebView = close
-          }
-          if (hasWebViewCookieJar(webView)) {
-            startCookieJarPolling(webView)
-          }
-          if (isOfficialUrl(request?.url)) {
-            diagnostics.sawOfficialRequest = true
-            auth = updateAuthFromRequest(auth, request)
-            if (hasWebViewCookieJar(webView)) {
-              auth = await updateAuthFromWebViewCookieJar(auth, webView, {
-                requestUrl: request?.url,
-                logMissingAuth: false,
-                logErrors: false
-              })
-            }
-          }
-
-          const isAuthenticatedPortalRequest = WEB_SUCCESS_PATTERNS.some(pattern => pattern.test(request?.url || ''))
-          if (isAuthenticatedPortalRequest) {
-            diagnostics.sawAuthenticatedPortalRequest = true
-            console.log('Bank Hapoalim WebView reached authenticated portal request', {
-              url: sanitizeOfficialUrlForLog(request?.url),
-              hasRequestCookies: getCookieHeaderNames(getHeaderValue(request?.headers, 'cookie') || getHeaderValue(request?.headers, 'Cookie')).length > 0,
-              authCookieNames: getCookieHeaderNames(auth.cookieHeader)
-            })
-          }
-          if (auth.cookieHeader !== '' && isAuthenticatedPortalRequest) {
-            if (!close) {
-              return { auth }
-            }
-            const isComplete = await tryCloseWithVerifiedAuth({
-              close,
-              nextAuth: auth,
-              verifyAccountsAccess: true,
-              source: hasWebViewCookieJar(webView)
-                ? 'authenticated-portal-webview-cookie-jar'
-                : 'authenticated-portal-request'
-            })
-            if (isComplete) {
-              return null
-            }
-          }
-
-          if (hasWebViewCookieJar(webView) && !authCaptureInFlight) {
-            await tryCompleteFromWebViewCookieJar({
-              close,
-              webView,
-              requestUrl: request?.url,
-              requireSessionCookie: false,
-              verifyAccountsAccess: true,
-              source: isAuthenticatedPortalRequest
-                ? 'authenticated-portal-webview-cookie-jar'
-                : 'webview-cookie-jar-request'
-            })
-          }
-
-          return null
-        } catch (error) {
-          console.warn('Bank Hapoalim WebView intercept handling failed', summarizeWebViewLoginDiagnostics(diagnostics, auth, error))
-          throw error
-        }
-      }
-    })
-
-    stopCookieJarPolling()
-    auth = restoreAuth(result?.auth) || auth
-    let hasVerifiedAccountsAccessFromResult = auth.cookieHeader !== '' && await hasAuthenticatedAccountsAccess(auth)
-    if (!hasVerifiedAccountsAccessFromResult) {
-      const recoveredConfiguredResultAuth = await recoverVerifiedAuth(auth, {
-        attempts: COOKIE_STORE_RECOVERY_RETRY_COUNT,
-        delayMs: COOKIE_STORE_RECOVERY_RETRY_DELAY_MS,
-        source: 'configured-webview-result-auth'
-      })
-      auth = recoveredConfiguredResultAuth.auth
-      hasVerifiedAccountsAccessFromResult = recoveredConfiguredResultAuth.verified
-    }
-    if (!hasVerifiedAccountsAccessFromResult) {
-      const recoveredConfiguredResultCookieStoreAuth = await recoverVerifiedAuthFromCookieStore(auth, {
-        attempts: COOKIE_STORE_RECOVERY_RETRY_COUNT,
-        delayMs: COOKIE_STORE_RECOVERY_RETRY_DELAY_MS,
-        requireSessionCookie: false,
-        logMissingAuth: false
-      })
-      auth = recoveredConfiguredResultCookieStoreAuth.auth
-      hasVerifiedAccountsAccessFromResult = recoveredConfiguredResultCookieStoreAuth.verified
-    }
-    ensure(auth.cookieHeader !== '', 'web login did not produce an authenticated cookie snapshot')
-    ensure(hasVerifiedAccountsAccessFromResult || await hasAuthenticatedAccountsAccess(auth), 'web login did not produce authenticated API access')
-    await ensureRestContext(auth)
-    return auth
+    result = await authorize()
   } catch (error) {
-    stopCookieJarPolling()
-    let hasVerifiedAccountsAccessAfterClose = false
-    const recoveredConfiguredCloseAuth = await recoverVerifiedAuth(auth, {
-      attempts: COOKIE_STORE_RECOVERY_RETRY_COUNT,
-      delayMs: COOKIE_STORE_RECOVERY_RETRY_DELAY_MS,
-      source: 'configured-webview-close-auth'
-    })
-    auth = recoveredConfiguredCloseAuth.auth
-    hasVerifiedAccountsAccessAfterClose = recoveredConfiguredCloseAuth.verified
-    if (hasVerifiedAccountsAccessAfterClose) {
-      await ensureRestContext(auth)
-      return auth
-    }
-
-    const recoveredConfiguredCloseCookieStoreAuth = await recoverVerifiedAuthFromCookieStore(auth, {
-      attempts: COOKIE_STORE_RECOVERY_RETRY_COUNT,
-      delayMs: COOKIE_STORE_RECOVERY_RETRY_DELAY_MS,
-      requireSessionCookie: false
-    })
-    auth = recoveredConfiguredCloseCookieStoreAuth.auth
-    hasVerifiedAccountsAccessAfterClose = recoveredConfiguredCloseCookieStoreAuth.verified
-    if (hasVerifiedAccountsAccessAfterClose) {
-      await ensureRestContext(auth)
-      return auth
-    }
-
-    if (error instanceof TemporaryError) {
-      throw error
-    }
-    console.warn('interactive web login failed', summarizeWebViewLoginDiagnostics(diagnostics, auth, error))
-    throw new TemporaryError(WEB_LOGIN_INCOMPLETE_MESSAGE)
-  }
-}
-
-async function captureOfficialSessionFromLegacyWebView () {
-  if (!ZenMoney?.openWebView) {
-    throw new TemporaryError('Bank Hapoalim login requires WebView support in the ZenMoney app.')
-  }
-
-  let auth = createEmptyAuth()
-  let authCaptureInFlight = false
-  let cookieStorePollingStarted = false
-  let cookieStorePollingStopped = false
-  let cookieStorePollingTimeoutId = null
-  let cookieStorePollingStartedAt = 0
-  let webViewCloseRequested = false
-
-  function stopCookieStorePolling () {
-    cookieStorePollingStopped = true
-    if (cookieStorePollingTimeoutId != null && typeof clearTimeout === 'function') {
-      clearTimeout(cookieStorePollingTimeoutId)
-    }
-    cookieStorePollingTimeoutId = null
-  }
-
-  function closeWebViewWithAuth (close, nextAuth, source) {
-    if (webViewCloseRequested) {
-      return
-    }
-    webViewCloseRequested = true
-    auth = nextAuth
-    stopCookieStorePolling()
-    console.log('Bank Hapoalim WebView auth captured', {
-      source,
-      cookieNames: getCookieHeaderNames(auth.cookieHeader),
-      hasXsrfToken: Boolean(auth.xsrfToken)
-    })
-    close(null, { auth })
-  }
-
-  async function tryCloseWithVerifiedAuth ({ close, nextAuth, verifyAccountsAccess, source }) {
-    if (authCaptureInFlight || webViewCloseRequested) {
-      return false
-    }
-
-    authCaptureInFlight = true
+    failure = error
+    failed = true
+    console.warn('Bank Hapoalim WebView authentication failed', { ...diagnostics, errorType: error?.name || 'Error' })
+  } finally {
+    clearTimeout(deadlineId)
     try {
-      if (nextAuth.cookieHeader === '') {
-        return false
-      }
-      if (verifyAccountsAccess && !await hasAuthenticatedAccountsAccess(nextAuth)) {
-        return false
-      }
-      if (!verifyAccountsAccess && !hasOfficialSessionCookie(nextAuth.cookieHeader)) {
-        return false
-      }
-      closeWebViewWithAuth(close, nextAuth, source)
-      return true
+      if (listenerAttached) webView.off('close', onClose)
     } catch (error) {
-      console.warn('failed to complete Bank Hapoalim WebView login from verified auth', error?.message || error)
-      return false
-    } finally {
-      authCaptureInFlight = false
-    }
-  }
-
-  async function tryCompleteFromCookieStore ({ close, requireSessionCookie, verifyAccountsAccess, source }) {
-    if (authCaptureInFlight || webViewCloseRequested) {
-      return false
-    }
-
-    const nextAuth = await updateAuthFromCookieStore(auth, {
-      requireSessionCookie,
-      logMissingAuth: source !== 'cookie-store-poll'
-    })
-    const isComplete = requireSessionCookie
-      ? hasOfficialSessionCookie(nextAuth.cookieHeader)
-      : nextAuth.cookieHeader !== ''
-    if (!isComplete) {
-      return false
-    }
-
-    return await tryCloseWithVerifiedAuth({
-      close,
-      nextAuth,
-      verifyAccountsAccess,
-      source
-    })
-  }
-
-  function scheduleCookieStorePoll (close) {
-    if (cookieStorePollingStopped || webViewCloseRequested || typeof setTimeout !== 'function') {
-      return
-    }
-    if (Date.now() - cookieStorePollingStartedAt > COOKIE_STORE_POLL_TIMEOUT_MS) {
-      console.warn('Bank Hapoalim cookie store polling timed out')
-      return
-    }
-
-    cookieStorePollingTimeoutId = setTimeout(async () => {
-      try {
-        cookieStorePollingTimeoutId = null
-        const isComplete = await tryCompleteFromCookieStore({
-          close,
-          requireSessionCookie: false,
-          verifyAccountsAccess: true,
-          source: 'cookie-store-poll'
-        })
-        if (!isComplete) {
-          scheduleCookieStorePoll(close)
-        }
-      } catch (error) {
-        console.warn('Bank Hapoalim cookie store polling failed', error?.message || error)
+      if (!failed) {
+        failure = error
+        failed = true
       }
-    }, COOKIE_STORE_POLL_INTERVAL_MS)
-  }
-
-  function startCookieStorePolling (close) {
-    if (cookieStorePollingStarted || !ZenMoney?.getCookies) {
-      return
     }
-    cookieStorePollingStarted = true
-    cookieStorePollingStartedAt = Date.now()
-    scheduleCookieStorePoll(close)
-  }
-
-  try {
-    const result = await openWebViewAndInterceptRequest({
-      url: WEB_LOGIN_URL,
-      log: false,
-      sanitizeRequestLog: {
-        headers: {
-          Cookie: true,
-          cookie: true,
-          'X-XSRF-TOKEN': true
-        }
-      },
-      intercept (request) {
-        const close = typeof this?.close === 'function' ? this.close.bind(this) : null
-        if (close) {
-          startCookieStorePolling(close)
-        }
-        if (isOfficialUrl(request?.url)) {
-          auth = updateAuthFromRequest(auth, request)
-        }
-
-        const isAuthenticatedPortalRequest = WEB_SUCCESS_PATTERNS.some(pattern => pattern.test(request?.url || ''))
-        if (isAuthenticatedPortalRequest) {
-          console.log('Bank Hapoalim WebView reached authenticated portal request', {
-            url: sanitizeOfficialUrlForLog(request?.url),
-            hasRequestCookies: getCookieHeaderNames(getHeaderValue(request?.headers, 'cookie') || getHeaderValue(request?.headers, 'Cookie')).length > 0,
-            authCookieNames: getCookieHeaderNames(auth.cookieHeader)
-          })
-        }
-        if (hasOfficialSessionCookie(auth.cookieHeader) && isAuthenticatedPortalRequest) {
-          if (!close) {
-            return { auth }
-          }
-          tryCloseWithVerifiedAuth({
-            close,
-            nextAuth: auth,
-            verifyAccountsAccess: true,
-            source: 'authenticated-portal-request'
-          })
-            .catch(error => {
-              console.warn('failed to complete Bank Hapoalim WebView login from request auth', error?.message || error)
-            })
-          return null
-        }
-
-        if (close && isAuthenticatedPortalRequest && ZenMoney?.getCookies && !authCaptureInFlight) {
-          tryCompleteFromCookieStore({
-            close,
-            requireSessionCookie: false,
-            verifyAccountsAccess: true,
-            source: 'authenticated-portal-cookie-store'
-          })
-            .catch(error => {
-              console.warn('failed to complete Bank Hapoalim WebView login from cookie store', error?.message || error)
-            })
-        }
-
-        return null
+    // Defer cleanup until the current native navigation-policy decision has returned.
+    await new Promise(resolve => setTimeout(resolve, 0))
+    try {
+      await closeOwnedView()
+    } catch (error) {
+      console.warn('Bank Hapoalim WebView cleanup failed', { errorType: error?.name || 'Error' })
+      if (!failed) {
+        failure = error
+        failed = true
       }
-    })
-
-    stopCookieStorePolling()
-    auth = restoreAuth(result?.auth) || auth
-    let hasVerifiedAccountsAccessFromResult = false
-    const recoveredLegacyResultAuth = await recoverVerifiedAuth(auth, {
-      attempts: COOKIE_STORE_RECOVERY_RETRY_COUNT,
-      delayMs: COOKIE_STORE_RECOVERY_RETRY_DELAY_MS,
-      source: 'legacy-webview-result-auth'
-    })
-    auth = recoveredLegacyResultAuth.auth
-    hasVerifiedAccountsAccessFromResult = recoveredLegacyResultAuth.verified
-    if (!hasVerifiedAccountsAccessFromResult) {
-      const recoveredLegacyResultCookieStoreAuth = await recoverVerifiedAuthFromCookieStore(auth, {
-        attempts: COOKIE_STORE_RECOVERY_RETRY_COUNT,
-        delayMs: COOKIE_STORE_RECOVERY_RETRY_DELAY_MS,
-        requireSessionCookie: false,
-        logMissingAuth: false
-      })
-      auth = recoveredLegacyResultCookieStoreAuth.auth
-      hasVerifiedAccountsAccessFromResult = recoveredLegacyResultCookieStoreAuth.verified
     }
-    if (auth.cookieHeader === '') {
-      throw new Error('web login did not produce an authenticated cookie snapshot')
-    }
-    if (!hasVerifiedAccountsAccessFromResult && !await hasAuthenticatedAccountsAccess(auth)) {
-      throw new Error('web login did not produce authenticated API access')
-    }
-    await ensureRestContext(auth)
-    return auth
-  } catch (error) {
-    stopCookieStorePolling()
-    let hasVerifiedAccountsAccessAfterClose = false
-    const recoveredLegacyCloseAuth = await recoverVerifiedAuth(auth, {
-      attempts: COOKIE_STORE_RECOVERY_RETRY_COUNT,
-      delayMs: COOKIE_STORE_RECOVERY_RETRY_DELAY_MS,
-      source: 'legacy-webview-close-auth'
-    })
-    auth = recoveredLegacyCloseAuth.auth
-    hasVerifiedAccountsAccessAfterClose = recoveredLegacyCloseAuth.verified
-    if (hasVerifiedAccountsAccessAfterClose) {
-      await ensureRestContext(auth)
-      return auth
-    }
-
-    const recoveredLegacyCloseCookieStoreAuth = await recoverVerifiedAuthFromCookieStore(auth, {
-      attempts: COOKIE_STORE_RECOVERY_RETRY_COUNT,
-      delayMs: COOKIE_STORE_RECOVERY_RETRY_DELAY_MS,
-      requireSessionCookie: false
-    })
-    auth = recoveredLegacyCloseCookieStoreAuth.auth
-    hasVerifiedAccountsAccessAfterClose = recoveredLegacyCloseCookieStoreAuth.verified
-    if (hasVerifiedAccountsAccessAfterClose) {
-      await ensureRestContext(auth)
-      return auth
-    }
-
-    if (error instanceof TemporaryError) {
-      throw error
-    }
-    console.warn('interactive web login failed', {
-      flow: 'legacy-webview',
-      auth: summarizeAuthSnapshot(auth),
-      error: error?.message || error
-    })
-    throw new TemporaryError(WEB_LOGIN_INCOMPLETE_MESSAGE)
   }
-}
-
-export async function login () {
-  return await (ZenMoney?.features?.webViewConfiguration
-    ? captureOfficialSessionFromConfiguredWebView()
-    : captureOfficialSessionFromLegacyWebView())
+  if (failed) throw failure
+  return result
 }
 
 async function fetchMainAccountDetails (auth, mainAccount, accountId) {
@@ -1355,9 +1010,10 @@ async function fetchMainAccountDetails (auth, mainAccount, accountId) {
     auth
   )
 
+  ensure(response.body && typeof response.body === 'object' && !Array.isArray(response.body), 'unexpected balance response', response)
   mainAccount.details = {
     ...response.body,
-    currentAccountCreditFrame: response.body?.creditLimitAmount ?? response.body?.currentAccountCreditFrame ?? 0
+    currentAccountCreditFrame: response.body?.currentAccountCreditFrame ?? null
   }
   mainAccount.structType = 'checking'
   return [mainAccount]
@@ -1370,10 +1026,12 @@ async function fetchForeignCurrencyAccount (auth, accountId) {
   })}`, auth)
 
   const account = response.body
-  if (!account) {
+  if (account === null) {
     return []
   }
+  ensure(Array.isArray(account?.balancesAndLimitsDataList), 'unexpected foreign currency accounts response', response)
   account.mainProductId = accountId
+  account.sourceAccountId = accountId
   account.structType = 'foreignCurrencyAccount'
   return [account]
 }
@@ -1381,53 +1039,70 @@ async function fetchForeignCurrencyAccount (auth, accountId) {
 async function fetchDeposits (auth, url, structType, accountId) {
   const separator = url.includes('?') ? '&' : '?'
   const response = await fetchOfficialJson(`${url}${separator}${qs.stringify({ accountId })}`, auth)
-  return (response.body?.list || []).map(account => {
-    const result = account.data?.[0]
-    if (!result) {
-      return null
+  ensure(Array.isArray(response.body?.list), 'unexpected deposits response', response)
+  const accounts = []
+  for (const group of response.body.list) {
+    ensure(Array.isArray(group?.data), 'unexpected deposit group', response)
+    for (const account of group.data) {
+      ensure(account && typeof account === 'object' && !Array.isArray(account), 'unexpected deposit account', response)
+      accounts.push({ ...account, structType, sourceAccountId: accountId })
     }
-    result.structType = structType
-    return result
-  }).filter(Boolean)
+  }
+  return accounts
 }
 
 async function fetchLoans (auth, accountId) {
   const response = await fetchOfficialJson(`/ServerServices/credit-and-mortgage/v3/loans?${qs.stringify({ accountId })}`, auth)
-  return await Promise.all((response.body?.data || []).map(async account => {
+  ensure(Array.isArray(response.body?.data), 'unexpected loans response', response)
+  const accounts = []
+  for (const account of response.body.data) {
+    ensure(account && typeof account === 'object' && !Array.isArray(account), 'unexpected loan account', response)
+    ensure(Number.isSafeInteger(account?.creditSerialNumber) && account.creditSerialNumber > 0 &&
+      Number.isSafeInteger(account?.unitedCreditTypeCode) && account.unitedCreditTypeCode > 0,
+    'unexpected loan identity', response)
     const query = qs.stringify({ unitedCreditTypeCode: account.unitedCreditTypeCode, accountId })
     const detailsResponse = await fetchOfficialJson(`/ServerServices/credit-and-mortgage/v3/loans/${account.creditSerialNumber}?${query}`, auth)
+    ensure(detailsResponse.body && typeof detailsResponse.body === 'object' && !Array.isArray(detailsResponse.body), 'unexpected loan details', detailsResponse)
 
     account.details = detailsResponse.body
     account.structType = 'loan'
-    return account
-  }))
+    account.sourceAccountId = accountId
+    accounts.push(account)
+  }
+  return accounts
 }
 
 async function fetchMortgages (auth, accountId) {
   const response = await fetchOfficialJson(`/ServerServices/credit-and-mortgage/mortgages?${qs.stringify({ accountId })}`, auth)
-  return (response.body?.data || []).map(account => {
+  ensure(Array.isArray(response.body?.data), 'unexpected mortgages response', response)
+  return response.body.data.map(account => {
+    ensure(account && typeof account === 'object' && !Array.isArray(account), 'unexpected mortgage account', response)
     account.structType = 'mortgage'
+    account.sourceAccountId = accountId
     return account
   })
 }
 
 export async function fetchAccounts (auth) {
-  const response = await fetchOfficialJson('/ServerServices/general/accounts?lang=he', auth)
-  ensure(Array.isArray(response.body), 'unexpected accounts response', response)
+  const response = await fetchOfficialAccounts(auth)
+  ensure(response.body.length > 0, 'unexpected empty accounts inventory', response)
 
   const accounts = []
-  await Promise.all(response.body.map(async mainAccount => {
+  // Requests share rotating authentication; finish each before starting the next.
+  for (const mainAccount of response.body) {
+    ensure(mainAccount && typeof mainAccount === 'object' && !Array.isArray(mainAccount), 'unexpected account record', { body: mainAccount })
     ensure(mainAccount.accountNumber && mainAccount.branchNumber && mainAccount.bankNumber, 'unexpected account', { body: mainAccount })
     const accountId = `${mainAccount.bankNumber}-${mainAccount.branchNumber}-${mainAccount.accountNumber}`
-    accounts.push(...flatten(await Promise.all([
+    const loaders = [
       async () => await fetchMainAccountDetails(auth, mainAccount, accountId),
       async () => await safeFetch('foreign currency', async () => fetchForeignCurrencyAccount(auth, accountId)),
       async () => await safeFetch('deposits', async () => fetchDeposits(auth, '/ServerServices/deposits-and-savings/deposits?view=details&lang=he', 'deposit', accountId)),
       async () => await safeFetch('savings', async () => fetchDeposits(auth, '/ServerServices/deposits-and-savings/savingsDeposits?view=details&lang=he', 'saving', accountId)),
       async () => await safeFetch('loans', async () => fetchLoans(auth, accountId)),
       async () => await safeFetch('mortgages', async () => fetchMortgages(auth, accountId))
-    ].map(fn => fn()))))
-  }))
+    ]
+    for (const load of loaders) accounts.push(...await load())
+  }
   return accounts
 }
 
@@ -1449,27 +1124,6 @@ function addDays (date, days) {
 
 function getMidpointDay (fromDate, toDate) {
   return startOfDay(new Date(Math.floor((startOfDay(fromDate).getTime() + startOfDay(toDate).getTime()) / 2)))
-}
-
-function deduplicateTransactions (transactions) {
-  const seenKeys = new Set()
-  return transactions.filter(transaction => {
-    const key = [
-      transaction.serialNumber,
-      transaction.referenceNumber,
-      transaction.eventDate,
-      transaction.valueDate,
-      transaction.eventAmount,
-      transaction.activityDescription
-    ].join('|')
-
-    if (seenKeys.has(key)) {
-      return false
-    }
-
-    seenKeys.add(key)
-    return true
-  })
 }
 
 async function fetchOfficialCurrentAccountTransactionsWindow (auth, product, fromDate, toDate) {
@@ -1500,45 +1154,54 @@ async function fetchOfficialCurrentAccountTransactionsWindow (auth, product, fro
     }
   )
 
-  const batch = response.body?.transactions || (response.status === 204 ? [] : null)
+  const batch = response.status === 204 ? [] : response.body?.transactions
   ensure(Array.isArray(batch), 'unexpected transactions response', response)
   return batch
 }
 
-async function fetchOfficialCurrentAccountTransactions (auth, product, fromDate, toDate) {
-  const batch = await fetchOfficialCurrentAccountTransactionsWindow(auth, product, fromDate, toDate)
+async function fetchOfficialForeignCurrencyTransactionsWindow (auth, product, fromDate, toDate) {
+  const fromDateStr = toISODateString(fromDate).replace(/-/g, '')
+  const toDateStr = toISODateString(toDate).replace(/-/g, '')
+  const response = await fetchOfficialJson('/ServerServices/foreign-currency/transactions?type=business&view=details&' +
+    `retrievalStartDate=${fromDateStr}&retrievalEndDate=${toDateStr}&` +
+    `currencyCodeList=${product.currencyCode}&detailedAccountTypeCodeList=${product.detailedAccountTypeCode}&accountId=${product.id}`, auth)
+  const balances = response.body?.balancesAndLimitsDataList
+  ensure(Array.isArray(balances), 'unexpected foreign currency history response', response)
+  const matches = balances.filter(balance => balance?.currencyCode === product.currencyCode && balance?.detailedAccountTypeCode === product.detailedAccountTypeCode)
+  ensure(matches.length === 1, 'unexpected foreign currency history source', response)
+  const batch = matches[0].transactions
+  ensure(Array.isArray(batch), 'unexpected foreign currency transactions response', response)
+  return batch
+}
 
-  if (batch.length < OFFICIAL_TRANSACTION_LIMIT || areSameCalendarDay(fromDate, toDate)) {
+async function fetchOfficialTransactionsInterval (auth, product, fromDate, toDate) {
+  const fetchWindow = product.type === 'foreignCurrencyAccount' ? fetchOfficialForeignCurrencyTransactionsWindow : fetchOfficialCurrentAccountTransactionsWindow
+  const batch = await fetchWindow(auth, product, fromDate, toDate)
+
+  if (batch.length < OFFICIAL_TRANSACTION_LIMIT) {
     return batch
   }
-
+  ensure(!areSameCalendarDay(fromDate, toDate), 'Bank Hapoalim history limit reached for one day; complete history cannot be verified')
   const midpointDay = getMidpointDay(fromDate, toDate)
-  if (midpointDay.getTime() <= startOfDay(fromDate).getTime() || midpointDay.getTime() >= startOfDay(toDate).getTime()) {
-    return batch
-  }
+  ensure(midpointDay.getTime() >= startOfDay(fromDate).getTime() && midpointDay.getTime() < startOfDay(toDate).getTime(),
+    'Bank Hapoalim history interval cannot be split completely')
 
-  const leftTransactions = await fetchOfficialCurrentAccountTransactions(auth, product, fromDate, midpointDay)
+  const leftTransactions = await fetchOfficialTransactionsInterval(auth, product, fromDate, midpointDay)
   const rightFromDate = addDays(midpointDay, 1)
   const rightTransactions = rightFromDate.getTime() <= startOfDay(toDate).getTime()
-    ? await fetchOfficialCurrentAccountTransactions(auth, product, rightFromDate, toDate)
+    ? await fetchOfficialTransactionsInterval(auth, product, rightFromDate, toDate)
     : []
 
-  return deduplicateTransactions([...leftTransactions, ...rightTransactions])
+  // Windows cover disjoint calendar days. Equal-looking rows are not proven duplicates.
+  return [...leftTransactions, ...rightTransactions]
 }
 
 export async function fetchTransactions (auth, product, fromDate, toDate) {
-  const fromDateStr = toISODateString(fromDate).replace(/-/g, '')
-  const toDateStr = toISODateString(toDate).replace(/-/g, '')
-
-  if (product.type === 'foreignCurrencyAccount') {
-    const response = await fetchOfficialJson('/ServerServices/foreign-currency/transactions?type=business&view=details&' +
-      `retrievalStartDate=${fromDateStr}&` +
-      `retrievalEndDate=${toDateStr}&` +
-      `currencyCodeList=${product.currencyCode}&` +
-      `detailedAccountTypeCodeList=${product.detailedAccountTypeCode}&` +
-      `accountId=${product.id}`, auth)
-    return response.body.balancesAndLimitsDataList?.transactions || []
-  }
-
-  return await fetchOfficialCurrentAccountTransactions(auth, product, fromDate, toDate)
+  ensure(fromDate instanceof Date && toDate instanceof Date && Number.isFinite(fromDate.getTime()) && Number.isFinite(toDate.getTime()) && fromDate <= toDate,
+    'unexpected history interval')
+  // Match the legacy formatted-date +02:00 interpretation, not the machine zone.
+  // Actual bank DST semantics still require bank evidence before changing dates.
+  const requestFromDate = dateInTimezone(fromDate, 120)
+  const requestToDate = dateInTimezone(toDate, 120)
+  return await fetchOfficialTransactionsInterval(auth, product, requestFromDate, requestToDate)
 }

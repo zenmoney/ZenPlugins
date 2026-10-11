@@ -473,5 +473,10 @@ describe('convertAccounts', () => {
     ]
   ])('converts foreign currency account', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
+    expect(convertAccounts([...apiAccounts, ...apiAccounts.map(account => ({ ...account, pdfUrl: 'MODEL_REFRESHED_PDF' }))])).toEqual(accounts)
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, balancesAndLimitsDataList: [...account.balancesAndLimitsDataList, { ...account.balancesAndLimitsDataList[0] }] })))).toThrow(expect.objectContaining({ context: { structType: 'foreignCurrencyAccount', field: 'balancesAndLimitsDataList.detailedAccountTypeCode' } }))
+    expect(() => convertAccounts([...apiAccounts, ...apiAccounts.map(account => ({ ...account, balancesAndLimitsDataList: account.balancesAndLimitsDataList.map(balance => ({ ...balance, lastEventDate: 20991231 })) }))])).toThrow('conflicting account identity')
+    expect(convertAccounts(apiAccounts.map(account => ({ ...account, balancesAndLimitsDataList: account.balancesAndLimitsDataList.map(balance => ({ ...balance, currentBalance: -5 })) }))))
+      .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, balance: -5 } })))
   })
 })

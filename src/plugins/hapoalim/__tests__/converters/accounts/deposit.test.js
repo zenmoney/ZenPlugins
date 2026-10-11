@@ -103,14 +103,14 @@ describe('convertAccounts', () => {
               '1530001'
             ],
             balance: 30000.17,
-            startBalance: 30000.17,
+            startBalance: 30000.14,
             startDate: new Date('2020-06-01T00:00:00+02:00'),
-            percent: 1,
-            capitalization: true,
-            endDateOffset: 1,
-            endDateOffsetInterval: 'year',
+            percent: 0.01,
+            capitalization: false,
+            endDateOffset: 90,
+            endDateOffsetInterval: 'day',
             payoffStep: 1,
-            payoffInterval: 'month'
+            payoffInterval: null
           }
         }
       ]
@@ -192,26 +192,54 @@ describe('convertAccounts', () => {
           mainProduct: null,
           account: {
             id: '20190903',
-            type: 'deposit',
+            type: 'checking',
+            savings: true,
             title: 'Save&Go',
             instrument: 'ILS',
             syncID: [
               '20190903'
             ],
-            balance: 3742.59,
-            startBalance: 3742.59,
-            startDate: new Date('2019-09-03T00:00:00+02:00'),
-            percent: 16,
-            capitalization: true,
-            endDateOffset: 1,
-            endDateOffsetInterval: 'year',
-            payoffStep: 1,
-            payoffInterval: 'month'
+            balance: 3742.59
           }
         }
       ]
     ]
   ])('converts deposit', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
+    expect(convertAccounts([...apiAccounts, ...apiAccounts])).toEqual(accounts)
+    const changeIgnoredField = account => accounts[0].account.type === 'checking'
+      ? { ...account, accountNumber: account.accountNumber + 1, eventNumber: account.eventNumber + 1 }
+      : { ...account, productNumber: account.productNumber + 1 }
+    expect(() => convertAccounts([...apiAccounts, ...apiAccounts.map(changeIgnoredField)])).toThrow('conflicting account identity')
+    const fallbackRecords = apiAccounts.map(account => ({ ...account, depositSerialId: undefined }))
+    expect(() => convertAccounts([...fallbackRecords, ...fallbackRecords.map(changeIgnoredField)])).toThrow('conflicting account identity')
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, revaluedTotalAmount: -5, revaluedBalance: -5 })))).toThrow(expect.objectContaining({ context: { field: 'revaluedTotalAmount/revaluedBalance', structType: accounts[0].account.type === 'checking' ? 'saving' : 'deposit' } }))
+    for (const detailedAccountTypeCode of [undefined, 999]) {
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, detailedAccountTypeCode })))).toThrow(/deposit currency/)
+    }
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, linkageTypeCode: 2 })))).toThrow(expect.objectContaining({ context: { structType: 'deposit', field: 'detailedAccountTypeCode/linkageTypeCode' } }))
+    for (const title of [undefined, null, '', '   ', 1]) {
+      expect(convertAccounts(apiAccounts.map(account => ({ ...account, shortProductName: title, shortSavingDepositName: title }))))
+        .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, title: plan.account.type === 'checking' ? 'חיסכון' : 'פיקדון' } })))
+    }
+    expect(convertAccounts(apiAccounts.map(account => ({ ...account, shortProductName: '  ', shortSavingDepositName: ' Sample title ' }))))
+      .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, title: 'Sample title' } })))
+    if (accounts[0].account.type === 'deposit') {
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, formattedPaymentDate: account.formattedAgreementOpeningDate })))).toThrow(expect.objectContaining({ context: { structType: 'deposit', field: 'formattedAgreementOpeningDate/formattedPaymentDate' } }))
+      for (const principal of [0, -1]) {
+        expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, principalAmount: principal })))).toThrow(/principal/)
+      }
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, interestPaymentDescription: null })))).toThrow(/interest conditions/)
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, interestCreditingMethodDescription: 'UNKNOWN' })))).toThrow(/interest conditions/)
+      expect(convertAccounts(apiAccounts.map(account => ({ ...account, adjustedInterest: null })))).toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, percent: null } })))
+      for (const rate of [undefined, NaN]) {
+        expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, adjustedInterest: rate })))).toThrow(/amount/)
+      }
+      expect(convertAccounts(apiAccounts.map(account => ({ ...account, depositSerialId: undefined })))).toEqual(accounts.map((plan, i) => ({ ...plan, account: { ...plan.account, id: String(apiAccounts[i].agreementOpeningDate), syncID: [String(apiAccounts[i].agreementOpeningDate)] } })))
+    } else {
+      expect(convertAccounts(apiAccounts.map(account => ({ ...account, structType: 'saving' })))).toEqual(accounts)
+      expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, structType: 'saving', linkageTypeCode: 2 })))).toThrow(expect.objectContaining({ context: { structType: 'saving', field: 'detailedAccountTypeCode/linkageTypeCode' } }))
+    }
+    expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, depositSerialId: undefined, agreementOpeningDate: undefined })))).toThrow(/identity/)
   })
 })
