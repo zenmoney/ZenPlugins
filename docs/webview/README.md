@@ -1,6 +1,6 @@
 # WebView
 
-Use Playwright [Page](https://playwright.dev/docs/api/class-page) and [JSHandle](https://playwright.dev/docs/api/class-jshandle) as references for navigation and page JavaScript. The supported API is defined by [WebView](../../src/common/webView.ts). The differences and plugin-specific behavior are below. Page-level overrides are covered by the [permissions contract](permissions.md).
+Use Playwright [Page](https://playwright.dev/docs/api/class-page) and [JSHandle](https://playwright.dev/docs/api/class-jshandle) as references for navigation and page JavaScript. The supported API is defined by [WebView](../../src/common/webView.ts). The differences and plugin-specific behavior are below. Page-level overrides are covered by the [permissions contract](permissions.md) and [DOM policies](dom-policies.md).
 
 ## Session and page behavior
 
