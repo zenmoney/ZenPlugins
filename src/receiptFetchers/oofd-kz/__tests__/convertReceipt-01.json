@@ -1,0 +1,86 @@
+{
+  "ticket": {
+    "type": "TICKET",
+    "transactionId": "531282_10602",
+    "transactionDate": "2021-03-03T13:25:01.000",
+    "fiscalId": "282483066",
+    "offlineFiscalId": "282483066",
+    "shiftNumber": 0,
+    "protocolVersion": 0,
+    "options": {
+      "printedDocumentNumber": "10728"
+    },
+    "kkmRequestId": 0,
+    "linkedKkmRequestId": null,
+    "linkedKkmRequestTime": null,
+    "totalSum": 5766,
+    "takenSum": 0,
+    "changeSum": 0,
+    "items": [
+      {
+        "itemType": 1,
+        "commodity": {
+          "taxes": [],
+          "code": 0,
+          "sum": 9610,
+          "price": 9610,
+          "sectionCode": "1",
+          "exciseStamp": "",
+          "quantity": 1,
+          "name": "Позиция",
+          "barcode": null
+        },
+        "options": {},
+        "modifiers": []
+      },
+      {
+        "discount": {
+          "taxes": [],
+          "sum": 3844,
+          "discount": true,
+          "name": "Скидка"
+        },
+        "itemType": 5,
+        "options": {},
+        "modifiers": [
+          {
+            "taxes": [],
+            "sum": 3844,
+            "discount": true,
+            "name": "Скидка"
+          }
+        ]
+      }
+    ],
+    "payments": [
+      {
+        "sum": 5766,
+        "paymentType": "CARD"
+      }
+    ],
+    "taxes": [],
+    "ticketAdInfo": [],
+    "operator": {
+      "code": 111,
+      "name": ""
+    },
+    "operationType": 2,
+    "domain": {
+      "domainType": 0
+    },
+    "modifiers": [],
+    "requestPayload": null,
+    "payload": null
+  },
+  "ticketDescription": "transaction.ticket.sell, transaction.ticket.payment.type.card",
+  "orgTitle": "ТОВАРИЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ 'MONАMIE.KZ'",
+  "orgId": "140340008559",
+  "retailPlaceAddress": "г. Нур-Султан, р-он Алматы, Республики 8",
+  "kkmSerialNumber": "SWK00304901",
+  "kkmFnsId": "010100529100",
+  "foundDate": "2021-05-06T21:03:33.463",
+  "taxes": [],
+  "totalDiscount": 3844,
+  "totalMarkup": 0,
+  "is_for_anon": true
+}
