@@ -1,0 +1,526 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<link rel='shortcut icon' href='/images/faviconttc.ico' type='image/x-icon'>
+	<title>ОФД </title>
+	<link rel="stylesheet" href="/css/app.css?7342327">
+
+	<link rel="stylesheet" href="/css/datepicker.min.css"/>
+	<script src="/js/jquery.min.js"></script>
+	<script src="/js/inputmask.min.js"></script>
+</head>
+
+<body class="clean_layout">
+
+
+<nav class="navbar navbar-expand-md navbar-dark black-bg top_menu">
+	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#top_menu" aria-controls="top_menu" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	</button>
+
+	<div class="navbar-collapse collapse" id="top_menu" style="">
+		<a href="/"><img src='/images/ttc_white_text.svg' alt='logo' class='logo'></a>
+		<ul class="navbar-nav mt-0 " id="">
+			<li class="nav-item d-none">
+				<a class="nav-link" href="/">Главная</a>
+			</li>
+			<li class="nav-item d-none">
+				<a class="nav-link" href="/load_cert">Регистрация организации</a>
+			</li>
+			<li class="nav-item d-none">
+				<a class="nav-link" href="/user_registration">Регистрация пользователя</a>
+			</li>
+
+			<!--
+			<li class="nav-item">
+  <a class="nav-link" href="/reg_legperson_1">Регистрация юрлица</a>
+			</li>
+			<li class="nav-item">
+  <a class="nav-link" href="/reg_busperson_1">Регистрация физлица</a>
+			</li> -->
+			<li>
+				<a class="nav-link" href="/login">Личный кабинет</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="/business_registration">Зарегистрировать компанию</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="/check_ticket">Проверка чека</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="/service_center/login/">Вход для ЦТО</a>
+			</li>
+
+
+			<!--
+			<li class="nav-item">
+			  <a href="/landing" class="nav-link">Лендинг</a>
+			</li> -->
+
+		</ul>
+		<div class="langs-login">
+          <span style="color: #ccc">
+Выбор языка<span />
+            <div class="langs__block">
+              <a class="lang_redirect" data-lang="rus" href="/lang/rus">Рус</a>
+              <a class="lang_redirect" data-lang="kaz" href="/lang/kaz">Қаз</a>
+              <a class="lang_redirect" data-lang="eng" href="/lang/eng">Eng</a>
+            </div>
+		</div>
+	</div>
+</nav>
+
+<div class="container mt-2">
+	<div class="app_main__centered">
+		<div class="page_inner__centered">
+			<p class="alert alert-info" role="alert"></p>
+			<p class="alert alert-danger" role="alert"></p>
+
+			<main role="main">
+				<div class="ready_ticket tickets_data_for_print"
+				     style="width: 300px;margin: 0 auto 45px; font-family: monospace;-webkit-box-shadow: 0 5px 20px 0 rgba(0, 0, 0, 0.35);box-shadow: 0 5px 20px 0 rgba(0, 0, 0, 0.35);padding: 15px;font-size: 12px;height: 500px;overflow-y: auto;">
+					<div class="ticket_header"
+					     style="text-align: center;border-bottom: 1px dotted #777;margin-bottom: 15px;padding-bottom: 15px; overflow: auto;">
+						<div><span class="">
+ТОВАРИЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ &quot;СКИФ ТРЕЙД&quot;
+      </span></div>
+						<div>
+							ИИН/БИН: <span class="">
+020340002288
+      </span>
+						</div>
+						<div>
+							РНМ: <span class="">
+010101809975
+      </span>
+						</div>
+						<div>
+							ЗНМ: <span class="">
+502220114
+      </span>
+						</div>
+						<div>
+							Адрес: <span class="wb-all">
+Республика Казахстан, г. Алматы, р-н Ауэзовский,
+Ташкентская, д. 514А, оф.
+      </span>
+						</div>
+						<div>
+							Дата и время: <span class="">
+30 янв 2023, 19:23
+      </span>
+						</div>
+						<div>
+							Кассовый чек <span class="">/ Продажа
+      </span>
+						</div>
+					</div>
+					<div class="ticket_body">
+						<ol class="ready_ticket__items_list"
+						    style="margin: 0;padding: 0; list-style: none; margin-bottom: 15px; padding-bottom: 15px;">
+
+
+							<li style="border-bottom: 1px dotted #777; padding: 10px 0;">
+								<span class="wb-all">КАРТОФЕЛЬ 1СОРТ КАЗАХСТАН</span>
+								<small>
+
+								</small> <br />
+								<div class="ready_ticket__item">
+									<b>
+										177625
+									</b>
+									182.00 x
+									3.796
+									642
+									= 690.87
+									<div>
+										-налог (12.0%): 74.02<br />
+
+
+
+
+									</div>
+								</div>
+							</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+							<li style="border-bottom: 1px dotted #777; padding: 10px 0;">
+								<span class="wb-all">КРУПА ГРЕЧНЕВАЯ 900ГР АЛТЫН ХАНЫМ</span>
+								<small>
+
+								</small> <br />
+								<div class="ready_ticket__item">
+									<b>
+										344782
+									</b>
+									870.00 x
+									2
+									642
+									= 1740.00
+									<div>
+										-налог (12.0%): 186.43<br />
+
+
+
+
+									</div>
+								</div>
+							</li>
+
+
+
+
+
+
+
+							<li style="border-bottom: 1px dotted #777; padding: 10px 0;">
+								<span class="wb-all">ГОРОШЕК BONDUELLE 425гр НЕЖНЫЙ</span>
+								<small>
+
+								</small> <br />
+								<div class="ready_ticket__item">
+									<b>
+										20295
+									</b>
+									695.00 x
+									1
+									642
+									= 695.00
+									<div>
+										-налог (12.0%): 74.46<br />
+
+
+
+
+									</div>
+								</div>
+							</li>
+
+
+
+
+
+
+
+							<li style="border-bottom: 1px dotted #777; padding: 10px 0;">
+								<span class="wb-all">ТВОРОГ МОЛОЧНЫЙ БИДОНЧИК 500гр 9  ПАКЕТ</span>
+								<small>
+
+								</small> <br />
+								<div class="ready_ticket__item">
+									<b>
+										316944
+									</b>
+									774.00 x
+									2
+									642
+									= 1548.00
+									<div>
+										-налог (12.0%): 165.86<br />
+
+
+
+
+									</div>
+								</div>
+							</li>
+
+
+
+
+
+
+
+							<li style="border-bottom: 1px dotted #777; padding: 10px 0;">
+								<span class="wb-all">СМЕТАНА МОЛОЧНЫЙ БИДОНЧИК 400гр 20  ВЕДРО</span>
+								<small>
+
+								</small> <br />
+								<div class="ready_ticket__item">
+									<b>
+										319341
+									</b>
+									699.00 x
+									1
+									642
+									= 699.00
+									<div>
+										-налог (12.0%): 74.89<br />
+
+
+
+
+									</div>
+								</div>
+							</li>
+
+
+
+
+
+
+
+							<li style="border-bottom: 1px dotted #777; padding: 10px 0;">
+								<span class="wb-all">СЫР БЕЛОРУССИЯ ЩУЧИНСКИЙ 45  ГОЛЛАНДСКИЙ ЛЮКС ВЕС</span>
+								<small>
+
+								</small> <br />
+								<div class="ready_ticket__item">
+									<b>
+										291860
+									</b>
+									3800.00 x
+									0.31
+									642
+									= 1178.00
+									<div>
+										-налог (12.0%): 126.21<br />
+
+
+
+
+									</div>
+								</div>
+							</li>
+
+
+
+
+
+
+
+							<li style="border-bottom: 1px dotted #777; padding: 10px 0;">
+								<span class="wb-all">СЫР ПЛАВЛЕНЫЙ PRESIDENT 300гр СЛИВОЧНЫЙ СЛАЙС</span>
+								<small>
+
+								</small> <br />
+								<div class="ready_ticket__item">
+									<b>
+										239325
+									</b>
+									1815.00 x
+									1
+									642
+									= 1815.00
+									<div>
+										-налог (12.0%): 194.46<br />
+
+
+
+
+									</div>
+								</div>
+							</li>
+
+
+
+
+
+
+
+							<li style="border-bottom: 1px dotted #777; padding: 10px 0;">
+								<span class="wb-all">БАНАН ЭКВАДОР</span>
+								<small>
+
+								</small> <br />
+								<div class="ready_ticket__item">
+									<b>
+										177633
+									</b>
+									895.00 x
+									1.226
+									642
+									= 1097.27
+									<div>
+										-налог (12.0%): 117.56<br />
+
+
+
+
+									</div>
+								</div>
+							</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+							<li style="border-bottom: 1px dotted #777; padding: 10px 0;">
+								<span class="wb-all">ПАКЕТ SMALL SKIF МАЙКА</span>
+								<small>
+
+								</small> <br />
+								<div class="ready_ticket__item">
+									<b>
+										339793
+									</b>
+									10.00 x
+									1
+									642
+									= 10.00
+									<div>
+										-налог (12.0%): 1.07<br />
+
+
+
+
+									</div>
+								</div>
+							</li>
+
+
+
+
+
+
+						</ol>
+						<div class="total_sum" style="margin-top: -20px;">
+							<div>
+								<b style="font-size: 24px;">
+									ИТОГО:
+									<span class="ticket_total bit_depth">
+9472.00
+              </span>
+								</b>
+							</div>
+							<ul class="list-unstyled" style="display: inline" >
+
+								<li>Карта: 9472.00</li>
+
+							</ul>
+
+						</div>
+
+
+						<div>
+
+							<ul> в т.ч. НДС(12.0)%: 1014.96</ul>
+
+						</div>
+
+						<div>
+
+						</div>
+					</div>
+					<div class="ticket_footer">
+						<div class="text-center">
+							Фискальный чек
+						</div>
+						<div class="text-center">
+							<b>
+
+							</b>
+						</div>
+						<div>
+							Фискальный признак: <span class="">475145263436</span>
+						</div>
+						<div>
+							ОФД - <span class="">АО «Транстелеком»</span>
+						</div>
+						<div>
+							Для проверки зайдите на сайт: <span class="">ofd1.kz/t</span>
+						</div>
+						<div class="qrcode_show_ticket" style="display: flex; justify-content: center; margin: 1rem;"></div>
+					</div>
+				</div>
+				<button onclick="copyUrl()" class="btn btn-primary" style="max-width: 100%; margin-top: 0;">Скопировать ссылку на чек</button>
+				<div style="display: flex; gap: 8px">
+					<button class="btn btn-primary" onclick="printTicket()">Распечатать</button>
+					<button class="btn btn-primary" onclick="printPdf()">Скачать PDF</button>
+					<form accept-charset="UTF-8" action="/download_ticket_pdf" class="d-none" method="post"><input name="_csrf_token" type="hidden" value="ACIweDoFBH0yDnIBUBg-PSsxEQI8Exw-iiaASQH6qdKUcoPGnGVRTciS"><input name="_utf8" type="hidden" value="✓">
+						<textarea class="d-none" id="ticket_body" name="ticket_body">
+</textarea>
+						<button id="download_ticket_pdf_btn_submit" name="download_ticket_pdf_btn_submit" type="submit"></button>
+					</form>
+				</div>
+				<div style="display: flex; gap: 8px">
+					<input id="recipient_input" type="email" placeholder="Введите email..." class="form-control" style="margin-top: 1rem; border-radius: 0.5rem">
+					<button class="btn btn-primary" onclick="sendEmail()">Отправить email</button>
+					<form accept-charset="UTF-8" action="/email_ticket_pdf" class="d-none" method="post"><input name="_csrf_token" type="hidden" value="ACIweDoFBH0yDnIBUBg-PSsxEQI8Exw-iiaASQH6qdKUcoPGnGVRTciS"><input name="_utf8" type="hidden" value="✓">
+						<textarea class="d-none" id="ticket_body_email" name="ticket_body_email">
+</textarea>
+						<textarea class="d-none" id="recipient" name="recipient">
+</textarea>
+						<textarea class="d-none" id="url" name="url">
+</textarea>
+						<button id="email_ticket_pdf_btn_submit" name="email_ticket_pdf_btn_submit" type="submit"></button>
+					</form>
+				</div>
+				<script>
+                  function copyUrl() {
+                    var Url = window.location.href;
+                    var input = document.createElement('input');
+                    input.value = Url;
+                    document.body.appendChild(input)
+                    input.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(input);
+                  }
+
+                  function sendEmail() {
+                    document.querySelector('#ticket_body_email').innerHTML = document.querySelector('.tickets_data_for_print').innerHTML
+
+                    document.querySelector('#recipient').innerHTML = document.querySelector('#recipient_input').value
+
+                    document.querySelector('#url').innerHTML = window.location.href
+
+                    document.querySelector('#email_ticket_pdf_btn_submit').click()
+                  }
+
+                  function printPdf() {
+                    document.querySelector('#ticket_body').innerHTML = document.querySelector('.tickets_data_for_print').innerHTML
+
+                    document.querySelector('#download_ticket_pdf_btn_submit').click()
+                  }
+
+                  function printTicket() {
+                    const prtContent = document.querySelector('.tickets_data_for_print'),
+                      WinPrint = window.open('','','left=50,top=50,width=800,toolbar=0,scrollbars=1,status=0');
+
+                    WinPrint.document.write('<div id="print" class="contentpane" style="width: 300px; font-family: monospace;">');
+                    WinPrint.document.write(prtContent.innerHTML);
+                    WinPrint.document.write('</div>');
+                    WinPrint.document.close();
+                    WinPrint.focus();
+                    WinPrint.print();
+                    WinPrint.close();
+                  }
+				</script>
+
+			</main>
+
+
+		</div>
+	</div>
+</div>
+
+
+<div class="container" style="height: 100px;">&nbsp;</div>
+<script src="/js/app.js?rand"></script>
+</body>
+</html>
