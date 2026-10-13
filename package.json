@@ -105,21 +105,29 @@
     ],
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.(j|t)s?(x)",
-      "<rootDir>/src/**/?(*.)(spec|test).(j|t)s?(x)"
+      "<rootDir>/src/**/?(*.)(spec|test).(j|t)s?(x)",
+      "<rootDir>/scripts/**/*.test.ts"
     ],
     "testEnvironment": "node",
     "testEnvironmentOptions": {
       "url": "http://localhost"
     },
     "transform": {
-      "^.+\\.[jt]sx?$": "esbuild-jest-transform",
+      "^.+\\.[jt]sx?$": "<rootDir>/scripts/jest-raw-loader",
       "^.+\\.xml$": "<rootDir>/scripts/jest-raw-loader",
-      "^.+\\.html?$": "<rootDir>/scripts/jest-raw-loader"
+      "^.+\\.html?$": "<rootDir>/scripts/jest-raw-loader",
+      "^.+\\.wasm$": "<rootDir>/scripts/jest-raw-loader"
     },
     "moduleFileExtensions": [
       "js",
-      "ts"
-    ]
+      "jsx",
+      "ts",
+      "tsx",
+      "wasm",
+      "html",
+      "htm"
+    ],
+    "dependencyExtractor": "<rootDir>/scripts/jest-raw-loader.js"
   },
   "ts-standard": {
     "env": [

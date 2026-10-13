@@ -15,6 +15,7 @@ const { setupProxyServer } = require('./debugServers/proxyServer')
 const { setupWebServer } = require('./debugServers/webServer')
 const { BOOTLOADER_PORT, setupBootloaderServer } = require('./bootloaderServer')
 const path = require('path')
+const { assetLoaders, isBundleQuery } = require('./jest-raw-loader')
 
 const readLogPrivateKey = () => {
   try {
@@ -86,16 +87,19 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       noParse: /\.wasm$/,
       rules: [
         {
-          test: /\.wasm$/,
-          // Tells WebPack that this module should be included as
-          // base64-encoded binary file and not as code
-          loader: 'base64-loader',
-          // Disables WebPack's opinion where WebAssembly should be,
-          // makes it think that it's not WebAssembly
-          //
-          // Error: WebAssembly module is included in initial chunk.
-          type: 'javascript/auto'
+          test: /\.[jt]sx?$/,
+          resourceQuery: query => isBundleQuery(query),
+          include: paths.appSrc,
+          type: 'asset/source',
+          loader: require.resolve('./jest-raw-loader')
         },
+        ...Object.entries(assetLoaders).map(([extension, kind]) => ({
+          test: filename => path.extname(filename) === extension,
+          // Template entrypoints remain owned by their HTML plugins.
+          ...kind === 'text' && { issuer: /\.[jt]sx?$/ },
+          type: kind === 'base64' ? 'javascript/auto' : 'asset/source',
+          loader: kind === 'base64' ? require.resolve('base64-loader') : require.resolve('./jest-raw-loader')
+        })),
         {
           test: /ZenmoneyManifest.xml$/,
           include: pluginPaths.manifest,
@@ -103,6 +107,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         },
         {
           test: /\.[jt]sx?$/,
+          resourceQuery: query => !isBundleQuery(query),
           include: paths.appSrc,
           loader: require.resolve('esbuild-loader'),
           options: {
