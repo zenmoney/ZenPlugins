@@ -91,7 +91,7 @@ import { Debug } from '../../common/debug'
 await Debug.checkpoint('parsed-accounts', accounts)
 ```
 
-Outside Bootloader, `Debug.checkpoint()` is a resolved no-op and `Debug.isActive` is `false`, so plugin code does not need an environment check. The proxy also exposes `version`, `sessionId`, `plugin`, `server`, and `config`; these metadata properties are `undefined` outside Bootloader.
+Outside Bootloader, `Debug.checkpoint()` is a resolved no-op and `Debug.isActive` is `false`, so plugin code does not need an environment check. The proxy also exposes `version`, `sessionId`, `plugin`, `server`, and `config`; these metadata properties are `undefined` outside Bootloader. `Debug.version` identifies the debugging protocol. `Debug.plugin` contains the local plugin ID; local sessions have no published plugin version or build.
 
 Under the hood, Bootloader still injects a read-only technical object into `global.bootloader`. `Debug.checkpoint(name, value)` forwards a named serializable snapshot to it. The Checkpoints section compares it with the most recent earlier session containing a checkpoint with the same name.
 

@@ -31,12 +31,43 @@ const resolveWebpackCacheDirectory = () => {
     : resolveFromRoot('node_modules/.cache/webpack')
 }
 
-function generatePluginConfig (production, server, pluginName, outputPath) {
-  const paths = resolveCommonFiles()
-  const pluginPaths = resolvePlugin(pluginName)
-  if (!pluginPaths) {
-    throw new Error(`cant resolve plugin "${pluginName}"`)
+// Emit a complete artifact in staging before replacing the last successful build.
+function emitPluginArtifacts (compiler) {
+  let staging
+  let outputPath
+  const cleanup = () => {
+    if (outputPath) compiler.outputPath = outputPath
+    if (staging && !fs.existsSync(path.join(staging, 'previous'))) fs.rmSync(staging, { recursive: true, force: true })
+    staging = undefined
   }
+  compiler.hooks.emit.tap('PluginArtifacts', compilation => {
+    const scripts = compilation.getAssets().filter(asset => asset.name.endsWith('.js'))
+    if (scripts.length !== 1 || scripts[0].name !== 'index.js') throw new Error('Plugin bundle must be one self-contained index.js')
+    outputPath = compiler.outputPath
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true })
+    staging = fs.mkdtempSync(path.join(path.dirname(outputPath), '.plugin-build-'))
+    compiler.outputPath = path.join(staging, 'artifact')
+  })
+  compiler.hooks.afterEmit.tap('PluginArtifacts', () => {
+    const backup = path.join(staging, 'previous')
+    if (fs.existsSync(outputPath)) fs.renameSync(outputPath, backup)
+    try {
+      fs.renameSync(path.join(staging, 'artifact'), outputPath)
+    } catch (error) {
+      if (fs.existsSync(backup)) fs.renameSync(backup, outputPath)
+      throw error
+    }
+    fs.rmSync(backup, { recursive: true, force: true })
+    cleanup()
+  })
+  compiler.hooks.failed.tap('PluginArtifacts', cleanup)
+}
+
+function generatePluginConfig (production, server, pluginPaths, outputPath) {
+  const paths = resolveCommonFiles()
+  const pluginName = pluginPaths.name
+  const manifest = fs.realpathSync(pluginPaths.manifest)
+  if (server && pluginPaths.family !== 'plugins') throw new Error('The browser harness supports bank plugins only')
   return {
     mode: production ? 'production' : 'development',
     target: ['webworker', 'es2020'],
@@ -49,14 +80,14 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       }
     },
     entry: production
-      ? { index: pluginPaths.js }
+      ? { index: manifest }
       : {
           windowLoader: [paths.windowLoaderJs],
           workerLoader: [paths.workerLoaderJs]
         },
     output: {
       path: outputPath,
-      filename: production && !server ? `${pluginName}.js` : '[name].js',
+      filename: '[name].js',
       chunkFilename: '[name].chunk.js',
       globalObject: 'this',
       chunkFormat: false,
@@ -71,7 +102,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         polyfills$: resolveFromRoot('src/polyfills'),
         injectErrorsGlobally$: resolveFromRoot('src/injectErrorsGlobally'),
         adapters$: resolveFromRoot('src/common/adapters'),
-        currentPluginManifest$: pluginPaths.manifest,
+        currentPluginManifest$: manifest,
         xhrViaZenApi$: resolveFromRoot('src/XMLHttpRequestViaZenAPI'),
         querystring: 'querystring-browser'
       },
@@ -89,7 +120,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
         {
           test: /\.[jt]sx?$/,
           resourceQuery: query => isBundleQuery(query),
-          include: paths.appSrc,
+          include: [paths.appSrc, fs.realpathSync(pluginPaths.path)],
           type: 'asset/source',
           loader: require.resolve('./jest-raw-loader')
         },
@@ -101,14 +132,19 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
           loader: kind === 'base64' ? require.resolve('base64-loader') : require.resolve('./jest-raw-loader')
         })),
         {
-          test: /ZenmoneyManifest.xml$/,
-          include: pluginPaths.manifest,
-          loader: resolveFromRoot('scripts/plugin-manifest-loader.js')
+          test: /ZenmoneyManifest\.(xml|[jt]s)$/,
+          include: manifest,
+          loader: resolveFromRoot('scripts/plugin-manifest-loader.js'),
+          options: {
+            emitManifest: production && !server,
+            ...pluginPaths.family === 'receiptFetchers' && { manifestParser: require.resolve('../src/common/receiptFetcher/manifest.ts') }
+          }
         },
         {
           test: /\.[jt]sx?$/,
           resourceQuery: query => !isBundleQuery(query),
-          include: paths.appSrc,
+          include: [paths.appSrc, fs.realpathSync(pluginPaths.path)],
+          exclude: manifest,
           loader: require.resolve('esbuild-loader'),
           options: {
             target: 'es2020'
@@ -123,6 +159,7 @@ function generatePluginConfig (production, server, pluginName, outputPath) {
       }
     },
     plugins: [
+      ...production && !server ? [emitPluginArtifacts] : [],
       ...server
         ? [new HtmlWebpackPlugin(production
             ? {
@@ -241,11 +278,17 @@ module.exports = (env, argv) => {
   if (server && pluginsNames.length > 1) {
     throw new Error('Cant debug multiple plugins!')
   }
-  const genPath = () => resolveFromRoot('build')
+  const genPath = name => resolveFromRoot(production && !server ? `build/${name}` : 'build')
 
-  const plugins = pluginsNames.map(x => generatePluginConfig(production, server, x, genPath(x)))
+  const plugins = pluginsNames.map(name => {
+    const pluginPaths = resolvePlugin(name)
+    if (!pluginPaths) throw new Error(`cant resolve plugin "${name}"`)
+    return generatePluginConfig(production, server, pluginPaths, genPath(name))
+  })
   if (plugins.length === 1) {
     return plugins[0]
   }
   return plugins
 }
+
+module.exports.generatePluginConfig = generatePluginConfig

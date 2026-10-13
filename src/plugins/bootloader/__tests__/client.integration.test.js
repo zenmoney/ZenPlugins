@@ -121,7 +121,7 @@ describe('Bootloader client integration', () => {
           sessionId: 'session-1',
           serverUrl: 'http://192.168.1.2:5050',
           scriptUrl: 'http://192.168.1.2:5050/index.js',
-          plugin: { id: 'target', version: '1', build: 1 },
+          plugin: { id: 'target' },
           preferences: { login: 'test' },
           data: { auth: { token: 'imported' } },
           config: {

@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>hapoalim</id>
-    <version>1.1</version>
-    <build>2</build>
     <company>15700</company>
-    <modular>true</modular>
     <codeRequired>false</codeRequired>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
     <description>Uses the official Bank Hapoalim web login flow and reuses the authenticated bank session for sync.</description>
 </provider>

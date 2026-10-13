@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>mbank-kg</id>
-    <version>1.0</version>
-    <build>1</build>
     <company>16191</company>
-    <modular>true</modular>
     <codeRequired>false</codeRequired>
     <api>public</api>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
     <description>Импорт выписки MBANK (Кыргызстан) из файла. Данные обрабатываются локально на устройстве и не передаются в интернет.
 
 Как получить выписку:

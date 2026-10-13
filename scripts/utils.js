@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const stripBOM = require('strip-bom')
 const fs = require('fs')
+const path = require('path')
 const cheerio = require('cheerio')
 const { parse: parseCookieString, splitCookiesString } = require('set-cookie-parser')
 
@@ -10,32 +11,69 @@ const convertManifestXmlToJs = (xml) => {
   })
   return $('provider').children().toArray()
     .reduce((memo, node) => {
-      const key = node.tagName
-      if (key === 'files') {
-        const result = $(node).children().toArray()
-          .reduce((memo, fileNode) => {
-            if (fileNode.tagName === 'preferences') {
-              memo.preferences = $(fileNode).text()
-            } else {
-              memo.files.push($(fileNode).text())
-            }
-            return memo
-          }, { files: [], preferences: null })
-        Object.assign(memo, result)
-      } else {
-        memo[key] = $(node).text()
-      }
+      memo[node.tagName] = $(node).text()
       return memo
     }, {})
 }
 
+const resolveEntryFile = (directory, base) => {
+  const files = ['js', 'ts'].map(extension => path.join(directory, `${base}.${extension}`)).filter(file => fs.existsSync(file))
+  if (files.length > 1) throw new Error(`Ambiguous ${base} extensions in ${directory}`)
+  if (files.length === 0) throw new Error(`Missing ${base} in ${directory}`)
+  return files[0]
+}
+
+const dedentDescription = (text) => {
+  const lines = text.split(/\r\n?|\n/)
+  const isBlank = line => /^[ \t]*$/.test(line)
+  while (lines.length && isBlank(lines[0])) lines.shift()
+  while (lines.length && isBlank(lines[lines.length - 1])) lines.pop()
+  if (!lines.length) return ''
+  const indents = lines.slice(1).filter(line => !isBlank(line)).map(line => line.match(/^[ \t]*/)[0].length)
+  const indent = indents.length ? Math.min(...indents) : 0
+  return lines.map((line, index) => {
+    if (index === 0) return line.replace(/^[ \t]+/, '')
+    return isBlank(line) ? '' : line.slice(indent)
+  }).join('\n')
+}
+
+const prepareScrapeManifest = (source, directory) => {
+  const manifest = convertManifestXmlToJs(source)
+  for (const field of ['version', 'build', 'modular', 'files']) {
+    if (Object.hasOwn(manifest, field)) throw new Error(`Source manifest must not declare ${field}`)
+  }
+  const index = resolveEntryFile(directory, 'index')
+  const preferences = fs.statSync(path.join(directory, 'preferences.xml'), { throwIfNoEntry: false }) ? 'preferences.xml' : null
+  const $ = cheerio.load(source, { xmlMode: true })
+  $('provider > description').each((_, element) => {
+    const description = $(element)
+    // Normalize plain text without flattening embedded XML markup.
+    if (description.children().length === 0) {
+      const text = description.text()
+      const normalized = dedentDescription(text)
+      if (normalized !== text) {
+        manifest.description = normalized
+        description.text(normalized)
+      }
+    }
+  })
+  $('provider').append(`<files><js>index.js</js>${preferences ? '<preferences>preferences.xml</preferences>' : ''}</files>`)
+  return { index, manifest: { ...manifest, files: ['index.js'], preferences }, xml: $.xml() }
+}
+
 const readPluginManifest = (manifestPath) => {
   const xml = fs.readFileSync(manifestPath)
-  return convertManifestXmlToJs(xml)
+  return prepareScrapeManifest(xml, path.dirname(manifestPath)).manifest
 }
 
 const readPluginPreferencesSchema = (xmlPreferencesPath) => {
-  const xml = fs.readFileSync(xmlPreferencesPath)
+  let xml
+  try {
+    xml = fs.readFileSync(xmlPreferencesPath)
+  } catch (error) {
+    if (error.code === 'ENOENT') return []
+    throw error
+  }
   const $ = cheerio.load(xml)
   return $('EditTextPreference').toArray().map((preference) => {
     const $preference = $(preference)
@@ -130,6 +168,8 @@ const isWebSocketHeader = (header) => {
 
 module.exports = {
   convertManifestXmlToJs,
+  resolveEntryFile,
+  prepareScrapeManifest,
   readPluginManifest,
   readPluginPreferencesSchema,
   parseCookies,

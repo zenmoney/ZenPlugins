@@ -1,7 +1,5 @@
 export interface DebugPluginInfo {
   readonly id: string
-  readonly version: string
-  readonly build: number
 }
 
 export interface DebugServerInfo {

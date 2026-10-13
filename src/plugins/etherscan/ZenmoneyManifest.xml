@@ -6,12 +6,5 @@
         Плагин для синхронизации ETH и BSC с помощью etherscan V2.
         Для синхронизации выберите блокчейн, укажите ApiKey etherscan V2 и адреса кошельков.
     </description>
-    <version>1.0</version>
-    <build>4</build>
-    <modular>true</modular>
     <api>public</api>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
 </provider>

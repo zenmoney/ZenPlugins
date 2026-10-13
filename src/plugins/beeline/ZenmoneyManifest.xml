@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>beeline</id>
-    <version>3.0</version>
-    <build>11</build>
     <company>15449</company>
-    <modular>true</modular>
     <codeRequired>false</codeRequired>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
     <description></description>
 </provider>

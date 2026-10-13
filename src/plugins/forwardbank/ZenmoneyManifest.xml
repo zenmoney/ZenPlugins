@@ -6,11 +6,4 @@
         Плагин синхронизации с Forward Bank.
         Для подключения импорта укажите ваш логин и пароль от интернет-банка.
     </description>
-    <version>1.0</version>
-    <build>1</build>
-    <modular>true</modular>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
 </provider>

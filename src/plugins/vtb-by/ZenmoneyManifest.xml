@@ -2,12 +2,5 @@
 <provider>
     <id>vtb-by</id>
     <company>15413</company>
-    <version>1.0</version>
-    <build>1</build>
-    <modular>true</modular>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
     <codeRequired>false</codeRequired>
 </provider>

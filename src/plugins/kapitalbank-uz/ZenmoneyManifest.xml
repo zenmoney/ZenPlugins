@@ -3,12 +3,5 @@
     <id>kapitalbank-uz</id>
     <company>15739</company>
     <description></description>
-    <version>1.0</version>
-    <build>1</build>
-    <modular>true</modular>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
     <codeRequired>false</codeRequired>
 </provider>

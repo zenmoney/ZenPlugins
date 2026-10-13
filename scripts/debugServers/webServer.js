@@ -28,7 +28,7 @@ function setupWebServer ({ app, proxy, state, pluginPaths }) {
       state.cookies = []
       res.set('Content-Type', 'text/xml')
       const manifest = readPluginManifest(pluginPaths.manifest)
-      for (const requiredProp of ['id', 'build', 'files', 'version', 'preferences']) {
+      for (const requiredProp of ['id']) {
         if (!manifest[requiredProp]) {
           throw new Error(`Wrong ZenmoneyManifest.xml: ${requiredProp} prop should be set`)
         }

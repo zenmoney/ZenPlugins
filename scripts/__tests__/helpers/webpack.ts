@@ -22,13 +22,14 @@ export async function buildProductionScript (entry: string, withHtmlTemplate = f
   const directory = mkdtempSync(join(tmpdir(), 'script-bundle-'))
   const config = configure({ PLUGIN: 'btcscan', WEBPACK_SERVE: withHtmlTemplate }, { mode: 'production' })
   config.entry = { index: resolve(entry) }
-  config.output = { ...(config.output as Record<string, unknown>), path: directory, filename: 'index.cjs', library: { type: 'commonjs2' } }
+  config.output = { ...(config.output as Record<string, unknown>), path: directory, filename: 'index.js', library: { type: 'commonjs2' } }
   config.cache = cacheDirectory === undefined ? false : { type: 'filesystem', cacheDirectory }
   // Apply the production source rules to checked-in and temporary fixtures outside src.
   const rules = (config.module as { rules: Array<{ include?: string | string[] }> }).rules
   for (const rule of rules) {
-    if (rule.include === resolve(__dirname, '../../../src')) {
-      rule.include = [rule.include, resolve(__dirname, '../fixtures'), dirname(resolve(entry))]
+    const includes = typeof rule.include === 'string' ? [rule.include] : rule.include
+    if (includes?.includes(resolve(__dirname, '../../../src')) === true) {
+      rule.include = [...includes, resolve(__dirname, '../fixtures'), dirname(resolve(entry))]
     }
   }
   const compiler = webpack(config)
@@ -40,7 +41,7 @@ export async function buildProductionScript (entry: string, withHtmlTemplate = f
         else resolve()
       })
     })
-    return readFileSync(join(directory, 'index.cjs'), 'utf8')
+    return readFileSync(join(directory, 'index.js'), 'utf8')
   } finally {
     try {
       await new Promise<void>((resolve, reject) => compiler.close(error => error != null ? reject(error) : resolve()))

@@ -1,8 +1,9 @@
-image: node:20
+image: node:24.21.0
 
 variables:
   SHARED_CACHE_ROOT: /opt/plugins-cache
   WEBPACK_CACHE_DIR: .webpack-cache
+  PLUGINS_SCRIPTS_DIR: /opt/plugins/scripts
 
 before_script:
   - scripts/setupDependenciesCache.sh
@@ -10,6 +11,7 @@ before_script:
 stages:
   - test
   - build
+  - deploy
 
 test:
   stage: test
@@ -19,7 +21,25 @@ test:
 build:
   stage: build
   script:
-    - /opt/ZenPlugins/bin/build
+    - 'node "$PLUGINS_SCRIPTS_DIR/build.ts"'
+  artifacts:
+    paths:
+      - build/
+    expire_in: 7 days
+  only:
+    - master
+    - develop
+    - /^[^/]+_beta$/
+
+deploy:
+  stage: deploy
+  before_script: []
+  needs:
+    - job: build
+      artifacts: true
+  resource_group: plugins-dist
+  script:
+    - 'node "$PLUGINS_SCRIPTS_DIR/deploy.ts"'
   only:
     - master
     - develop

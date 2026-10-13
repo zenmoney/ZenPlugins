@@ -10,12 +10,5 @@
         configured payment wallet, not imported as a duplicate Card balance.
     </description>
 
-    <version>1.0</version>
-    <build>3</build>
-    <modular>true</modular>
 
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
 </provider>

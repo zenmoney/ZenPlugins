@@ -1,8 +1,7 @@
 const { spawn, spawnSync } = require('child_process')
 const os = require('os')
+const { resolveFromRoot, resolvePluginSelection, expandPluginArguments } = require('./pathResolvers')
 
-const command = process.argv[2]
-let args = process.argv.slice(3)
 const spawnOptions = {
   env: { ...process.env, NODE_OPTIONS: `--max-old-space-size=${Math.floor(os.totalmem() / (1024 * 1024))}` },
   stdio: 'inherit',
@@ -32,8 +31,8 @@ function getParallelism (tasksCount) {
   return Math.min(tasksCount, os.cpus().length)
 }
 
-function runParallelBuilds (argsBeforePlugin, pluginNames) {
-  const parallelism = getParallelism(pluginNames.length)
+function runParallelBuilds (jobs) {
+  const parallelism = getParallelism(jobs.length)
   const runningChildren = new Set()
   const failures = []
   let nextIndex = 0
@@ -53,12 +52,11 @@ function runParallelBuilds (argsBeforePlugin, pluginNames) {
     process.exit(143)
   })
 
-  console.log(`Building ${pluginNames.length} plugins with parallelism ${parallelism}`)
+  console.log(`Building ${jobs.length} plugins with parallelism ${parallelism}`)
 
   const scheduleNext = () => {
-    while (runningChildren.size < parallelism && nextIndex < pluginNames.length) {
-      const pluginName = pluginNames[nextIndex++]
-      const childArgs = argsBeforePlugin.concat(`PLUGIN=${pluginName}`)
+    while (runningChildren.size < parallelism && nextIndex < jobs.length) {
+      const { name: pluginName, command, args: childArgs } = jobs[nextIndex++]
       console.log(`[${pluginName}] build started`)
       const child = spawn(command, childArgs, spawnOptions)
       let childErrorMessage = null
@@ -78,7 +76,7 @@ function runParallelBuilds (argsBeforePlugin, pluginNames) {
         }
         console.log(`[${pluginName}] build ${failures.some(x => x.pluginName === pluginName) ? 'failed' : 'finished'}`)
 
-        if (completed === pluginNames.length) {
+        if (completed === jobs.length) {
           if (failures.length > 0) {
             console.error('Build failed:')
             for (const failure of failures) {
@@ -96,17 +94,52 @@ function runParallelBuilds (argsBeforePlugin, pluginNames) {
   scheduleNext()
 }
 
-const pluginIndex = args.indexOf('PLUGIN=')
-if (pluginIndex !== -1) {
-  const pluginNames = args.slice(pluginIndex + 1)
+function getBuildJobs (command, args, root = resolveFromRoot('.')) {
+  const pluginIndex = args.indexOf('PLUGIN=')
   const argsBeforePlugin = args.slice(0, pluginIndex)
-  const shouldRunParallelBuild = getCommandName(command) === 'webpack' && args[0] === 'build' && pluginNames.length > 1
-  if (shouldRunParallelBuild) {
-    runParallelBuilds(argsBeforePlugin, pluginNames)
-  } else {
-    args = argsBeforePlugin.concat(`PLUGIN=${pluginNames.join(',')}`)
-    runCommandSync(command, args)
-  }
-} else {
-  runCommandSync(command, args)
+  const selectors = args.slice(pluginIndex + 1)
+  if (!selectors.length) throw new Error('Usage: yarn build <plugin> [<plugin> ...]')
+  const selected = new Set()
+  return selectors.map(selector => {
+    const plugin = resolvePluginSelection(selector, root)
+    if (!plugin) throw new Error(`Unknown plugin: ${selector}`)
+    if (selected.has(plugin.name)) throw new Error(`Duplicate plugin selection: ${selector}`)
+    selected.add(plugin.name)
+    return {
+      name: selector,
+      command,
+      args: argsBeforePlugin.concat(`PLUGIN=${plugin.name}`)
+    }
+  })
 }
+
+function main (command, args) {
+  const pluginIndex = args.indexOf('PLUGIN=')
+  if (pluginIndex !== -1) {
+    if (getCommandName(command) === 'webpack' && args[0] === 'build') {
+      const jobs = getBuildJobs(command, args)
+      if (jobs.length > 1) runParallelBuilds(jobs)
+      else runCommandSync(jobs[0].command, jobs[0].args)
+    } else {
+      const pluginNames = args.slice(pluginIndex + 1)
+      for (const selector of pluginNames) {
+        const plugin = resolvePluginSelection(selector)
+        if (plugin && plugin.family === 'receiptFetchers') throw new Error('The browser harness supports bank plugins only')
+      }
+      runCommandSync(command, args.slice(0, pluginIndex).concat(`PLUGIN=${pluginNames.join(',')}`))
+    }
+  } else {
+    runCommandSync(command, expandPluginArguments(args))
+  }
+}
+
+if (require.main === module) {
+  try {
+    main(process.argv[2], process.argv.slice(3))
+  } catch (error) {
+    console.error(error.message)
+    process.exitCode = 1
+  }
+}
+
+module.exports = { getBuildJobs }

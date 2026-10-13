@@ -2,7 +2,7 @@ const { SessionStore } = require('../../../../scripts/bootloaderServer/sessionSt
 
 function makeStore () {
   return new SessionStore({
-    plugin: { id: 'test', version: '1', build: 1 },
+    plugin: { id: 'test' },
     storageDirectory: '/unused',
     persist: false,
     limit: 20

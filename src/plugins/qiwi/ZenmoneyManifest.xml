@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>qiwi</id>
-    <version>1.0</version>
-    <build>13</build>
     <company>15592</company>
-    <modular>true</modular>
     <codeRequired>false</codeRequired>
     <api>public</api>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
     <description>Как получить токен QIWI Кошелька:
 1. Откройте https://qiwi.com/api-info и войдите в аккаунт.
 2. Нажмите «Выпустить новый токен».

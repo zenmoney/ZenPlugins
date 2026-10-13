@@ -21,7 +21,7 @@ describe('Debug proxy', () => {
       isActive: true,
       version: '2',
       sessionId: 'session-1',
-      plugin: { id: 'example', version: '1', build: 1 },
+      plugin: { id: 'example' },
       server: { url: 'http://192.168.1.2:5050' },
       config: { captureConsole: true },
       checkpoint
@@ -29,7 +29,7 @@ describe('Debug proxy', () => {
 
     expect(Debug.isActive).toBe(true)
     expect(Debug.sessionId).toBe('session-1')
-    expect(Debug.plugin).toEqual({ id: 'example', version: '1', build: 1 })
+    expect(Debug.plugin).toEqual({ id: 'example' })
     await expect(Debug.checkpoint('accounts', [{ id: 'account' }])).resolves.toBeUndefined()
     expect(checkpoint).toHaveBeenCalledWith('accounts', [{ id: 'account' }])
   })

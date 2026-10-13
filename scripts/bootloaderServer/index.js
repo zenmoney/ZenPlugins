@@ -35,11 +35,7 @@ function formatLogEvent (event) {
 
 function setupBootloaderServer ({ app, pluginPaths, storageDirectory }) {
   const manifest = readPluginManifest(pluginPaths.manifest)
-  const plugin = {
-    id: manifest.id,
-    version: manifest.version,
-    build: Number(manifest.build)
-  }
+  const plugin = { id: manifest.id }
   const debugConfig = loadDebugConfig(pluginPaths)
   const store = new SessionStore({
     plugin,
@@ -143,7 +139,7 @@ function setupBootloaderServer ({ app, pluginPaths, storageDirectory }) {
     }
     const filename = `${session.plugin.id}-${session.id}.log`
     const header = [
-      `plugin=${session.plugin.id}@${session.plugin.version} (${session.plugin.build})`,
+      `plugin=${session.plugin.id}`,
       `session=${session.id}`,
       `created=${session.createdAt}`,
       `status=${session.status}`,

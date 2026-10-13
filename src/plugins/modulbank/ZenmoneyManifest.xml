@@ -2,15 +2,8 @@
 <provider>
     <id>modulbank</id>
     <company>15523</company>
-    <version>1.0</version>
-    <build>46</build>
-    <modular>true</modular>
     <codeRequired>false</codeRequired>
     <api>public</api>
     <subscriptionRequired>true</subscriptionRequired>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
     <description></description>
 </provider>

@@ -18,12 +18,5 @@
         - Enter the one-time password sent to your device
         - You'll receive a Client ID and Client Secret
     </description>
-    <version>1.0</version>
-    <build>1</build>
-    <modular>true</modular>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
     <codeRequired>false</codeRequired>
 </provider>

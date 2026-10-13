@@ -27,7 +27,7 @@ Git refs expose code, but do not establish PR/MR authorship, open/closed/merged 
 
 ## Commands
 
-Run from the repository root. Clone the public repository with `git clone https://github.com/zenmoney/ZenPlugins.git` and enter its directory. Use Node.js 20 and Yarn Classic to match the current CI, with a Node patch version satisfying dependency engines (webpack-cli 7.2.1 requires >=20.9.0). Install the locked dependencies with `yarn install --frozen-lockfile`; dependency upgrades must be intentional.
+Run from the repository root. Clone the public repository with `git clone https://github.com/zenmoney/ZenPlugins.git` and enter its directory. Use Node.js 24.21.0 from [`.nvmrc`](../../.nvmrc) and Yarn Classic to match CI. Install the locked dependencies with `yarn install --frozen-lockfile`; dependency upgrades must be intentional.
 
 | Command | Purpose |
 | --- | --- |
@@ -57,9 +57,9 @@ Before creating or updating any PR/MR, including documentation-only changes, run
 
 | Current CI | Environment and checks |
 | --- | --- |
-| [GitHub Actions](../../.github/workflows/test.yml) | Node.js 20; `yarn install --frozen-lockfile`, then `yarn test` on pushes and pull requests |
-| [GitLab](../../.gitlab-ci.yml) | Node.js 20; [dependency cache setup](../../scripts/setupDependenciesCache.sh) installs with `--frozen-lockfile` on a cache miss; `yarn test` |
-| GitLab build job | Runs `/opt/ZenPlugins/bin/build` only on `master`, `develop`, and branch names ending in `_beta` without `/`. The runner script is outside this repository; local `yarn build` does not prove this job passes |
+| [GitHub Actions](../../.github/workflows/test.yml) | Node.js 24.21.0; `yarn install --frozen-lockfile`, then `yarn test` on pushes and pull requests |
+| [GitLab](../../.gitlab-ci.yml) | Node.js 24.21.0; [dependency cache setup](../../scripts/setupDependenciesCache.sh) installs with `--frozen-lockfile` on a cache miss; `yarn test` |
+| GitLab build/deploy jobs | Invoke external `build` and `deploy` scripts |
 
 After an authorized push, verify required CI jobs on the latest submitted commit under the [access rules](#git-and-hosting-access); wait for completion when results are accessible. Fix introduced failures, repeat affected local checks, and verify the new pipeline. Previous green revisions, pending/skipped jobs, and branch-specific jobs absent from the pipeline are not passes. Report the checked commit, results, and limitations in the task report; inaccessible/unavailable CI leaves verification incomplete. Update the PR/MR description with remote CI results when possible without creating another commit solely to report them.
 

@@ -3,11 +3,4 @@
     <id>jupitercard</id>
     <company>16193</company>
     <description>Jupiter Card (global.jup.ag) — card account sync via email OTP.</description>
-    <version>1.0</version>
-    <build>1</build>
-    <modular>true</modular>
-    <files>
-        <js>index.js</js>
-        <preferences>preferences.xml</preferences>
-    </files>
 </provider>
