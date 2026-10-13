@@ -66,6 +66,23 @@ const OFFICIAL_AUTH_COOKIE_NAMES = new Set([
   'TS'
 ])
 
+function getResponseErrorCode (response) {
+  if (typeof response?.errCode === 'string') return response.errCode
+  if (typeof response?.body?.error?.errCode === 'string') return response.body.error.errCode
+  const body = response?.body
+  // Observed public accounts rejection: STEPUPOTP is a top-level state, not error.errCode.
+  if (response?.status !== 401 || body?.flow !== 'STEPUP' || body.state !== 'STEPUPOTP' ||
+    body.target !== '' || body.result !== null || body.error !== null || Object.keys(body).length !== 5) return null
+  try {
+    const url = new URL(response.url)
+    return url.origin === OFFICIAL_BASE_URL && url.pathname === '/ServerServices/general/accounts'
+      ? 'STEPUPOTP'
+      : null
+  } catch (error) {
+    return null
+  }
+}
+
 function summarizeResponse (response) {
   return response
     ? {
@@ -73,7 +90,7 @@ function summarizeResponse (response) {
         url: sanitizeOfficialUrlForLog(response.url),
         contentType: getHeaderValue(response.headers, 'content-type'),
         isLoginPage: isOfficialLoginPageResponse(response),
-        errCode: typeof response.body?.error?.errCode === 'string' ? response.body.error.errCode : null
+        errCode: getResponseErrorCode(response)
       }
     : null
 }
@@ -161,6 +178,15 @@ function mergeCookieHeaders (currentCookieHeader, nextCookieHeader) {
   return Object.entries(mergedCookies)
     .map(([name, value]) => `${name}=${value}`)
     .join('; ')
+}
+
+function isRejectedSession (cookieHeader, rejectedCookieHeader, rejectedCookieHeaders = []) {
+  const session = parseCookieHeader(cookieHeader).SMSESSION
+  return [rejectedCookieHeader, ...rejectedCookieHeaders].some(rejectedHeader => {
+    if (!rejectedHeader) return false
+    if (cookieHeader === rejectedHeader) return true
+    return Boolean(session && parseCookieHeader(rejectedHeader).SMSESSION === session)
+  })
 }
 
 function mergeSetCookieHeaders (currentCookieHeader, setCookieHeader) {
@@ -251,6 +277,8 @@ function sanitizeFinancialBody (value, parentKey = null) {
   if (!value || typeof value !== 'object') return sanitize(value, true)
   return Object.fromEntries(Object.entries(value).map(([key, field]) => {
     if (key === 'commentExistenceSwitch' && (field === 0 || field === 1)) return [key, field]
+    if ((key === 'flow' && field === 'STEPUP') || (key === 'state' && field === 'STEPUPOTP')) return [key, field]
+    if ((key === 'result' || key === 'error') && field === null) return [key, field]
     if (key === 'code') {
       const isSelectorCode = ['currencyCode', 'detailedAccountTypeCode'].includes(parentKey) && Number.isFinite(field)
       return [key, isSelectorCode || field === 'STEPUPOTP' ? field : sanitize(field, true)]
@@ -505,8 +533,8 @@ function isOfficialLoginPageResponse (response) {
 
 export function isLikelyAuthGateError (error) {
   const response = error?.responseSummary || error?.response
-  const code = response?.errCode || response?.body?.error?.errCode
-  // STEPUPOTP was observed in the official Hapoalim flow; generic statuses are not proof.
+  const code = getResponseErrorCode(response)
+  // Only observed STEPUPOTP forms or a confirmed login redirect allow recovery.
   return (response?.status === 401 && code === 'STEPUPOTP') ||
     (response?.status >= 200 && response?.status < 500 &&
       (response?.isLoginPage === true || isOfficialLoginPageResponse(response)))
@@ -534,7 +562,7 @@ export async function withSessionDeadline (operation, label) {
   }
 }
 
-export async function recoverAuthFromCookieStore (storedAuth, { onAuthUpdate = async () => {}, verify } = {}) {
+export async function recoverAuthFromCookieStore (storedAuth, { onAuthUpdate = async () => {}, verify, rejectedCookieHeader = null, rejectedCookieHeaders = [] } = {}) {
   const snapshot = await withSessionDeadline(() => cookieJar.serialize(), 'cookie store read')
   ensure(Array.isArray(snapshot?.cookies), 'unexpected cookie store snapshot')
   const cookies = snapshot.cookies.map(({ key, ...cookie }) => ({ ...cookie, name: key }))
@@ -563,6 +591,10 @@ export async function recoverAuthFromCookieStore (storedAuth, { onAuthUpdate = a
     auth.xsrfToken = previousAuth.xsrfToken
   }
 
+  if (isRejectedSession(auth.cookieHeader, rejectedCookieHeader, rejectedCookieHeaders)) {
+    console.log('Bank Hapoalim silent recovery: skipping already rejected accounts cookies')
+    return null
+  }
   try {
     await withSessionDeadline(
       () => fetchOfficialAccounts(auth, { log: false }),
@@ -628,12 +660,17 @@ function buildOfficialHeaders (auth, headers, { includeXsrf = false } = {}) {
 }
 
 async function fetchOfficialJson (path, auth, options = {}) {
+  const requestUrl = OFFICIAL_BASE_URL + path
+  const isAccountsProof = path === '/ServerServices/general/accounts?lang=he' && (options.method || 'GET') === 'GET'
   // Replay only this read request, not a full transaction import or a guessed OTP API.
-  const verify = candidate => fetchOfficialJson(path, candidate, {
-    ...options,
-    log: false,
-    headers: { ...options.headers, ...options.headers?.uuid ? { uuid: createRequestUuid() } : {} }
-  })
+  // Recovery already validates the complete accounts response; do not duplicate that GET.
+  const verify = isAccountsProof
+    ? undefined
+    : candidate => fetchOfficialJson(path, candidate, {
+      ...options,
+      log: false,
+      headers: { ...options.headers, ...options.headers?.uuid ? { uuid: createRequestUuid() } : {} }
+    })
   const {
     headers,
     includeXsrf = false,
@@ -644,7 +681,7 @@ async function fetchOfficialJson (path, auth, options = {}) {
 
   let response
   try {
-    response = await withSessionDeadline(() => fetchJson(OFFICIAL_BASE_URL + path, {
+    response = await withSessionDeadline(() => fetchJson(requestUrl, {
       method: 'GET',
       ...rest,
       headers: buildOfficialHeaders(auth, headers, { includeXsrf }),
@@ -754,6 +791,8 @@ export async function login ({
   skipHidden = false,
   verify,
   interactionError,
+  rejectedCookieHeader = null,
+  rejectedCookieHeaders = [],
   onAuthUpdate = async () => {},
   onInteraction = () => {}
 } = {}) {
@@ -771,6 +810,7 @@ export async function login ({
   let closedError = null
   let resolveClosed
   let loggedStepUp = false
+  let presented = false
   const closed = new Promise(resolve => { resolveClosed = resolve })
   const stopped = new Promise((resolve, reject) => { rejectStopped = reject })
   stopped.catch(() => {})
@@ -840,8 +880,8 @@ export async function login ({
     } catch (error) {
       if (!isLikelyAuthGateError(error)) throw error
       if (closedError) throw closedError
-      if (verify && !loggedStepUp) {
-        console.log('Bank Hapoalim step-up: waiting for bank confirmation')
+      if (presented && !loggedStepUp && getResponseErrorCode(error?.responseSummary || error?.response) === 'STEPUPOTP') {
+        console.log('Bank Hapoalim auth state still STEPUPOTP')
         loggedStepUp = true
       }
       return { auth: null, retryCookies: null }
@@ -919,7 +959,7 @@ export async function login ({
 
     const initialCookies = await readCookies()
     let hiddenCookies = initialCookies
-    if (!skipHidden && hasOfficialSessionCookie(hiddenCookies)) {
+    if (!skipHidden && !isRejectedSession(hiddenCookies, rejectedCookieHeader, rejectedCookieHeaders) && hasOfficialSessionCookie(hiddenCookies)) {
       for (let attempt = 0; attempt < 3; attempt++) {
         const recovered = await probe(hiddenCookies)
         if (recovered.auth) {
@@ -928,15 +968,20 @@ export async function login ({
         }
         if (!recovered.retryCookies) break
         hiddenCookies = recovered.retryCookies
+        if (isRejectedSession(hiddenCookies, rejectedCookieHeader, rejectedCookieHeaders)) break
         if (attempt === 2) throw new Error('Bank Hapoalim WebView session kept changing during verification')
       }
     }
     if (isInBackground) throw new UserInteractionError()
     if (!allowInteraction) throw interactionError || new Error('Bank Hapoalim session was rejected after interactive login')
 
+    console.log('Bank Hapoalim auth recovery: opening foreground bank login', {
+      reason: verify || isLikelyAuthGateError(interactionError) ? 'confirmed bank challenge' : 'no verified session'
+    })
     onInteraction()
     diagnostics.stage = 'showing bank login'
     await run(() => webView.show(), 'WebView presentation')
+    presented = true
     diagnostics.stage = 'loading bank login'
     await run(() => webView.goto(WEB_LOGIN_URL, { waitUntil: 'commit', timeout: 30000 }), 'WebView navigation', 30000)
 
