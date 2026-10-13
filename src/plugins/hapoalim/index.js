@@ -32,10 +32,18 @@ async function withForegroundReauthRetry (fn, state) {
       }
     }
 
+    const rejectedCookieHeader = originalAuthError?.isAccountsResponse &&
+      originalAuthError.responseSummary?.status === 401 && originalAuthError.responseSummary.errCode === 'STEPUPOTP'
+      ? state.auth?.cookieHeader || null
+      : null
+    if (rejectedCookieHeader) state.rejectedCookieHeaders.add(rejectedCookieHeader)
+    const rejectedCookieHeaders = rejectedCookieHeader ? state.rejectedCookieHeaders : []
     if (!attemptedRecovery) {
       attemptedRecovery = true
       const recoveredAuth = await recoverAuthFromCookieStore(state.auth, {
         onAuthUpdate,
+        rejectedCookieHeader,
+        rejectedCookieHeaders,
         verify: getAuthGateVerifier(originalAuthError)
       })
       if (recoveredAuth) {
@@ -54,6 +62,8 @@ async function withForegroundReauthRetry (fn, state) {
       skipHidden,
       verify: getAuthGateVerifier(originalAuthError),
       interactionError: originalAuthError,
+      rejectedCookieHeader,
+      rejectedCookieHeaders,
       onAuthUpdate,
       onInteraction: () => { state.didInteractiveLogin = true }
     })
@@ -76,7 +86,8 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
   const state = {
     auth: normalizeStoredAuth(ZenMoney.getData('auth')),
     isInBackground,
-    didInteractiveLogin: false
+    didInteractiveLogin: false,
+    rejectedCookieHeaders: new Set()
   }
   const accounts = []
   const transactions = []
