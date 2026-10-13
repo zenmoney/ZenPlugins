@@ -1,0 +1,174 @@
+{
+  "ticket": {
+    "requestPayload": null,
+    "responsePayload": null,
+    "acceptedAt": "2023-06-25T16:01:57.123+03:00",
+    "insertedAt": "2023-06-25T16:01:57.123+03:00",
+    "fs21": "gQbDiLlmJqo=",
+    "header21": "pQMBEJlygUQFAHUlhwOW5JBkEDxDA29xAAcBOQ==",
+    "protocolVersion": 261,
+    "internetSign": 1,
+    "retailPlace": "www.litres.ru",
+    "senderAddress": "billing@litres.ru",
+    "machineNumber": "KSR13.7-7-1",
+    "buyerAddress": "19443780+100@litres.ru",
+    "qrCode": "t=20230625T1601&s=126.75&fn=7281440500752587&i=235236&fp=2315559729&n=1",
+    "userInn": "7719571260  ",
+    "requestNumber": 2549,
+    "operatorPhoneToTransfer": [],
+    "paymentAgentPhone": [],
+    "operatorPhoneToReceive": [],
+    "providerPhone": [],
+    "agent": {
+      "operatorPhoneToTransfer": [],
+      "paymentAgentPhone": [],
+      "operatorPhoneToReceive": []
+    },
+    "items": [
+      {
+        "options": {
+          "quantity": "1.0",
+          "name": "Эл. книга 1984, Джордж Оруэлл",
+          "sum": "12675",
+          "price": "12675",
+          "ndsRate": "2",
+          "calculationSubjectSign": "1",
+          "calculationTypeSign": "4"
+        },
+        "quantity": 1,
+        "price": 12675,
+        "ndsRate": 2,
+        "name": "Эл. книга 1984, Джордж Оруэлл",
+        "taxes": [
+          {
+            "layout": {
+              "type": "НДС 10%",
+              "printedName": "НДС 10%",
+              "rate": 0.1
+            }
+          }
+        ],
+        "calculationSubjectSign": 1,
+        "calculationTypeSign": 4,
+        "sum": 12675
+      }
+    ],
+    "operationType": 2,
+    "taxationType": 1,
+    "options": {
+      "buyerAddress": "19443780+100@litres.ru",
+      "dateTime": "1687708860",
+      "userInn": "7719571260",
+      "totalSum": "12675",
+      "cashTotalSum": "0",
+      "machineNumber": "KSR13.7-7-1",
+      "kktRegId": "0000936508035429",
+      "shiftNumber": "74",
+      "fiscalDocumentNumber": "235236",
+      "fiscalDriveNumber": "7281440500752587",
+      "requestNumber": "2549",
+      "operationType": "1",
+      "taxationType": "1",
+      "fiscalSign": "31 04 8a 04 a3 31",
+      "ecashTotalSum": "12675",
+      "nds10": "1152",
+      "internetSign": "1",
+      "senderAddress": "billing@litres.ru",
+      "retailPlace": "www.litres.ru",
+      "protocolVersion": "2",
+      "prepaymentSum": "0",
+      "postpaymentSum": "0",
+      "counterSubmissionSum": "0",
+      "extras": {
+        "fnsStatus": {
+          "status": "200",
+          "confirmation": "{\"fdId\":\"4826773476973696256\"}",
+          "confirmationDate": "2023-06-25T16:01:58.629"
+        },
+        "aggregation": {
+          "sum": "126.75",
+          "cashSum": "0",
+          "ecashSum": "126.75",
+          "prepaymentSum": "0",
+          "postpaymentSum": "0",
+          "countersubmissionSum": "0",
+          "totalClearing": "126.75"
+        }
+      },
+      "asOf": "2023-05-05 16:56:32.94100",
+      "kktNumber": "00107700157290",
+      "fnsUrl": "www.nalog.gov.ru",
+      "retailPlaceAddress": "109316, Регион 77, Москва, Волгоградский проспект, дом 42, корпус 9",
+      "user": "ООО \"Литрес\"",
+      "orgId": "117520"
+    },
+    "type": "TICKET",
+    "kkmId": "0000936508035429",
+    "transactionDate": "2023-06-25T16:01:00",
+    "transactionId": "0000936508035429_7281440500752587_235236",
+    "fiscalId": "2315559729",
+    "eligibleForNds20": true,
+    "kktRegId": "0000936508035429    ",
+    "header21Bytes": null,
+    "fs21Bytes": null,
+    "shiftNumber": 74,
+    "field1209": 2,
+    "fiscalDriveNumber": "7281440500752587",
+    "fiscalDocumentNumber": 235236,
+    "totalSum": 126.75,
+    "cashTotalSum": 0,
+    "ecashTotalSum": 126.75,
+    "prepaymentSum": 0,
+    "postpaymentSum": 0,
+    "counterSubmissionSum": 0,
+    "payments": [
+      {
+        "sum": 0,
+        "paymentType": "CASH"
+      },
+      {
+        "sum": 126.75,
+        "paymentType": "CARD"
+      },
+      {
+        "sum": 0,
+        "paymentType": "PREPAYMENT"
+      },
+      {
+        "sum": 0,
+        "paymentType": "POSTPAYMENT"
+      },
+      {
+        "sum": 0,
+        "paymentType": "COUNTERSUBMISSION"
+      }
+    ],
+    "taxes": [
+      {
+        "layout": {
+          "type": "НДС 10%",
+          "printedName": "СУММА НДС 10%",
+          "rate": 0.1
+        },
+        "sum": 11.52
+      }
+    ],
+    "nds10": 11.52,
+    "totalTax": 11.52
+  },
+  "ticketDescription": "transaction.ticket.sell, transaction.ticket.payment.type.card",
+  "orgTitle": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"ЛИТРЕС\"",
+  "orgId": "7719571260",
+  "retailPlaceAddress": "109316, г Москва, пр-кт Волгоградский 42/9",
+  "kkmFnsId": "0000936508035429    ",
+  "foundDate": "2023-06-26 12:04:42",
+  "taxes": [
+    {
+      "rate": 0.1,
+      "name": "НДС 10%",
+      "sum": 11.52
+    }
+  ],
+  "kpp": "770301001",
+  "owned": false
+}
