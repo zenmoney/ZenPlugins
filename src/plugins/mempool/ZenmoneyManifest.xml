@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>mempool</id>
+    <company>0</company> <!-- internal zenmoney id, to be set during the merge -->
+    <description>
+        Плагин для синхронизации BTC через mempool.space.
+        Укажите адреса кошельков — адреса одного кошелька станут одним счётом.
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <api>public</api>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <codeRequired>false</codeRequired>
+</provider>
