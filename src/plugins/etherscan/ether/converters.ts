@@ -3,7 +3,9 @@ import {
   AccountType,
   type Transaction
 } from '../../../types/zenmoney'
-import { ETHER_MAINNET, Instruments } from '../common/config'
+import { ETHER_MAINNET, Instruments, chainAccountId } from '../common/config'
+import { normalizeMerchant } from '../common/merchants'
+import type { Chain } from '../common/types'
 import type { EthereumAccount, EthereumTransaction } from './types'
 
 const MIN_MOVEMENT_SUM = 0.01
@@ -20,29 +22,34 @@ export function getTransactionFee (transaction: EthereumTransaction): number {
 
 function convertAccount (
   { account, balance }: EthereumAccount,
-  instrument: string
+  instrument: string,
+  chain: Chain
 ): Account {
+  const id = chainAccountId(chain, account)
   return {
-    id: account,
+    id,
     type: AccountType.checking,
     title: account,
     instrument,
     balance: convertWeiToUETH(Number(balance)),
-    syncIds: [account]
+    syncIds: [id]
   }
 }
 
 export function convertAccounts (
   accounts: EthereumAccount[],
-  instrument: string = Instruments[ETHER_MAINNET]
+  instrument: string = Instruments[ETHER_MAINNET],
+  chain: Chain = ETHER_MAINNET
 ): Account[] {
-  return accounts.map((account) => convertAccount(account, instrument))
+  return accounts.map((account) => convertAccount(account, instrument, chain))
 }
 
 export function convertTransaction (
   account: string,
-  transaction: EthereumTransaction
+  transaction: EthereumTransaction,
+  chain: Chain = ETHER_MAINNET
 ): Transaction | null {
+  const accountId = chainAccountId(chain, account)
   const direction = transaction.from === account ? 'PAYMENT' : 'DEPOSIT'
   const targetAccount =
     direction === 'PAYMENT' ? transaction.to : transaction.from
@@ -63,7 +70,7 @@ export function convertTransaction (
       {
         id: transaction.hash,
         account: {
-          id: account
+          id: accountId
         },
         invoice: null,
         sum: sign * operationValue,
@@ -72,7 +79,7 @@ export function convertTransaction (
       }
     ],
     merchant: {
-      fullTitle: targetAccount,
+      fullTitle: normalizeMerchant(targetAccount, account, chain),
       mcc: null,
       location: null
     },
@@ -82,10 +89,11 @@ export function convertTransaction (
 
 export function convertTransactions (
   account: string,
-  transactions: EthereumTransaction[]
+  transactions: EthereumTransaction[],
+  chain: Chain = ETHER_MAINNET
 ): Transaction[] {
   const list = transactions
-    .map((transaction) => convertTransaction(account, transaction))
+    .map((transaction) => convertTransaction(account, transaction, chain))
     .filter((transaction): transaction is Transaction =>
       Boolean(
         transaction?.movements.some((movement) =>
