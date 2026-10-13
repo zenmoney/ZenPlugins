@@ -21,9 +21,9 @@ Select text by its role in the source: merchant identity and place follow [MERCH
 | One source field identifies the merchant and another supplies an independent purpose | Preserve both in their respective output fields; parsing the merchant does not consume the purpose |
 | Unknown text format | Preserve useful purposes and messages even when the format is unfamiliar; do not suppress an entire operation class speculatively |
 
-Apply the [observed-format generalization rule](../../../project/testing.md#bank-parsing-and-interpretation). An operation code alone does not make all comments boilerplate.
+Apply the [observed-format generalization rule](../testing.md#bank-parsing-and-interpretation). An operation code alone does not make all comments boilerplate.
 
-Assess every available relevant description field and array item by meaning. A generic sender label may duplicate the merchant while a later item contains the useful purpose; taking only the first or last item is not a general rule. Preserve complementary human meaning; omit technical and redundant blocks under COMMENT-002. A human-looking suffix in saved application data may have been added after import; use real bank source data to establish its API field and parsing boundary under the [fixture evidence rules](../../../project/testing.md#bank-data-and-model-tests).
+Assess every available relevant description field and array item by meaning. A generic sender label may duplicate the merchant while a later item contains the useful purpose; taking only the first or last item is not a general rule. Preserve complementary human meaning; omit technical and redundant blocks under COMMENT-002. A human-looking suffix in saved application data may have been added after import; use real bank source data to establish its API field and parsing boundary under the [fixture evidence rules](../testing.md#bank-data-and-model-tests).
 
 ## COMMENT-002 Exclude technical identifiers and duplication
 

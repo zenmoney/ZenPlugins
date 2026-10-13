@@ -22,4 +22,4 @@ Older names such as `product`, `products`, or `mainProduct` often represent thes
 
 Treat each plan as an indivisible fetch unit. Add its account(s) to the returned account list, honor [skips](contract.md#skipped-accounts), execute its history workflow once, convert operations, then perform transaction grouping. Do not duplicate a shared fetch for each covered account.
 
-Verify complete plans and their execution under [account quality](quality/accounts.md) and [full-result testing](../../project/testing.md#verification-for-code-changes), including mixed skips and a single execution of shared workflows.
+Verify complete plans and their execution under [account quality](quality/accounts.md) and [full-result testing](testing.md#required-coverage), including mixed skips and a single execution of shared workflows.

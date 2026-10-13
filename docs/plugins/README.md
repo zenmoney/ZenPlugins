@@ -1,23 +1,46 @@
-# Plugin model
+# Shared plugin facilities
 
-All plugin types share the execution environment, platform facilities, and engineering conventions. Each type defines its exported operations, argument/result contracts, manifest format, and settings structure.
+All plugin types share the execution environment, platform facilities, and engineering conventions. Each type defines its exported operations, argument/result contracts, manifest fields, and settings structure.
 
-## Shared documentation
+## Shared topics
 
-- [Runtime](runtime.md): platform API, state, interaction, networking, capabilities.
-- [Architecture](architecture.md): placement of transport, workflows, conversion, and persistence.
-- [Errors](errors.md): error classes and application behavior.
-- [Authentication](authentication.md): persisted authorization and interactive login for service-backed plugins.
-- [Utilities](utilities.md): reusable repository helpers.
+Read only the row matching the affected behavior, alongside the selected type's contracts.
 
-## Plugin types
+| Change | Required reading |
+| --- | --- |
+| New implementation, structural change or full review | [Architecture](architecture.md), [runtime](runtime.md) |
+| Sessions, state or cookies | [Runtime state](runtime.md#state-and-lifecycle), [persistence boundaries](architecture.md#boundaries); [authentication](authentication.md) for auth state |
+| Authentication | [Authentication](authentication.md), [runtime state/input](runtime.md), [errors](errors.md), [sanitization](../debugging/log-sanitization.md) |
+| User interaction or background execution | [Runtime UI](runtime.md#background-execution-and-ui); [authentication](authentication.md) for login challenges |
+| Error handling | [Error classes and propagation](errors.md), [sanitization](../debugging/log-sanitization.md); [authentication](authentication.md) only for auth transitions |
+| Logging or network requests | [Logging behavior](../debugging/production-logs.md#logging-path), [sanitization](../debugging/log-sanitization.md); [architecture boundaries](architecture.md#boundaries) and [errors](errors.md) for request changes |
+| WebView, TCP or WebSocket | [Event semantics](runtime.md#event-emitters), affected [WebView](webview/README.md), [Socket](socket.md) or [WebSocket](websocket.md) contract; [permissions](webview/permissions.md) for page-level overrides, plus affected network/authentication rules above |
+| Find a reusable helper | [Utilities](utilities.md) |
+| Research a service protocol | [Protocol research](protocol-research.md) and relevant existing integration notes |
 
-| Type | Exported operation | Documentation |
-| --- | --- | --- |
-| Account and transaction synchronization | `scrape` | [Scrape](scrape/README.md): contracts, XML manifest, preferences, and quality rules |
+## Review scope
 
-Scrape includes [remote history loading](scrape/contract.md) and [file import](scrape/file-import.md). These variants share the exported interface and domain result, with different acquisition and history-scope rules.
+A focused fix or review covers affected behavior and dependencies: data quality, errors, sanitization, and authentication when present. Inspect available output for other quality defects and report them in the same backlog; keep unrelated fixes separate. Missing evidence is a gap, not a pass.
 
-Add another type here when its interface exists. Give it its own directory with its exported functions, argument/result types, operation lifecycle, error conditions, manifest and settings formats, loader/application contract, and examples. Link to the shared runtime instead of copying it. Scrape's XML packaging, history interval, account/transaction output, and result adapter apply only to that type.
+General log analysis assesses all applicable quality topics across the supported integration, including successful runs. A full plugin review additionally assesses architecture, runtime use, and the type's operation contract. Mark genuinely absent facilities, such as authentication in a file-only importer, as not applicable. Code changes always follow applicable architecture boundaries; a focused legacy fix does not authorize a migration.
 
-See existing integration notes beside the affected plugin for integrations; they are read only for the affected plugin or shared provider.
+## Build pipelines
+
+The shared [webpack configuration](../../scripts/webpack.config.js) supports two entrypoint formats through the [manifest loader](../../scripts/plugin-manifest-loader.js):
+
+- Scrape plugins in `src/plugins/` use `ZenmoneyManifest.xml` and an `index.ts` or `index.js` module. The bundle adapts `scrape` to the host's `main` entrypoint; modules can also export `main` directly. Entrypoints and optional settings follow the [scrape file conventions](scrape/manifest.md#source-files-and-build-output).
+- The general module format uses `ZenmoneyManifest.ts` (or `.js`) for metadata and `index.ts` (or `.js`) for named operation functions. The runtime receives metadata and exposes every declared operation through the same asynchronous lifecycle. The source family selects its domain manifest parser: `src/receiptFetchers/` uses the [receipt parser](../../src/common/receiptFetcher/manifest.ts), shared by builds and tests. The loader checks source files and matches exported operations to `capabilities`.
+
+Receipt fetchers are the current consumer of the general module format. Their descriptor validation and operation contracts remain receipt-specific. Future types can reuse this pipeline after adding their discovery, metadata and operation contracts; they do not need a separate builder solely because they are not receipt plugins.
+
+## Publication metadata
+
+Source manifests and local build manifests MUST NOT contain `version` or `build`. These fields identify published packages and are assigned outside local builds; publication procedures are outside this repository's documentation.
+
+Bundles MUST NOT embed `version` or `build` in `ZenMoney.manifest`. Local development has no publication build.
+
+## Plugin names
+
+A plugin name is its source directory name and command-line build target. Names MUST be unique across all plugin types, including `src/plugins/` and `src/receiptFetchers/`. Only directories with a type-specific manifest declare plugins; helper directories do not reserve names. Shared commands reject duplicate plugin names before running a build, lint or test command, including when an unrelated plugin is selected.
+
+New plugin manifest IDs MUST equal the source name and remain unchanged in generated artifacts. No type namespace or generated prefix is added. Receipt IDs MUST also avoid existing bank manifest IDs, including legacy IDs that differ from their directories. Existing bank identities remain unchanged. Use `yarn build <PLUGIN_ID> [<PLUGIN_ID> ...]` for either type; the builder selects the manifest and loader from the source location. See [commands](../project/workflow.md#commands) for outputs.

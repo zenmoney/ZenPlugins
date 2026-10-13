@@ -198,8 +198,8 @@ function setup (initialAuth?: MobileAuth, initialIdentity?: string): Runtime {
   Object.assign(global, { ZenMoney: host })
   jest.requireActual('../../../polyfills/fetch')
   const { scrape } = jest.requireActual<{ scrape: (args: typeof options & { isInBackground?: boolean }) => Promise<ReturnType<typeof expected>> }>('../index')
-  const { adaptScrapeToMain } = jest.requireActual<{ adaptScrapeToMain: (fn: typeof scrape) => (args: { isInBackground: boolean }) => Promise<void> }>('../../../common/adapters')
-  return { scrape, data, host, native, nativeFetch, reply, main: adaptScrapeToMain(scrape) }
+  const { createScrapeMain } = jest.requireActual<{ createScrapeMain: (fn: typeof scrape) => (args: { isInBackground: boolean }) => Promise<void> }>('../../../common/adapters')
+  return { scrape, data, host, native, nativeFetch, reply, main: createScrapeMain(scrape) }
 }
 
 beforeEach(() => { for (const method of ['debug', 'info', 'log', 'warn', 'error'] as const) jest.spyOn(console, method).mockImplementation(() => {}) })

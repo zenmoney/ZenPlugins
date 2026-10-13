@@ -20,7 +20,7 @@ function pageFunction<Arg, Result> (source: string): (arg: Arg) => Result {
 const disposePage = pageFunction<{ key: string }, unknown>(`${lifecycleScript}\nreturn WebViewScript.dispose(config)`)
 const matchesDocument = pageFunction<{ key: string, documentId: string }, boolean>(`${lifecycleScript}\nreturn WebViewScript.matchesDocument(config)`)
 
-/** Page-level overrides; see docs/webview/permissions.md. */
+/** Page-level overrides; see docs/plugins/webview/permissions.md. */
 export async function installPermissions (webView: WebViewInstance, config: PermissionConfig): Promise<Disposable> {
   if (controllers.has(webView)) throw new Error('WebView permissions are already installed')
   if (config.mode !== 'force' && config.mode !== 'fallback') throw new Error('Invalid permission mode')

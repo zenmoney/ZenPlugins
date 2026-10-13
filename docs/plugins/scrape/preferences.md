@@ -1,6 +1,6 @@
 # Scrape plugin preferences
 
-Read when changing a scrape plugin's `preferences.xml`, referenced by its [manifest](manifest.md). This page defines the settings format and behavior for scrape plugins. Other plugin types define their own settings structure and semantics.
+Read when changing a scrape plugin's optional `preferences.xml`, discovered beside its entrypoint under the [source-file contract](manifest.md#source-files-and-build-output). This page defines the settings format and behavior for scrape plugins. Other plugin types define their own settings structure and semantics.
 
 Example source: [preferences.xml](../../../src/plugins/example/preferences.xml). The format is inspired by Android preferences, but Zenmoney adapters define the supported attributes; do not assume every Android preference feature is supported.
 
@@ -50,9 +50,9 @@ The first choice stores `district: 'BIC'`; the second stores `district: 'BERLINE
 
 ## Checkboxes
 
-Use `checked="true"` or `checked="false"` for the initial state. The documented Android/iOS behavior carried from develop does not use `defaultValue` for checkboxes; an existing user value overrides `checked`.
+Use `checked="true"` or `checked="false"` for the initial state. The application settings form does not use `defaultValue` for checkboxes; an existing user value overrides `checked`.
 
-Use `summaryOn` and `summaryOff`. Set both to the same text when the description applies in either state. Legacy screens select the description by state; the documented current Android/iOS adapters use a nonempty `summaryOff` as the checkbox description. They do not use generic `summary` for this purpose. `inputType`, dialog title/message, and positive/negative button text are ignored for checkboxes.
+Use `summaryOn` and `summaryOff`. Set both to the same text when the description applies in either state. Legacy screens select the description by state; the current application settings form uses a nonempty `summaryOff` as the checkbox description. They do not use generic `summary` for this purpose. `inputType`, dialog title/message, and positive/negative button text are ignored for checkboxes.
 
 ```xml
 <CheckBoxPreference
@@ -68,7 +68,7 @@ Native adapter implementations are outside this repository. Verify new control b
 
 ## Scrape history start date
 
-The current scrape adapter requires `startDate`:
+Scrape settings MUST include the `startDate` preference:
 
 ```xml
 <EditTextPreference
@@ -84,7 +84,7 @@ The current scrape adapter requires `startDate`:
 />
 ```
 
-The adapter uses it to derive `fromDate`, then removes it from the settings passed to `scrape`. Repeated-run overlap is defined by the [scrape contract](contract.md#dates-and-repeated-runs). In the [file-import variant](file-import.md#import-scope-and-repeated-runs), file selection defines the imported period; keep `startDate` for adapter compatibility and explain its limited role in setup.
+The `scrape` function receives its requested interval through `fromDate` and `toDate`; follow the [scrape contract](contract.md#dates-and-repeated-runs). In the [file-import variant](file-import.md#import-scope-and-repeated-runs), file selection defines the imported period; explain this in setup.
 
 ## Local verification
 

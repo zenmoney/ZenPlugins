@@ -8,8 +8,8 @@ These plugins do the job.
 ---
 - Plugins in this repository are developed by the community.
 - All new plugins must be created in TypeScript according to our [architecture and conventions](docs/plugins/architecture.md).
-- In simple words, the plugin requests the bank to get your accounts and transactions,
-then converts them into our unified format.
+- Plugins retrieve accounts and transactions or receipts from a service,
+then convert them into the corresponding Zenmoney format.
 - Plugins are downloaded to the app, run on your device, and contact the
   configured service for authentication and data.
 
@@ -23,11 +23,5 @@ if your bank is still unsupported, and you have skills in TypeScript + basic rev
 you can help us — create a plugin by yourself.
 So after a successful merge, all users will be able to use it.
 
-Start with the [documentation by task](docs/README.md), the
-[plugin creation guide](docs/development/new-plugin.md), and the
-[contribution workflow](docs/project/workflow.md).
-
-The [shared runtime](docs/plugins/runtime.md) applies to all plugin types.
-Account and transaction synchronization follows the
-[scrape contract](docs/plugins/scrape/contract.md) and
-[data quality requirements](docs/plugins/scrape/quality/README.md).
+Start with the [documentation](docs/README.md): choose the plugin type, then
+follow the route for new development or investigation of an existing plugin.

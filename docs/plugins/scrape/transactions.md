@@ -1,6 +1,6 @@
 # Transaction contract
 
-Applies to scrape output. Exact shapes: [zenmoney.ts](../../../src/types/zenmoney.ts). Use the [task route](../../README.md#choose-a-task) for the quality rules affected by the change.
+Applies to scrape output. Exact shapes: [zenmoney.ts](../../../src/types/zenmoney.ts). The [scrape topic map](README.md#select-the-affected-topic) selects related quality rules.
 
 ## Transaction
 

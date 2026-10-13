@@ -125,7 +125,7 @@ describe('hapoalim real session orchestration', () => {
     global.ZenMoney.addAccount = jest.fn()
     global.ZenMoney.addTransaction = jest.fn()
     global.ZenMoney.setResult = jest.fn()
-    return require('../../../common/adapters').adaptScrapeToMain(scrape)
+    return require('../../../common/adapters').createScrapeMain(scrape)
   }
 
   afterEach(() => {

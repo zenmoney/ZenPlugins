@@ -1,6 +1,6 @@
 # Transfer classification and grouping
 
-Applies to scrape transfers. Field meanings are in the [transaction contract](../transactions.md); use the [task route](../../../README.md#choose-a-task) for related amount, merchant, and comment rules. Tables are illustrative, not bank fixtures.
+Applies to scrape transfers. Field meanings are in the [transaction contract](../transactions.md); the [scrape topic map](../README.md#select-the-affected-topic) selects related amount, merchant and comment rules. Tables are illustrative, not bank fixtures.
 
 ## TRANSFER-001 Classify by the financial movement
 
@@ -56,9 +56,9 @@ The standard `adjustTransactions` merger supports this probabilistic approach: w
 | A shared plan includes an active account | Fetch once, omit only operations affecting exclusively skipped accounts |
 | A full transfer and its one-sided duplicate are returned | Remove only the duplicate confirmed by group key, account, amount, and sign |
 
-Fee/currency differences need the corresponding amount semantics, not raw sum equality. For nullable amounts and the common helper's optional inference, follow [AMOUNT-001](amounts-and-statuses.md#amount-001-preserve-direction-and-currency); explicitly enable and test inference with the applicable fee/currency conditions.
+Fee/currency differences need the corresponding amount semantics, not raw sum equality. Nullable amounts follow [AMOUNT-001](amounts-and-statuses.md#amount-001-preserve-direction-and-currency). Call `adjustTransactions({ transactions })` to group the converted records.
 
-The default merger does not remove a one-sided duplicate beside an already complete transfer; see [compatibility](../../compatibility.md). Matching tests follow the [bank/model evidence boundary](../../../project/testing.md#bank-data-and-model-tests).
+The default merger does not remove a one-sided duplicate beside an already complete transfer; see [compatibility](../../compatibility.md). Matching tests follow the [bank/model evidence boundary](../testing.md#bank-data-and-model-tests).
 
 ## TRANSFER-004 Verify the final financial effect
 

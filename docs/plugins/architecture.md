@@ -12,7 +12,7 @@ For service-backed integrations, runtime dependencies MUST follow these directio
 | Layer | Owns | Must not own |
 | --- | --- | --- |
 | `fetchApi` | Base URLs, endpoints, methods, query/body serialization, headers, cookie transport, response envelopes, sanitized network logs | Persistent storage, user prompts, authentication transitions, business pagination, domain result construction |
-| `api` | Preference validation, authentication transitions, protocol validation, user interaction, pagination, retries, endpoint sequencing and response-dependent recovery | Physical persistent storage, conversion into the exported domain result |
+| `api` | Preference validation, authentication transitions, protocol validation, user interaction, pagination, retries, endpoint sequencing and response-dependent recovery | Physical persistent storage, domain conversion logic |
 | `converters` | Deterministic conversion from the complete relevant service data into the type's domain objects and declarative fetch parameters | HTTP, storage, user prompts, authentication |
 | `index` | Exported operation, physical state/cookie reads and writes, calling workflows and converters, assembling the result | URLs, HTTP headers, cryptography, pagination, protocol state machines, raw payload parsing |
 
@@ -28,6 +28,6 @@ Use small ordered transaction parsers with explicit recognition conditions where
 
 ## Type-specific orchestration
 
-The plugin type owns exports/result shapes. Scrape adds [account sync plans](scrape/account-sync-plans.md) for account-dependent history or the [file-import contract](scrape/file-import.md) for selected statements.
+Each plugin type owns its exported operations and result shapes: [scrape](scrape/contract.md), [receipts](receipt-fetchers/contract.md). Scrape adds [account sync plans](scrape/account-sync-plans.md) for account-dependent history or the [file-import contract](scrape/file-import.md) for selected statements.
 
-Use the [task route](../README.md#choose-a-task) for affected contracts and verification. Transport logs follow [sanitization](../debugging/log-sanitization.md).
+The selected type's task route owns affected contracts and verification. Transport logs follow [sanitization](../debugging/log-sanitization.md).

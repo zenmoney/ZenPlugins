@@ -1,6 +1,6 @@
 # DOM policies
 
-Use DOM policies to maintain WebView element effects across SPA updates and navigation without polling. Read the [public types](../../src/common/webview/dom/types.ts) for exact shapes and [page script contract](README.md#page-scripts) for bundling. Types support TypeScript 4.7.
+Use DOM policies to maintain WebView element effects across SPA updates and navigation without polling. Read the [public types](../../../src/common/webview/dom/types.ts) for exact shapes and [page script contract](README.md#page-scripts) for bundling. Types support TypeScript 4.7.
 
 ## Install and own the controller
 
@@ -102,6 +102,6 @@ Policies cooperate with page code; they are not a security boundary against host
 - `yarn test`: public types and full repository lint/Jest checks.
 - `yarn test:playwright src/common/webview`: run `__tests__/dom.playwright.test.ts` using a production-built typed consumer in Chromium/WebKit; layout, inert, pointer/touch hits, focus, Shadow DOM, navigation, and execution.
 
-Browser installation, runner separation, engine selection, and failure traces are described in [browser test setup](../project/testing.md#browser-tests).
+Browser installation, runner separation, engine selection, and failure traces are described in [browser test setup](../../project/testing.md#browser-tests).
 
 Registration removal and persisted BFCache events are modeled in jsdom; real back navigation runs in both browsers. Native mobile WebView compatibility needs separate device verification.

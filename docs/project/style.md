@@ -4,7 +4,7 @@ Read for new code and changes to diagnostics, user-facing text, or TypeScript mo
 
 ## Type safety
 
-- All new code files MUST use TypeScript, including new plugins, provider wrappers, helpers, and tests. WebView-only page scripts MAY use JavaScript or TypeScript under the [page script contract](../webview/README.md#page-scripts). This applies to every plugin type. A focused change inside an existing JavaScript file keeps that file's language; it does not authorize new JavaScript modules or an unrelated migration
+- All new code files MUST use TypeScript, including new plugins, provider wrappers, helpers, and tests. WebView-only page scripts MAY use JavaScript or TypeScript under the [page script contract](../plugins/webview/README.md#page-scripts). This applies to every plugin type. A focused change inside an existing JavaScript file keeps that file's language; it does not authorize new JavaScript modules or an unrelated migration
 - Never use `any` in TypeScript
 - Bank API responses should be typed as `unknown`
 - Use helper functions from `src/types/get.ts` for safe property access

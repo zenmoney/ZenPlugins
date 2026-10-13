@@ -1,6 +1,6 @@
 # WebView permissions
 
-[`installPermissions` and `geoPermission`](../../src/common/webview/permissions/index.ts) install page-level overrides on the new WebView API on Android and iOS. Like Playwright's [permissions and geolocation](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-geolocation), permission state and API values are separate: a `granted` query does not create a media stream or grant an OS permission.
+[`installPermissions` and `geoPermission`](../../../src/common/webview/permissions/index.ts) install page-level overrides on the new WebView API on Android and iOS. Like Playwright's [permissions and geolocation](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-geolocation), permission state and API values are separate: a `granted` query does not create a media stream or grant an OS permission.
 
 - Install before `goto`. Installation also applies to the current document. Specify exact HTTP(S) origins; overrides apply only to the top document, leaving frames and workers native.
 - `force` immediately uses configured states. `fallback` first tries the native operation and calls the plugin's `fallbackWhen` on unavailable APIs, denied state or errors. `prompt` alone does not trigger fallback, and missing `permissions.query` does not establish that another API is broken.

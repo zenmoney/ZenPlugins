@@ -4,7 +4,7 @@ Read whenever a request, response, assertion, or diagnostic log changes. Applies
 
 Sanitization must protect real secrets and personal identity data while preserving enough payload structure to diagnose API changes. Mask fields selectively; a log containing only `<object>` or a fully masked `data` array is usually not actionable.
 
-Runtime log masks do not define fixture cleanup; copying bank data follows the separate [target-branch fixture rules](../project/fixtures.md).
+Runtime log masks do not define fixture cleanup; copying source data follows the separate [fixture rules](../project/fixtures.md).
 
 ## Always redact
 
@@ -12,12 +12,12 @@ Runtime log masks do not define fixture cleanup; copying bank data follows the s
 - Access, refresh, ID, bearer, and session tokens; authorization cookies; private keys; reusable signatures; encrypted credential/PIN/card payloads
 - A `sid`, hash, nonce, or similar value when it can authenticate/authorize a request or derive credential material, even if it is short-lived. Apply the same mask in request and response URLs, headers, and bodies
 - The customer's/cardholder's full name, passport/identity-document data, avatar/photo, personal phone, and registration/residential home address
-- `Authorization`, `Cookie`, and `Set-Cookie` headers and equivalent token-bearing fields, including camelCase/snake_case variants used by the bank
+- `Authorization`, `Cookie`, and `Set-Cookie` headers and equivalent token-bearing fields, including camelCase/snake_case variants used by the provider
 
 ## Keep visible unless proven sensitive
 
 - Request/correlation IDs, challenge IDs, operation IDs, confirmation IDs, trace/error codes, pagination cursors, transaction IDs, `hashPan`, and one-time technical `sid` values that cannot authorize a request
-- Bank product, account, card, balance, and transaction payload fields needed by converters; masked card/account identifiers; merchant names, terminal addresses, MCC, purposes, statuses, and dates
+- Source payload fields needed by converters, such as products, accounts, balances, transactions, items and amounts; masked card/account identifiers; merchant names, terminal addresses, MCC, purposes, statuses, and dates
 - Generated non-auth device/request identifiers and protocol metadata when they are needed to compare the plugin with the current bank application
 - Bank error codes and technical messages after required secret/personal-data masking. They belong in the log; [error classification rules](../plugins/errors.md) prevent them from being displayed to the user
 
@@ -32,7 +32,13 @@ Runtime log masks do not define fixture cleanup; copying bank data follows the s
 
 ## Required sanitization tests
 
-- Capture the actual `console.debug('request', ...)` and `console.debug('response', ...)` output produced by the network layer
-- Assert that credentials, personal fields, auth tokens, cookies, and auth-bearing session IDs are masked
-- In the same test, assert that representative diagnostic fields remain visible, including IDs, bank error details, and account/transaction data
-- Cover request and response URLs, headers, nested objects, and arrays. A test that checks only the options passed to `fetchJson` is not sufficient
+Capture actual emitted diagnostics for the changed logging path:
+
+| Logging path | Output to verify |
+| --- | --- |
+| HTTP helpers | `console.debug('request', ...)` and `console.debug('response', ...)` |
+| WebView navigation | Navigation request logs |
+| WebSocket | Handshake logs and request/reply logs when using the request client |
+| Raw TCP, assertions, or manual diagnostics | The messages and context emitted by the changed code |
+
+Assert that sensitive fields present in the case are masked and representative diagnostic fields remain visible, including relevant IDs, provider errors and converter source data. Cover the affected URLs, headers, bodies, nested objects and arrays that this logging path emits. Inspect the output itself; checking only options passed to a helper such as `fetchJson` is insufficient.

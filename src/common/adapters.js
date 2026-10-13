@@ -65,25 +65,6 @@ const MS_IN_MINUTE = 60 * 1000
 
 const SCRAPE_LAST_SUCCESS_DATE_KEY = 'scrape/lastSuccessDate'
 
-const unsealSyncPromise = (promise) => {
-  let state = 'pending'
-  let value = null
-  promise.then(
-    resolveValue => {
-      state = 'resolved'
-      value = resolveValue
-    },
-    rejectValue => {
-      state = 'rejected'
-      value = rejectValue
-    }
-  )
-  return {
-    state,
-    value
-  }
-}
-
 const manualDateInputRegExp = /^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/
 
 export const parseStartDateString = (startDateString) => {
@@ -123,26 +104,6 @@ const calculateFromDate = (startDateString, now = new Date()) => {
 
 const getIsFirstRun = () => {
   return Boolean(typeof ZenMoney?.getData === 'function' && !ZenMoney.getData(SCRAPE_LAST_SUCCESS_DATE_KEY))
-}
-
-export function provideScrapeDates (fn) {
-  console.assert(typeof fn === 'function', 'provideScrapeDates argument should be a function')
-
-  return function scrapeWithDates (args) {
-    const successAttemptDate = new Date().toISOString()
-    const scrapeResult = fn({
-      ...args,
-      preferences: _.omit(args.preferences, ['startDate']),
-      fromDate: calculateFromDate(args.preferences.startDate),
-      toDate: null,
-      isFirstRun: getIsFirstRun()
-    })
-    return scrapeResult.then((x) => {
-      ZenMoney.setData(SCRAPE_LAST_SUCCESS_DATE_KEY, successAttemptDate)
-      ZenMoney.saveData()
-      return x
-    })
-  }
 }
 
 export function assertAccountIdsAreUnique (accounts) {
@@ -411,7 +372,7 @@ function getPresentationError (error, isFirstRun) {
   const code = getApiErrorCode(error?.message)
   let forceFatal = false
   if (isFirstRun && (
-    (typeof error === 'object' && Object.getPrototypeOf(error) === TemporaryError.prototype) ||
+    (error !== null && typeof error === 'object' && Object.getPrototypeOf(error) === TemporaryError.prototype) ||
     error instanceof InvalidOtpCodeError ||
     error instanceof InvalidPreferencesError ||
     error instanceof PreviousSessionNotClosedError ||
@@ -476,54 +437,22 @@ function getPresentationError (error, isFirstRun) {
   return meaningfulError
 }
 
-export function adaptScrapeToGlobalApi (scrape) {
-  console.assert(typeof scrape === 'function', 'argument must be function')
-
-  return function adaptedAsyncFn (args) {
-    const isFirstRun = getIsFirstRun()
-    const result = scrape({
-      ..._.isPlainObject(args) && args,
-      preferences: ZenMoney.getPreferences()
-    })
-    console.assert(result && typeof result.then === 'function', 'scrape() did not return a promise')
-    const resultHandled = result.then((results) => {
-      console.assert(results, 'scrape() did not return anything')
-      if (Array.isArray(results.accounts) && Array.isArray(results.transactions)) {
-        ZenMoney.addAccount(patchAccounts(results.accounts))
-        ZenMoney.addTransaction(patchTransactions(results.transactions, results.accounts))
-        ZenMoney.setResult({ ..._.omit(results, ['accounts', 'success', 'transactions']), success: true })
-        return
-      }
-      throw new Error('scrape should return {accounts[], transactions[]}')
-    })
-
-    const {
-      state,
-      value
-    } = unsealSyncPromise(resultHandled)
-    if (state === 'rejected') {
-      ZenMoney.setResult(getPresentationError(value, isFirstRun))
-      return Promise.resolve()
-    } else if (state === 'pending') {
-      return resultHandled.catch((e) => {
-        ZenMoney.setResult(getPresentationError(e, isFirstRun))
-      })
-    } else {
-      return resultHandled
-    }
-  }
-}
-
-export function traceFunctionCalls (fn) {
+export function traceFunctionCalls (fn, name) {
   console.assert(typeof fn === 'function', 'traceFunctionCalls argument should be a function')
 
-  const functionName = fn.name || 'anonymous'
+  const functionName = name || fn.name || 'anonymous'
   return function logCallsWrapper (args) {
     const startMs = Date.now()
     console.log('call', functionName, 'with args:', sanitize(args, { preferences: true }))
-    const result = fn.call(this, args)
+    let result
+    try {
+      result = fn.call(this, args)
+    } catch (error) {
+      console.error(`${functionName} call threw`, error, `\n(${(Date.now() - startMs).toFixed(0)}ms)`)
+      throw error
+    }
 
-    if (!result.then) {
+    if (!result || typeof result.then !== 'function') {
       console.log(`${functionName} call returned result:`, result, `\n(${(Date.now() - startMs).toFixed(0)}ms)`)
       return result
     }
@@ -543,7 +472,7 @@ export function traceFunctionCalls (fn) {
 function checkSubscription (fn) {
   return async function (args) {
     if (toISODateString(new Date()) < '2023-06-01') {
-      return fn(args)
+      return fn.call(this, args)
     }
     if (ZenMoney.manifest.isSubscriptionRequired) {
       if (!ZenMoney.user || !ZenMoney.user.subscription || typeof ZenMoney.user.subscription.endDate !== 'number') {
@@ -553,8 +482,59 @@ function checkSubscription (fn) {
         throw new SubscriptionRequiredError()
       }
     }
-    return fn(args)
+    return fn.call(this, args)
   }
 }
 
-export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(checkSubscription(traceFunctionCalls(scrape))))
+export function wrapPluginOperation (fn, { name, adapt = fn => fn, getFirstRun = () => false, setResult } = {}) {
+  console.assert(typeof fn === 'function', 'wrapPluginOperation argument should be a function')
+  const operation = adapt(checkSubscription(traceFunctionCalls(fn, name)))
+  return async function (args) {
+    let isFirstRun = false
+    let result
+    let failure
+    try {
+      isFirstRun = getFirstRun()
+      result = await operation.call(this, args)
+    } catch (error) {
+      // Keep the failure distinct from its value, which may be null or undefined.
+      failure = { error }
+    }
+    try {
+      await ZenMoney.saveData()
+    } catch (error) {
+      if (!failure) {
+        failure = { error }
+      }
+    }
+    if (failure) {
+      result = getPresentationError(failure.error, isFirstRun)
+      if (!setResult) throw result
+    }
+    // The host may terminate execution here; do not catch it or save again afterwards.
+    return setResult ? setResult(result) : result
+  }
+}
+
+export const createScrapeMain = (scrape) => wrapPluginOperation(scrape, {
+  adapt: fn => async function (args) {
+    const startedAt = new Date().toISOString()
+    const preferences = ZenMoney.getPreferences()
+    const results = await fn.call(this, {
+      ..._.isPlainObject(args) && args,
+      preferences: _.omit(preferences, ['startDate']),
+      fromDate: calculateFromDate(preferences.startDate),
+      toDate: null,
+      isFirstRun: getIsFirstRun()
+    })
+    console.assert(results, 'scrape() did not return anything')
+    console.assert(Array.isArray(results.accounts) && Array.isArray(results.transactions), 'scrape should return {accounts[], transactions[]}')
+    ZenMoney.addAccount(patchAccounts(results.accounts))
+    ZenMoney.addTransaction(patchTransactions(results.transactions, results.accounts))
+    const hostResult = { ..._.omit(results, ['accounts', 'success', 'transactions']), success: true }
+    ZenMoney.setData(SCRAPE_LAST_SUCCESS_DATE_KEY, startedAt)
+    return hostResult
+  },
+  getFirstRun: getIsFirstRun,
+  setResult: result => ZenMoney.setResult(result)
+})

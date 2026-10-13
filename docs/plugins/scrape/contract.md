@@ -8,21 +8,21 @@ Remote loading and [file import](file-import.md) share this interface, result, q
 
 | Argument | Meaning |
 | --- | --- |
-| `preferences` | Typed settings for the plugin; the scrape adapter handles `startDate` separately |
+| `preferences` | Typed settings for the plugin |
 | `fromDate` | Inclusive start of the requested history interval |
 | `toDate` | Inclusive end of the interval; absent or `null` means no upper bound |
-| `isFirstRun` | No successful scrape has yet been recorded by the adapter |
+| `isFirstRun` | No successful synchronization has completed yet |
 | `isInBackground` | `true` means UI is unavailable; follow the shared [runtime UI contract](../runtime.md#background-execution-and-ui) |
 
-Return `Promise<{ accounts: Account[], transactions: Transaction[] }>` with both arrays and at least one account. `transactions` MAY be empty when no operations are in scope or all histories are skipped. The [adapter](../../../src/common/adapters.js) rejects empty accounts and handles host conversion/error presentation; return domain objects instead of calling `ZenMoney.addAccount`/`addTransaction` or legacy `main`.
+Return `Promise<{ accounts: Account[], transactions: Transaction[] }>` containing the complete set of accounts and transactions to be saved, with both arrays and at least one account. `transactions` MAY be empty when no operations are in scope or all histories are skipped.
 
 Every movement reference by ID MUST resolve to an account in the same result. Account IDs MUST be unique. A transfer's external/cash side uses a reference by data; it does not require a fabricated fetched account. See [accounts](accounts.md#account-references) and [transactions](transactions.md).
 
 ## Dates and repeated runs
 
-The current `provideScrapeDates` adapter derives `fromDate` from `preferences.startDate` and, after success, an overlap starting at midnight 14 days before the last successful run, bounded by the chosen start date and now. It removes `startDate` from the settings passed to `scrape`, passes `toDate: null`, and records the successful invocation time only after the promise resolves. Treat that as adapter behavior; do not recreate or override it in each plugin.
+For remote history loading, use the supplied `fromDate` and `toDate` as the requested interval on every invocation, including repeated runs.
 
-For remote history loading, include operations exactly at `fromDate` and, when supplied, `toDate`. A nullish `toDate` imposes no upper-date filter; do not replace it with the current moment as a domain cutoff. If a bank endpoint requires a concrete end date, choose a protocol-supported request bound that covers all available operations in scope and document that transport requirement. Map the interval to the bank's documented time zone and endpoint boundaries; an exclusive or date-only endpoint may require an overlapping request and local filtering. Fetch all pages and merge overlap without losing distinct identical-looking operations. Never assume an empty first page or a page-size limit proves that all history is loaded without the protocol's termination condition.
+Include operations exactly at `fromDate` and, when supplied, `toDate`. A nullish `toDate` imposes no upper-date filter; do not replace it with the current moment as a domain cutoff. If a bank endpoint requires a concrete end date, choose a protocol-supported request bound that covers all available operations in scope and document that transport requirement. Map the interval to the bank's documented time zone and endpoint boundaries; an exclusive or date-only endpoint may require an overlapping request and local filtering. Fetch all pages and merge overlap without losing distinct identical-looking operations. Never assume an empty first page or a page-size limit proves that all history is loaded without the protocol's termination condition.
 
 Bank endpoint boundaries do not change this inclusive output contract. Record their mapping and the selected transaction date semantics in the bank's existing notes or tests; test operations exactly at both edges and an unbounded upper date. Stable account/movement identifiers must survive repeat and overlapping runs.
 

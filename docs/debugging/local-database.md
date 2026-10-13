@@ -14,7 +14,7 @@ Run investigations in a read-only transaction (`BEGIN READ ONLY`, then `ROLLBACK
 | --- | --- | --- |
 | `mail_inbound` | Table | Submitted logs, plugin/build, user message, and extracted problem metadata |
 | `plugin_transaction` | View | Plugin-origin transaction sample with merchant/comment and extracted plugin ID |
-| `plugin_connection_stats(interval, boolean)` | Function | Connection outcome aggregates; see [metrics](metrics.md) |
+| `plugin_connection_stats` | Function | Connection outcome aggregates for an interval or exact dates; signatures and semantics in [metrics](metrics.md#connection-outcomes) |
 | `analytics_event` | Table | Source of `bank.connect` events used by the function |
 | `user` | Table | Registration timestamp used for the newcomer filter |
 | `transaction_data` | Table | Base transaction records behind the view |
@@ -43,7 +43,7 @@ Example query, using psql substitution for an explicitly selected plugin:
 ```sql
 \set plugin 'example'
 BEGIN READ ONLY;
-SELECT id, created, plugin, plugin_build, "user", user_message, metadata, body
+SELECT id, created, plugin, plugin_build, "user", user_message, metadata
 FROM mail_inbound
 WHERE plugin = :'plugin'
 ORDER BY created DESC
@@ -51,7 +51,7 @@ LIMIT 50;
 ROLLBACK;
 ```
 
-The limit is a discovery starting point, not a complete review sample. Expand it and the interval until the relevant builds/users/operation classes are covered. Use metadata to group similar reports, then read the underlying bodies. Message count is not unique-user count or synchronization count.
+The limit is a discovery starting point, not a complete review sample. Select bodies by the discovered IDs using [triage sampling](README.md#triage-before-implementation); keep full bodies in local artifacts and inspect relevant portions. Message count is not unique-user count or synchronization count.
 
 ## plugin_transaction
 

@@ -27,7 +27,7 @@ The usual dependencies are `index → api → parser` and `index → converters`
 
 ## Import scope and repeated runs
 
-Import every supported operation in the selected files on every run, including the first. `fromDate`, `toDate`, and `isFirstRun` MUST NOT truncate the selected statements or turn the first import into accounts-only synchronization. The required `startDate` preference remains for adapter compatibility; explain in setup that file selection defines the imported period. This exception belongs to the file variant and does not relax remote history-fetching rules.
+Import every supported operation in the selected files on every run, including the first. `fromDate`, `toDate`, and `isFirstRun` MUST NOT truncate the selected statements or turn the first import into accounts-only synchronization. Keep the [required scrape settings](preferences.md#scrape-history-start-date) and explain in setup that file selection defines the imported period. This exception belongs to the file variant and does not relax remote history-fetching rules.
 
 Merge files for the same account while keeping different accounts/currencies separate. Choose account metadata and balance by the statements' effective dates, not file selection order. A balance describes the latest supplied statement snapshot, not an independently verified present-day balance. Conflicting equally recent snapshots require investigation rather than an arbitrary winner.
 

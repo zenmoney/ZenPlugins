@@ -4,13 +4,9 @@ These rules interpret bank evidence for scrape; [accounts](../accounts.md) and [
 
 ## Required use
 
-Start every scrape development, review, and log-analysis task here, alongside the policies in the [task route](../../../README.md#choose-a-task). Assess data correctness even for auth/network changes: successful requests, schema validation, or completion alone do not prove it. Include available successful runs/records in log reviews. Select detailed topics by affected data and decisions:
+Start every scrape development, review, and log-analysis task here. Assess data correctness even for auth/network changes: successful requests, schema validation, or completion alone do not prove it.
 
-| Task | Required scope |
-| --- | --- |
-| New scrape plugin or substantial API migration | Before choosing fields/endpoints, read both contracts and all applicable topics; define expected results and coverage during implementation |
-| Full plugin review or general log analysis | Assess every topic against source records and output; report checked coverage, findings, evidence gaps, or justified non-applicability |
-| Focused fix or review, including auth/network changes | Read affected topics and dependencies; inspect available financial records for additional defects, report them in the same backlog, and keep unrelated fixes separate |
+For a new plugin or substantial API migration, read both output contracts and all applicable topics before choosing fields/endpoints; define expected results and coverage during implementation. For an existing plugin, select topics by the shared [review scope](../../README.md#review-scope): affected topics/dependencies for a focused task, every applicable topic for general log analysis or a full review.
 
 Missing examples are evidence gaps, not non-applicability. Use relevant existing fixtures/other logs; if authorization prevents all financial data collection, mark data quality unverified.
 
@@ -26,11 +22,12 @@ Missing examples are evidence gaps, not non-applicability. Use relevant existing
 
 ## Development and review procedure
 
+Within [diagnostic triage](../../../debugging/README.md#triage-before-implementation), cover supported operation classes: real expenses, income and internal transfers where they exist. Rare classes may require a 3–6 month interval. Purchases alone cannot validate transfer matching; for a suspected missing transfer, find both source records before attributing it to matching.
+
 1. Identify supported products/operation classes from protocol evidence. Derive expected accounts/transactions from source records and rules before implementing conversion, including merchant, purpose, and observed missing values, ambiguities, and counterexamples.
 2. Compare source records with the complete converted result, including account fetch plans and final transaction grouping where applicable. Check missing records and lost useful fields as well as invalid values. Verify pagination, overlapping sources, and repeated-run behavior when they affect completeness or identity.
-3. Tie the comparison to the plugin/build that produced the evidence. If the log has no converted output, reproduce conversion with the relevant implementation and a complete real fixture under the target branch rules; distinguish reproduced output from logged output. When source records or necessary context are absent, record the limit instead of guessing.
-4. Implement new/changed behavior together with [full-result tests](../../../project/testing.md#verification-for-code-changes) referencing affected rule IDs. Expectations come from step 1, not accepted converter output. Follow the [bank/model evidence boundary](../../../project/testing.md#bank-data-and-model-tests).
-5. Report checked cases, defects, and evidence gaps alongside other task/MR findings, covering every topic for a full review. Use existing tests/notes and the task/MR; do not create per-plugin READMEs for this procedure.
+
+Use [scrape testing](../testing.md) for changes and shared [findings and next steps](../../../debugging/README.md#findings-and-next-steps) for the report.
 
 ## What counts as a defect
 
@@ -45,4 +42,4 @@ Confirmed user-input mistakes are deliberate UI errors, not unknown protocol fai
 
 ## Evidence and coverage
 
-Topic decision tables define required scenarios when their inputs are supported, not verified coverage of every legacy plugin. [Diagnostics](../../../debugging/README.md#triage-before-implementation) owns log collection and backlog preparation; [testing](../../../project/testing.md#bank-data-and-model-tests) owns evidence rules; [maintenance](../../../project/documentation.md) owns rule changes.
+Topic decision tables define required scenarios when their inputs are supported, not verified coverage of every legacy plugin. [Scrape testing](../testing.md#bank-data-and-model-tests) owns evidence rules; [maintenance](../../../project/documentation.md) owns rule changes.

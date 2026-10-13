@@ -55,4 +55,4 @@ Cover each implemented classification with its confirmed positive case and obser
 - Unknown per-entity and network/loading failures; every deliberately swallowed server condition versus an unexpected one that must propagate.
 - Unsupported flows, assertions, and required absent input as ordinary errors; optional input's supported continuation.
 
-Evidence rules and missing samples follow [testing](../project/testing.md#bank-data-and-model-tests). Authorization-specific coverage is in [authentication](authentication.md#verification); scrape completeness and skips are in the [scrape contract](scrape/contract.md).
+Evidence rules and missing samples follow [testing](../project/testing.md#verification-for-code-changes). Authorization-specific coverage is in [authentication](authentication.md#verification); scrape completeness and skips are in the [scrape contract](scrape/contract.md).

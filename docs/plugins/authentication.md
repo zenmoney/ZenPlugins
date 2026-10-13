@@ -9,11 +9,11 @@ Read when implementing or changing authentication for a service-backed plugin. T
 - Never use a broad `catch` around `hotAuth` for fallback. Timeouts, network/generic HTTP errors, malformed/unknown responses, and other unclassified failures propagate unchanged under [errors](errors.md), preserving the latest confirmed state without starting `coldAuth`
 - Log a deliberately sanitized English summary when a confirmed hot-auth rejection causes a cold-auth fallback
 - Persist each confirmed auth update immediately: initial authorization, token rotation, device state, and auth cookies. Do not wait for account/history loading, conversion, or workflow completion. Later failures propagate without undoing the latest valid update; unvalidated/unusable candidates must not replace it
-- Follow the shared [background/UI contract](runtime.md#background-execution-and-ui). In the background, throw `new UserInteractionError()` before the first request known to make the bank initiate user interaction, such as sending an OTP, push approval, or confirmation call. This may happen before the plugin reaches its own prompt: waiting for the host to reject that prompt is too late to prevent the bank's interaction. The same foreground state executes the full flow and requests input when needed
+- Apply the shared [background/UI contract](runtime.md#background-execution-and-ui) to login challenges, including OTP delivery, push approvals and confirmation calls
 
 ## Verification
 
-- Test that a background run throws `UserInteractionError` before the first request that would initiate the bank's user interaction, and assert that this request was not sent; a failing UI mock alone does not prove this. Test that the same foreground state sends the request and continues through the interaction flow
+- Apply the [runtime interaction checks](runtime.md#background-execution-and-ui) to the supported login challenges
 - Test hot success including refresh, confirmed cold fallback, unchanged propagation of transient/malformed/unknown failures, and missing/legacy/incompatible state
 - Test preference changes with a working hot session and after confirmed rejection: session preserved in the former, current credentials used for cold auth in the latter
 - Test entrypoint persistence before further work: refresh then history/conversion failure, a later auth update then failure, and hot failure without any update. Assert the latest confirmed state survives and the original failure propagates

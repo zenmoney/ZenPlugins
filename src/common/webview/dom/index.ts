@@ -30,7 +30,7 @@ export function createDomPolicyScript<Factory extends DomPolicyFactory<never>> (
 const disposePage = pageFunction<{ key: string }, DomPageFailure | undefined>(`${runtime}\nreturn WebViewScript.dispose(config)`)
 const matchesDocument = pageFunction<{ key: string, documentId: string }, boolean>(`${runtime}\nreturn WebViewScript.matchesDocument(config)`)
 
-/** Persistent page policies; see docs/webview/dom-policies.md. */
+/** Persistent page policies; see docs/plugins/webview/dom-policies.md. */
 export async function installDomPolicies<Arg = void> (webView: WebViewInstance, options: InstallDomPoliciesOptions<Arg>): Promise<DomPolicyController> {
   if (controllers.has(webView)) throw new Error('[webview/dom/install] DOM policies are already installed')
   if (options.origins.length === 0 || options.origins.some(origin => new URL(origin).origin !== origin || !/^https?:\/\//.test(origin))) {

@@ -8,6 +8,14 @@ const repositoryUri = 'https://github.com/zenmoney/ZenPlugins/blob/master'
 function generateScrapeLoader (index, { id, company, subscriptionRequired, codeRequired, api }) {
   return `require("polyfills");
 require("injectErrorsGlobally");
+ZenMoney.manifest = ${JSON.stringify({
+  id,
+  api: api || 'private',
+  company,
+  isSubscriptionRequired: subscriptionRequired === 'true',
+  isUserInputRequiredOnEveryRun: codeRequired === 'true'
+})};
+
 var result = require(${JSON.stringify(index)});
 
 var exportsThatMakeNoDifference = Object.keys(result).filter(function (key) {
@@ -22,21 +30,14 @@ if (result.scrape && result.main || !result.scrape && !result.main) {
 }
 
 if (result.scrape) {
-    var adaptScrapeToMain = require("adapters").adaptScrapeToMain;
-    result.main = adaptScrapeToMain(result.scrape);
+    var createScrapeMain = require("adapters").createScrapeMain;
+    result.main = createScrapeMain(result.scrape);
     result = {
         main: result.main,
         makeTransfer: result.makeTransfer,
         scrape: undefined
     };
 }
-ZenMoney.manifest = ${JSON.stringify({
-  id,
-  api: api || 'private',
-  company,
-  isSubscriptionRequired: subscriptionRequired === 'true',
-  isUserInputRequiredOnEveryRun: codeRequired === 'true'
-})};
 
 for (var key in result) {
     if (result.hasOwnProperty(key)) {
@@ -116,18 +117,14 @@ function checkTypes (directory, root) {
 function generatePluginLoader (index, descriptor) {
   return `require("polyfills");
 require("injectErrorsGlobally");
+const wrapPluginOperation = require("adapters").wrapPluginOperation;
 ZenMoney.manifest = ${JSON.stringify(descriptor)};
 const operations = require(${JSON.stringify(index)});
 const result = {};
 for (const name of ${JSON.stringify(Object.keys(descriptor.capabilities))}) {
   if (typeof operations[name] !== 'function') throw new Error('Missing declared plugin operation');
-  result[name] = async function (args) {
-    await ZenMoney.restoreCookies();
-    const value = await operations[name](args);
-    await ZenMoney.saveCookies();
-    await ZenMoney.saveData();
-    return value;
-  };
+  // Keep the public operation name in logs when its implementation is aliased or minified.
+  result[name] = wrapPluginOperation(operations[name], { name });
   global[name] = result[name];
 }
 module.exports = result;

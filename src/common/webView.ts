@@ -78,7 +78,7 @@ export interface WebViewEvents extends Record<string, unknown[]> {
   close: []
 }
 
-/** Native browser session; see [WebView behavior](../../docs/webview/README.md). */
+/** Native browser session; see [WebView behavior](../../docs/plugins/webview/README.md). */
 export interface WebViewInstance extends EventEmitter<WebViewEvents> {
   show: () => Promise<void>
   hide: () => Promise<void>
