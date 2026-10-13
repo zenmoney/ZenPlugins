@@ -39,6 +39,14 @@ src/plugins/<PLUGIN_ID>/__tests__/converters/transactions/<type>.test.ts
 
 Use one file per account/operation class with cases inside it, such as `card`, `loan`, `purchase`, `innerTransfer`, `outerTransfer`, `cashWithdrawal`, or `refund`. Match the function's actual input contract: a converter may require complete objects from several bank responses plus existing preprocessing context.
 
+## Browser tests
+
+Place browser tests in the tested module's `__tests__` directory and name them `<subject>.playwright.test.ts`. This repository convention separates runners: Jest excludes that suffix, and [Playwright Test](../../scripts/playwright.config.ts) selects it across the repository. Import `test` and `expect` from `playwright/test`, provided by the existing `playwright` dependency.
+
+Before the first browser run or after a Playwright upgrade, install matching binaries and system dependencies with `yarn playwright install --with-deps chromium webkit`. Run all browser tests with `yarn test:playwright`, or pass a path to select a module, for example `yarn test:playwright src/common/webview`. Add `--project=chromium` or `--project=webkit` to select one engine.
+
+Browser tests run separately from `yarn test` and the current CI jobs. Playwright creates a fresh browser context for each scenario and saves failure traces under `node_modules/.cache/playwright-results`.
+
 ## Tests by layer
 
 | Layer | Verify |
