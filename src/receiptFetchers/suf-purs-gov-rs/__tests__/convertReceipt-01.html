@@ -1,0 +1,352 @@
+
+
+<!DOCTYPE html>
+<html lang="sr-Cyrl-RS">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex">
+	<title>Провера рачуна - TaxCore</title>
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+	<link href="/Content/css?v=CMJX9PRIaS5SVb54H9lSVbrx4oKUVuIKr17Q3CexgV41" rel="stylesheet"/>
+
+	<link href="/Content/theme?v=Mm3ZMcV7iDCQ7cGcjnV8tq9Px24VziKQ56i0KUxiItE1" rel="stylesheet"/>
+
+	<link href="/font-awesome/css?v=o4RQG0VyKe5KvT8vhAt1OmqJkZ2U6L2spbyAzU84zGo1" rel="stylesheet"/>
+
+	<script src="/bundles/jquery?v=DilzeZuJxdbQsfc_JOwsWB4VFDhTPM73urYeggaKdL81"></script>
+
+	<script src="/bundles/bootstrap?v=B2Aod10hsfpgprkQoCi898mBDbb-2dlSAOQz-A6MrX81"></script>
+
+
+
+	<link href="/plugins/toastrStyles?v=9czft_r-CqghKeskuFwGAB-eQDMxtTqbQuPIWDCPfb01" rel="stylesheet"/>
+
+
+	<style>
+        .form-group {
+            display: grid;
+        }
+
+        .col-form-label {
+            font-weight: bold;
+        }
+	</style>
+
+
+	<script src="/plugins/knockoutjs?v=8C2HZTEhg-4SlR23jR0VIRqK2jmCLEckMvQFq6wFpeY1"></script>
+
+	<script src="/plugins/verifyInvoice?v=5I9o0ROF-_Eaj3B12vZEqLGOx2pPwIE3A5H_PD1MAjY1"></script>
+
+
+
+
+	<script type="text/javascript">
+      $(document).ready(function () {
+
+        viewModel = new ViewModel();
+        ko.applyBindings(viewModel);
+        viewModel.InvoiceNumber('FW7MY48C-FW7MY48C-67275');
+        viewModel.Token('1e990c9d-7c0c-4eb2-8b57-83dec0907b67');
+
+        viewModel.IsNormalOrAdvance(true);
+        viewModel.IsNormalSale(true);
+
+      });
+
+	</script>
+
+	<link href="/BotDetectCaptcha.ashx?get=layout-stylesheet&amp;amp;t=1684728000" rel="stylesheet" type="text/css" />
+	<script type="text/javascript">
+      var rootPath = 'https://suf.purs.gov.rs/';
+      var lang = 'sr-Cyrl-RS';
+      var dateTimePickerFormat = 'dd.mm.yyyy. h:ii';
+      var showMeridianTime = false;
+	</script>
+</head>
+<body class="body-content">
+<div class="container">
+	<div class="m-t-md">
+		<div class="row  mr-1 ml-1">
+			<h3 class="text-dark"><img src="/Content/Images/logo.png" alt="logo" height="25" /> Провера рачуна</h3>
+
+			<ul class="nav navbar-nav ml-auto">
+				<li class="nav-item dropdown">
+					<a id="languagesSelect" href="#" class="nav-link dropdown-toggle pb-1 pt-1" data-toggle="dropdown"><img src="/Content/Images/Flags/sr-Cyrl-RS.png" alt="српски (Србија)" width="16" /> српски (Србија)</a>
+					<div class="dropdown-menu dropdown-menu-right">
+						<a href="/Home/ChangeLanguage/en-US" class="dropdown-item "><img src="/Content/Images/Flags/en-US.png" alt="English (United States)" width="16" /> English (United States)</a>
+						<a href="/Home/ChangeLanguage/sr-Cyrl-RS" class="dropdown-item  font-bold"><img src="/Content/Images/Flags/sr-Cyrl-RS.png" alt="српски (Србија)" width="16" /> Српски (Србија)</a>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<hr />
+
+
+		<form action="/v/" method="post"><input name="__RequestVerificationToken" type="hidden" value="XWpGpJ7Eev5SC12vDhJqMShAcete39_8X1gA2hLP8Hht4AIeKtpVr7FhGFRyYmHOn--O6_ULWXP4LqbyVVLHG4ciAzv7eU1d2W4oGAte89I1" />    <div class="row">
+			<div class="col-lg-12  text-center">
+				<div class="panel panel-primary">
+					<div class="panel-heading">
+						<i class="glyphicon glyphicon-info-sign"></i>
+						Статус рачуна
+					</div>
+					<div class="panel-body">
+						<div class="form-group">
+							<div class="col-md-12">
+								<label class="h2" for="" id="invoiceStatusLabel" style="margin-top:10px">Рачун је проверен</label>
+								<br /> <img src="/Content/Images/Verification/Valid.png" width="100" height="100" />
+
+
+							</div>
+							<div class="col-md-12">
+
+                                    <span style="padding: 10px 0px">
+                                        <text>
+                                            <b>
+                                                Упоредите време издавања и износ промета на овој страни и на Вашем рачуну. У случају неједнакости, <a target="_blank" href='/CustomerReport/FW7MY48C-FW7MY48C-67275/'>пријавите случај пореској управи.</a>                                            </b>
+                                        </text>
+                                    </span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+			<div class="row">
+				<div class="col-lg-6 col-md-6 text-center">
+					<div class="panel panel-info">
+						<div class="panel-heading">
+							<i class="glyphicon glyphicon-arrow-right"></i>
+							Захтев за фискализацију рачуна
+						</div>
+						<div class="panel-body">
+							<div class="form-group">
+								<label class="col-form-label">ПИБ</label>
+								<div class="col-md-12">
+                                <span id="tinLabel">
+                                101692669
+                                <span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label">Име продајног места</label>
+								<div class="col-md-12">
+									<span id="shopFullNameLabel">1023027-MP083</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-form-label">Адреса</label>
+								<div class="col-md-12">
+									<span id="addressLabel">БУЛЕВАР ОСЛОБОЂЕЊА 119   </span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-form-label">Град</label>
+								<div class="col-md-12">
+									<span id="cityLabel">НОВИ САД</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-form-label">Општина</label>
+								<div class="col-md-12">
+									<span id="administrativeUnitLabel">Нови Сад</span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label">ИД купца</label>
+								<div class="col-md-12">
+                            <span id="buyerIdLabel">
+
+                           </span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label">Затражио</label>
+								<div class="col-md-12">
+                            <span id="requestedByLabel">
+                                FW7MY48C
+                            </span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label" for="">Врста</label>
+								<div class="col-md-12">
+									<span id="invoiceTypeId">Промет</span>
+									<span id="transactionTypeId">Продаја</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-lg-6 col-md-6 text-center">
+					<div class="panel panel-info">
+						<div class="panel-heading">
+							<i class="glyphicon glyphicon-arrow-left"></i>
+							Резултат фискализације рачуна
+						</div>
+						<div class="panel-body">
+
+							<div class="form-group">
+								<label class="col-form-label">Укупан износ</label>
+								<div class="col-md-12">
+                            <span id="totalAmountLabel">
+                                4.048,76
+                            </span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label">Бројач по врсти трансакције</label>
+								<div class="col-md-12">
+                            <span id="transactionTypeCounterLabel">
+                                66991
+                            </span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label">Бројач укупног броја</label>
+								<div class="col-md-12">
+                            <span id="totalCounterLabel">
+                                67275
+                            </span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label">Екстензија бројача рачуна</label>
+								<div class="col-md-12">
+                            <span id="invoiceCounterExtensionLabel">
+                                ПП
+                            </span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label">Затражио - Потписао - Бројач</label>
+								<div class="col-md-12">
+                            <span id="invoiceNumberLabel">
+                                FW7MY48C-FW7MY48C-67275
+                            </span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label">Потписао</label>
+								<div class="col-md-12">
+                            <span id="signedByLabel">
+                                FW7MY48C
+                            </span>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-form-label">ПФР време (временска зона сервера)</label>
+								<div class="col-md-12">
+                            <span id="sdcDateTimeLabel">
+                                05.05.2023. 19:42:10
+                            </span>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+
+			</div>
+			<div class="row">
+				<div class="col-lg-12 text-center centered">
+					<div class="panel panel-warning">
+						<div class="panel-heading">
+							<h4 class="panel-title">
+								<a data-toggle="collapse" href="#collapse3"><i class="glyphicon glyphicon-list-alt"></i> Журнал</a>
+							</h4>
+						</div>
+						<div id="collapse3" class="panel-collapse collapse">
+							<div class="panel-body">
+                            <pre style="font-family:monospace">============ ФИСКАЛНИ РАЧУН ============
+101692669
+UNIVEREXPORT
+1023027-MP083
+БУЛЕВАР ОСЛОБОЂЕЊА 119
+Нови Сад
+Касир:                               242
+ЕСИР број:                         617/4
+-------------ПРОМЕТ ПРОДАЈА-------------
+Артикли
+========================================
+Назив   Цена         Кол.         Укупно
+DESERT COK 115G ZOTT (KOM) (Ђ)
+        68,99          4          275,96
+KOB.PIL.POSEB.320G (KOM) (Ђ)
+       190,99          1          190,99
+CAJNA KOB.SLAJS 100G (KOM) (Ђ)
+       229,99          1          229,99
+CIPIRIPI DEZERT 100G (KOM) (Ђ)
+        71,99          4          287,96
+ZVAKE BUBLE MINT 14G (KOM) (Ђ)
+        70,99          3          212,97
+VODA ROSA NEGAZ. 6L (KOM) (Ђ)
+       199,99          1          199,99
+JAB FAMILY 1,5L NEC (KOM) (Ђ)
+       182,99          1          182,99
+PP PILECI  BATAK 480 (KOM) (Е)
+       259,99          1          259,99
+KESA SA RUCKOM UNI (KOM) (Ђ)
+        19,00          3           57,00
+KRPA KUH  50x70 1/1 (KOM) (Ђ)
+       299,99          1          299,99
+KINDER CHOCOFRESH 41 (KOM) (Ђ)
+       104,99          2          209,98
+MLEKO UHT MK 1,5L (KOM) (Е)
+       229,99          1          229,99
+PAN.ODRES.P.FILE 700 (KOM) (Ђ)
+       683,99          1          683,99
+MAJONEZ CLAS 285ML D (KOM) (Ђ)
+       174,99          1          174,99
+EUROMAX HC 250G (KOM) (Ђ)
+       275,99          2          551,98
+----------------------------------------
+Укупан износ:                   4.048,76
+Платна картица:                 4.048,76
+========================================
+Ознака       Име      Стопа        Порез
+Ђ           О-ПДВ   20,00%        593,13
+Е           П-ПДВ   10,00%         44,54
+----------------------------------------
+Укупан износ пореза:              637,67
+========================================
+ПФР време:          05.05.2023. 19:42:10
+ПФР број рачуна: FW7MY48C-FW7MY48C-67275
+Бројач рачуна:             66991/67275ПП
+========================================<br/><img src=data:image/gif;base64,R0lGODlhhAGEAfcAAAAAAAAAMwAAZgAAmQAAzAAA/wArAAArMwArZgArmQArzAAr/wBVAABVMwBVZgBVmQBVzABV/wCAAACAMwCAZgCAmQCAzACA/wCqAACqMwCqZgCqmQCqzACq/wDVAADVMwDVZgDVmQDVzADV/wD/AAD/MwD/ZgD/mQD/zAD//zMAADMAMzMAZjMAmTMAzDMA/zMrADMrMzMrZjMrmTMrzDMr/zNVADNVMzNVZjNVmTNVzDNV/zOAADOAMzOAZjOAmTOAzDOA/zOqADOqMzOqZjOqmTOqzDOq/zPVADPVMzPVZjPVmTPVzDPV/zP/ADP/MzP/ZjP/mTP/zDP//2YAAGYAM2YAZmYAmWYAzGYA/2YrAGYrM2YrZmYrmWYrzGYr/2ZVAGZVM2ZVZmZVmWZVzGZV/2aAAGaAM2aAZmaAmWaAzGaA/2aqAGaqM2aqZmaqmWaqzGaq/2bVAGbVM2bVZmbVmWbVzGbV/2b/AGb/M2b/Zmb/mWb/zGb//5kAAJkAM5kAZpkAmZkAzJkA/5krAJkrM5krZpkrmZkrzJkr/5lVAJlVM5lVZplVmZlVzJlV/5mAAJmAM5mAZpmAmZmAzJmA/5mqAJmqM5mqZpmqmZmqzJmq/5nVAJnVM5nVZpnVmZnVzJnV/5n/AJn/M5n/Zpn/mZn/zJn//8wAAMwAM8wAZswAmcwAzMwA/8wrAMwrM8wrZswrmcwrzMwr/8xVAMxVM8xVZsxVmcxVzMxV/8yAAMyAM8yAZsyAmcyAzMyA/8yqAMyqM8yqZsyqmcyqzMyq/8zVAMzVM8zVZszVmczVzMzV/8z/AMz/M8z/Zsz/mcz/zMz///8AAP8AM/8AZv8Amf8AzP8A//8rAP8rM/8rZv8rmf8rzP8r//9VAP9VM/9VZv9Vmf9VzP9V//+AAP+AM/+AZv+Amf+AzP+A//+qAP+qM/+qZv+qmf+qzP+q///VAP/VM//VZv/Vmf/VzP/V////AP//M///Zv//mf//zP///wAAAAAAAAAAAAAAACH5BAEAAPwALAAAAACEAYQBAAj/AAEIHEiwoMGD+xIqXMiwoUKCCyE6lOiw4sODGDFWzMixYMSOGi0mBClyZMeS+yimPIly4sCPAlvKXMlx40uXBmGC3MmT50yLKlXq/Kmzp0ecRo+aTAoAJcmST0UGZUmUZtOLMasCpcpQKFalVpmK7am1682lVxt6lTl2bVixRclC5Wqz5tysaENWnYq3rFm7as/+Bdu28E6/X4ciLWs47eCxcX3ezeiU7uKveonydYw4L8LLgXNibiz45+bTgjNHdpzZrevSnRWH5pxY62vRaGUPNp2aa1SrvPuqrp3b9ue9vXG/FX78cXLCsIvPjl2XtvTdxvuu1n3b+lbmgJdD/9c+eTto4NnBBmfdvHVz857Be+9O/bzu+zO7b8Z/vbJ89+G5VR182PWX33sH/vccauTFx55y9NlXH3rTSchWdOJxh6GA5/3mIYYDjtYghSSux+B48yEolYolJqieiA9S5iJjlq0omY0xhjgbgDJWiCOHPz632olDCokUkM6NiGR1+i3Ioo6a1fjdYeURV2CSKA5n4I4gTrYfjESCaSSXIzK5YZdBKtmelFCa+OSRbFoZIZlZsoikli3xWKSCfKJoZplwqglomilCGKePUYbnH5U48teigyfOOeWSgeYoZp97Wnrdh4Yy5SiBoHbGY5OYyjlmhqYqR2OfeEJ556mc1v/ZqabihQmpb2iiSueEuvZKoJ6pxvilg7FF+iair8qX6a+4KnupsE7e+CiWf3q3qqyFYquhs8QGS2mjz35LYrK0xmost+M2i22si5JqbXq2UgvjtuWuWSpi574I7pZX5stsgGeiW6275P6WqbnqLurqobXKtSnDoT486LTDNnyvxbTS266dDBs1sMMYV9ymt8eGnPCzbgqasYXpshottLMuPLHBKHspZWMHnzqyxD1OChfJqtqs8qdWalxzt7cKHOzGQSf9rtMEg+xx0Sz7K3RS9LZaqcxPUwyruuIava/PMR+NsdhTZv1yxcCOvbO8hFb7cdkXDg1vrlwrfDXbYNvmuzKyLy8L9N9Xvh0x3IjnrLTbVNetb546syw4z6P6TTTP//YcL7l6x3213JW2DbndyDU9OuGXnz241ZhXSfnaX9Odtutkd43n7VLj3fi0TJOGNt/oAl9v8LEPb/zvxSNP/PLHL+1869CbTBrWz7fcfPTCK3+99dp3X3323ycfPvPaTz+999iLnz75428P/vruq899++jPD7/5vtOvP/z1v2////4LoPwEyD7+7c96OOOV5BboNMO5SGtI61fkoucomvErdRA8Xd7MFjYF1kdcBePYxHoXQtL9D20VvFmuSti1zknQZYv/86AMU4dBFY5wbysU4fZQuDsL8m53h1vPBhsIxBnKEIQ5VFQRHZdB3BXwhdmaWxRpBzp8Bcx4opshZMIFO9MNUYM9NEzmnMgor5lQcX5iIACvWDkYxs+NbdQcyFyIxBgmMII+nBq/JIVGkS1xjSqL4+QACbMy6lF6LaweHdn4Mzza0JBXfNsW95jEHXLQb6IT3iE3OUfa1ZFwd+xVHnN3xjB6ypS2k98g40jAQkoqXlU8HSsxGTizxTJlqZRdCr3IRdP5D41SjJobv9jEkq2SlNqy5dbuNjPLVa1kk4TiLssIzNB1cYqvayYv6ZSvzdFym756YCX9SElwRrN+1eSm/w5naUJYLpOJ35TjrFhXu2uxcJq3tKYSDahOX3aSiABFpNr2mahEXvBz8+qlKxn5RHISkoycBNjFxvhPRHazeD4U4oyYWch0qm5XB3zlNYMZT00ydKEEjWZEUfo4jTrOnrWE2kjfSUh8ru6kCJMdRK+5U2mt1KPXcmlBvenTR7bSptl8nEpPFkGKSsupkCRoDbWJzcLdNJA6zCdIEZU5oCYUnv4cZod05zmZzhOalXQhUqHYU6WetHeSdKZZs/VJMg6Sh6VbV9/MmVYqopJrbeXjV+v5TJ1WNIN3vWpVO7hVi86UcVwtbFUH6taUvhWhkXUkHC8L1sqy9IswFetc6//a14AmdmwOXeRT08OrTK4zpmbU6w0zK8q9UhOzszOtMlE7QTDOtVhklSVGOVtbrIq2oLHM6W3LmtuPYumTePWtQEUVXLgOLrlyRVxG/apZeVKvs6rt2Wmbm1pPVlSowDVsWJNZTtka1KrdHeXF7klT9Ia0pBAba1FLGVB6cg6Hs0VgJMVp2fmOk7j25Wdxv4tcha71mMf9L6GgO1gaOli/aWRuELlb08Gec6O//as+sZhdB+qWt+vFpV09fGDjvnetJt0sOAHLVPg617+lrR2Fm/rHDd8PtsXk60QrrFgVx3OqLHWXkaXK4iH3070+fiiQ0Srkjta3yAT2bnmT2tY7JYuXpu58Mo6rTFmoWhfFnhUpk8U8Zap6lccT7lh2gxxVLeeYqOwlLJqVjGHEXri74ZVvS0dM5xjnss7/P6XufvMHXgwjuY8tZjR1lDtNQ4+5LV62cJzPWhhcEvPOjdSxGCdEaVRa+rGOnfElA0xSGS9Xz9L840WrjL/W2rbSw+W0e7f7ZE2LWtcf1vABabxaNp/yg7c2da6hrFA/Kzi6vi41ZKWrVWqPmIS9PfMPf+xkGzu7ueEFrRohPOiDTjvKJnauFH3dVfMamMxXzqtQ1XzoTBOZtmqNt7V7DWDU4VbCAu42rlk9bkUaHN/XvreN893YBD830luGNcDxDHB0c1jbgo0vlUEJW+xKFNOKfvW8Bwznbce2zPpOdGMzvmA6w3jjlw72UPOLZmJPVrIob/ifY+tQPp841oCj/zWqQxnaL8tbxCWvePt8/nBdNvnmGod3e6PMziTT/Nflli69Wf7ybgd2zssu9NVJu+YTuvvFihX7xxlLXp4O8Mg7d62rsa1qczc96xGH9tkP2WorI5t57Lru06Ut5bLz/eKEBnWA897n88bdmCAOuHdz3vJkc9vod9+xcA2fbUezttkQh/vfSfxxylednumuNsPDCWjJqnzhu908/uys6087/aWkljPBS776LiM98yWW9dUhfb5Ve9b01e1xlpXe6KPrvPW0XSp/71702ePX68tmt/I7y3zZBzXlwW/v65H8beJLmvDl6/y5OTpwvGeVw2wXZMJxL/7wgxvxdrd5+e/Zf98njvdw3Rd/okd9kSdM/oZwCGhy+gd5VqReb8RxnJdi8Jd8UUdXDGh2/RVcmpd6jVd26ZVhHUZBsQeAOaZ9FbhuBYhT6gd7CSiAc2dE0BeCrOcXXGd8fcd27YeC9Xd7Cph2JKduBzddXPaDlPeB6RZ4xpZ1vfdaPIiELMhWjzRePYdMUviD+zdtLDSFx0aDCGaD83dyKVhskkdvfUdZLBdmXDh95HaDFOhtTAiCa1hwQyiBP6eFdVaF7dRbh6dgZPh7hMdrTxhXpSd465eEVaeDhQeCWbRz/WOFejh01/deLmiBDkh1GjhqdVhjl//WbkloexBoSXPod0BYiPeXgYBXgv2mXAaYfg5oh4KGTsOGZRW4gZEXh0m1emwIbCrYUJoIc5F4iP2md8/XdjHkiTb3aAq3h0AHfG6GW7a2dsikdop4iXUng+Hmh/ZXhIzoeZ2IfzP4gacXiXQHirB2jfkXi7cofNgnhtGljOTXhuNofv/nhefIe9zYg89GiCaHhu4YhP1od1coefKYitSIdtF3ga7oiB7og8WobFT1bUyHfHRYeey4jaS4hNWYkHm4kKEYcRH5hRh5fIOnkLvmixyJj6X4jfdIgscVaDUmiO53kh+ZjknXZgxWhrX4ecMobjXZknv3kq4XeovXhTT/qZI9KYr2BpCRFo/0mDj3KHNQlYVR2IFKaJELxpJIuXwrSF+b9lkOWW8MGZPM1pUrFnSYh5Mr13H6mJT7uJTB2JSWeIoVOYtCiXlbh5CHBXYTGZBOeIQmOZY8p3hWJ3Q+aYhEKIuy53tKuZGfCJF5KZefGG2P2JAxSHRPV219SJbRuHHGCJIEyZicuIzmKJpg5nYFBofJSJLjuFIu95S7KImPSXqRuX0YWJuhaZkxiJU8yYyIxpmu6WJkZ5fZh41DaUdbqZcgl5YuBpPv2GlwOZIR5ptH+WajSIyDmWe3aVtOOGuHpoxQuZLQ6ZX2WJRm+Iaax538iJzhWIlWOZCG9lmcjWmT8rdnJClojgmZ6HeZxvd63Lma5jl2k5ln+WmWd3ma9ymbA3qV+0mFYemf6/WPTyh34qldjpeAzLl0vyidgfmg2jmc3IdqoemX7JmJupiRbZiZY2iaYtl+BriJCoeI9nmcD/l2BqqiDheSrFiSUrehadahkMmWMUqZbTmi1bmesLl7YHh56CmYiOhR24mX0MihQop6X3ieK+ieKXmG9ZmhJrqFTDdxoaZ6tNmkVVqQwsibAXiYU7egc4mmAeqRKsqVKcmWMGqmQZiLYHmQ0xdzFeqmxsmD5RmBKxpy0sh4+aiZO/pgxEl7Ipd4TZiNYSmnHP/4nqIooVEZasFZg5XplvQZpd0Zp316jI5KiclJkQ+4pIP4oWqon4s5qCE2nqaKm1r3n1JaqvOZiOa3iF0potM4o834qkYZq5jYYEcZpLY6gIaWq5DKby2InNq2gLX3b9ZnkAI5qnWaqL/nZRJ6oK25pt1oofxnliPnpch6pT/5q26IpNI3oUxZc0F5mlr0fvWYop6anUiqjXoKdYnZizKpe7P5rYEYrqTZqb35bgc4q9jqrTO3aPPIrNYJk694RPKKkqhaqc5KqKC6hdTJrbRasOyqb2SKqFU5nYvqaaAHnxXrnbGZqa/5h/7Ksigbqqn5pwd7qf1aopK2sVAqnM7/SZe+eqRnOarBuZuGKqw3q6OlqrNdyrPHirPP+paqGrTDaIeSibN82adPSpifqrHqCLSFmrGu+rAjeKelia4XCrDXmpU7ebIieZFja4pJq0anhq5D27U4aq1QW63CRqmaSrEvy6VSO6QIyqRZhoxY2LJ1ia9OybdqGrA/R27f2aqBmqd+C6h2S5WeeFQYKqROCqI497ki6K7zCovMpYo0epOb+4A5WrV3+LZJmq7k2JnOZ5tly6itpLI/2n+yybpZG7haCpq0+UthWLPh6aIdObF41ogGq61hh4oKS7piO7roKHE+eqrl+rOQ66EUCpycum/eC4i4eLn0Z7SBy6tF0decE7qtxLWKzuiNEHuB5uu++hi5czqmrEq99bqW99uwwWqCPIqD4lu/BAq23+e2yrm16aue6/uaT2vAsBuQhivAUOhqkxi+Byyr61q0gJjBJ8qg44unfYm5OemwMseaw4qluop1DoqdWmm5zWp9EXyg7ZpqpGqkxuqyMau1CbrCrLvC4yfCH1ymXAustSa0NkmnRixwn0m8rVrEkvuiclu9ium953u/MNu21ii/JLu24Dq7loq34wuhBTxp18vEQriMGlyQvzuyKDmuvVrDO0ud/0aYe9EauliHommcw/oqwxK7vF/Jx8D6jNTqcW/MvMBrx5M6gzMpwWP8xWh7ruXLtgkKjKPVuMpKpBo5eRP4ggr7w09MnlQ5rWpLvliKvusKvZ4Mu53LmCH8yXprnaKcnk7LtrwaSpoLsGnKya+bymCqxMdbfMUKiUMsuLZ8umgpuNCKmr/8r9EbrMkLxQQ7w8lauMHrwYr8hujrkqlapACqy5nbwb58Y9qLcWrMrz26nF3by61LopG8zKN5teHcuxaXm0usuFMsqaGswLVqpW06zV78l7dbzpz7eOt4zgfbrWdMpY+bzzqMuP4HshDtwP0Jnlz8vVMJq418sRXNz/8G7cjl2L5BTLBlSczw+Mdbeq+Q3I4aqs1wTKRiWtGJPNHiCtLESoADjNLR7I8rndJgTLsYDc2M3KAUvbg1jYejPMebis4SLdCFnLpjTMgqvc/mOq8QTLYbLZjP3HyOK868GM61bMzgt80WTNRubLKkSHFTfc16fMuvfKNW/KYMXM16jNSVG7aiSs97W9ce7c9FXbtR3dFpXbcNaMYIfdcKqtU5KK3cy8pxTcSeW7odi5XGqrirTK0Bra5qecAh29ZsqskLfcGNrdavpr4/m8LvnNkIK5aZXKAtfZ2Ta9aifatK+8ZS6cLNjIYsTc6LvViRTdAfC9lSXdCTrb+4DM641ovZwX3Ufg3JsurGfSvPruvc3Wy7qL3Iwgu3go3Mkjx8QByh5sy/0n20lCzamKlKnQ3b6uzEaTjKtX3cbMzSHDvLW0zU183VbGzakSqzOf3Cnk2vg8zQ9129uhnWu0vTWd2/I8yb8TqlZdy3if3PSzvWuEuqDfzKuK2Td1zSoou/LEzVRJnatMjfEXvVe6nP/y3i3B3G3Svbck3hGA7IEjzhL03eb12NEq7fNS2nLO7hSp3jceyNMv/+m4CdsKb62iGXzQK72e+ry+wLyiputjU+5HYdnkY+2EieV+3tcEbKouM8vCHJ13L8lfbazs084zMOvmLu22k7zwP7wF0eyO9qsYXp49ib5J55uFYL161o3BE8uXl8nSXs0PH50Iwb4fMLv1EsqH2e4Fve4pc82oL+4D5NwzCO1jhN0jvafV9uo46+3WLYonoeu54e4Ln702ftr4se0uT7548+4gqe5og86hxtZkeet7vpv9aNtZwO5yS8rBl+6URrVJaMmLReyQz+qMmd3lKcuPvbwu/t5XdO4yK9wHlu2yn8dZm+mYJ6q5OI5hDe2uVNt8JusKkcojPbqO7cnuf/bb+8TsY0O8UxPO5yzmA6HtrYDrRn28bFG+kJzr/eTtaMvusg3tv5Ktk/XvDsTso9fePbjuimnqUCD9+h3XVSruWqKbA3fPAqbOvUbOUAztH3nu8hH/CHvLC/fcYM77spjuB47trDO/L5WsGd/aV/eaZwauiXl+qrfsQm/enDvqsvLuC1W+/HftAaz9e5jLRjDsKN2+0O799GfeFJTbn4vOEHvuQuP/VMv6fGDc8JXKPxrNFlHtFozPMtL9OH/b+xmchx2bSDO5HfzPVzjsfaPu/DrdndXbEU/7UMK9T8bc8njcU5yu2AG+7KbOEEvKh8v87+/dxvvssXXfaLZulMvUvzjI2fQBmKPiz2QW71E1vlquz3RW6V9xz4fm5/lO+/A17o+A7U0G3syv3ZE8zbR6vkQx+gUI2xch+3+73xSmp5vj/wl0/q4N7xaS/pADzfjx7eCHzZHjvDuQ3gFi/eZu/mA53XoF77rv/dtLz92j/f/97k3tfsz7vJhH3CxM2jNt/1zL7UtUrIpgvsoDvpFG/ITLv622v0yK3aO439AAFA4EAA+wweNEiQIEKFDRUydLgQ4USKFS3uk0gxI//GgRAFXqy40WPBgyJBcoyY8mHIjiUdWjSZ8KXLjzRJgox5UmZDnSpr4mypc+dKjTOL8rTp8ybKlEKdTsy5UWpQoVGp5oSp1GfWn0ytdh05tStWm0+hGr2otCfVtUiPEj3r1uvWpGjNtl06MqzWsVftlgU8NOLevmDrquSalyXiw1rNDj4J+S5TvIn1Nra8WPHQy2/VYtZMuGnguYY5k/4s2K/p0qPf4pXcOnXVv57ZPiV7+jXq2pRD/9Yd1zHo3aoZB4/d2bdxuLG/Di+eli7z2bBv22ZdOfL15d2Tk1au/Pns78j5LhULV/xq163DNy7fPbHz87mF24+vHSjr9KL/M0dfj7/z/APOO+7qew+79tLrr0Dy2GPwQLQilGs87h6bjrbjDJRLtPzA460w9DK0cEP8BgyxOQlFpI9FCFdU0cUKYbTPug63M/FFAfnST7gAR8xxR+jk0+xBGYHcjMMFdUSyRCQ9ZG++C3HL0MYYm6SxygJ//LHFJBEEUUEvCQyuywmZJPO+KOFbU8HJxJwSThHThPJGAFM0c0YecUyyziHj87K6FAFFcb8v0Ry0TSINHZNPI9Xjs8dAz9zTUCvBZE7KIwndNMsN//OROCUbLNNRSvtkU09ILY1U1EcFvVPOP3ub9NNE7ZSttwRHVbTRUhk99dJTawwz1ExTxdLW/1jVrO9ITZNtL89Vc8V1VwqfdFVRYec0NchpQQW1Vmi53DLbTp1t1bxqu71SXD8xzK5Yd4vU9lZonbQWRmnJXdZXasdNl9d4gVV1XuriNFY6Ia99Nl90D1643l+VTJPUhCtmkuGANZ7s1WEzRnhXh9v1FNvoxMVXXn3t5fdic+9FlFV1v2X3Wo7/hRfViQ1m1uSEUS555HBDdlDLY2fG+NxoA076UCFbfvfNlE+OmWKWRfXz5g9lxplebme2uFmidw62XKRVVlZDp6cNu+yzj3bP6yULHvtno+N+G2+Bh+yxaXDxRHtpp6a2+2Grwa4666q3VhjmiL/eW1pYG2848PKhIY+646CLNrztzmktVG+PK3WZ68xLX1RtSUF+GlnJWXec5sERxrRxm2FvGui0iSV795U1H/jwrqn29vTRBb/rRNIrhzj23D9evti/m58+9b45dx57f4+/fd3Zg6+d+eHH1z12TnVGffLn3rQecOq1d5t8EkNnX3m+5TZ+froNv5545B9VXNpEhjX3/ctJ5yOc2FoHt9dhLnCTs1LOVue74iELgtIjYN7CZ8HNuYmDuLpZA302sgsSDH0DRBwI9We+u6FQby3bYPMI97zopXBt+Vtgzxgnvv4V7n8rDCDyXHg+ER4QdCrc3/1seLm53VBuO//EoAzp90GA5Q2HClSVBK/WuxE+MXSeOyEVYbjC2q2vZgp8Fs8sdkUsrnFji/td+6RYQSueMYv26l4TqxdE9X0xfkZUWhnrBkY31lFWACzgtq4kQj5KTI4GnOIcqyg8NrbRgVzTWhzth8UxBi+InWyiIB/nRBPyMJFm0+ER0SfK7L1PVnSKIiUz2LPqhRCVQpvlJjvowx5+8pZixCPuvMi/WBbyhfhDpS2XhUsGFlOVZpzYECP5SFZWEomhjCMTTenBfiXul1yEZTRzqUppgm+auqSj/CiIzRxqE5mlTKY3l2m5AhJSkyXLI9Rcd0q4WfKSyetVQNPpz1amz4//9Fv/Pcn5QOgtkqF35GIeEck+DQpUj1QsXy0P2kVuCk+ZsnSlOjkqUhLCbqIUBSMjg0m6Po5ye7T7o0WhmTruWTSNNn0nJNNZP5za0J5iO11JBwpTS/ZylkINY0UR+tCR5pOe/dTVUwHqUnmm0ns0NWlUxdnMbl4VlOVcmzGdCs6X2W+PTNsnV60qO6wGUqvUfOsM3wg5s+Z0pifd11GlqsVX6lWSPZRoXInKVrlisqeUs+s9d7rFY3Y1qQb1FjqFuNeynnOQG63rVnXKNmHCk6Ig3axYBevVb6qNoHmV5EwV+VF9HnKhId3mVJuKRqZGUGp1uylQGcvJ0vpSra1dKxHT/2o73GIvtxftaGyN+j2C+qx8wmXu8Sa4Str6j3FQNCxVF/tbvyL2s811JHYbO97AaneyzAXldVv4ss9yN7W79FcRBwtW3pH3tZs9rnjd6dPBqheiKB1ts8QX35US1pHhJO4omdhSAbc3pcM9rm01K+EEK1F08ZOvOZfqXlrmNMNhnSZfPbpe2CbWk+xa7TPhmMMY8jKWA95obMHL0uJ2VLUvduaGIWth/e42vJh9K4xprOBhzljHFL7xhHM8Uo3WcLzTfbBrlcbTJBJYrUbG623/y0zVzfWxgOQsaa17WN+OL2flne01sYxhLTvUsSLeb5elDOITj5mu+GxoixGMZCuZ9hm8NJxkUL2MwOpeeM1Cpu5/xavn7iIatXs7bWWJWeLs/rCokm6uo1HM/9gUa5itml5igXkL1SRGmEpTLrJ0MWrZLZs40HY0sJg7rFQ3hxbIn1NzkAucXzJmVbc27q+fv3zfErbVwvSNKa7p7NzOwnXSspVxVVl7akuT7JqCdmyxJRtlQy87vWy282ObHOZXh/q7d8so/K4K5sxWmNtW7rZKNTtt9HqY0/cGXrXH6kP/Lrvfivz2P1+K6nlXFc7jfDa9TatiZVP5vPHmJ6RrbOZVrzvZx1bonZ0s4hbX15jABfimab1gXfd1zv3+6cPf7Wtxq7vaHJ8vjk1e4a+6vL7YtrXFFR3ijDN749QuswtBHvGQe3bELCaxu/H8c1Kz0NM1/6uDWX5W//912tup3mVC29tzQEP5sB4PtpO3HWA0q/q9uTZvYSG+9ZFj2usaZ3JpR426oLs60k2fO4I7zvC45zvg5eb31y/r6b0TPunPvbXT9b10cidw4nHOpM4nye3l5pyUSpd82XvtVgFivfMmHHitEX/pcO/Zx6Sf9ZNtPnjRs57RJy95cIX96DVf2+2DZjmhn01yWYf+zDyHvazLHPnJ1/6uDX274nUPeN5/mr0yt/zvfy3bk4Ze89OnfYABXXhrD5vgC4c7zDnf+vGnvOjepTm1x15n1dOawcRHOZmBGdLr+1z5s4d15RdN9tj/W9TwzbOwsz9e+776+7vq4z/Jo7AFLDL16Us0+3u/FVO5iyPAgjLAnqum7tI2AXTA82PAqpu/1Es3oxOtIZsVE+QZ4NpAE3S44eNAfHskqku/iJLAdhu6SquphPuxz8Mv6PswZIO7JJMz6tvB7jM9slKycBtB+xK4w4uxNnNBwwvCbAK6NitBI9RAxWo5/qoyaSvC+NuuIcxAEvRC9hM6V0M0hTs+M8S0/WM/BHzDALQ9JdRCU4su1lOu5zMd9Uu6RurC3nM9CuTD8Rs3nLtCN3Q+GpTCvotBz/O+Nqq7PQQ9+SNDsdNC6DI2RAQ7IqvEB3S4YvPD7kNEB6Q8kevBN4OwiAPFRqstU7TBQXz/uFAUQqhbO/STLL17wnprOkNkPN+LJ9QbQxe7w3Warux7uiX7qGBMPnnbsWAUwrs7RWM7w6ibp7bbRS/jM7RDLjG8OEwMRRXsxc3bxhuUvXYyrtPzRGQswxN8RK2jOEVkRy6TxamTqk2MNSyExxaEvptDuC0MPELsR1xEQQBkQViExo+7vXyEwn2cOG9cSLwTx+arQIEURXDDPEgkuoTMxIY8sN6ytyS0RTnEx3/0N+SzOyAySH8iRzXKuioESX68ssdDR7MjyYnsRzSbRsuDw1oDwgfMMkOqRf+jxmYMx2N8SZFsN7UDK/FLM58UQHg7RPzDQXRryaGMs2zEOKAU/0r0K0bKSi5H5DLH273/M8eYZDrQSkMnbEIFRKtKk8ePLMemRKpHaz6HNMusRMuT5MGoNEqubEuJ20sq5MJHREhrfMcZFEGORLo4ZEtKY8LF27kpPMtnbDas7MrB7EA0fEhhBL90dMzlAzNazLtfvLxVvEa33DVYBDVoO8dh9MzDBE3GE81CK8TVY0yebE3AJEyC9Mc13M2+jEDzssO8nMryM8lsy0WdREraBEuXO8K1YjvSDE24hMmarLiRRKqdPMjaszqJZEXH3Dq1C87L00eInD67jD6yZEcj607n/M7DDM+qhM37Ks9umzv0vM/cE0dotMnSe0/TZM2v/Ez6zPVC7GtDCYxPNgTBu7zKvyzM1HtL8PRIhTzKzGO1imw4qVNQzsTPjkTFCiW3cRtFl0zM21w/yLRAizw4v4NB31xR4oRQr4TPCd3IIyvQBgO2yPLQIazPZKxDEiVHihTR/sNDzcw3e4RKSpTG61zK5mTRoWS3iNTDo8NRIrRRCu3MKwTHxazSV7RKElXG64Q/wTPODYW3ITVRiyxFJEzPgks7xVS87Ew8d0w5AHVHwCLSMFzTJT07RoxSM6VHeGQl4jvAPjRSbuTSFby/AkTJJ0XMaDNQzMy/EOzJQj3P4+TTaKzL/Wy26rxFU/xG23TKPwxRVxS2/P8stXoEPt1cwp/kUbikSO7DOWt6OVOVTIw0T7mkVFFt1UYN0EelTuaU1EkEyGoMSv3U0TIlv9dcubXszUIj1NyMTg6T1VRcUCq1TCuE1h1t1gGk0VA1t0ytzg+My00FTjIdVUasQF9ETcOcRVizviLMycwk1lKVUHflVhWFV19NSnSN0CzlVzXd0U98SmJTS28FyjtNyUtN01T90Iv8MC3VVmJcsmyNzjPVyO08NIZMVvJUx8jsUsEE2Dl0tnSdV1s12QMdyD/jWHbyWDfdRlR92ZG115K1WLbD2FydR2V11eHs0EWsU1892S9N2I9VV9U02u1LvCQNPxi0VBS9WZz/bEBHHL17DEupFNfkvNnZHEv3u9BP9dp1is2VxUuJDVtdhdJAdFautVr1VMopldqZ29lFZdYfDVff7NlDZdvnDFqxfcGzHduSJFtFvdpbLdx4BNKJRdgS9VME1dCZ5Ut/JFhtJMVTXcf+tM/YW02xbNwMPbeyBK0e+1yoXVgIxFQ5ddgZdc0tXdZl9EHSbFAOm9b5BMSh6lg0ddlZRVqtFMTiPFpJzFpOnF2IhdWpHdbHxNyqPVys3NPR1EWS2ldATdQaLNKHHVSZNNbL5My0bNrge1ZGBVrNVdXUHVHrndNpHVdVzFfy/cJVNdfOxcva1Nn/FNm4bb9f7VG7RUx2yY1LT+3UghW+8R3J8t2xKEzEVz3SpT3Y4WWqE81Zmh3P+nNeBI5GB56xiEXW15zd6azXB7a6wJ3b1/PLtA3fjR3MqvVSnJXN6MXNBI5UkTI+/31THYvhblTgwNxQPMXhkM1hMV3hPp1gHUbcDr7g13VhyYVdFiZXvg1Y2x3HitVIphzOPJxfBhbdES5ZRQVb4j3efXvXuxVf3t3hLb7iJd7MngTDlK1XZvRikTXGA2bdNGZe7AXW0ZVBEZbjSe3i/wXdN5bhpszjTv80vpzs1iDmukM2OnClO+ONnNy8wDm7ItTNtJZ9WsJFZBgNXPT02cvFwK/l1O7t3229zUpe4Et+0Ewm0DVuUXTlvhxc3BAWWmx0W+0z5fVtvAutXMN15AxO3iYW3O+dWdw9vz8W4j2lU0OFWVfeZFB+0eU9Y0ouXvqD02JW0mPmQTQWyWV+5cQ1X+kNZukE4N9dZCw9ZRuu3XRdwkjOSOB1ZkclZPlUZ3cGZ2Y+VAC14O+LZxi9Y/3dyTjWV0ENZy1OwAOOV4atW+FtZqrF5eHqVm2mZgt9Yd29V8ad2ybF0oT2XgbL5+aNZeSE6CqdYkaOWpWE4ovm5ouc4DYGZQ7/tlmRVuiPPlF6ZdWO3t73fGcTJsm+/c0WzmJPpthurllNrN/KlFaUVWTvlGZ81uNMXdeihNxLhOqGfWqlvtaRjuiZNGeCpul7vuWfLuCApF+SZcbY3V9exj3wLahhdmMmddKv9s+37kz5VV19hlthtc6kFmdUpmoYltJOhGWplkHcLehYvFEk5eO85rt0Zujz9WsfPucvxmJndN/CVtsUvdLHVGZGvt5FxOBrBmt5JuE43d06LmsnlmkDBuEQDOSZPkshfebQjkTSfs7Z5lV//Uu61NvcBlEqxmT5dNGXLs1UjtHnlWwajjlq/edavOmra9fIFu7I1ejPlu2zjllbiXbdxsbucSbKc+1L165qtobrSt3M4obf6y5tNWZqB6VlmIXU4J7hoBbuv8bQ+VZprRbevDXWajVMRcZEpjXd7m7gIg7tzJbdVsRrjNbUWn5vH/VcDl3v7cYy1P5k5ptny25HJd5lZ91s9+Zp81PvBRfl9Zxw2iZnmt5nS1xpp2bw4uNSJgbdiAgIADs= width='250' height='250'/>
+======== КРАЈ ФИСКАЛНОГ РАЧУНА =========</pre>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-lg-12 text-center centered">
+					<a target="_blank" href='/CustomerReport/FW7MY48C-FW7MY48C-67275/' class="btn btn-danger">       <i class="glyphicon glyphicon-flag"></i> Пријавите овај рачун</a>
+				</div>
+			</div>
+		</form>
+
+
+		<hr />
+		<footer>
+			<p class="text-center"><strong>Copyright</strong> <a href="https://www.dti.rs">Data Tech International</a> &copy; 2012-2023</p>
+		</footer>
+	</div>
+</div>
+
+</body>
+
+</html>
