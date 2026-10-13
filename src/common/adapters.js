@@ -64,6 +64,7 @@ i18n.init({
 const MS_IN_MINUTE = 60 * 1000
 
 const SCRAPE_LAST_SUCCESS_DATE_KEY = 'scrape/lastSuccessDate'
+const DEFERRED_SCRAPE_RESULT = Symbol('deferredScrapeResult')
 
 const unsealSyncPromise = (promise) => {
   let state = 'pending'
@@ -125,10 +126,35 @@ const getIsFirstRun = () => {
   return Boolean(typeof ZenMoney?.getData === 'function' && !ZenMoney.getData(SCRAPE_LAST_SUCCESS_DATE_KEY))
 }
 
+function publishWithSuccessDate (host, successAttemptDate, publish) {
+  const previousValue = host.getData(SCRAPE_LAST_SUCCESS_DATE_KEY)
+  try {
+    host.setData(SCRAPE_LAST_SUCCESS_DATE_KEY, successAttemptDate)
+    host.saveData()
+    return publish()
+  } catch (error) {
+    try {
+      // Restore only our checkpoint, never another run's newer date or confirmed auth.
+      if (host.getData(SCRAPE_LAST_SUCCESS_DATE_KEY) === successAttemptDate) {
+        host.setData(SCRAPE_LAST_SUCCESS_DATE_KEY, previousValue ?? null)
+        host.saveData()
+      }
+    } catch (_) {
+      console.warn('History checkpoint restoration failed after publication error')
+    }
+    throw error
+  }
+}
+
 export function provideScrapeDates (fn) {
+  return withScrapeDates(fn)
+}
+
+function withScrapeDates (fn, deferLastSuccessDate = false) {
   console.assert(typeof fn === 'function', 'provideScrapeDates argument should be a function')
 
   return function scrapeWithDates (args) {
+    const host = ZenMoney
     const successAttemptDate = new Date().toISOString()
     const scrapeResult = fn({
       ...args,
@@ -138,6 +164,13 @@ export function provideScrapeDates (fn) {
       isFirstRun: getIsFirstRun()
     })
     return scrapeResult.then((x) => {
+      if (deferLastSuccessDate) {
+        return {
+          [DEFERRED_SCRAPE_RESULT]: true,
+          result: x,
+          publish: publish => publishWithSuccessDate(host, successAttemptDate, publish)
+        }
+      }
       ZenMoney.setData(SCRAPE_LAST_SUCCESS_DATE_KEY, successAttemptDate)
       ZenMoney.saveData()
       return x
@@ -480,19 +513,58 @@ export function adaptScrapeToGlobalApi (scrape) {
   console.assert(typeof scrape === 'function', 'argument must be function')
 
   return function adaptedAsyncFn (args) {
+    const host = ZenMoney
     const isFirstRun = getIsFirstRun()
+    const reportError = (error) => {
+      let presentation
+      try {
+        // Non-extensible built-in errors need a mutable copy for presentation flags.
+        let presentable = error
+        if ((error instanceof ZPAPIError || _.isError(error)) && !Object.isExtensible(error)) {
+          presentable = Object.assign(Object.create(Object.getPrototypeOf(error)), error)
+          Object.defineProperties(presentable, {
+            message: { value: error.message, writable: true, configurable: true, enumerable: false },
+            stack: { value: error.stack, writable: true, configurable: true, enumerable: false }
+          })
+        }
+        presentation = getPresentationError(presentable, isFirstRun)
+      } catch (presentationError) {
+        const errorType = error instanceof ZPAPIError ? 'ZPAPIError' : _.isError(error) ? 'Error' : typeof error
+        console.warn('Error presentation failed; sending generic failure', { errorType })
+        // This fallback must not read host locale or invoke presentation again.
+        presentation = {
+          message: '[RUE] Error presentation failed',
+          fatal: false,
+          allowRetry: false,
+          allow_retry: false,
+          toString: new ZPAPIError().toString
+        }
+      }
+      try {
+        host.setResult(presentation)
+      } catch (_) {
+        // The native boundary may have consumed a result before throwing; do not retry again.
+        console.warn('Error result callback failed; native outcome is unknown')
+      }
+    }
     const result = scrape({
       ..._.isPlainObject(args) && args,
-      preferences: ZenMoney.getPreferences()
+      preferences: host.getPreferences()
     })
     console.assert(result && typeof result.then === 'function', 'scrape() did not return a promise')
     const resultHandled = result.then((results) => {
+      const deferred = results && results[DEFERRED_SCRAPE_RESULT] ? results : null
+      if (deferred) results = deferred.result
       console.assert(results, 'scrape() did not return anything')
       if (Array.isArray(results.accounts) && Array.isArray(results.transactions)) {
-        ZenMoney.addAccount(patchAccounts(results.accounts))
-        ZenMoney.addTransaction(patchTransactions(results.transactions, results.accounts))
-        ZenMoney.setResult({ ..._.omit(results, ['accounts', 'success', 'transactions']), success: true })
-        return
+        const accounts = patchAccounts(results.accounts)
+        const transactions = patchTransactions(results.transactions, results.accounts)
+        host.addAccount(accounts)
+        host.addTransaction(transactions)
+        const publish = () => {
+          host.setResult({ ..._.omit(results, ['accounts', 'success', 'transactions']), success: true })
+        }
+        return deferred ? deferred.publish(publish) : publish()
       }
       throw new Error('scrape should return {accounts[], transactions[]}')
     })
@@ -502,12 +574,10 @@ export function adaptScrapeToGlobalApi (scrape) {
       value
     } = unsealSyncPromise(resultHandled)
     if (state === 'rejected') {
-      ZenMoney.setResult(getPresentationError(value, isFirstRun))
+      reportError(value)
       return Promise.resolve()
     } else if (state === 'pending') {
-      return resultHandled.catch((e) => {
-        ZenMoney.setResult(getPresentationError(e, isFirstRun))
-      })
+      return resultHandled.catch(reportError)
     } else {
       return resultHandled
     }
@@ -557,4 +627,4 @@ function checkSubscription (fn) {
   }
 }
 
-export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(provideScrapeDates(checkSubscription(traceFunctionCalls(scrape))))
+export const adaptScrapeToMain = (scrape) => adaptScrapeToGlobalApi(withScrapeDates(checkSubscription(traceFunctionCalls(scrape)), true))
