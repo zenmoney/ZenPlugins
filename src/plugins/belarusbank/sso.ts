@@ -19,9 +19,7 @@ const installCapture = new Function('config', `${authCaptureScript}\nreturn WebV
 export const authorizeInWebView = async (isInBackground: boolean): Promise<unknown> => {
   if (isInBackground) throw new UserInteractionError()
 
-  const webView = new WebView({
-    inspectable: true
-  })
+  const webView = new WebView()
   let resolveAuth!: (value: unknown) => void
   let rejectAuth!: (error: unknown) => void
   const authorized = new Promise<unknown>((resolve, reject) => {
