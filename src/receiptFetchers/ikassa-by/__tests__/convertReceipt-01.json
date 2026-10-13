@@ -1,0 +1,72 @@
+{
+  "uid": "DC1591A3BBD7810E0717E0D3",
+  "token_serial": "AVQ11071102301",
+  "doc_number": 55728,
+  "doc": {
+    "items": [
+      {
+        "code": {
+          "codeType": "PLAIN",
+          "code": 1559142911
+        },
+        "count": 1,
+        "sum": 33.9,
+        "discount": 0
+      },
+      {
+        "code": {
+          "codeType": "PLAIN",
+          "code": 2001322528
+        },
+        "count": 1,
+        "sum": 5.9,
+        "discount": 0
+      },
+      {
+        "code": {
+          "codeType": "PLAIN",
+          "code": 804984148
+        },
+        "count": 1,
+        "sum": 2.9,
+        "discount": 0
+      },
+      {
+        "code": {
+          "codeType": "PLAIN",
+          "code": 257980352
+        },
+        "count": 1,
+        "sum": 1.06,
+        "discount": 0
+      }
+    ],
+    "sum": 43.76,
+    "discount": 0,
+    "total_to_pay": 43.76,
+    "cashless": 43.76,
+    "cash": 0,
+    "other": 0,
+    "header": {
+      "device_id": 119005395,
+      "cashier": "Кассир",
+      "doc_number": 55728,
+      "date": "2023-05-04T16:46:21",
+      "currency": "BYN"
+    },
+    "doc_type": "SALE"
+  },
+  "is_sent": true,
+  "company_unp": 192454509,
+  "trade_point": {
+    "name": "Ресторан быстрого обслуживания \" Додо пицца\", ООО \" Пицца Стар\", г. Минск, ул. Романовская Слобода, 8",
+    "location": "г. Минск УЛ. РОМАНОВСКАЯ СЛОБОДА, 8",
+    "inserted": "2021-09-13T12:00:00",
+    "id": 3503
+  },
+  "currency_code": 933,
+  "extendedInfo": null,
+  "currenciesReport": null,
+  "metadata": null,
+  "items": null
+}
