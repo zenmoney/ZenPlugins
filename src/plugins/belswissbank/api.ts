@@ -5,6 +5,24 @@ import { Device, Preferences, Session } from './models'
 import { Strings } from './strings'
 import { encryptCredentials, formatToApiDate, getDevice } from './utils'
 import _ from 'lodash'
+import { sanitize } from '../../common/sanitize'
+
+function maskCardholder (value: unknown): unknown {
+  if (typeof value !== 'string') return sanitize(value, true)
+  const last4 = /^(\d{4}), /.exec(value)
+  return last4 !== null ? `${last4[1]}, <redacted>` : sanitize(value, true)
+}
+
+function sanitizePaymentLog (payment: unknown): unknown {
+  const payer = _.get(payment, 'last4namePayer') as string | null
+  const target = _.get(payment, 'target') as string | null
+  const payerName = typeof payer === 'string' ? /^\d{4}, (.+)$/.exec(payer)?.[1] : undefined
+  const targetName = typeof target === 'string' ? /^\d{4}, (.+)$/.exec(target)?.[1] : undefined
+  return sanitize(payment, {
+    last4namePayer: maskCardholder,
+    ...(payerName !== undefined && payerName === targetName ? { target: maskCardholder } : {})
+  })
+}
 
 const BASE_URL = 'https://mobile.bsb.by/api/v1/'
 
@@ -50,7 +68,8 @@ export class Api {
 
   async fetchCards (): Promise<unknown[]> {
     const response = await this.fetchApi('card-management/cards/actual?with-tokenized=false&with-hidden=false', {
-      method: 'GET'
+      method: 'GET',
+      sanitizeResponseLog: { body: { nameOnCard: true } }
     })
     return response.body as unknown[]
   }
@@ -81,6 +100,9 @@ export class Api {
           showConsumptions: false,
           showEnrollments: false,
           showTransfers: false
+        },
+        sanitizeResponseLog: {
+          body: { payments: (payments: unknown) => Array.isArray(payments) ? payments.map(sanitizePaymentLog) : payments }
         }
       })
 

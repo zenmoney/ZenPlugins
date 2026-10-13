@@ -229,7 +229,9 @@ export function convertAccounts (apiAccounts: unknown[]): ConvertResult[] {
             "favoriteId": null
         },
   */
-export function * convertTransactions (apiTransactions: unknown[]): Generator<Transaction> {
+export function * convertTransactions (apiTransactions: unknown[], apiCards: unknown[] = []): Generator<Transaction> {
+  const cards = convertCards(apiCards)
+  const cardsByRetailId = _.groupBy(apiCards, card => _.get(card, 'cardRetailId'))
   for (const transaction of apiTransactions) {
     try {
       const summa = _.get(transaction, 'summa') as number
@@ -269,8 +271,37 @@ export function * convertTransactions (apiTransactions: unknown[]): Generator<Tr
         }
       }
 
-      const transactionMerchant = _.get(transaction, 'target')
-      const isValidMerchant = typeof transactionMerchant === 'string' && transactionMerchant.trim() !== ''
+      const date = parseDate(_.get(transaction, 'paymentDate'))
+      const cardId = String(_.get(transaction, 'cardId'))
+      const card = cards.find(({ account }) => account.id === cardId)
+      const transactionMerchant = _.get(transaction, 'target') as string | null
+      const paymentType = _.get(transaction, 'paymentType') as string
+      const recipients = cardsByRetailId[_.get(transaction, 'cardRetailIdRecipient')] ?? []
+      const recipient = recipients.length === 1
+        ? cards.find(({ account }) => account.id === String(_.get(recipients[0], 'id')))
+        : undefined
+      const isInternalOutcome = card !== undefined && !isEnrollment && paymentType === 'TRANSFER' &&
+        recipient !== undefined && recipient.account.id !== cardId && recipient.account.instrument === currCode
+      const isInternalIncome = card !== undefined && isEnrollment && paymentType === 'TRANSACTION' &&
+        _.get(transaction, 'transactionType') === 'POPOLNENIE' && transactionMerchant === 'OBMEN VALUT BSB'
+      const transferAccountId = isInternalOutcome ? recipient?.account.id : isInternalIncome ? cardId : undefined
+      const groupKeys = transferAccountId !== undefined
+        ? [`bsb-transfer:${transferAccountId}:${date.toISOString()}:${currCode}:${summa}`]
+        : undefined
+
+      let comment = _.get(transaction, 'commentText') as string | null
+      const isNumericEripTarget = paymentType === 'ERIP' && typeof transactionMerchant === 'string' && /^\d+$/.test(transactionMerchant)
+      if (isNumericEripTarget) {
+        const paymentName = _.get(transaction, 'paymentName') as string | null
+        if (paymentName != null && paymentName.trim() !== '') {
+          const suffix = ` ${transactionMerchant}`
+          const label = paymentName.endsWith(suffix) ? paymentName.slice(0, -suffix.length).trim() : paymentName.trim()
+          const comments = _.uniq([label, comment].filter(value => value != null && value !== ''))
+          comment = comments.length > 0 ? comments.join('\n') : null
+        }
+      }
+      const isValidMerchant = transferAccountId === undefined && !isNumericEripTarget &&
+        typeof transactionMerchant === 'string' && transactionMerchant.trim() !== ''
       const merchant = isValidMerchant
         ? {
             fullTitle: transactionMerchant,
@@ -281,22 +312,23 @@ export function * convertTransactions (apiTransactions: unknown[]): Generator<Tr
 
       yield {
         hold: false,
-        date: parseDate(_.get(transaction, 'paymentDate')),
+        date,
         movements: [
           {
             id: String(_.get(transaction, 'id')),
-            account: { id: String(_.get(transaction, 'cardId')) },
+            account: { id: cardId },
             sum,
             fee: 0,
             invoice
           }
         ],
         merchant,
-        comment: _.get(transaction, 'commentText')
+        comment,
+        ...(groupKeys !== undefined ? { groupKeys } : {})
       }
     } catch (e) {
-      console.error(e, transaction)
-      throw new Error('Failed to convert transaction')
+      console.error('Failed to convert BSB transaction', { id: _.get(transaction, 'id'), paymentType: _.get(transaction, 'paymentType') })
+      throw e
     }
   }
 }

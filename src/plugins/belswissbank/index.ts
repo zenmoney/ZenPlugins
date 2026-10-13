@@ -1,5 +1,5 @@
 import { adjustTransactions } from '../../common/transactionGroupHandler'
-import { AccountOrCard, ScrapeFunc, Transaction } from '../../types/zenmoney'
+import { ScrapeFunc, Transaction } from '../../types/zenmoney'
 import { Api } from './api'
 import { convertAccounts, convertCards, convertTransactions } from './converters'
 
@@ -22,17 +22,16 @@ export const scrape: ScrapeFunc<Preferences> = async ({
   const apiAccounts = await api.fetchAccounts()
 
   const allTransactions: Transaction[] = []
-  const allAccounts: AccountOrCard[] = []
+  const products = [...convertCards(apiCards), ...convertAccounts(apiAccounts)]
+  const allAccounts = products.map(({ account }) => account)
 
-  await Promise.all([...convertCards(apiCards), ...convertAccounts(apiAccounts)].map(async ({ product, account }) => {
+  await Promise.all(products.map(async ({ product }) => {
     if (ZenMoney.isAccountSkipped(product.id.toString())) {
       return
     }
 
-    allAccounts.push(account)
-
     const apiTransactions = await api.fetchTransactions(product.id, fromDate, toDate ?? new Date())
-    allTransactions.push(...convertTransactions(apiTransactions))
+    allTransactions.push(...convertTransactions(apiTransactions, apiCards))
   }))
 
   return {

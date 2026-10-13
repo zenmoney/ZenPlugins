@@ -413,14 +413,10 @@ describe('convertTransactions', () => {
 
     expect(transactions).toEqual([
       {
-        comment: null,
+        comment: 'Polevoy.by',
         date: new Date('2025-05-23T11:48:20+0300'),
         hold: false,
-        merchant: {
-          fullTitle: '4640',
-          location: null,
-          mcc: null
-        },
+        merchant: null,
         movements: [
           {
             account: { id: '100007' },
