@@ -1,0 +1,42 @@
+{
+  "provenance": {
+    "sessionId": "00000000-0000-4000-8000-000000000013",
+    "source": "Derived from authorized private capture; public financial and identity values replaced by user request."
+  },
+  "records": [
+    {
+      "endpoint": "users.check_confirmation",
+      "response": {
+        "verified": false,
+        "code": 42,
+        "device_name": "iPhone | Apple iPhone 13 Pro Max | ios 18.7.1",
+        "result": 0
+      },
+      "sourceSequence": 10
+    },
+    {
+      "endpoint": "users.check_confirmation",
+      "response": {
+        "verified": true,
+        "code": 42,
+        "device_name": null,
+        "result": 0
+      },
+      "sourceSequence": 12
+    },
+    {
+      "endpoint": "ask_otp",
+      "response": {
+        "result": 0
+      },
+      "sourceSequence": 14
+    },
+    {
+      "endpoint": "verify_otp",
+      "response": {
+        "result": 0
+      },
+      "sourceSequence": 18
+    }
+  ]
+}

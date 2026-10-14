@@ -1,0 +1,18 @@
+{
+  "provenance": {
+    "flowId": "00000000-0000-4000-8000-000000000012",
+    "currency": "EUR"
+  },
+  "response": {
+    "incoming": {
+      "date": "2021-07-30 00:00:00",
+      "balance": null
+    },
+    "outgoing": {
+      "date": "2021-08-13 00:00:00",
+      "balance": null
+    },
+    "operations": [],
+    "result": 0
+  }
+}
