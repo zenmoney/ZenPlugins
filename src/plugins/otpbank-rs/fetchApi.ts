@@ -8,7 +8,17 @@ import moment from 'moment'
 const baseUrl = 'https://ebank.otpbanka.rs/RetailV4/Protected/Services/'
 
 async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResponse> {
-  return await fetchJson(baseUrl + url, options ?? {})
+  return await fetchJson(baseUrl + url, {
+    parse: body => {
+      console.assert(typeof body === 'string', 'OTP Bank response must be JSON text')
+      return JSON.parse((body).replace(/^\uFEFF/, '')) as unknown
+    },
+    sanitizeRequestLog: {
+      headers: { Cookie: true, Cookies: true, Authorization: true },
+      body: { username: true, otp: true, sid: true, sessionID: true }
+    },
+    ...options
+  })
 }
 
 async function fetchLogin (username: string, otp: string): Promise<void> {
@@ -20,7 +30,37 @@ async function fetchLogin (username: string, otp: string): Promise<void> {
       appType: 'AUTH_1',
       sessionID: 1
     },
-    sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    sanitizeResponseLog: {
+      headers: { 'set-cookie': true },
+      body: {
+        Address: true,
+        Street: true,
+        StreetNumber: true,
+        Locality: true,
+        PhoneNumber: true,
+        MobileNumber: true,
+        CorePhoneNumber: true,
+        BirthDate: true,
+        Username: true,
+        Email: true,
+        FirstName: true,
+        LastName: true,
+        Name: true,
+        FullName: true,
+        SocialIdentityNumber: true,
+        Ticket: true,
+        RequestToken: true,
+        IdToken: true,
+        SessionID: true,
+        SessionGuid: true,
+        GeneratedSessionID: true,
+        SMSSessionID: true,
+        HolosSessionID: true,
+        SecurityComponent: true,
+        EncryptedSecurityUserID: true,
+        HistoryPins: true
+      }
+    }
   })
   checkResponseAndSetCookies(response)
 }
