@@ -4,6 +4,7 @@ import { parseFlexXML } from './flexParser'
 import { convertToZenmoney } from './converter'
 
 export async function scrape (args: any): Promise<any> {
+  ZenMoney.locale = 'en'
   const { flexToken, queryId } = args.preferences
 
   if (flexToken == null || flexToken === '' || queryId == null || queryId === '') {
