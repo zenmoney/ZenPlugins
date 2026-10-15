@@ -172,36 +172,44 @@ export async function fetchAccountTransactions (accountNumber: string, productCo
 }
 
 async function fetchTransactionDetails (transaction: GetAccountTransactionsResponse, auth: Auth): Promise<void> {
-  const response = await fetchApi('DataService.svc/getAllTransactionalDetails', {
-    method: 'POST',
-    headers: {
-      Cookie: auth.cookie
-    },
-    body: {
-      filterParam: {
-        TransactionID: transaction.TransactionID
-      }
-    },
-    sanitizeRequestLog: {
-      headers: { cookie: true }
-    },
-    sanitizeResponseLog: {
-      headers: { 'set-cookie': true },
+  // The bank sometimes answers 400 (Err_95136) for details of a particular transaction.
+  // Retry once and, if it still fails, import the transaction without details
+  // instead of failing the whole sync.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const response = await fetchApi('DataService.svc/getAllTransactionalDetails', {
+      method: 'POST',
+      headers: {
+        Cookie: auth.cookie
+      },
       body: {
-        UserName: true,
-        s_Group: true,
-        OrderNumber_pp: true,
-        DebtorAccount: true,
-        s_OrderNumber: true,
-        UserAccount: true,
-        s_Note_st: true
+        filterParam: {
+          TransactionID: transaction.TransactionID
+        }
+      },
+      sanitizeRequestLog: {
+        headers: { cookie: true }
+      },
+      sanitizeResponseLog: {
+        headers: { 'set-cookie': true },
+        body: {
+          UserName: true,
+          s_Group: true,
+          OrderNumber_pp: true,
+          DebtorAccount: true,
+          s_OrderNumber: true,
+          UserAccount: true,
+          s_Note_st: true
+        }
       }
+    }) as FetchResponse & { body: GetTransactionDetailsResponse[] }
+
+    if (isArray(response.body)) {
+      transaction.Details = response.body[0]
+      return
     }
-  }) as FetchResponse & { body: GetTransactionDetailsResponse[] }
-
-  assert(isArray(response.body), 'cant get transaction details', response)
-
-  transaction.Details = response.body[0]
+    await new Promise(resolve => setTimeout(resolve, delayBetweenFetches))
+  }
+  console.log('cant get transaction details, importing without them')
 }
 
 export async function fetchTransactionsInProgress (accountNumber: string, auth: Auth): Promise<string[][]> {
