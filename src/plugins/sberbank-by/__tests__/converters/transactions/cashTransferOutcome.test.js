@@ -9,12 +9,12 @@ describe('convertTransaction', () => {
     [
       {
         sourceSystem: 1,
-        eventId: '2004250790079371',
-        contractId: '7987935',
+        eventId: '1000000000000001',
+        contractId: '1000029',
         contractCurrency: '643',
-        cardPAN: '449655******4870',
+        cardPAN: '411111******1616',
         cardExpiryDate: null,
-        cardId: '781375964',
+        cardId: '100000045',
         eventDate: 1587502800000,
         processingDate: 1587762000000,
         transactionType: -1,
@@ -30,7 +30,7 @@ describe('convertTransaction', () => {
         commissionSum: 12.62,
         commissionCurrency: '643',
         rnnCode: null,
-        authorizationCode: '085116',
+        authorizationCode: '100001',
         eventStatus: 1,
         mccCode: '6011',
         errorDescription: null,
@@ -52,7 +52,7 @@ describe('convertTransaction', () => {
         date: new Date(1587502800000),
         movements: [
           {
-            id: '2004250790079371',
+            id: '1000000000000001',
             account: { id: 'account' },
             invoice: {
               sum: -10,
@@ -90,12 +90,12 @@ describe('convertTransaction', () => {
     [
       {
         sourceSystem: 1,
-        eventId: '191915455',
-        contractId: '7431439',
+        eventId: '100000046',
+        contractId: '1000030',
         contractCurrency: '933',
-        cardPAN: '449655******7688',
+        cardPAN: '411111******1717',
         cardExpiryDate: null,
-        cardId: '722444271',
+        cardId: '100000047',
         eventDate: 1603470741000,
         processingDate: 1603486800000,
         transactionType: 1,
@@ -110,8 +110,8 @@ describe('convertTransaction', () => {
         accountSum: 100,
         commissionSum: null,
         commissionCurrency: '933',
-        rnnCode: '029716362517',
-        authorizationCode: '194081',
+        rnnCode: '100000000001',
+        authorizationCode: '100002',
         eventStatus: 1,
         mccCode: '6011',
         errorDescription: null,
@@ -133,7 +133,7 @@ describe('convertTransaction', () => {
         date: new Date(1603470741000),
         movements: [
           {
-            id: '191915455',
+            id: '100000046',
             account: { id: 'account' },
             invoice: null,
             sum: 100,

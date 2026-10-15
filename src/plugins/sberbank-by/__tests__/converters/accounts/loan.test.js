@@ -12,11 +12,11 @@ describe('convertLoan', () => {
         backColor1: '#33C985',
         backColor2: '#4FC5BC',
         contractType: 50,
-        contractId: '232951310120',
-        contractNumber: '704-63478/17',
+        contractId: '100000000041',
+        contractNumber: '104-10005/17',
         refContractNumber: null,
         account: null,
-        name: 'Кредит 704-63478/17',
+        name: 'Кредит 104-10005/17',
         currencyCode: '933',
         currencyName: 'BYN',
         dateStart: 1506373200000,
@@ -45,12 +45,12 @@ describe('convertLoan', () => {
       },
       {
         account: {
-          id: '232951310120',
+          id: '100000000041',
           instrument: 'BYN',
           balance: -50263.54,
           startBalance: 60000,
           type: 'loan',
-          title: 'Кредит 704-63478/17',
+          title: 'Кредит 104-10005/17',
           startDate: new Date(1506373200000),
           capitalization: true,
           percent: 5.65,
@@ -58,7 +58,7 @@ describe('convertLoan', () => {
           endDateOffset: 7299,
           payoffInterval: 'month',
           payoffStep: 1,
-          syncID: ['7046347817']
+          syncID: ['1041000517']
         },
         products: []
       }
@@ -73,9 +73,9 @@ describe('convertLoan', () => {
         backColor1: '#33C985',
         backColor2: '#4FC5BC',
         contractType: 51,
-        contractId: '384376202',
-        contractNumber: '777-62189/17',
-        refContractNumber: '5161070',
+        contractId: '100000039',
+        contractNumber: '103-10003/17',
+        refContractNumber: '1000017',
         account: null,
         name: '"Добро пожаловать в Сбербанк" 12 месяцев (СР-1,5 продукт 589)(классик, классический, статусный, голд, "ComPass")неуст.',
         currencyCode: '933',
@@ -95,7 +95,7 @@ describe('convertLoan', () => {
         percentAccuralUrgent: null,
         percentUrgent: null,
         departmentNumber: '369-777',
-        contractAccount: 'BY95BPSB24277770052439330000',
+        contractAccount: 'BY94BPSB24271000000000000035',
         isGracePeriod: '0',
         isUseInDebitTransactions: 0,
         overdraftLimit: 10000,
@@ -107,14 +107,14 @@ describe('convertLoan', () => {
       },
       {
         account: {
-          id: '384376202',
+          id: '100000039',
           instrument: 'BYN',
           available: 8029.9,
           creditLimit: 10000,
           type: 'ccard',
           title: '"Добро пожаловать в Сбербанк" 12 месяцев (СР-1,5 продукт 589)(классик, классический, статусный, голд, "ComPass")неуст.',
           percent: 7.25,
-          syncID: ['5161070']
+          syncID: ['1000017']
         },
         products: []
       }
@@ -135,10 +135,10 @@ describe('convertAccounts', () => {
             descr: 'Дополнительный офис №100 Брест',
             unit: 1,
             amount: 0,
-            account: 'BY76BPSB3014F000000005504913',
+            account: 'BY39BPSB3014F000000001000026',
             dateStart: 1502658000000,
             isFamily: false,
-            contractId: '365597460',
+            contractId: '100000043',
             background: '',
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
@@ -147,10 +147,10 @@ describe('convertAccounts', () => {
             currencyCode: '933',
             contractType: 1,
             productTypeId: 829,
-            contractNumber: '5504913',
+            contractNumber: '1000026',
             productClassId: 1,
             availableAmount: 0,
-            contractAccount: 'BY53BPSB30141000006189330000',
+            contractAccount: 'BY28BPSB30141000000000000040',
             departmentNumber: '369-100',
             isUseInDebitTransactions: 1,
             status: 1,
@@ -158,12 +158,12 @@ describe('convertAccounts', () => {
               [
                 {
                   contract: null,
-                  cardId: '1226654183',
-                  contractId: '365597460',
-                  cardAccountNumber: 'BY76BPSB3014F000000005504913',
-                  panCode: '543553******4147',
+                  cardId: '1000000002',
+                  contractId: '100000043',
+                  cardAccountNumber: 'BY39BPSB3014F000000001000026',
+                  panCode: '555555******1414',
                   productName: 'MasterCard',
-                  smartVistaId: '200013001961',
+                  smartVistaId: '100000000042',
                   stateSignature: 'BETRAY',
                   paymentSystemId: '2',
                   productTypeId: 8983,
@@ -185,7 +185,7 @@ describe('convertAccounts', () => {
                   isBelavia: false,
                   isMoneyback: false,
                   dominantColor: '#A3A7A9',
-                  cardholderName: 'NIKOLAY NIKOLAEV',
+                  cardholderName: 'TEST USERTWO',
                   processingCenter: 2,
                   properties: ['IS_P2P_WITHOUT_FEE', 'IS_INTERNET_PASS']
                 }
@@ -215,7 +215,7 @@ describe('convertAccounts', () => {
             dateStart: 1502658000000,
             isFamily: false,
             hasReport: false,
-            contractId: '365599792',
+            contractId: '100000044',
             background: '',
             backColor1: '#33C985',
             backColor2: '#4FC5BC',
@@ -225,13 +225,13 @@ describe('convertAccounts', () => {
             contractType: 51,
             isGracePeriod: '1',
             productTypeId: 606,
-            contractNumber: '151-60723/17',
+            contractNumber: '105-10006/17',
             overdraftLimit: 3870,
             productClassId: 3,
             availableAmount: 0,
-            contractAccount: 'BY76BPSB24271000000049330000',
+            contractAccount: 'BY29BPSB24271000000000000041',
             departmentNumber: '369-100',
-            refContractNumber: '5504913',
+            refContractNumber: '1000026',
             isUseInDebitTransactions: 0,
             status: 1,
             cardList: [],
@@ -246,23 +246,23 @@ describe('convertAccounts', () => {
           {
             available: 3870,
             creditLimit: 3870,
-            id: '365597460',
+            id: '100000043',
             instrument: 'BYN',
             percent: 0.01,
-            syncID: ['BY76BPSB3014F000000005504913', '543553******4147'],
-            title: '*4147',
+            syncID: ['BY39BPSB3014F000000001000026', '555555******1414'],
+            title: '*1414',
             type: 'ccard'
           }
         ],
         accountsByContractNumber: {
-          5504913: {
-            id: '365597460',
+          1000026: {
+            id: '100000043',
             instrument: 'BYN'
           }
         },
         products: [
           {
-            id: '1226654183',
+            id: '1000000002',
             type: 'card'
           }
         ]
@@ -281,7 +281,7 @@ describe('convertAccounts', () => {
             dateStart: 1502658000000,
             isFamily: false,
             hasReport: false,
-            contractId: '365599792',
+            contractId: '100000044',
             background: '',
             backColor1: '#33C985',
             backColor2: '#4FC5BC',
@@ -291,13 +291,13 @@ describe('convertAccounts', () => {
             contractType: 51,
             isGracePeriod: '1',
             productTypeId: 606,
-            contractNumber: '151-60723/17',
+            contractNumber: '105-10006/17',
             overdraftLimit: 3870,
             productClassId: 3,
             availableAmount: 0,
-            contractAccount: 'BY76BPSB24271000000049330000',
+            contractAccount: 'BY29BPSB24271000000000000041',
             departmentNumber: '369-100',
-            refContractNumber: '5504913',
+            refContractNumber: '1000026',
             isUseInDebitTransactions: 0,
             status: 1,
             cardList: [],
@@ -312,17 +312,17 @@ describe('convertAccounts', () => {
           {
             available: 3870,
             creditLimit: 3870,
-            id: '365599792',
+            id: '100000044',
             instrument: 'BYN',
             percent: 1,
-            syncID: ['5504913'],
+            syncID: ['1000026'],
             title: '«НаСТОящая кредитка» с grace-периодом 5 лет (СР+2 продукт 606 )',
             type: 'ccard'
           }
         ],
         accountsByContractNumber: {
-          '151-60723/17': {
-            id: '365599792',
+          '105-10006/17': {
+            id: '100000044',
             instrument: 'BYN'
           }
         },
