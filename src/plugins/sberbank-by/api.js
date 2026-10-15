@@ -10,8 +10,9 @@ import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, Inv
 
 const host = 'digital.sber-bank.by'
 const apiBaseUrl = `https://${host}/SBOLServer`
-const authBaseUrl = `https://${host}/api/sbol-auth/v1`
+const authBaseUrl = `https://${host}/api/v1/auth`
 const internalAuthHost = 'sbol-auth.apps.k8s-prom1.belpsb.by'
+const internalAuthRootHosts = [internalAuthHost, 'sbol-api-gateway.apps.k8s-prom1.belpsb.by']
 const authRedirectUri = `https://${host}/loginsbol`
 const appVersion = '4.1.10'
 const sbolClientId = 'sbol-client'
@@ -69,6 +70,8 @@ function getSbolHeaders (device, headers = {}) {
   return {
     ...headers,
     Accept: 'application/json; charset=UTF-8',
+    // The legacy API returns HTTP 500 for fetch's default Accept-Language: *.
+    'Accept-Language': 'ru',
     'X-Sbol-Os': 'android',
     'X-Sbol-Version': appVersion,
     'X-Sbol-Id': device.androidId,
@@ -223,7 +226,7 @@ function isInternalAuthRootLocation (location) {
     return false
   }
   const parsedLocation = new URL(location, `${authBaseUrl}/`)
-  return parsedLocation.hostname === internalAuthHost && parsedLocation.pathname === '/'
+  return internalAuthRootHosts.includes(parsedLocation.hostname) && parsedLocation.pathname === '/'
 }
 
 function getAuthorizeUrl (codeChallenge, extraParams = {}) {

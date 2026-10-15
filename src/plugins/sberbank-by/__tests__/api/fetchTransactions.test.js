@@ -47,6 +47,8 @@ describe('fetchTransactions', () => {
     expect(transactions).toEqual(events)
     expect(fetchJson).toHaveBeenCalledTimes(1)
     expect(fetchJson.mock.calls[0][0]).toBe('https://digital.sber-bank.by/SBOLServer/rest/client/events')
+    // Live legacy API calls return HTTP 500 for fetch's implicit Accept-Language: *.
+    expect(fetchJson.mock.calls[0][1].headers['Accept-Language']).toBe('ru')
     expect(fetchJson.mock.calls[0][1].body).toEqual({
       contractNumber,
       endDate: '2026-06-10',
