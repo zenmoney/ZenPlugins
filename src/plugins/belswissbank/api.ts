@@ -1,11 +1,12 @@
 import { fetch, FetchOptions, FetchResponse } from '../../common/network'
-import { InvalidOtpCodeError, UserInteractionError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError, UserInteractionError } from '../../errors'
 import { APP_VERSION } from './consts'
 import { Device, Preferences, Session } from './models'
 import { Strings } from './strings'
 import { encryptCredentials, formatToApiDate, getDevice } from './utils'
 import _ from 'lodash'
 import { sanitize } from '../../common/sanitize'
+import { getOptString } from '../../types/get'
 
 function maskCardholder (value: unknown): unknown {
   if (typeof value !== 'string') return sanitize(value, true)
@@ -221,6 +222,11 @@ export class Api {
       isUnhandled: () => false
     })
     if (response.status === 400) {
+      const message = getOptString(response.body, 'message')
+      if (getOptString(response.body, 'code') === 'MAS-0073' &&
+        message === 'Для восстановления доступа сбросьте пароль или повторите попытку позже') {
+        throw new BankMessageError(message)
+      }
       if (_.get(response.body, 'code') !== 'MAS-0007') {
         raiseUnhandledResponse(response)
       }
