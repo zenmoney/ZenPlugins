@@ -70,8 +70,8 @@ export interface GetAccountTransactionsResponse {
   Note: string
   ValueDate: string
   TransactionType: string
-  Details: GetTransactionDetailsResponse
-  [others: string]: string | number | null | GetTransactionDetailsResponse
+  Details?: GetTransactionDetailsResponse
+  [others: string]: string | number | null | GetTransactionDetailsResponse | undefined
 }
 
 export interface GetTransactionDetailsResponse {

@@ -38,7 +38,7 @@ export function convertTransaction (t1: GetAccountTransactionsResponse): Transac
   const invoice = makeInvoice(t1)
   return {
     hold: false,
-    date: details?.c_Date_tx !== null && details?.c_Date_tx?.length > 0
+    date: details?.c_Date_tx != null && details.c_Date_tx.length > 0
       ? new Date(details.c_Date_tx)
       : new Date(t1.ProcessedDate),
     movements: [
@@ -71,7 +71,7 @@ export function convertCashTransaction (t1: GetAccountTransactionsResponse): Tra
   const invoice = makeInvoice(t1)
   return {
     hold: false,
-    date: details?.c_Date_tx !== null && details?.c_Date_tx?.length > 0
+    date: details?.c_Date_tx != null && details.c_Date_tx.length > 0
       ? new Date(details.c_Date_tx)
       : new Date(t1.ProcessedDate),
     movements: [
@@ -109,9 +109,9 @@ export function convertCashTransaction (t1: GetAccountTransactionsResponse): Tra
 function makeInvoice (t: GetAccountTransactionsResponse): Amount | null {
   const details = t.Details
   const isRefund = t.CreditAmount > t.DebitAmount
-  return details?.c_CurrencyCode_tx !== null &&
-    details?.c_CurrencyCode_tx?.length > 0 &&
-    details?.c_CurrencyCode_tx !== details?.s_CurrencyCode
+  return details?.c_CurrencyCode_tx != null &&
+    details.c_CurrencyCode_tx.length > 0 &&
+    details.c_CurrencyCode_tx !== details.s_CurrencyCode
     ? {
         sum: isRefund ? (details.c_Amount_tx ?? 0) : -(details.c_Amount_tx ?? 0),
         instrument: details.c_CurrencyCode_tx
@@ -123,7 +123,7 @@ export function convertTransfer (t1: GetAccountTransactionsResponse, t2: GetAcco
   const description = t1.Description
   return {
     hold: false,
-    date: t1.Details.c_Date_tx !== null && t1.Details.c_Date_tx.length > 0
+    date: t1.Details?.c_Date_tx != null && t1.Details.c_Date_tx.length > 0
       ? new Date(t1.Details.c_Date_tx)
       : new Date(t1.ProcessedDate),
     movements: [
@@ -149,7 +149,7 @@ export function convertTransfer (t1: GetAccountTransactionsResponse, t2: GetAcco
           location: null
         }
       : null,
-    comment: description !== t1.Details.s_Note_st ? t1.Details.s_Note_st : null
+    comment: t1.Details !== undefined && description !== t1.Details.s_Note_st ? t1.Details.s_Note_st : null
   }
 }
 
@@ -193,8 +193,8 @@ export function convertTransactions (apiTransactions: GetAccountTransactionsResp
   const transactions: Transaction[] = []
   for (const apiTransaction of apiTransactions) {
     const hasPairTransaction = TRANSFER_TRANSACTION_TYPES.includes(apiTransaction.TransactionType) &&
-      apiTransaction.Details.DebtorAccount !== null &&
-      apiTransaction.Details.DebtorAccount?.length > 0
+      apiTransaction.Details?.DebtorAccount != null &&
+      apiTransaction.Details.DebtorAccount.length > 0
     const pairTransactionIndex = hasPairTransaction
       ? apiTransactions.findIndex((t) => t.TransactionID !== apiTransaction.TransactionID &&
           t.Details?.s_OrderNumber === apiTransaction.Details?.s_OrderNumber)
