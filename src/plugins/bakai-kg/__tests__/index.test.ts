@@ -5,6 +5,7 @@ import { scrape } from '../index'
 import { convertAccounts } from '../converters'
 import get, { getArray } from '../../../types/get'
 import { AuthState } from '../models'
+import { InvalidPreferencesError } from '../../../errors'
 
 const products: unknown = JSON.parse(readFileSync(join(__dirname, 'fixtures/products.json'), 'utf8'))
 const accountEmpty: unknown = JSON.parse(readFileSync(join(__dirname, 'fixtures/empty-account-history.json'), 'utf8'))
@@ -21,6 +22,7 @@ let saved: unknown
 let accountHistoryFailure: Error | undefined
 
 beforeEach(() => {
+  jest.spyOn(Date, 'now').mockReturnValue(new Date('2021-02-20T12:00:00+06:00').getTime())
   storage = session
   saved = null
   accountHistoryFailure = undefined
@@ -42,10 +44,34 @@ beforeEach(() => {
     fetchMock.mock((url, options) => url.endsWith('/account.get_balance') && JSON.parse(String(options.body)).id === balance.accountId, { body: balance.response })
   }
 })
-afterEach(() => fetchMock.restore())
+afterEach(() => { fetchMock.restore(); jest.restoreAllMocks() })
 
 describe('[model] scrape orchestration with observed response envelopes', () => {
   // Reusing the real empty-history envelope models scheduling, not actual empty history on every card.
+  it('rejects an unsupported selected card period before loading any history and retains authorization', async () => {
+    await expect(scrape({ ...args, fromDate: new Date('2020-08-19T00:00:00+06:00') })).rejects.toBeInstanceOf(InvalidPreferencesError)
+    expect(fetchMock.calls('https://bakai24.bakai.kg/v2/card.online_statement')).toHaveLength(0)
+    expect(fetchMock.calls('https://bakai24.bakai.kg/v2/account.history')).toHaveLength(0)
+    expect(saved).toEqual(session)
+  })
+
+  it('allows an old initial preference when the host supplies a recent repeat-sync interval', async () => {
+    fetchMock.post('https://bakai24.bakai.kg/v2/card.online_statement', { body: get(empty, 'response') })
+    const originalPreferences = { ...preferences, startDate: '2000-01-01T00:00:00Z' }
+    await expect(scrape({ ...args, preferences: originalPreferences })).resolves.toEqual({
+      accounts: convertAccounts(getArray(products, 'list')).map(plan => plan.account), transactions: []
+    })
+  })
+
+  it('does not apply the card limit when all card histories are skipped', async () => {
+    jest.mocked(ZenMoney.isAccountSkipped).mockImplementation(id => ['1000', '1003', '1006'].includes(id))
+    await expect(scrape({ ...args, fromDate: new Date('2018-01-01T00:00:00+06:00') })).resolves.toEqual({
+      accounts: convertAccounts(getArray(products, 'list')).map(plan => plan.account), transactions: []
+    })
+    expect(fetchMock.calls('https://bakai24.bakai.kg/v2/account.history')).toHaveLength(2)
+    expect(fetchMock.calls('https://bakai24.bakai.kg/v2/card.online_statement')).toHaveLength(0)
+  })
+
   it('returns complete card metadata, uses each history plan once and retains skipped cards', async () => {
     jest.mocked(ZenMoney.isAccountSkipped).mockImplementation(id => id === '1003')
     fetchMock.post('https://bakai24.bakai.kg/v2/card.online_statement', { body: get(empty, 'response') })

@@ -108,16 +108,24 @@ export async function fetchAccountBalance (state: AuthState, accountId: number):
   return balance
 }
 
-export async function fetchTransactions (state: AuthState, params: FetchParams, fromDate: Date, toDate?: Date): Promise<unknown[]> {
+export function getHistoryDates (params: FetchParams, fromDate: Date, toDate?: Date): { start: string, end: string } {
   assert(Number.isFinite(fromDate.getTime()) && (toDate == null || Number.isFinite(toDate.getTime())), 'Invalid scrape interval')
   assert(toDate == null || fromDate.getTime() <= toDate.getTime(), 'Scrape interval is reversed')
+  // Current statements preserve lifecycle updates. Future padding can exceed the
+  // card endpoint's advertised six-month request limit (observed result -5000).
+  const endDate = moment(Math.max(toDate?.getTime() ?? 0, Date.now())).utcOffset(360).startOf('day')
+  const earliest = endDate.clone().subtract(6, 'months')
+  if ('cardId' in params && moment(fromDate).utcOffset(360).startOf('day').isBefore(earliest)) {
+    throw new InvalidPreferencesError(`Период импорта операций по картам Bakai не должен превышать 6 месяцев. Выберите дату начала не раньше ${earliest.format('DD.MM.YYYY')}.`)
+  }
   // Bank filtering uses operation/processing dates differently between sources.
   // Include the preceding day to cover the observed six-hour boundary difference.
   const start = moment(fromDate).utcOffset(360).subtract(1, 'day').format('YYYY-MM-DD')
-  // Historical end bounds can return an earlier lifecycle representation of an
-  // operation. Fetch the current statement, then apply output bounds in conversion.
-  const requestEnd = Math.max(toDate?.getTime() ?? 0, Date.now() + 7 * 24 * 60 * 60 * 1000)
-  const end = moment(requestEnd).utcOffset(360).format('YYYY-MM-DD')
+  return { start, end: endDate.format('YYYY-MM-DD') }
+}
+
+export async function fetchTransactions (state: AuthState, params: FetchParams, fromDate: Date, toDate?: Date): Promise<unknown[]> {
+  const { start, end } = getHistoryDates(params, fromDate, toDate)
   const isAccount = !('cardId' in params)
   const body = 'cardId' in params
     ? await fetchStatement(state, params, start, end)
