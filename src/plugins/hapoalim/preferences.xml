@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen>
+    <ListPreference
+        key="authenticationMethod"
+        title="שיטת כניסה"
+        dialogTitle="שיטת כניסה"
+        entries="כניסה ישירה|כניסה בחלון הבנק"
+        entryValues="direct|web"
+        defaultValue="web"
+        positiveButtonText="בסדר"
+        negativeButtonText="בטל"
+        summary="||{@s}"
+    />
     <EditTextPreference
         key="startDate"
         obligatory="true"

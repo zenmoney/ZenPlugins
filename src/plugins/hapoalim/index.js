@@ -1,10 +1,15 @@
 import { adjustTransactions } from '../../common/transactionGroupHandler'
-import { restoreCookies, saveCookies } from '../../common/network/cookies'
-import { fetchAccounts, fetchTransactions, getAuthGateVerifier, isLikelyAuthGateError, login, normalizeStoredAuth, recoverAuthFromCookieStore, withAuthUpdates, withSessionDeadline } from './api'
+import { restoreCookies, saveCookies, cookieJar } from '../../common/network/cookies'
+import { authenticationMethod, fetchAccounts, fetchTransactions, getAuthGateVerifier, isLikelyAuthGateError, login, loginDirect, isMobileAuth, normalizeStoredAuth, recoverAuthFromCookieStore, recoverDirectAuth, withAuthUpdates, withSessionDeadline } from './api'
 import { convertAccounts, convertTransaction } from './converters'
 import { dateInTimezone, toISODateString } from '../../common/dateUtils'
 
 async function storeAuth (state) {
+  if (state.direct) {
+    if (isMobileAuth(state.auth)) state.directIdentity = state.auth.identity
+    // Keep the connection binding even after rejected session cookies are gone.
+    ZenMoney.setData('directIdentity', state.directIdentity ?? null)
+  }
   ZenMoney.setData('auth', state.auth ? { ...state.auth } : null)
   await withSessionDeadline(() => ZenMoney.saveData(), 'auth state save')
 }
@@ -23,12 +28,19 @@ async function withForegroundReauthRetry (fn, state) {
   }
   // At most one silent recovery and one interactive login per operation.
   while (true) {
-    if (state.auth) {
+    if (state.auth && (!state.direct || isMobileAuth(state.auth))) {
       try {
         return await withAuthUpdates(state.auth, onAuthUpdate, fn)
       } catch (error) {
         originalAuthError = error
         if (!isLikelyAuthGateError(error)) throw error
+        if (state.direct && isMobileAuth(state.auth)) {
+          // A confirmed rejection is not a reusable session. Persist that fact
+          // before returning in background or asking for a new foreground login.
+          state.auth = null
+          state.directCookieSnapshot = null
+          await storeAuth(state)
+        }
       }
     }
 
@@ -40,12 +52,16 @@ async function withForegroundReauthRetry (fn, state) {
     const rejectedCookieHeaders = rejectedCookieHeader ? state.rejectedCookieHeaders : []
     if (!attemptedRecovery) {
       attemptedRecovery = true
-      const recoveredAuth = await recoverAuthFromCookieStore(state.auth, {
+      const recoveryOptions = {
         onAuthUpdate,
+        previousIdentity: state.statementIdentity ?? state.directIdentity,
         rejectedCookieHeader,
         rejectedCookieHeaders,
         verify: getAuthGateVerifier(originalAuthError)
-      })
+      }
+      const recoveredAuth = state.direct
+        ? await recoverDirectAuth(state.auth && isMobileAuth(state.auth) ? null : state.directCookieSnapshot, recoveryOptions)
+        : await recoverAuthFromCookieStore(state.auth, recoveryOptions)
       if (recoveredAuth) {
         state.auth = recoveredAuth
         await storeAuth(state)
@@ -56,7 +72,9 @@ async function withForegroundReauthRetry (fn, state) {
     if (attemptedHiddenWebView && state.didInteractiveLogin) throw originalAuthError || new Error('Bank Hapoalim authentication did not produce a usable session')
     const skipHidden = attemptedHiddenWebView
     attemptedHiddenWebView = true
-    state.auth = await login({
+    const authorize = state.direct ? loginDirect : login
+    state.auth = await authorize({
+      previousIdentity: state.statementIdentity ?? state.directIdentity,
       isInBackground: state.isInBackground,
       allowInteraction: !state.didInteractiveLogin,
       skipHidden,
@@ -73,6 +91,7 @@ async function withForegroundReauthRetry (fn, state) {
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground, isFirstRun }) {
   ZenMoney.locale = 'he'
+  const direct = authenticationMethod(preferences) === 'direct'
 
   const upperDate = toDate
   toDate = toDate || new Date()
@@ -82,9 +101,21 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
   const fromDay = toISODateString(dateInTimezone(fromDate, 120))
   const upperDay = upperDate ? toISODateString(dateInTimezone(upperDate, 120)) : null
 
-  await withSessionDeadline(() => restoreCookies(), 'cookie store restore')
+  const storedAuth = normalizeStoredAuth(ZenMoney.getData('auth'))
+  const auth = !direct && isMobileAuth(storedAuth) ? null : storedAuth
+  const storedIdentity = direct ? ZenMoney.getData('directIdentity') : null
+  if (storedIdentity != null && (typeof storedIdentity !== 'string' || !/^[a-f0-9]{64}$/.test(storedIdentity))) {
+    throw new Error('Bank Hapoalim stored account identity is invalid')
+  }
+  if (!isMobileAuth(auth)) await withSessionDeadline(() => restoreCookies(), 'cookie store restore')
+  const directCookieSnapshot = direct && !isMobileAuth(auth)
+    ? JSON.stringify(await withSessionDeadline(() => cookieJar.serialize(), 'legacy cookie store read'))
+    : null
   const state = {
-    auth: normalizeStoredAuth(ZenMoney.getData('auth')),
+    auth,
+    direct,
+    directIdentity: direct && isMobileAuth(auth) ? auth.identity : storedIdentity ?? undefined,
+    directCookieSnapshot,
     isInBackground,
     didInteractiveLogin: false,
     rejectedCookieHeaders: new Set()
@@ -93,7 +124,15 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
   const transactions = []
 
   try {
-    const apiAccounts = await withForegroundReauthRetry(fetchAccounts, state)
+    const loadAccounts = state.direct
+      ? async auth => await fetchAccounts(auth, {
+        onIdentity: identity => {
+          if (state.statementIdentity !== undefined && state.statementIdentity !== identity) throw new Error('Bank Hapoalim account set changed within a statement')
+          state.statementIdentity = identity
+        }
+      })
+      : fetchAccounts
+    const apiAccounts = await withForegroundReauthRetry(loadAccounts, state)
     for (const { mainProduct, account } of convertAccounts(apiAccounts)) {
       accounts.push(account)
 
@@ -122,14 +161,14 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
       console.warn('Bank Hapoalim auth state save failed after sync error')
     }
     try {
-      await saveCookieStore()
+      if (!isMobileAuth(state.auth)) await saveCookieStore()
     } catch (saveError) {
       console.warn('Bank Hapoalim cookie store save failed after sync error')
     }
     throw error
   }
   await storeAuth(state)
-  await saveCookieStore()
+  if (!isMobileAuth(state.auth)) await saveCookieStore()
 
   if (isFirstRun && !isInBackground && ZenMoney.alert) {
     await ZenMoney.alert('לקבלת תוצאות מיטביות, אנו ממליצים לא לסנכרן כרטיסי כאל, ישראקרט ומקס דרך הבנק אלא ישירות דרך חברות האשראי.')

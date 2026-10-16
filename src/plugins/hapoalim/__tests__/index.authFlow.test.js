@@ -8,7 +8,7 @@ describe('[model] hapoalim auth orchestration', () => {
   const freshAuth = { cookieHeader: 'SMSESSION=fresh', restContext: 'pib', acquiredAt: 2 }
   const account = { id: 'model-account', type: 'checking', instrument: 'ILS' }
   const product = { id: account.id, type: 'account' }
-  const options = { preferences: {}, fromDate: new Date('2026-10-01T00:00:00Z'), toDate: new Date('2026-10-09T00:00:00Z') }
+  const options = { preferences: { authenticationMethod: 'web' }, fromDate: new Date('2026-10-01T00:00:00Z'), toDate: new Date('2026-10-09T00:00:00Z') }
   let dataApi
   let scrape
   let fetchAccounts
@@ -76,6 +76,23 @@ describe('[model] hapoalim auth orchestration', () => {
     expect(fetchTransactions).toHaveBeenCalledWith(savedAuth, product, options.fromDate, options.toDate)
     expect(login).not.toHaveBeenCalled()
     expect(global.ZenMoney.locale).toBe('he')
+  })
+
+  it('honors an explicit return to WebView instead of reusing the mobile transport', async () => {
+    load({
+      version: 2,
+      transport: 'mobile',
+      cookieStore: '{"cookies":[]}',
+      cookieHeader: 'SMSESSION=model-mobile',
+      xsrfToken: null,
+      restContext: 'ServerServices',
+      identity: 'a'.repeat(64),
+      acquiredAt: 1
+    })
+    expect(await scrape(options)).toEqual({ accounts: [account], transactions: [] })
+    expect(login).toHaveBeenCalledTimes(1)
+    expect(fetchAccounts).toHaveBeenCalledWith(freshAuth)
+    expect(global.ZenMoney.restoreCookies).toHaveBeenCalledTimes(1)
   })
 
   it.each([false, true])('uses verified cookie recovery before WebView (background: %s)', async isInBackground => {
