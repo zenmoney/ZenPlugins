@@ -1,0 +1,42 @@
+{
+  "source": "Authorized MyAmeria capture and separate HTTP login on 2026-10-07; auth-login/network-1791377587383.jsonl and probe-network.jsonl; secrets replaced, fields preserved",
+  "pending": {
+    "status": "success",
+    "data": {
+      "sessionStatus": "pending"
+    },
+    "errorMessages": null
+  },
+  "accepted": {
+    "status": "success",
+    "data": {
+      "sessionStatus": "accepted"
+    },
+    "errorMessages": null
+  },
+  "token": {
+    "access_token": "fixture-access_token",
+    "expires_in": 900,
+    "refresh_expires_in": 14400,
+    "refresh_token": "fixture-refresh_token",
+    "token_type": "bearer",
+    "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImZpeHR1cmUta2V5In0.eyJqdGkiOiJmaXh0dXJlLWp0aSIsImV4cCI6MTc5MTM3ODUxNCwibmJmIjowLCJpYXQiOjE3OTEzNzc2MTQsImlzcyI6Imh0dHBzOi8vYWNjb3VudC5teWFtZXJpYS5hbS9hdXRoL3JlYWxtcy9hbWVyaWEiLCJhdWQiOiJiYW5xci1vbmxpbmUiLCJzdWIiOiJmaXh0dXJlLXN1YiIsInR5cCI6IklEIiwiYXpwIjoiYmFucXItb25saW5lIiwibm9uY2UiOiJmaXh0dXJlLXN0YXRlIiwiYXV0aF90aW1lIjoxNzkxMzc3NjE0LCJzZXNzaW9uX3N0YXRlIjoiZml4dHVyZS1zZXNzaW9uX3N0YXRlIiwiYWNyIjoiMSIsInVzZXItY2hhbm5lbCI6Ik9OTElORSIsInVzZXItc2Vzc2lvbi1pZCI6ImZpeHR1cmUtdXNlci1zZXNzaW9uLWlkIiwicGhvbmVOdW1iZXIiOiJmaXh0dXJlLXBob25lTnVtYmVyIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJmaXh0dXJlLW5hbWUiLCJncm91cHMiOlsicmVndWxhci11c2VycyJdLCJzZWN1cml0eS1wcm92aWRlci1uYW1lIjoiT05FU1BBTi1QSE9ORSIsInByZWZlcnJlZF91c2VybmFtZSI6ImZpeHR1cmUtcHJlZmVycmVkX3VzZXJuYW1lIiwiZ2l2ZW5fbmFtZSI6ImZpeHR1cmUtZ2l2ZW5fbmFtZSIsImxvY2FsZSI6ImVuIiwiZmFtaWx5X25hbWUiOiJmaXh0dXJlLWZhbWlseV9uYW1lIiwiZW1haWwiOiJmaXh0dXJlLWVtYWlsIn0.fixture-signature",
+    "not-before-policy": 0,
+    "session_state": "fixture-session_state",
+    "scope": "openid Online-User-Channel email profile"
+  },
+  "refreshRejection": {
+    "status": 400,
+    "body": {
+      "error": "invalid_grant",
+      "error_description": "Invalid refresh token"
+    }
+  },
+  "refused": {
+    "status": "success",
+    "data": {
+      "sessionStatus": "refused"
+    },
+    "errorMessages": null
+  }
+}

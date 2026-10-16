@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>ameriabank-am</id>
+    <company>15472</company>
+    <description>Импорт счетов и операций Ameriabank в Дзен-мани. Введите логин и пароль MyAmeria и подтвердите вход в приложении MyAmeria.</description>
+    <version>0.3</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+    <codeRequired>false</codeRequired>
+</provider>
