@@ -2,13 +2,14 @@
 
 import { makePluginDataApi } from '../../../ZPAPI.pluginData'
 import { EventEmitter } from 'events'
+import { createHash } from 'crypto'
 
 const BASE = 'https://login.bankhapoalim.co.il'
 const ACCOUNTS_PATH = '/ServerServices/general/accounts'
 const accountsStepUp = require('../__fixtures__/accounts-stepupotp.json')
 const savedAuth = { cookieHeader: 'SMSESSION=stale', restContext: 'pib', acquiredAt: 1 }
 const options = {
-  preferences: {},
+  preferences: { authenticationMethod: 'web' },
   fromDate: new Date('2026-09-01T00:00:00Z'),
   toDate: new Date('2026-09-28T00:00:00Z')
 }
@@ -118,7 +119,7 @@ describe('hapoalim real session orchestration', () => {
   })
 
   function prepareMain () {
-    global.ZenMoney.getPreferences = () => ({ startDate: '2026-09-01' })
+    global.ZenMoney.getPreferences = () => ({ startDate: '2026-09-01', authenticationMethod: 'web' })
     global.ZenMoney.manifest = { isSubscriptionRequired: false }
     global.ZenMoney.features = { transactionDtoV2: true, dateProcessing: true }
     global.ZenMoney.addAccount = jest.fn()
@@ -172,6 +173,58 @@ describe('hapoalim real session orchestration', () => {
       expect(dataApi.currentData.auth.cookieHeader).toContain('SMSESSION=fresh-rotated')
       expect(global.ZenMoney.fetch.mock.calls.filter(([url]) => new URL(url).pathname === ACCOUNTS_PATH)).toHaveLength(3)
     })
+  })
+
+  // [model] Full result after observed collection 204; synthetic history verifies
+  // that both checking sources, movement signs and ownership survive the fix.
+  it.each([['savingsDeposits'], ['savingsDeposits', 'loans', 'mortgages'], ['savingsDeposits', 'loans', 'mortgages', 'fxInventory']].map(endpoints => ({ endpoints })))('[model] returns both checking accounts and their full history after 204 at $endpoints', async ({ endpoints }) => {
+    loadRuntime(null)
+    const implementation = global.ZenMoney.fetch.getMockImplementation()
+    const historyIds = []
+    global.ZenMoney.fetch.mockImplementation(async (url, init) => {
+      const parsed = new URL(url)
+      if (endpoints.some(endpoint => endpoint === 'fxInventory'
+        ? parsed.pathname.startsWith('/ServerServices/foreign-currency/') && !parsed.searchParams.has('retrievalStartDate')
+        : parsed.pathname.endsWith('/' + endpoint))) {
+        expect(init.headers.get('accept-encoding')).toBe('identity')
+        return { status: 204, url, headers: new NativeHeaders(), text: async () => '' }
+      }
+      if (parsed.pathname.endsWith('/current-account/transactions')) {
+        const id = parsed.searchParams.get('accountId')
+        historyIds.push(id)
+        const row = {
+          serialNumber: 1,
+          eventAmount: id.endsWith('1001') ? 10 : 20,
+          eventActivityTypeCode: id.endsWith('1001') ? 1 : 2,
+          formattedEventDate: '2026-09-10T00:00:00.000Z',
+          activityDescription: 'model',
+          transactionType: 'REGULAR',
+          rejectedDataEventPertainingIndication: 'N'
+        }
+        return { status: 200, url, headers: new NativeHeaders(), text: async () => JSON.stringify({ transactions: [row] }) }
+      }
+      return await implementation(url, init)
+    })
+    expect(await scrape({ ...options, isInBackground: false })).toEqual({
+      accounts: [1001, 1002].map(number => ({
+        id: `12-702-${number}`,
+        type: 'checking',
+        title: `*${number} חשבון נוכחי`,
+        instrument: 'ILS',
+        syncID: [`12-702-${number}`],
+        balance: 100,
+        creditLimit: 0
+      })),
+      transactions: [1001, 1002].map(number => ({
+        hold: false,
+        date: new Date('2026-09-10T00:00:00+02:00'),
+        movements: [{ id: null, account: { id: `12-702-${number}` }, invoice: null, sum: number === 1001 ? 10 : -20, fee: 0 }],
+        merchant: { country: null, city: null, title: 'model', mcc: null, location: null },
+        comment: null
+      }))
+    })
+    expect(historyIds).toEqual(['12-702-1001', '12-702-1002'])
+    expect(nativeShow).not.toHaveBeenCalled()
   })
 
   describe('[model] coordination with the complete observed accounts fixture', () => {
@@ -782,13 +835,133 @@ describe('hapoalim real session orchestration', () => {
     }
   })
 
-  it('[model] loads both currency balances of each main account without mixing their histories', async () => {
+  // [model] Preserve the complete graph and checking histories when only the
+  // recognized maturity-label rendering changes; these are not live bank records.
+  const endLabel = '\u05e1\u05d5\u05e3 \u05e4\u05d9\u05e7\u05d3\u05d5\u05df'
+  const legacyLabel = '1   ' + endLabel
+  it.each([
+    [endLabel, legacyLabel], [legacyLabel, endLabel], [endLabel, endLabel], [legacyLabel, legacyLabel],
+    ['\u200f' + endLabel + '\u200e', ' 1\t' + endLabel + ' ']
+  ].flatMap(descriptions => [false, true].map(sharedSerial => ({ descriptions, sharedSerial }))))('[model] retains both parents, four deposits and complete histories for payout renderings $descriptions (shared serial: $sharedSerial)', async ({ descriptions, sharedSerial }) => {
+    loadRuntime(null)
+    const implementation = global.ZenMoney.fetch.getMockImplementation()
+    global.ZenMoney.fetch.mockImplementation(async (url, init) => {
+      const parsed = new URL(url)
+      const number = parsed.searchParams.get('accountId')?.endsWith('1002') ? 1002 : 1001
+      if (parsed.pathname.endsWith('/deposits')) {
+        const deposits = [0, 1].map(index => ({
+          depositSerialId: (sharedSerial ? 1001 : number) * 10 + index + 1,
+          detailedAccountTypeCode: 26,
+          linkageTypeCode: 1,
+          shortProductName: 'model deposit ' + index,
+          principalAmount: 5000 + index * 1000 + number - 1001,
+          revaluedTotalAmount: index === 0 ? 0 : 6500 + number - 1001,
+          adjustedInterest: index === 0 ? null : 0.5,
+          formattedAgreementOpeningDate: '2026-06-01T00:00:00.000Z',
+          formattedPaymentDate: '2026-08-30T00:00:00.000Z',
+          interestCreditingMethodDescription: '\u05dc\u05e2\u05d5"\u05e9',
+          interestPaymentDescription: descriptions[number - 1001]
+        }))
+        return { status: 200, url, headers: new NativeHeaders(), text: async () => JSON.stringify({ list: [{ data: deposits }] }) }
+      }
+      if (parsed.pathname.endsWith('/current-account/transactions')) {
+        return {
+          status: 200,
+          url,
+          headers: new NativeHeaders(),
+          text: async () => JSON.stringify({
+            transactions: [{
+              eventAmount: number === 1001 ? 10 : 20,
+              eventActivityTypeCode: number === 1001 ? 1 : 2,
+              formattedEventDate: '2026-09-15T00:00:00.000Z',
+              transactionType: 'REGULAR',
+              rejectedDataEventPertainingIndication: 'N',
+              activityDescription: 'model'
+            }]
+          })
+        }
+      }
+      return await implementation(url, init)
+    })
+    const expected = {
+      accounts: [1001, 1002].flatMap(number => [
+        { id: `12-702-${number}`, type: 'checking', title: `*${number} חשבון נוכחי`, instrument: 'ILS', syncID: [`12-702-${number}`], balance: 100, creditLimit: 0 },
+        ...[0, 1].map(index => ({
+          id: `hapoalim-deposit:${createHash('sha256').update(`12-702-${number}`).digest('hex')}:${(sharedSerial ? 1001 : number) * 10 + index + 1}`,
+          type: 'deposit',
+          title: 'model deposit ' + index,
+          instrument: 'ILS',
+          syncID: [String((sharedSerial ? 1001 : number) * 10 + index + 1), `hapoalim-deposit:${createHash('sha256').update(`12-702-${number}`).digest('hex')}:${(sharedSerial ? 1001 : number) * 10 + index + 1}`, ...sharedSerial ? [] : [String(number * 10 + index + 1).slice(-4)]],
+          balance: index === 0 ? 0 : 6500 + number - 1001,
+          startBalance: 5000 + index * 1000 + number - 1001,
+          startDate: new Date('2026-06-01T00:00:00+02:00'),
+          percent: index === 0 ? null : 0.5,
+          capitalization: false,
+          endDateOffsetInterval: 'day',
+          endDateOffset: 90,
+          payoffInterval: null,
+          payoffStep: 1
+        }))
+      ]),
+      transactions: [1001, 1002].map(number => ({
+        hold: false,
+        date: new Date('2026-09-15T00:00:00+02:00'),
+        movements: [{ id: null, account: { id: `12-702-${number}` }, invoice: null, sum: number === 1001 ? 10 : -20, fee: 0 }],
+        merchant: { country: null, city: null, title: 'model', mcc: null, location: null },
+        comment: null
+      }))
+    }
+    expect(await scrape(options)).toEqual(expected)
+    expect(await scrape(options)).toEqual(expected)
+    const histories = global.ZenMoney.fetch.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/current-account/transactions'))
+    expect(histories.map(([url]) => new URL(url).searchParams.get('accountId'))).toEqual(['12-702-1001', '12-702-1002', '12-702-1001', '12-702-1002'])
+  })
+
+  it.each([1, 2])('[model] rejects an unknown payout on parent%s without returning partial checking histories', async parent => {
+    loadRuntime(null)
+    const implementation = global.ZenMoney.fetch.getMockImplementation()
+    global.ZenMoney.fetch.mockImplementation(async (url, init) => {
+      const parsed = new URL(url)
+      const number = parsed.searchParams.get('accountId')?.endsWith('1002') ? 1002 : 1001
+      if (parsed.pathname.endsWith('/deposits')) {
+        return {
+          status: 200,
+          url,
+          headers: new NativeHeaders(),
+          text: async () => JSON.stringify({
+            list: [{
+              data: [{
+                depositSerialId: number * 10,
+                detailedAccountTypeCode: 26,
+                linkageTypeCode: 1,
+                principalAmount: 5000,
+                revaluedTotalAmount: 5100,
+                adjustedInterest: 0.5,
+                formattedAgreementOpeningDate: '2026-06-01T00:00:00.000Z',
+                formattedPaymentDate: '2026-08-30T00:00:00.000Z',
+                interestCreditingMethodDescription: '\u05dc\u05e2\u05d5"\u05e9',
+                interestPaymentDescription: (number - 1000 === parent ? '2 ' : '') + endLabel
+              }]
+            }]
+          })
+        }
+      }
+      return await implementation(url, init)
+    })
+    await expect(scrape(options)).rejects.toThrow(/deposit interest conditions/)
+    expect(global.ZenMoney.fetch.mock.calls.some(([url]) => new URL(url).pathname.endsWith('/current-account/transactions'))).toBe(false)
+  })
+
+  it.each([[200, 200], [200, 204], [204, 200], [204, 204]].map(statuses => ({ statuses })))('[model] preserves both-parent balances and FX histories for inventory statuses $statuses', async ({ statuses }) => {
     loadRuntime(null)
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     global.ZenMoney.fetch.mockImplementation(async (url, init) => {
       const parsed = new URL(url)
       if (!parsed.pathname.startsWith('/ServerServices/foreign-currency/')) return await implementation(url, init)
       const id = parsed.searchParams.get('accountId')
+      const inventory = !parsed.searchParams.has('retrievalStartDate')
+      expect(init.headers.get('accept-encoding')).toBe(inventory ? 'identity' : null)
+      if (inventory && statuses[id.endsWith('1001') ? 0 : 1] === 204) return { status: 204, url, headers: new NativeHeaders(), text: async () => '' }
       const balances = [[19, 142, 'USD'], [100, 143, 'EUR']].map(([code, detail, instrument]) => ({
         currencyCode: code,
         detailedAccountTypeCode: detail,
@@ -800,13 +973,16 @@ describe('hapoalim real session orchestration', () => {
       return { status: 200, url, headers: new NativeHeaders(), text: async () => JSON.stringify({ balancesAndLimitsDataList: balances }) }
     })
     const result = await scrape(options)
-    expect(result.accounts.map(account => [account.id, account.instrument])).toEqual([
-      ['12-702-1001', 'ILS'], ['12-702-1001142', 'USD'], ['12-702-1001143', 'EUR'],
-      ['12-702-1002', 'ILS'], ['12-702-1002142', 'USD'], ['12-702-1002143', 'EUR']
-    ])
-    expect(result.transactions.map(transaction => [transaction.movements[0].account.id, transaction.movements[0].sum])).toEqual([
-      ['12-702-1001142', 7], ['12-702-1001143', 7], ['12-702-1002142', 9], ['12-702-1002143', 9]
-    ])
+    expect(result.accounts.map(account => [account.id, account.instrument])).toEqual([1001, 1002].flatMap((number, i) => [
+      [`12-702-${number}`, 'ILS'], ...statuses[i] === 200 ? [[`12-702-${number}142`, 'USD'], [`12-702-${number}143`, 'EUR']] : []
+    ]))
+    expect(result.transactions.map(transaction => [transaction.movements[0].account.id, transaction.movements[0].sum])).toEqual([1001, 1002].flatMap((number, i) =>
+      statuses[i] === 200 ? [[`12-702-${number}142`, number === 1001 ? 7 : 9], [`12-702-${number}143`, number === 1001 ? 7 : 9]] : []
+    ))
+    expect(global.ZenMoney.fetch.mock.calls.filter(([url]) => {
+      const parsed = new URL(url)
+      return parsed.pathname.startsWith('/ServerServices/foreign-currency/') && parsed.searchParams.has('retrievalStartDate')
+    })).toHaveLength(statuses.filter(status => status === 200).length * 2)
   })
 
   it.each([false, true])('[model] awaits auth/cookie persistence before first-run advice and preserves its failure (%s)', failsAlert => {
