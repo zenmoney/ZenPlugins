@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>bakai-kg</id>
-    <company>0</company>
+    <company>15971</company>
     <description>Синхронизация карт и текущих счетов BakAi: Visa в сомах и USD, Элкарт в сомах, банковские счета в сомах и EUR. Первое подключение требует пароля BakAi, подтверждения нового устройства в BakAi при запросе банка и SMS-кода.</description>
     <version>1.0</version>
     <build>2</build>
