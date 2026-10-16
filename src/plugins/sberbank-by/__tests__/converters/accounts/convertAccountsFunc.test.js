@@ -14,10 +14,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '911702355',
-            contractNumber: '8013742',
+            contractId: '100000003',
+            contractNumber: '1000003',
             refContractNumber: null,
-            account: 'BY91BPSB3014F000000008013742',
+            account: 'BY78BPSB3014F000000001000003',
             name: 'МПЦ Карточный счет Virtuon (BYN)',
             currencyCode: '933',
             currencyName: 'BYN',
@@ -35,7 +35,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-707',
-            contractAccount: 'BY57BPSB30147010005389330000',
+            contractAccount: 'BY30BPSB30141000000000000004',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -43,7 +43,7 @@ describe('convertAccounts', () => {
             packageContractKind: null,
             isFamily: false,
             cardList: [{
-              contractId: '911702355',
+              contractId: '100000003',
               contract: null,
               productTypeId: null,
               productName: null,
@@ -55,8 +55,8 @@ describe('convertAccounts', () => {
               dominantColor: '#039c39',
               textColor: 'ffffffff',
               status: 0,
-              cardId: '911702357',
-              panCode: '449655******3289',
+              cardId: '100000004',
+              panCode: '411111******2222',
               name: 'МПЦ Visa Virtuon, BYN',
               yearEnd: 2021,
               monthEnd: 3,
@@ -66,7 +66,7 @@ describe('convertAccounts', () => {
               properties: ['IS_VIRTUON', 'IS_APPLE_PAY'],
               paymentSystemId: '1',
               isFamily: false,
-              cardholderName: 'NIKOLAY NIKOLAEV'
+              cardholderName: 'TEST USERTWO'
             }],
             actionList: [{
               actionCode: 1050504,
@@ -91,10 +91,10 @@ describe('convertAccounts', () => {
             backColor1: '#1DCD81',
             backColor2: '#3BDB6A',
             contractType: 1,
-            contractId: '575063360',
-            contractNumber: '6870102',
+            contractId: '100000005',
+            contractNumber: '1043333',
             refContractNumber: null,
-            account: 'BY70BPSB3014F000000006870102',
+            account: 'BY85BPSB3014F000000001043333',
             name: 'МПЦ Карточный счет физических лиц (BYN)',
             currencyCode: '933',
             currencyName: 'BYN',
@@ -112,7 +112,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-704',
-            contractAccount: 'BY98BPSB30147040005069330000',
+            contractAccount: 'BY73BPSB30141000000000000006',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -139,8 +139,8 @@ describe('convertAccounts', () => {
           }
         ],
         moneyBoxes: [{
-          id: '470c803e-4fa0-49af-9fd2-b9deb43677f4',
-          name: 'Автошкола + машина',
+          id: '00000000-0000-4000-8000-000000000001',
+          name: 'Цель один + цель два',
           created: 1575574380000,
           closed: 1585325791000,
           status: 'OPENED',
@@ -150,19 +150,19 @@ describe('convertAccounts', () => {
           image: null,
           imageURL: null,
           contractCurrency: '933',
-          contractId: '7824229',
+          contractId: '1000007',
           balance: 100,
-          phone: '375298106295',
+          phone: '375290000001',
           email: null,
           contractKindName: 'Текущий (расчетный) счет "Копилка" в белорусских рублях',
           percRate: 3,
           settings: [
             {
-              id: 'a6e588d4-e9f9-40a4-a7ad-b91a168ed9aa',
+              id: '00000000-0000-4000-8000-000000000002',
               status: 'DISABLE',
               refillType: 'INCOME',
-              cardId: '764704950',
-              cardPan: '449655******0276',
+              cardId: '100000008',
+              cardPan: '411111******5555',
               contractId: null,
               fixedAmount: null,
               fixedSchedule: null,
@@ -175,11 +175,11 @@ describe('convertAccounts', () => {
               startDate: null,
               nextDate: 1581800400000
             }, {
-              id: '3e674b43-1c3d-4949-be95-207251c85a7d',
+              id: '00000000-0000-4000-8000-000000000003',
               status: 'DISABLE',
               refillType: 'INCOME',
-              cardId: '764704950',
-              cardPan: '449655******0276',
+              cardId: '100000008',
+              cardPan: '411111******5555',
               contractId: null,
               fixedAmount: null,
               fixedSchedule: null,
@@ -193,37 +193,37 @@ describe('convertAccounts', () => {
               nextDate: 1583701200000
             }
           ],
-          ibannum: 'BY95BPSB3014F000000007824229'
+          ibannum: 'BY87BPSB3014F100000000000009'
         }]
       },
       {
         accounts: [{
-          id: '911702355',
+          id: '100000003',
           type: 'ccard',
-          title: '*3289',
+          title: '*2222',
           instrument: 'BYN',
           syncID: [
-            'BY91BPSB3014F000000008013742',
-            '449655******3289'
+            'BY78BPSB3014F000000001000003',
+            '411111******2222'
           ],
           balance: 1.97
         }, {
-          id: '575063360',
+          id: '100000005',
           type: 'ccard',
-          title: '*0102',
+          title: '*3333',
           instrument: 'BYN',
           syncID: [
-            'BY70BPSB3014F000000006870102'
+            'BY85BPSB3014F000000001043333'
           ],
           balance: 1.97
         },
         {
-          id: '470c803e-4fa0-49af-9fd2-b9deb43677f4',
+          id: '00000000-0000-4000-8000-000000000001',
           type: 'checking',
-          title: 'Автошкола + машина',
+          title: 'Цель один + цель два',
           instrument: 'BYN',
           syncID: [
-            'BY95BPSB3014F000000007824229'
+            'BY87BPSB3014F100000000000009'
           ],
           balance: 100,
           savings: true,
@@ -231,22 +231,22 @@ describe('convertAccounts', () => {
         }
         ],
         accountsByContractNumber: {
-          8013742: {
-            id: '911702355',
+          1000003: {
+            id: '100000003',
             instrument: 'BYN'
           },
-          6870102: {
-            id: '575063360',
+          1043333: {
+            id: '100000005',
             instrument: 'BYN'
           },
-          7824229: {
-            id: '470c803e-4fa0-49af-9fd2-b9deb43677f4',
+          1000007: {
+            id: '00000000-0000-4000-8000-000000000001',
             instrument: 'BYN'
           }
         },
         products: [
           {
-            id: '911702357',
+            id: '100000004',
             type: 'card'
           }
         ]
@@ -264,10 +264,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '575836659',
-            contractNumber: '6875131',
+            contractId: '100000009',
+            contractNumber: '1000008',
             refContractNumber: null,
-            account: 'BY87BPSB3014F000000006875131',
+            account: 'BY40BPSB3014F000000001000008',
             name: 'ЛПЦ Карточный счет физических лиц (BYN)',
             currencyCode: '933',
             currencyName: 'BYN',
@@ -285,15 +285,15 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-704',
-            contractAccount: 'BY98BPSB30147040005069330000',
+            contractAccount: 'BY73BPSB30141000000000000006',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
-            packageContractNumber: '6875132',
+            packageContractNumber: '1000009',
             packageContractKind: '92022',
             isFamily: false,
             cardList: [{
-              contractId: '575836659',
+              contractId: '100000009',
               contract: null,
               productTypeId: 8032,
               productName: null,
@@ -305,8 +305,8 @@ describe('convertAccounts', () => {
               dominantColor: '#ca9730',
               textColor: 'ff000000',
               status: 0,
-              cardId: '575836661',
-              panCode: '543553******7974',
+              cardId: '100000010',
+              panCode: '555555******6666',
               name: 'ЛПЦ MC Gold Chip PayPass, BYN',
               yearEnd: 2021,
               monthEnd: 10,
@@ -316,10 +316,10 @@ describe('convertAccounts', () => {
               properties: ['IS_APPLE_PAY'],
               paymentSystemId: '2',
               isFamily: false,
-              cardholderName: 'NIKOLAY NIKOLAEV'
+              cardholderName: 'TEST USERTWO'
             },
             {
-              contractId: '575836659',
+              contractId: '100000009',
               contract: null,
               productTypeId: 8043,
               productName: null,
@@ -331,8 +331,8 @@ describe('convertAccounts', () => {
               dominantColor: '#a8abae',
               textColor: 'ff000000',
               status: 0,
-              cardId: '898044243',
-              panCode: '543553******8815',
+              cardId: '100000011',
+              panCode: '555555******7777',
               name: 'ЛПЦ MC Standard Chip PayPass, BYN',
               yearEnd: 2022,
               monthEnd: 12,
@@ -342,7 +342,7 @@ describe('convertAccounts', () => {
               properties: ['IS_APPLE_PAY'],
               paymentSystemId: '2',
               isFamily: false,
-              cardholderName: 'NIKOLAY NIKOLAEV'
+              cardholderName: 'TEST USERTWO'
             }],
             actionList: [
               {
@@ -370,10 +370,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '581759962',
-            contractNumber: '6904050',
+            contractId: '100000012',
+            contractNumber: '1000010',
             refContractNumber: null,
-            account: 'BY27BPSB3014F000000006904050',
+            account: 'BY83BPSB3014F000000001000010',
             name: 'ЛПЦ Карточный счет физических лиц (EUR)',
             currencyCode: '978',
             currencyName: 'EUR',
@@ -391,7 +391,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-704',
-            contractAccount: 'BY78BPSB30147040005229780000',
+            contractAccount: 'BY08BPSB30141000000000000012',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -400,7 +400,7 @@ describe('convertAccounts', () => {
             isFamily: false,
             cardList: [
               {
-                contractId: '581759962',
+                contractId: '100000012',
                 contract: null,
                 productTypeId: 8216,
                 productName: null,
@@ -412,8 +412,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#a8abae',
                 textColor: 'ff000000',
                 status: 0,
-                cardId: '579548199',
-                panCode: '543553******7952',
+                cardId: '100000013',
+                panCode: '555555******8888',
                 name: 'ЛПЦ MC Standard Momentum Chip, EUR',
                 yearEnd: 2021,
                 monthEnd: 10,
@@ -423,7 +423,7 @@ describe('convertAccounts', () => {
                 properties: ['IS_APPLE_PAY'],
                 paymentSystemId: '2',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }
             ],
             actionList: [
@@ -452,10 +452,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '581760119',
-            contractNumber: '6904075',
+            contractId: '100000014',
+            contractNumber: '1000011',
             refContractNumber: null,
-            account: 'BY31BPSB3014F000000006904075',
+            account: 'BY56BPSB3014F000000001000011',
             name: 'ЛПЦ Карточный счет физических лиц (RUB)',
             currencyCode: '643',
             currencyName: 'RUB',
@@ -473,7 +473,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-704',
-            contractAccount: 'BY02BPSB30147040005356430000',
+            contractAccount: 'BY51BPSB30141000000000000014',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -482,7 +482,7 @@ describe('convertAccounts', () => {
             isFamily: false,
             cardList: [
               {
-                contractId: '581760119',
+                contractId: '100000014',
                 contract: null,
                 productTypeId: 8230,
                 productName: null,
@@ -494,8 +494,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#a3a7a9',
                 textColor: 'ffffffff',
                 status: 0,
-                cardId: '575827473',
-                panCode: '449655******3828',
+                cardId: '100000015',
+                panCode: '411111******9999',
                 name: 'ЛПЦ Visa Classic Momentum Chip, RUB',
                 yearEnd: 2021,
                 monthEnd: 10,
@@ -505,7 +505,7 @@ describe('convertAccounts', () => {
                 properties: ['IS_APPLE_PAY'],
                 paymentSystemId: '1',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }
             ],
             actionList: [
@@ -535,10 +535,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '581760207',
-            contractNumber: '6904092',
+            contractId: '100000016',
+            contractNumber: '1000012',
             refContractNumber: null,
-            account: 'BY57BPSB3014F000000006904092',
+            account: 'BY29BPSB3014F000000001000012',
             name: 'ЛПЦ Карточный счет физических лиц (USD)',
             currencyCode: '840',
             currencyName: 'USD',
@@ -556,7 +556,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-704',
-            contractAccount: 'BY95BPSB30147040005198400000',
+            contractAccount: 'BY94BPSB30141000000000000016',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -565,7 +565,7 @@ describe('convertAccounts', () => {
             isFamily: false,
             cardList: [
               {
-                contractId: '581760207',
+                contractId: '100000016',
                 contract: null,
                 productTypeId: 8228,
                 productName: null,
@@ -577,8 +577,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#a3a7a9',
                 textColor: 'ffffffff',
                 status: 0,
-                cardId: '575827130',
-                panCode: '449655******4823',
+                cardId: '100000017',
+                panCode: '411111******0101',
                 name: 'ЛПЦ Visa Classic Momentum Chip, USD',
                 yearEnd: 2021,
                 monthEnd: 10,
@@ -588,7 +588,7 @@ describe('convertAccounts', () => {
                 properties: ['IS_APPLE_PAY'],
                 paymentSystemId: '1',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }
             ],
             actionList: [
@@ -618,10 +618,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '850778313',
-            contractNumber: '7841565',
+            contractId: '100000018',
+            contractNumber: '1000013',
             refContractNumber: null,
-            account: 'BY48BPSB3014F000000007841565',
+            account: 'BY02BPSB3014F000000001000013',
             name: 'ЛПЦ Карточный счет физических лиц (USD)',
             currencyCode: '840',
             currencyName: 'USD',
@@ -639,7 +639,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-701',
-            contractAccount: 'BY19BPSB30147010004248400000',
+            contractAccount: 'BY40BPSB30141000000000000018',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -648,7 +648,7 @@ describe('convertAccounts', () => {
             isFamily: false,
             cardList: [
               {
-                contractId: '850778313',
+                contractId: '100000018',
                 contract: null,
                 productTypeId: 8044,
                 productName: null,
@@ -660,8 +660,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#a8abae',
                 textColor: 'ff000000',
                 status: 0,
-                cardId: '850778315',
-                panCode: '543553******8228',
+                cardId: '100000019',
+                panCode: '555555******0202',
                 name: 'ЛПЦ MC Standard Chip PayPass, USD',
                 yearEnd: 2022,
                 monthEnd: 12,
@@ -671,7 +671,7 @@ describe('convertAccounts', () => {
                 properties: ['IS_APPLE_PAY'],
                 paymentSystemId: '2',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }
             ],
             actionList: [
@@ -701,10 +701,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '857066393',
-            contractNumber: '7857452',
+            contractId: '100000020',
+            contractNumber: '1000014',
             refContractNumber: null,
-            account: 'BY33BPSB3014F000000007857452',
+            account: 'BY72BPSB3014F000000001000014',
             name: 'ЛПЦ Карточный счет физического лица с рассрочкой (BYN)',
             currencyCode: '933',
             currencyName: 'BYN',
@@ -722,7 +722,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-701',
-            contractAccount: 'BY59BPSB30147010005129330000',
+            contractAccount: 'BY83BPSB30141000000000000020',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -730,7 +730,7 @@ describe('convertAccounts', () => {
             packageContractKind: null,
             isFamily: false,
             cardList: [{
-              contractId: '857066393',
+              contractId: '100000020',
               contract: null,
               productTypeId: 8227,
               productName: null,
@@ -742,8 +742,8 @@ describe('convertAccounts', () => {
               dominantColor: '#ffffff',
               textColor: 'ff000000',
               status: 0,
-              cardId: '829525997',
-              panCode: '460257******2849',
+              cardId: '100000021',
+              panCode: '422222******0303',
               name: 'КартаFUN',
               yearEnd: 2022,
               monthEnd: 11,
@@ -756,7 +756,7 @@ describe('convertAccounts', () => {
                   'IS_P2P_WITHOUT_FEE'],
               paymentSystemId: '1',
               isFamily: false,
-              cardholderName: 'NIKOLAY NIKOLAEV'
+              cardholderName: 'TEST USERTWO'
             }],
             actionList: [
               {
@@ -784,9 +784,9 @@ describe('convertAccounts', () => {
             backColor1: '#33C985',
             backColor2: '#4FC5BC',
             contractType: 51,
-            contractId: '857068331',
-            contractNumber: '701-69261/19',
-            refContractNumber: '7857452',
+            contractId: '100000022',
+            contractNumber: '101-10001/19',
+            refContractNumber: '1000014',
             account: null,
             name: 'Карта рассрочки «КартаFUN» (СР+3,89)',
             currencyCode: '933',
@@ -805,7 +805,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-701',
-            contractAccount: 'BY36BPSB24277010100029330000',
+            contractAccount: 'BY84BPSB24271000000000000021',
             isGracePeriod: '1',
             isUseInDebitTransactions: 0,
             overdraftLimit: 1090,
@@ -821,142 +821,142 @@ describe('convertAccounts', () => {
       {
         accounts: [
           {
-            id: '575836659',
+            id: '100000009',
             type: 'ccard',
-            title: '*7974',
+            title: '*6666',
             instrument: 'BYN',
             syncID: [
-              'BY87BPSB3014F000000006875131',
-              '543553******7974',
-              '543553******8815'
+              'BY40BPSB3014F000000001000008',
+              '555555******6666',
+              '555555******7777'
             ],
             balance: 3340.33
           },
           {
-            id: '581759962',
+            id: '100000012',
             type: 'ccard',
-            title: '*7952',
+            title: '*8888',
             instrument: 'EUR',
             syncID: [
-              'BY27BPSB3014F000000006904050',
-              '543553******7952'
+              'BY83BPSB3014F000000001000010',
+              '555555******8888'
             ],
             balance: 0
           },
           {
-            id: '581760119',
+            id: '100000014',
             type: 'ccard',
-            title: '*3828',
+            title: '*9999',
             instrument: 'RUB',
             syncID: [
-              'BY31BPSB3014F000000006904075',
-              '449655******3828'
+              'BY56BPSB3014F000000001000011',
+              '411111******9999'
             ],
             balance: 0
           },
           {
-            id: '581760207',
+            id: '100000016',
             type: 'ccard',
-            title: '*4823',
+            title: '*0101',
             instrument: 'USD',
             syncID: [
-              'BY57BPSB3014F000000006904092',
-              '449655******4823'
+              'BY29BPSB3014F000000001000012',
+              '411111******0101'
             ],
             balance: 0
           },
           {
-            id: '850778313',
+            id: '100000018',
             type: 'ccard',
-            title: '*8228',
+            title: '*0202',
             instrument: 'USD',
             syncID: [
-              'BY48BPSB3014F000000007841565',
-              '543553******8228'
+              'BY02BPSB3014F000000001000013',
+              '555555******0202'
             ],
             balance: 0
           },
           {
-            id: '857066393',
+            id: '100000020',
             type: 'ccard',
-            title: '*2849',
+            title: '*0303',
             instrument: 'BYN',
             syncID: [
-              'BY33BPSB3014F000000007857452',
-              '460257******2849'
+              'BY72BPSB3014F000000001000014',
+              '422222******0303'
             ],
             available: 0,
             creditLimit: 1090,
             percent: 0.01
           }
           // {
-          //   id: '857068331',
+          //   id: '100000022',
           //   instrument: 'BYN',
           //   balance: -1090,
           //   creditLimit: 1090,
           //   type: 'ccard',
           //   title: 'Карта рассрочки «КартаFUN» (СР+3,89)',
           //   percent: 12.64,
-          //   syncID: ['7857452']
+          //   syncID: ['1000014']
           // }
         ],
         accountsByContractNumber: {
-          6875131: {
-            id: '575836659',
+          1000008: {
+            id: '100000009',
             instrument: 'BYN'
           },
-          6904050: {
-            id: '581759962',
+          1000010: {
+            id: '100000012',
             instrument: 'EUR'
           },
-          6904075: {
-            id: '581760119',
+          1000011: {
+            id: '100000014',
             instrument: 'RUB'
           },
-          6904092: {
-            id: '581760207',
+          1000012: {
+            id: '100000016',
             instrument: 'USD'
           },
-          7841565: {
-            id: '850778313',
+          1000013: {
+            id: '100000018',
             instrument: 'USD'
           },
-          7857452: {
-            id: '857066393',
+          1000014: {
+            id: '100000020',
             instrument: 'BYN'
           } // ,
-          // '701-69261/19': {
-          //   id: '857068331',
+          // '101-10001/19': {
+          //   id: '100000022',
           //   instrument: 'BYN'
           // }
         },
         products: [
           {
-            id: '575836661',
+            id: '100000010',
             type: 'card'
           },
           {
-            id: '898044243',
+            id: '100000011',
             type: 'card'
           },
           {
-            id: '579548199',
+            id: '100000013',
             type: 'card'
           },
           {
-            id: '575827473',
+            id: '100000015',
             type: 'card'
           },
           {
-            id: '575827130',
+            id: '100000017',
             type: 'card'
           },
           {
-            id: '850778315',
+            id: '100000019',
             type: 'card'
           },
           {
-            id: '829525997',
+            id: '100000021',
             type: 'card'
           }
         ]
@@ -974,9 +974,9 @@ describe('convertAccounts', () => {
             backColor1: '#33C985',
             backColor2: '#4FC5BC',
             contractType: 51,
-            contractId: '854367160',
-            contractNumber: '369-658130/19',
-            refContractNumber: '6746169',
+            contractId: '100000023',
+            contractNumber: '102-100038/19',
+            refContractNumber: '1000015',
             account: null,
             name: 'Овердрафтный кредит «One-click!»(СР+3,89)',
             currencyCode: '933',
@@ -995,7 +995,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-327',
-            contractAccount: 'BY76BPSB24273270187079330000',
+            contractAccount: 'BY57BPSB24271000000000000022',
             isGracePeriod: '0',
             isUseInDebitTransactions: 0,
             overdraftLimit: 840,
@@ -1010,18 +1010,18 @@ describe('convertAccounts', () => {
       },
       {
         accounts: [{
-          id: '854367160',
+          id: '100000023',
           instrument: 'BYN',
           available: 781.13,
           creditLimit: 840,
           type: 'ccard',
           title: 'Овердрафтный кредит «One-click!»(СР+3,89)',
           percent: 12.64,
-          syncID: ['6746169']
+          syncID: ['1000015']
         }],
         accountsByContractNumber: {
-          '369-658130/19': {
-            id: '854367160',
+          '102-100038/19': {
+            id: '100000023',
             instrument: 'BYN'
           }
         },
@@ -1040,10 +1040,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '243439625',
-            contractNumber: '4583528',
+            contractId: '100000024',
+            contractNumber: '1000016',
             refContractNumber: null,
-            account: 'BY67BPSB6520F000000004583528',
+            account: 'BY10BPSB6520F000000001000016',
             name: 'Технологический (корпоративный) карточный счет (EUR)',
             currencyCode: '978',
             currencyName: 'EUR',
@@ -1062,7 +1062,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-777',
-            contractAccount: '6520860015939',
+            contractAccount: '1000000000001',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -1070,7 +1070,7 @@ describe('convertAccounts', () => {
             packageContractKind: null,
             isFamily: false,
             cardList: [{
-              contractId: '243439625',
+              contractId: '100000024',
               contract: null,
               productTypeId: 928,
               productName: null,
@@ -1082,8 +1082,8 @@ describe('convertAccounts', () => {
               dominantColor: '#ca9730',
               textColor: 'ffffffff',
               status: 0,
-              cardId: '529265313',
-              panCode: '431837******0467',
+              cardId: '100000025',
+              panCode: '433333******0404',
               name: 'VI Gold PayWave Корпоративная Банка, EUR',
               yearEnd: 2020,
               monthEnd: 8,
@@ -1093,7 +1093,7 @@ describe('convertAccounts', () => {
               properties: [],
               paymentSystemId: '1',
               isFamily: false,
-              cardholderName: 'NIKOLAY NIKOLAEV'
+              cardholderName: 'TEST USERTWO'
             }],
             actionList: [{
               actionCode: 1051028,
@@ -1110,10 +1110,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '319739750',
-            contractNumber: '5161070',
+            contractId: '100000026',
+            contractNumber: '1000017',
             refContractNumber: null,
-            account: 'BY64BPSB3014F000000005161070',
+            account: 'BY88BPSB3014F000000001000017',
             name: 'ЛПЦ Карточный счет физических лиц (BYN)',
             currencyCode: '933',
             currencyName: 'BYN',
@@ -1132,16 +1132,16 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-777',
-            contractAccount: 'BY39BPSB30147770002729330000',
+            contractAccount: 'BY45BPSB30141000000000000025',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
-            packageContractNumber: '5161072',
+            packageContractNumber: '1000018',
             packageContractKind: '92004',
             isFamily: false,
             cardList:
               [{
-                contractId: '319739750',
+                contractId: '100000026',
                 contract: null,
                 productTypeId: 8032,
                 productName: null,
@@ -1153,8 +1153,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#ca9730',
                 textColor: 'ff000000',
                 status: 0,
-                cardId: '928104406',
-                panCode: '543553******7568',
+                cardId: '100000027',
+                panCode: '555555******0505',
                 name: 'ЛПЦ MC Gold Chip PayPass, BYN',
                 yearEnd: 2023,
                 monthEnd: 4,
@@ -1164,7 +1164,7 @@ describe('convertAccounts', () => {
                 properties: ['IS_APPLE_PAY'],
                 paymentSystemId: '2',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }],
             actionList:
               [{
@@ -1192,10 +1192,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '319739991',
-            contractNumber: '5161114',
+            contractId: '100000028',
+            contractNumber: '1000019',
             refContractNumber: null,
-            account: 'BY40BPSB3014F000000005161114',
+            account: 'BY34BPSB3014F000000001000019',
             name: 'Карточный счет физических лиц с овердрафтом (BYN)',
             currencyCode: '933',
             currencyName: 'BYN',
@@ -1214,7 +1214,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-777',
-            contractAccount: 'BY97BPSB30147770001979330000',
+            contractAccount: 'BY88BPSB30141000000000000027',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -1223,7 +1223,7 @@ describe('convertAccounts', () => {
             isFamily: false,
             cardList:
               [{
-                contractId: '319739991',
+                contractId: '100000028',
                 contract: null,
                 productTypeId: 198,
                 productName: null,
@@ -1235,8 +1235,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#039c39',
                 textColor: 'ffffffff',
                 status: 0,
-                cardId: '627745664',
-                panCode: '431838******0908',
+                cardId: '100000029',
+                panCode: '444444******0606',
                 name: 'VV Виртуон, BYN',
                 yearEnd: 2021,
                 monthEnd: 1,
@@ -1246,7 +1246,7 @@ describe('convertAccounts', () => {
                 properties: ['IS_VIRTUON', 'IS_MILES'],
                 paymentSystemId: '1',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }],
             actionList:
               [{
@@ -1264,10 +1264,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '433579789',
-            contractNumber: '6091027',
+            contractId: '100000030',
+            contractNumber: '1000020',
             refContractNumber: null,
-            account: 'BY63BPSB3014F000000006091027',
+            account: 'BY07BPSB3014F000000001000020',
             name: 'ЛПЦ Карточный счет физического лица с рассрочкой (BYN)',
             currencyCode: '933',
             currencyName: 'BYN',
@@ -1287,7 +1287,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-711',
-            contractAccount: 'BY63BPSB30147770004459330000',
+            contractAccount: 'BY34BPSB30141000000000000029',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             packageContractNumber: null,
@@ -1295,7 +1295,7 @@ describe('convertAccounts', () => {
             isFamily: false,
             cardList:
               [{
-                contractId: '433579789',
+                contractId: '100000030',
                 contract: null,
                 productTypeId: 8227,
                 productName: null,
@@ -1307,8 +1307,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#ffffff',
                 textColor: 'ff000000',
                 status: 0,
-                cardId: '425513522',
-                panCode: '460257******5014',
+                cardId: '100000031',
+                panCode: '422222******0707',
                 name: 'КартаFUN',
                 yearEnd: 2020,
                 monthEnd: 12,
@@ -1321,7 +1321,7 @@ describe('convertAccounts', () => {
                     'IS_P2P_WITHOUT_FEE'],
                 paymentSystemId: '1',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }],
             actionList:
               [{
@@ -1349,10 +1349,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '627744188',
-            contractNumber: '7101076',
+            contractId: '100000032',
+            contractNumber: '1000021',
             refContractNumber: null,
-            account: 'BY96BPSB3014F000000007101076',
+            account: 'BY77BPSB3014F000000001000021',
             name: 'ЛПЦ Карточный счет физических лиц (EUR)',
             currencyCode: '978',
             currencyName: 'EUR',
@@ -1371,7 +1371,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-711',
-            contractAccount: 'BY65BPSB30147770002729780000',
+            contractAccount: 'BY77BPSB30141000000000000031',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -1380,7 +1380,7 @@ describe('convertAccounts', () => {
             isFamily: false,
             cardList:
               [{
-                contractId: '627744188',
+                contractId: '100000032',
                 contract: null,
                 productTypeId: 8048,
                 productName: null,
@@ -1392,8 +1392,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#ca9730',
                 textColor: 'ff000000',
                 status: 0,
-                cardId: '627744190',
-                panCode: '543553******9002',
+                cardId: '100000033',
+                panCode: '555555******0808',
                 name: 'ЛПЦ MC Gold Chip PayPass, EUR',
                 yearEnd: 2021,
                 monthEnd: 1,
@@ -1403,7 +1403,7 @@ describe('convertAccounts', () => {
                 properties: ['IS_APPLE_PAY'],
                 paymentSystemId: '2',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }],
             actionList:
               [{
@@ -1431,10 +1431,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '826844894',
-            contractNumber: '7775763',
+            contractId: '100000034',
+            contractNumber: '1000022',
             refContractNumber: null,
-            account: 'BY50BPSB3014F000000007775763',
+            account: 'BY50BPSB3014F000000001000022',
             name: 'ЛПЦ Карточный счет физических лиц (BYN)',
             currencyCode: '933',
             currencyName: 'BYN',
@@ -1453,7 +1453,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-711',
-            contractAccount: 'BY39BPSB30147770002729330000',
+            contractAccount: 'BY45BPSB30141000000000000025',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -1462,7 +1462,7 @@ describe('convertAccounts', () => {
             isFamily: false,
             cardList:
               [{
-                contractId: '826844894',
+                contractId: '100000034',
                 contract: null,
                 productTypeId: 8240,
                 productName: null,
@@ -1474,8 +1474,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#a3a7a9',
                 textColor: 'ffffffff',
                 status: 0,
-                cardId: '826844896',
-                panCode: '449655******2903',
+                cardId: '100000035',
+                panCode: '411111******0909',
                 name: 'ЛПЦ Visa Classic Chip PayWave, BYN',
                 yearEnd: 2020,
                 monthEnd: 11,
@@ -1485,7 +1485,7 @@ describe('convertAccounts', () => {
                 properties: ['IS_APPLE_PAY'],
                 paymentSystemId: '1',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }],
             actionList:
               [{
@@ -1513,10 +1513,10 @@ describe('convertAccounts', () => {
             backColor1: '#9FA3C1',
             backColor2: '#B3C0BE',
             contractType: 1,
-            contractId: '909713282',
-            contractNumber: '8007630',
+            contractId: '100000036',
+            contractNumber: '1000023',
             refContractNumber: null,
-            account: 'BY21BPSB3014F000000008007630',
+            account: 'BY23BPSB3014F000000001000023',
             name: 'ЛПЦ Карточный счет физических лиц (USD)',
             currencyCode: '840',
             currencyName: 'USD',
@@ -1535,7 +1535,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-711',
-            contractAccount: 'BY37BPSB30147770002728400000',
+            contractAccount: 'BY93BPSB30141000000000000034',
             isGracePeriod: null,
             isUseInDebitTransactions: 1,
             overdraftLimit: null,
@@ -1544,7 +1544,7 @@ describe('convertAccounts', () => {
             isFamily: false,
             cardList:
               [{
-                contractId: '909713282',
+                contractId: '100000036',
                 contract: null,
                 productTypeId: 8044,
                 productName: null,
@@ -1556,8 +1556,8 @@ describe('convertAccounts', () => {
                 dominantColor: '#a8abae',
                 textColor: 'ff000000',
                 status: 0,
-                cardId: '909713294',
-                panCode: '543553******0754',
+                cardId: '100000037',
+                panCode: '555555******1010',
                 name: 'ЛПЦ MC Standard Chip PayPass, USD',
                 yearEnd: 2021,
                 monthEnd: 3,
@@ -1567,7 +1567,7 @@ describe('convertAccounts', () => {
                 properties: ['IS_APPLE_PAY'],
                 paymentSystemId: '2',
                 isFamily: false,
-                cardholderName: 'NIKOLAY NIKOLAEV'
+                cardholderName: 'TEST USERTWO'
               }],
             actionList:
               [{
@@ -1595,9 +1595,9 @@ describe('convertAccounts', () => {
             backColor1: '#33C985',
             backColor2: '#4FC5BC',
             contractType: 51,
-            contractId: '433582516',
-            contractNumber: '777-60138/18',
-            refContractNumber: '6091027',
+            contractId: '100000038',
+            contractNumber: '103-10002/18',
+            refContractNumber: '1000020',
             account: null,
             name: 'Кредитная карта «КартаFUN» ОТС партнеров и grace-период 0,000001%(СР+5,8 продукт 683) VIP',
             currencyCode: '933',
@@ -1617,7 +1617,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-711',
-            contractAccount: 'BY95BPSB24277770052439330000',
+            contractAccount: 'BY94BPSB24271000000000000035',
             isGracePeriod: '1',
             isUseInDebitTransactions: 0,
             overdraftLimit: 10260,
@@ -1636,9 +1636,9 @@ describe('convertAccounts', () => {
             backColor1: '#33C985',
             backColor2: '#4FC5BC',
             contractType: 51,
-            contractId: '384376202',
-            contractNumber: '777-62189/17',
-            refContractNumber: '5161070',
+            contractId: '100000039',
+            contractNumber: '103-10003/17',
+            refContractNumber: '1000017',
             account: null,
             name: '"Добро пожаловать в Сбербанк" 12 месяцев (СР-1,5 продукт 589)(классик, классический, статусный, голд, "ComPass")неуст.',
             currencyCode: '933',
@@ -1658,7 +1658,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-777',
-            contractAccount: 'BY95BPSB24277770052439330000',
+            contractAccount: 'BY94BPSB24271000000000000035',
             isGracePeriod: '0',
             isUseInDebitTransactions: 0,
             overdraftLimit: 10000,
@@ -1677,10 +1677,10 @@ describe('convertAccounts', () => {
             backColor1: '#33C985',
             backColor2: '#4FC5BC',
             contractType: 51,
-            contractId: '319742207',
-            contractNumber: '777-60762/17',
-            refContractNumber: '5161114',
-            account: 'BY75BPSB2427F300000000453590',
+            contractId: '100000040',
+            contractNumber: '103-10004/17',
+            refContractNumber: '1000019',
+            account: 'BY72BPSB2427F100000000361212',
             name: '«НаСТОящая кредитка» (СР+3продукт 590) 3года+зарпл.пакет ',
             currencyCode: '933',
             currencyName: 'BYN',
@@ -1699,7 +1699,7 @@ describe('convertAccounts', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-777',
-            contractAccount: 'BY95BPSB24277770052439330000',
+            contractAccount: 'BY94BPSB24271000000000000035',
             isGracePeriod: '0',
             isUseInDebitTransactions: 0,
             overdraftLimit: 10000,
@@ -1714,146 +1714,146 @@ describe('convertAccounts', () => {
       },
       {
         accounts: [{
-          id: '243439625',
+          id: '100000024',
           instrument: 'EUR',
           balance: 2000,
           type: 'ccard',
-          title: '*0467',
+          title: '*0404',
           syncID: [
-            'BY67BPSB6520F000000004583528',
-            '431837******0467'
+            'BY10BPSB6520F000000001000016',
+            '433333******0404'
           ]
         },
         {
           available: 9958.06,
           creditLimit: 10000,
-          id: '319739750',
+          id: '100000026',
           instrument: 'BYN',
           percent: 0.01,
           syncID: [
-            'BY64BPSB3014F000000005161070',
-            '543553******7568'
+            'BY88BPSB3014F000000001000017',
+            '555555******0505'
           ],
-          title: '*7568',
+          title: '*0505',
           type: 'ccard'
         },
         {
           available: 9999.1,
           creditLimit: 10000,
-          id: '319739991',
+          id: '100000028',
           instrument: 'BYN',
           percent: 0.01,
           syncID: [
-            'BY40BPSB3014F000000005161114',
-            '431838******0908'
+            'BY34BPSB3014F000000001000019',
+            '444444******0606'
           ],
-          title: '*0908',
+          title: '*0606',
           type: 'ccard'
         },
         {
           available: 736.32,
           creditLimit: 10260,
-          id: '433579789',
+          id: '100000030',
           instrument: 'BYN',
           percent: 0.01,
           syncID: [
-            'BY63BPSB3014F000000006091027',
-            '460257******5014'
+            'BY07BPSB3014F000000001000020',
+            '422222******0707'
           ],
-          title: '*5014',
+          title: '*0707',
           type: 'ccard'
         },
         {
           balance: 0.23,
-          id: '627744188',
+          id: '100000032',
           instrument: 'EUR',
           syncID: [
-            'BY96BPSB3014F000000007101076',
-            '543553******9002'
+            'BY77BPSB3014F000000001000021',
+            '555555******0808'
           ],
-          title: '*9002',
+          title: '*0808',
           type: 'ccard'
         },
         {
           balance: 0.02,
-          id: '826844894',
+          id: '100000034',
           instrument: 'BYN',
           syncID: [
-            'BY50BPSB3014F000000007775763',
-            '449655******2903'
+            'BY50BPSB3014F000000001000022',
+            '411111******0909'
           ],
-          title: '*2903',
+          title: '*0909',
           type: 'ccard'
         },
         {
           balance: 0,
-          id: '909713282',
+          id: '100000036',
           instrument: 'USD',
           syncID: [
-            'BY21BPSB3014F000000008007630',
-            '543553******0754'
+            'BY23BPSB3014F000000001000023',
+            '555555******1010'
           ],
-          title: '*0754',
+          title: '*1010',
           type: 'ccard'
         }
         ],
         accountsByContractNumber: {
-          4583528: {
-            id: '243439625',
+          1000016: {
+            id: '100000024',
             instrument: 'EUR'
           },
-          5161070: {
-            id: '319739750',
+          1000017: {
+            id: '100000026',
             instrument: 'BYN'
           },
-          5161114: {
-            id: '319739991',
+          1000019: {
+            id: '100000028',
             instrument: 'BYN'
           },
-          6091027: {
-            id: '433579789',
+          1000020: {
+            id: '100000030',
             instrument: 'BYN'
           },
-          7101076: {
-            id: '627744188',
+          1000021: {
+            id: '100000032',
             instrument: 'EUR'
           },
-          7775763: {
-            id: '826844894',
+          1000022: {
+            id: '100000034',
             instrument: 'BYN'
           },
-          8007630: {
-            id: '909713282',
+          1000023: {
+            id: '100000036',
             instrument: 'USD'
           }
         },
         products: [
           {
-            id: '529265313',
+            id: '100000025',
             type: 'card'
           },
           {
-            id: '928104406',
+            id: '100000027',
             type: 'card'
           },
           {
-            id: '627745664',
+            id: '100000029',
             type: 'card'
           },
           {
-            id: '425513522',
+            id: '100000031',
             type: 'card'
           },
           {
-            id: '627744190',
+            id: '100000033',
             type: 'card'
           },
           {
-            id: '826844896',
+            id: '100000035',
             type: 'card'
           },
           {
-            id: '909713294',
+            id: '100000037',
             type: 'card'
           }
         ]

@@ -9,17 +9,17 @@ describe('convertTransaction', () => {
     [
       {
         sourceSystem: 3,
-        eventId: '340525766',
-        contractId: '7658726',
+        eventId: '100000057',
+        contractId: '1000036',
         contractCurrency: null,
-        cardPAN: '449655******0198',
+        cardPAN: '411111******2828',
         cardExpiryDate: null,
-        cardId: '789249178',
+        cardId: '100000056',
         eventDate: 1586735622000,
         processingDate: null,
         transactionType: 1,
         transactionCode: '313',
-        transactionName: 'Перевод BYN на свои карты 449655******0198',
+        transactionName: 'Перевод BYN на свои карты 411111******2828',
         operationCode: null,
         merchantId: null,
         merchantName: null,
@@ -29,8 +29,8 @@ describe('convertTransaction', () => {
         accountSum: null,
         commissionSum: null,
         commissionCurrency: null,
-        rnnCode: '122497918000',
-        authorizationCode: '133584',
+        rnnCode: '100000000021',
+        authorizationCode: '100020',
         eventStatus: 0,
         mccCode: null,
         errorDescription: null,
@@ -41,7 +41,7 @@ describe('convertTransaction', () => {
         souAuthorizationCode: null,
         souTransactionSum: null,
         souTransactionCurrency: null,
-        souEventId: '340525766',
+        souEventId: '100000057',
         qrPaymentId: null,
         fileId: null,
         printDocs: null,
@@ -52,7 +52,7 @@ describe('convertTransaction', () => {
         date: new Date(1586735622000),
         movements: [
           {
-            id: '340525766',
+            id: '100000057',
             account: { id: 'account' },
             invoice: null,
             sum: 5.18,
@@ -60,24 +60,24 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Перевод BYN на свои карты 449655******0198',
-        groupKeys: ['340525766']
+        comment: 'Перевод BYN на свои карты 411111******2828',
+        groupKeys: ['100000057']
       }
     ],
     [
       {
         sourceSystem: 3,
-        eventId: '340525746',
-        contractId: '8006989',
+        eventId: '100000055',
+        contractId: '1000032',
         contractCurrency: null,
-        cardPAN: '543553******6409',
+        cardPAN: '555555******2929',
         cardExpiryDate: null,
-        cardId: '909696579',
+        cardId: '100000058',
         eventDate: 1586735202000,
         processingDate: null,
         transactionType: 1,
         transactionCode: '313',
-        transactionName: 'Перевод BYN на свои карты 543553******6409',
+        transactionName: 'Перевод BYN на свои карты 555555******2929',
         operationCode: null,
         merchantId: null,
         merchantName: null,
@@ -87,8 +87,8 @@ describe('convertTransaction', () => {
         accountSum: null,
         commissionSum: null,
         commissionCurrency: null,
-        rnnCode: '122497917431',
-        authorizationCode: '134153',
+        rnnCode: '100000000022',
+        authorizationCode: '100021',
         eventStatus: 0,
         mccCode: null,
         errorDescription: null,
@@ -99,7 +99,7 @@ describe('convertTransaction', () => {
         souAuthorizationCode: null,
         souTransactionSum: null,
         souTransactionCurrency: null,
-        souEventId: '340525746',
+        souEventId: '100000055',
         qrPaymentId: null,
         fileId: null,
         printDocs: null,
@@ -110,7 +110,7 @@ describe('convertTransaction', () => {
         date: new Date(1586735202000),
         movements: [
           {
-            id: '340525746',
+            id: '100000055',
             account: { id: 'account' },
             invoice: null,
             sum: 5,
@@ -118,24 +118,24 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Перевод BYN на свои карты 543553******6409',
-        groupKeys: ['340525746']
+        comment: 'Перевод BYN на свои карты 555555******2929',
+        groupKeys: ['100000055']
       }
     ],
     [
       {
         sourceSystem: 3,
-        eventId: '341551482',
-        contractId: '8094341',
+        eventId: '100000064',
+        contractId: '1000038',
         contractCurrency: null,
-        cardPAN: '449655******8075',
+        cardPAN: '411111******3434',
         cardExpiryDate: null,
-        cardId: '940519949',
+        cardId: '100000065',
         eventDate: 1587136472000,
         processingDate: null,
         transactionType: 1,
         transactionCode: '220',
-        transactionName: 'Перевод RUB на свои карты 449655******8075',
+        transactionName: 'Перевод RUB на свои карты 411111******3434',
         operationCode: null,
         merchantId: null,
         merchantName: null,
@@ -145,8 +145,8 @@ describe('convertTransaction', () => {
         accountSum: null,
         commissionSum: null,
         commissionCurrency: null,
-        rnnCode: '122510429622',
-        authorizationCode: '621962',
+        rnnCode: '100000000023',
+        authorizationCode: '100022',
         eventStatus: 0,
         mccCode: null,
         errorDescription: null,
@@ -157,7 +157,7 @@ describe('convertTransaction', () => {
         souAuthorizationCode: null,
         souTransactionSum: null,
         souTransactionCurrency: null,
-        souEventId: '341551482',
+        souEventId: '100000064',
         qrPaymentId: null,
         fileId: null,
         printDocs: null,
@@ -168,7 +168,7 @@ describe('convertTransaction', () => {
         date: new Date(1587136472000),
         movements: [
           {
-            id: '341551482',
+            id: '100000064',
             account: { id: 'account' },
             invoice: {
               instrument: 'RUB',
@@ -179,15 +179,15 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Перевод RUB на свои карты 449655******8075',
-        groupKeys: ['341551482']
+        comment: 'Перевод RUB на свои карты 411111******3434',
+        groupKeys: ['100000064']
       }
     ],
     [
       {
         sourceSystem: 2,
-        eventId: '2343225045',
-        contractId: '7628284',
+        eventId: '1000000011',
+        contractId: '1000039',
         contractCurrency: '933',
         cardPAN: '',
         cardExpiryDate: null,
@@ -230,7 +230,7 @@ describe('convertTransaction', () => {
         movements:
           [
             {
-              id: '2343225045',
+              id: '1000000011',
               account: { id: 'account' },
               invoice: null,
               sum: 19.13,
