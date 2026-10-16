@@ -123,7 +123,8 @@ describe('Hapoalim typed WebView lifecycle', () => {
     const auth = await finish(api.login())
     expect(auth).toEqual({ cookieHeader: nativeCookies, xsrfToken: 'model-xsrf', restContext: 'pib', acquiredAt: Date.now() })
     expect(show).toHaveBeenCalledTimes(1)
-    expect(goto).toHaveBeenCalledWith(expect.stringContaining('getLogonPage'), expect.objectContaining({ waitUntil: 'commit', timeout: 30000 }))
+    // Android comparison on 2026-10-15: legacy entry stayed blank; direct auth entry rendered the form.
+    expect(goto).toHaveBeenCalledWith(BASE + '/ng-portals/auth/he/', expect.objectContaining({ waitUntil: 'commit', timeout: 30000 }))
     expect(cookieRead).toHaveBeenCalledWith(ACCOUNTS)
     expect(close).toHaveBeenCalledTimes(1)
     expect(nativeIsClosed).not.toHaveBeenCalled()

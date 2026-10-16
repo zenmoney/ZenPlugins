@@ -225,6 +225,20 @@ describe('convertAccounts', () => {
     expect(convertAccounts(apiAccounts.map(account => ({ ...account, shortProductName: '  ', shortSavingDepositName: ' Sample title ' }))))
       .toEqual(accounts.map(plan => ({ ...plan, account: { ...plan.account, title: 'Sample title' } })))
     if (accounts[0].account.type === 'deposit') {
+      // [model] Format-only variations of the fixture's maturity label must keep
+      // the complete DTO. Live classification, not a full new bank record, motivated this regression.
+      const endLabel = '\u05e1\u05d5\u05e3 \u05e4\u05d9\u05e7\u05d3\u05d5\u05df'
+      for (const description of [endLabel, '1 ' + endLabel, '  ' + endLabel + '  ',
+        endLabel.replace(' ', '\u00a0'), '\u200f' + endLabel + '\u200e', '1\t' + endLabel]) {
+        expect(convertAccounts(apiAccounts.map(account => ({ ...account, interestPaymentDescription: description })))).toEqual(accounts)
+      }
+      for (const description of [null, undefined, '', ' ', 1, {}, '2 ' + endLabel, '01 ' + endLabel,
+        '12345 ' + endLabel, '1' + endLabel, endLabel + ' UNKNOWN', 'MONTHLY']) {
+        expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, interestPaymentDescription: description })))).toThrow(/interest conditions/)
+      }
+      for (const crediting of [null, undefined, 'UNKNOWN', ' \u05dc\u05e2\u05d5"\u05e9 ', '\u05dc\u05e2\u05d5\u05f4\u05e9']) {
+        expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, interestCreditingMethodDescription: crediting, interestPaymentDescription: endLabel })))).toThrow(/interest conditions/)
+      }
       expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, formattedPaymentDate: account.formattedAgreementOpeningDate })))).toThrow(expect.objectContaining({ context: { structType: 'deposit', field: 'formattedAgreementOpeningDate/formattedPaymentDate' } }))
       for (const principal of [0, -1]) {
         expect(() => convertAccounts(apiAccounts.map(account => ({ ...account, principalAmount: principal })))).toThrow(/principal/)

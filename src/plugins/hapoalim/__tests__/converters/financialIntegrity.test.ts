@@ -1,3 +1,5 @@
+import { createHash } from 'crypto'
+
 interface Api {
   convertAccounts: (records: unknown[]) => Array<{ account: { id: string, balance?: number | null, title?: string } }>
   convertTransaction: (record: unknown, account: unknown, sourceType?: string) => unknown
@@ -58,9 +60,11 @@ describe('[model] Hapoalim financial integrity', () => {
       formattedPaymentDate: '2026-04-01T00:00:00.000Z',
       adjustedInterest: 0.5
     }
-    expect(() => convertAccounts([
+    expect(convertAccounts([
       { ...deposit, sourceAccountId: '12-702-1001' }, { ...deposit, sourceAccountId: '12-702-1002' }
-    ])).toThrow(/identity/)
+    ]).map(plan => [plan.account.id, plan.account.balance])).toEqual([
+      ...['12-702-1001', '12-702-1002'].map(parent => [`hapoalim-deposit:${createHash('sha256').update(parent).digest('hex')}:1`, 500])
+    ])
   })
 
   it('rejects two different currencies sharing an old FX identity', () => {

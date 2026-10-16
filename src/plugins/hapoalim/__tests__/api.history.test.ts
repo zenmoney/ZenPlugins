@@ -174,6 +174,154 @@ describe('[model] Hapoalim history completeness', () => {
     ])
   })
 
+  // Live Android 26.8/build 1105, 2026-10-14: the savings GET returned actual
+  // empty 204 with Accept-Encoding: identity; gzip-marked empty 204 rejected
+  // in native fetch. The two-account graph below is a [model], not bank data.
+  it.each([[204, 204], [204, 200], [200, 204]].map(statuses => ({ endpoint: 'savingsDeposits', statuses }))
+  )('preserves both account graphs for $endpoint statuses $statuses', async ({ endpoint, statuses }) => {
+    respondJson.mockImplementation(async (url, options) => {
+      const parsed = new URL(url)
+      const path: string = parsed.pathname
+      if (path.endsWith('/general/accounts')) return response([1001, 1002].map(accountNumber => ({ bankNumber: 12, branchNumber: 702, accountNumber })))
+      const id: string | null = parsed.searchParams.get('accountId')
+      const number: number = id === '12-702-1001' ? 1001 : 1002
+      if (path.includes('balanceAndCreditLimit')) return response({ currentBalance: number, currentAccountCreditFrame: 0 })
+      if (path.includes('/foreign-currency/')) return response(null)
+      if (path.includes('/deposits-and-savings/')) {
+        expect(new Headers((options as { headers: HeadersInit }).headers).get('accept-encoding')).toBe('identity')
+        if (path.endsWith('/' + endpoint) && statuses[number - 1001] === 204) return { status: 204, headers: {}, body: undefined }
+        return response({ list: [{ data: [{ depositSerialId: number }] }] })
+      }
+      return response({ data: [] })
+    })
+    const expected: unknown[] = []
+    for (const number of [1001, 1002]) {
+      expected.push({ bankNumber: 12, branchNumber: 702, accountNumber: number, details: { currentBalance: number, currentAccountCreditFrame: 0 }, structType: 'checking' })
+      for (const [name, structType] of [['deposits', 'deposit'], ['savingsDeposits', 'saving']]) {
+        if (name !== endpoint || statuses[number - 1001] === 200) expected.push({ depositSerialId: number, structType, sourceAccountId: `12-702-${number}` })
+      }
+    }
+    expect(await fetchAccounts(auth())).toEqual(expected)
+    expect(respondJson.mock.calls.filter(([url]) => new URL(url).pathname.includes('/deposits-and-savings/'))).toHaveLength(4)
+    expect(respondJson.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/mortgages'))).toHaveLength(2)
+    expect(respondJson.mock.calls.filter(([url]) => !new URL(url).pathname.includes('/deposits-and-savings/') &&
+      !new URL(url).pathname.includes('/foreign-currency/') &&
+      !new URL(url).pathname.endsWith('/loans') && !new URL(url).pathname.endsWith('/mortgages')).every(([, options]) =>
+      new Headers((options as { headers: HeadersInit }).headers).get('accept-encoding') === null
+    )).toBe(true)
+  })
+
+  // Live Android 26.8/build1105: second-parent FX inventory GET returned actual
+  // empty204 with identity; both-parent/mixed nonempty graphs below are models.
+  it.each([[204, 204], [204, 200], [200, 204], [200, 200]].map(statuses => ({ statuses })))('preserves both parents and every FX bucket for inventory statuses $statuses', async ({ statuses }) => {
+    const buckets = [{ currencyCode: 19, detailedAccountTypeCode: 142, currentBalance: 20 }, { currencyCode: 100, detailedAccountTypeCode: 143, currentBalance: 30 }]
+    respondJson.mockImplementation(async (url, options) => {
+      const parsed = new URL(url)
+      const path: string = parsed.pathname
+      if (path.endsWith('/general/accounts')) return response([1001, 1002].map(accountNumber => ({ bankNumber: 12, branchNumber: 702, accountNumber })))
+      const id: string | null = parsed.searchParams.get('accountId')
+      expect(id).toMatch(/^12-702-100[12]$/)
+      const number: number = id === '12-702-1001' ? 1001 : 1002
+      if (path.includes('balanceAndCreditLimit')) return response({ currentBalance: number })
+      if (path.includes('/foreign-currency/')) {
+        expect(parsed.searchParams.get('type')).toBe('business')
+        expect(parsed.searchParams.has('retrievalStartDate')).toBe(false)
+        expect(new Headers((options as { headers: HeadersInit }).headers).get('accept-encoding')).toBe('identity')
+        return statuses[number - 1001] === 204 ? { status: 204, headers: {}, body: undefined } : response({ balancesAndLimitsDataList: buckets, preservedModelField: number })
+      }
+      if (path.endsWith('/deposits')) return response({ list: [{ data: [{ depositSerialId: number }] }] })
+      if (path.includes('/deposits-and-savings/')) return response({ list: [] })
+      return response({ data: [] })
+    })
+    const expected: unknown[] = []
+    for (const number of [1001, 1002]) {
+      expected.push({ bankNumber: 12, branchNumber: 702, accountNumber: number, details: { currentBalance: number, currentAccountCreditFrame: null }, structType: 'checking' })
+      if (statuses[number - 1001] === 200) expected.push({ balancesAndLimitsDataList: buckets, preservedModelField: number, mainProductId: `12-702-${number}`, sourceAccountId: `12-702-${number}`, structType: 'foreignCurrencyAccount' })
+      expected.push({ depositSerialId: number, structType: 'deposit', sourceAccountId: `12-702-${number}` })
+    }
+    expect(await fetchAccounts(auth())).toEqual(expected)
+    expect(respondJson.mock.calls.filter(([url]) => new URL(url).pathname.includes('/foreign-currency/'))).toHaveLength(2)
+    expect(respondJson.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/mortgages'))).toHaveLength(2)
+  })
+
+  it.each([1001, 1002].flatMap(number => ['transport', 'empty200', 'malformed200', 'http401', 'http500'].map(failure => ({ number, failure }))))('rejects FX inventory $failure on account $number without partial success', async ({ number, failure }) => {
+    const transportError = new Error('model FX transport failure')
+    respondJson.mockImplementation(async url => {
+      const parsed = new URL(url)
+      const path: string = parsed.pathname
+      if (path.endsWith('/general/accounts')) return response([1001, 1002].map(accountNumber => ({ bankNumber: 12, branchNumber: 702, accountNumber })))
+      if (path.includes('balanceAndCreditLimit')) return response({ currentBalance: 10 })
+      if (path.includes('/foreign-currency/')) {
+        if (parsed.searchParams.get('accountId') !== `12-702-${number}`) return response(null)
+        if (failure === 'transport') throw transportError
+        if (failure === 'malformed200') return response({ unknown: 'MODEL_FX_PRIVATE_FIELD' })
+        return { status: failure === 'http401' ? 401 : failure === 'http500' ? 500 : 200, headers: {}, body: undefined }
+      }
+      return response(path.includes('/deposits-and-savings/') ? { list: [] } : { data: [] })
+    })
+    if (failure === 'transport') await expect(fetchAccounts(auth())).rejects.toBe(transportError)
+    else await expect(fetchAccounts(auth())).rejects.toThrow()
+    expect(JSON.stringify(jest.mocked(console.warn).mock.calls)).not.toContain('MODEL_FX_PRIVATE_FIELD')
+  })
+
+  // Live Android 26.8/build 1105: both collection GETs returned empty 204
+  // with identity encoding. Mixed parent inventories and nonempty records are models.
+  it.each(['loans', 'mortgages'].flatMap(endpoint =>
+    [[204, 204], [204, 200], [200, 204]].map(statuses => ({ endpoint, statuses }))
+  ))('preserves both account graphs and credit records for $endpoint statuses $statuses', async ({ endpoint, statuses }) => {
+    const mortgage = { mortgageLoanSerialId: 123, subLoansCounter: 1, subLoanData: [{ subLoansSerialId: 201 }] }
+    respondJson.mockImplementation(async (url, options) => {
+      const parsed = new URL(url)
+      const path: string = parsed.pathname
+      if (path.endsWith('/general/accounts')) return response([1001, 1002].map(accountNumber => ({ bankNumber: 12, branchNumber: 702, accountNumber })))
+      const id: string | null = parsed.searchParams.get('accountId')
+      expect(id).toMatch(/^12-702-100[12]$/)
+      const number: number = id === '12-702-1001' ? 1001 : 1002
+      if (path.includes('balanceAndCreditLimit')) return response({ currentBalance: number })
+      if (path.includes('/foreign-currency/')) return response(null)
+      if (path.includes('/deposits-and-savings/')) return response({ list: [] })
+      if (path.endsWith('/loans') || path.endsWith('/mortgages')) {
+        expect(new Headers((options as { headers: HeadersInit }).headers).get('accept-encoding')).toBe('identity')
+        if (path.endsWith('/' + endpoint) && statuses[number - 1001] === 204) return { status: 204, headers: {}, body: undefined }
+        return response({ data: path.endsWith('/loans') ? [{ creditSerialNumber: number, unitedCreditTypeCode: 2710 }] : [mortgage] })
+      }
+      expect(path).toBe(`/ServerServices/credit-and-mortgage/v3/loans/${number}`)
+      expect(parsed.searchParams.get('unitedCreditTypeCode')).toBe('2710')
+      expect(new Headers((options as { headers: HeadersInit }).headers).get('accept-encoding')).toBeNull()
+      return response({ nextPaymentAmount: number })
+    })
+    const expected: unknown[] = []
+    for (const number of [1001, 1002]) {
+      expected.push({ bankNumber: 12, branchNumber: 702, accountNumber: number, details: { currentBalance: number, currentAccountCreditFrame: null }, structType: 'checking' })
+      if (endpoint !== 'loans' || statuses[number - 1001] === 200) expected.push({ creditSerialNumber: number, unitedCreditTypeCode: 2710, details: { nextPaymentAmount: number }, structType: 'loan', sourceAccountId: `12-702-${number}` })
+      if (endpoint !== 'mortgages' || statuses[number - 1001] === 200) expected.push({ ...mortgage, structType: 'mortgage', sourceAccountId: `12-702-${number}` })
+    }
+    expect(await fetchAccounts(auth())).toEqual(expected)
+    expect(respondJson.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/loans'))).toHaveLength(2)
+    expect(respondJson.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/mortgages'))).toHaveLength(2)
+    expect(respondJson.mock.calls.filter(([url]) => new URL(url).pathname.includes('/loans/'))).toHaveLength(endpoint === 'loans' ? statuses.filter(status => status === 200).length : 2)
+  })
+
+  it.each(['deposits', 'savingsDeposits', 'loans', 'mortgages'].flatMap(endpoint =>
+    [1001, 1002].flatMap(number => ['transport', 'empty200', 'http500'].map(failure => ({ endpoint, number, failure })))
+  ))('rejects $failure on $endpoint for account $number rather than returning partial accounts', async ({ endpoint, number, failure }) => {
+    const transportError = new Error('model native transport failure')
+    respondJson.mockImplementation(async url => {
+      const parsed = new URL(url)
+      const path: string = parsed.pathname
+      if (path.endsWith('/general/accounts')) return response([1001, 1002].map(accountNumber => ({ bankNumber: 12, branchNumber: 702, accountNumber })))
+      if (path.includes('balanceAndCreditLimit')) return response({ currentBalance: 10 })
+      if (path.includes('/foreign-currency/')) return response(null)
+      if (path.endsWith('/' + endpoint) && parsed.searchParams.get('accountId') === `12-702-${number}`) {
+        if (failure === 'transport') throw transportError
+        return { status: failure === 'http500' ? 500 : 200, headers: {}, body: undefined }
+      }
+      return response(path.includes('/deposits-and-savings/') ? { list: [] } : { data: [] })
+    })
+    if (failure === 'transport') await expect(fetchAccounts(auth())).rejects.toBe(transportError)
+    else await expect(fetchAccounts(auth())).rejects.toThrow()
+  })
+
   it.each(['foreign-currency', 'deposits', 'loans', 'mortgages'])('does not turn an unknown %s envelope into no products', async endpoint => {
     respondJson.mockImplementation(async url => {
       const path = new URL(url).pathname
@@ -244,11 +392,7 @@ describe('[model] Hapoalim history completeness', () => {
   })
 
   it.each([
-    { path: '/foreign-currency/transactions', message: 'unexpected foreign currency accounts response' },
-    { path: '/deposits-and-savings/deposits', message: 'unexpected deposits response' },
-    { path: '/deposits-and-savings/savingsDeposits', message: 'unexpected deposits response' },
-    { path: '/credit-and-mortgage/v3/loans', message: 'unexpected loans response' },
-    { path: '/credit-and-mortgage/mortgages', message: 'unexpected mortgages response' }
+    { path: '/deposits-and-savings/deposits', message: 'unexpected deposits response' }
   ])('does not infer no products from an unobserved 204 at $path', async ({ path: target, message }) => {
     respondJson.mockImplementation(async url => {
       const path = new URL(url).pathname
@@ -274,6 +418,7 @@ describe('[model] Hapoalim history completeness', () => {
     await expect(fetchTransactions(auth(), { type: 'foreignCurrencyAccount', id: product.id, currencyCode: 19, detailedAccountTypeCode: 142 }, from, to)).rejects.toThrow('unexpected foreign currency history response')
     expect(respondJson).toHaveBeenCalledTimes(1)
     expect(respondJson.mock.calls[0][0]).toContain('/foreign-currency/transactions?')
+    expect(new Headers((respondJson.mock.calls[0][1] as { headers: HeadersInit }).headers).get('accept-encoding')).toBeNull()
   })
 
   it('does not probe an absent portal context for every window, but retries after auth changes', async () => {
@@ -321,6 +466,22 @@ describe('[model] Hapoalim history completeness', () => {
     })
     await expect(fetchAccounts(auth())).rejects.toThrow(/loan identity/)
     expect(respondJson.mock.calls.some(([url]) => new URL(url).pathname.includes('/loans/'))).toBe(false)
+  })
+
+  it('does not treat a loan-detail 204 as an absent loan or return partial accounts', async () => {
+    respondJson.mockImplementation(async url => {
+      const path = new URL(url).pathname
+      if (path.endsWith('/general/accounts')) return response([1001, 1002].map(accountNumber => ({ bankNumber: 12, branchNumber: 702, accountNumber })))
+      if (path.includes('balanceAndCreditLimit')) return response({ currentBalance: 10 })
+      if (path.includes('/foreign-currency/')) return response(null)
+      if (path.includes('/deposits-and-savings/')) return response({ list: [] })
+      if (path.endsWith('/loans')) return response({ data: [{ creditSerialNumber: 1, unitedCreditTypeCode: 2710 }] })
+      if (path.endsWith('/loans/1')) return { status: 204, headers: {}, body: undefined }
+      throw new Error('unexpected model path')
+    })
+    await expect(fetchAccounts(auth())).rejects.toThrow('unexpected loan details')
+    expect(respondJson.mock.calls.some(([url]) => new URL(url).searchParams.get('accountId') === '12-702-1002')).toBe(false)
+    expect(respondJson.mock.calls.some(([url]) => new URL(url).pathname.endsWith('/mortgages'))).toBe(false)
   })
 
   it('does not infer a credit frame from an unconfirmed creditLimitAmount alias', async () => {

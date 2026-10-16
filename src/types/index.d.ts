@@ -16,7 +16,8 @@ export interface ZenMoneyApi {
     text: string,
     options?: {
       image?: Uint8Array
-      inputType?: 'number' | 'text'
+      /** Password variants are supported by the native Android input mapper. */
+      inputType?: 'number' | 'text' | 'textPassword' | 'numberPassword'
       time?: number
     }
   ) => Promise<string | null>
