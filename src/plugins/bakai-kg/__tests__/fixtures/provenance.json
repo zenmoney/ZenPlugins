@@ -1,0 +1,25 @@
+{
+  "source": "Authorized private BakAi 5.1.9 captures. Public samples use owner-requested fictional financial and identity values.",
+  "productsSourceFlowId": "00000000-0000-4000-8000-000000000003",
+  "operations": "Complete selected capture-derived records, with owner-requested fictional values and public-safe source lookup labels. Selection covers observed type/currency combinations, not a complete card statement. Complete account ledger records are retained.",
+  "sanitization": "Amounts, balances, dates, merchant/product names, payment purposes and identifiers are substituted consistently. Signs, currency relations, matching transfer/refund sides, ledger totals, timestamp offsets/precision, field presence and record order are preserved. Zero/null values and bank operation/MCC/currency codes remain. All merchant, provider and technical location names are fictional. These values must not be interpreted as the original user history.",
+  "ruleIds": [
+    "ACCOUNT-001",
+    "ACCOUNT-002",
+    "ACCOUNT-003",
+    "AMOUNT-001",
+    "AMOUNT-002",
+    "ID-001",
+    "DATE-001",
+    "STATUS-001",
+    "TRANSFER-001",
+    "MERCHANT-001",
+    "COMMENT-001"
+  ],
+  "gaps": [
+    "Rejected/expired authentication and native background scheduling remain unverified.",
+    "Offset-free account dates use the documented bank-time assumption.",
+    "No independent account/card timestamp pair or full historical own-transfer counterpart coverage."
+  ],
+  "authSource": "Authorized private login captures; credentials, identity, challenge values and source lookup labels are public-safe substitutes."
+}

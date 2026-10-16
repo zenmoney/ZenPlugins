@@ -1,0 +1,15 @@
+{
+  "provenance": {
+    "source": "Derived from authorized private capture; public financial and identity values replaced by user request."
+  },
+  "response": {
+    "name": "Test Customer",
+    "token": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "is_new": 0,
+    "role": "USER",
+    "avatar": "https://example.invalid/avatar.png",
+    "is_2fa": true,
+    "is_2fa_selfie": false,
+    "result": 0
+  }
+}

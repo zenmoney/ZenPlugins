@@ -1,0 +1,1022 @@
+[
+  {
+    "date": "2020-06-04T03:34:46.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2020-06-04T03:34:46.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -7015.65,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-021"
+  },
+  {
+    "date": "2020-05-07T03:06:33.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2020-05-07T03:06:33.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -7015.65,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-022"
+  },
+  {
+    "date": "2020-05-06T05:46:43.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 1085,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2020-04-02T02:48:22.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2020-04-02T02:48:22.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -7015.65,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-024"
+  },
+  {
+    "date": "2020-03-07T03:20:20.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2020-03-07T03:20:20.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -7015.65,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-025"
+  },
+  {
+    "date": "2020-01-31T03:19:05.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2020-01-31T03:19:05.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -7015.65,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-026"
+  },
+  {
+    "date": "2020-01-31T03:18:38.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2020-01-31T03:18:38.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -3915,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-027"
+  },
+  {
+    "date": "2020-01-01T08:27:25.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -817262,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2020-01-01T07:47:51.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 181780,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовое поступление по договору TEST-028"
+  },
+  {
+    "date": "2019-12-29T03:23:30.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-12-29T03:23:30.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -1256,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-029"
+  },
+  {
+    "date": "2019-12-29T03:23:07.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-12-29T03:23:07.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -7015.65,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-030"
+  },
+  {
+    "date": "2019-12-18T16:48:15.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -847666,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-12-18T16:17:14.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 931925,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовое поступление по договору TEST-031"
+  },
+  {
+    "date": "2019-11-29T03:49:18.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -6,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-11-29T03:49:18.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -782,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-032"
+  },
+  {
+    "date": "2019-11-29T03:49:13.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-11-29T03:49:13.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -7996,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-033"
+  },
+  {
+    "date": "2019-11-29T03:49:09.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-11-29T03:49:09.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -7015.65,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-034"
+  },
+  {
+    "date": "2019-11-16T11:37:08.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -724052,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-11-16T09:14:25.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 900953,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовое поступление по договору TEST-035"
+  },
+  {
+    "date": "2019-11-07T08:17:52.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -13,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-11-07T08:17:52.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -2474.58,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-037"
+  },
+  {
+    "date": "2019-11-07T08:17:41.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -13,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-11-07T08:17:41.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -1519,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-038"
+  },
+  {
+    "date": "2019-11-07T08:14:17.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 1085,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-10-03T03:54:19.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-10-03T03:54:19.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -8273,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-039"
+  },
+  {
+    "date": "2019-10-03T03:54:15.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-10-03T03:54:15.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -2474.58,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-040"
+  },
+  {
+    "date": "2019-10-02T11:29:33.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -244822,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-10-02T11:15:27.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 746660,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовое поступление по договору TEST-041"
+  },
+  {
+    "date": "2019-09-15T09:32:29.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -318755,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-09-15T07:01:50.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 364200,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовое поступление по договору TEST-042"
+  },
+  {
+    "date": "2019-09-04T03:19:57.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-09-04T03:19:57.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -2474.58,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-043"
+  },
+  {
+    "date": "2019-09-04T03:19:51.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-09-04T03:19:51.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -2347,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-044"
+  },
+  {
+    "date": "2019-08-11T03:00:09.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -6,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-08-11T03:00:09.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -344,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-045"
+  },
+  {
+    "date": "2019-08-10T08:33:30.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -724052,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-08-10T06:21:26.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 900953,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовое поступление по договору TEST-046"
+  },
+  {
+    "date": "2019-08-08T02:53:08.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-08-08T02:53:08.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -2474.58,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-047"
+  },
+  {
+    "date": "2019-08-08T02:52:56.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -54,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Комиссия за тестовый перевод Иванов Иван Иванович"
+  },
+  {
+    "date": "2019-08-08T02:52:56.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -9188,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый платёж, документ TEST-048"
+  },
+  {
+    "date": "2019-08-04T16:10:34.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -38321,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-07-28T15:17:36.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -36309,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-07-28T08:16:10.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 89721,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовое поступление по договору TEST-049"
+  },
+  {
+    "date": "2019-07-25T20:41:48.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -58660,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-07-19T10:08:08.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": -436849,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовый перевод между своими счетами"
+  },
+  {
+    "date": "2019-07-19T08:17:02.000Z",
+    "hold": null,
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1009"
+        },
+        "invoice": null,
+        "sum": 225150,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": "Тестовое поступление по договору TEST-050\nТестовый контрагент"
+  }
+]
