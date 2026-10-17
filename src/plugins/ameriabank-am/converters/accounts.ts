@@ -23,6 +23,9 @@ export function convertAccounts (graph: unknown, products: readonly unknown[]): 
     accounts: [...result].sort((a, b) => a.id.localeCompare(b.id)),
     fetchParams: {
       source: 'history',
+      cards: [...new Map(listed.flatMap((item, index) => text(item, 'productType') === 'CARD'
+        ? [{ accountId: text(products[index], 'card.accountNumber'), cardId: text(item, 'id') }]
+        : []).map(source => [source.cardId, source])).values()].sort((a, b) => a.cardId.localeCompare(b.cardId)),
       deposits: deposits.map(item => ({
         accountId: `deposit:${text(item, 'id')}`,
         productId: text(item, 'id')
