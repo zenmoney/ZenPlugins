@@ -1,6 +1,7 @@
 import { Movement, ScrapeFunc } from '../../types/zenmoney'
-import { authenticate, fetchAccountGraph, fetchTransactions, fetchProducts, fetchExchangeDetails, fetchDepositTransactions } from './api'
+import { authenticate, fetchAccountGraph, fetchTransactions, fetchProducts, fetchExchangeDetails, fetchDepositTransactions, fetchOnlineTransactions } from './api'
 import { convertAccounts, convertTransactions, verifyDepositHistory } from './converters'
+import { combineOnlineTransactions } from './converters/online'
 import { Preferences } from './models'
 
 /** Import verified MyAmeria accounts and operations, persisting rotated authorization first. */
@@ -18,6 +19,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const requestStart = deposits.length > 0 ? armenianMidnight(fromDate) : fromDate
   const requestEnd = toDate == null ? nextArmenianMidnight() : deposits.length > 0 ? new Date(armenianMidnight(toDate).getTime() + 86400000) : toDate
   const history = await fetchTransactions(auth, fetchParams, requestStart, requestEnd)
+  const online = await fetchOnlineTransactions(auth, fetchParams.cards.filter(source => !ZenMoney.isAccountSkipped(source.accountId)))
   const depositMovements: Record<string, string> = {}
   for (const source of deposits) {
     const account = accounts.find(account => account.id === source.accountId)
@@ -29,8 +31,12 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     }
   }
   const details = await fetchExchangeDetails(auth, history)
-  const transactions = convertTransactions(history, accounts, details, fromDate, toDate, depositMovements)
+  const booked = convertTransactions(history, accounts, details, fromDate, toDate, depositMovements)
+  const combined = combineOnlineTransactions(history, booked, online, accounts, fromDate, toDate, ZenMoney.getData('onlineTransactions'))
+  const transactions = combined.transactions
     .filter(transaction => transaction.movements.some(isSelectedMovement))
+  ZenMoney.setData('onlineTransactions', combined.state)
+  ZenMoney.saveData()
   return { accounts, transactions }
 }
 

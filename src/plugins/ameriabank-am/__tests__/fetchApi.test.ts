@@ -4,8 +4,9 @@ import fetchMock from 'fetch-mock'
 import get from '../../../types/get'
 import { refreshToken, submitCredentials, confirmLogin, fetchAuthorizationPage, fetchPushStatus, exchangeToken, fetchClientAuthorization, fetchClientId } from '../fetchApi'
 import { pushPage } from '../authPage'
-import { authenticate } from '../api'
+import { authenticate, fetchOnlineTransactions } from '../api'
 import { UserInteractionError } from '../../../errors'
+import { Auth } from '../models'
 
 // Complete sanitized auth responses are from the authorized MyAmeria capture on 2026-10-07.
 describe('MyAmeria captured authorization transport', () => {
@@ -118,5 +119,20 @@ describe('MyAmeria captured authorization transport', () => {
     for (const secret of ['private-access-secret', 'fixture-id', 'fixture-firstName', 'fixture-lastName', 'fixture-email']) expect(logs).not.toContain(secret)
     expect(logs).toContain('users/')
     expect(logs).toContain('/clients')
+  })
+
+  it('loads the minimized anonymized online source with sanitized authorization and visible financial diagnostics', async () => {
+    const fixture: { onlineResponse: unknown } = JSON.parse(readFileSync(join(__dirname, 'fixtures/online.json'), 'utf8'))
+    const auth: Auth = { accessToken: 'online-access-secret', refreshToken: 'refresh-secret', clientId: 'online-client-secret', clientAuth: 'auth-secret', expiresAt: 1 }
+    const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
+    fetchMock.get('https://ob.myameria.am/api/events/settled/100000002?', { headers: { 'Set-Cookie': 'online-cookie-secret' }, body: fixture.onlineResponse })
+    const result = await fetchOnlineTransactions(auth, [{ accountId: '1570010000000002', cardId: '100000002' }])
+    expect({ result, request: { method: fetchMock.lastOptions()?.method ?? 'GET', authorization: get(fetchMock.lastOptions(), 'headers.Authorization'), locale: get(fetchMock.lastOptions(), 'headers.Locale') } }).toEqual({
+      result: [{ accountId: '1570010000000002', cardId: '100000002', entries: get(fixture.onlineResponse, 'data.entries') }],
+      request: { method: 'GET', authorization: 'Bearer online-access-secret', locale: 'hy' }
+    })
+    const logs = JSON.stringify(debug.mock.calls)
+    for (const secret of ['online-access-secret', 'online-client-secret', 'online-cookie-secret']) expect(logs).not.toContain(secret)
+    for (const diagnostic of ['620257', 'AUTHORIZED', 'SETTLED', '1837.45', 'MARKETA', 'totalCount']) expect(logs).toContain(diagnostic)
   })
 })
