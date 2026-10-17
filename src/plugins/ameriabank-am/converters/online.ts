@@ -25,46 +25,72 @@ export function combineOnlineTransactions (
   toDate?: Date,
   saved?: unknown
 ): { transactions: Transaction[], state: OnlineState } {
-  const previous = savedState(saved)
-  const aliases = { ...previous.historyAliases }
   const current = sources.flatMap(source => source.entries.map(record => ({ accountId: source.accountId, cardId: source.cardId, record })))
+  const reconciled = reconcileHistory(history, current, savedState(saved))
+  const additions = newAuthorizations(current, accounts, reconciled.linked, fromDate, toDate)
+  const imported = new Map([...reconciled.state.imported, ...additions.imported].map(operation => [operationId(operation), operation]))
+  const combined = transactions.map(transaction => aliasedTransaction(transaction, reconciled.state.historyAliases))
+    .filter(transaction => withinPeriod(transaction.date, fromDate, toDate))
+  return { transactions: [...combined, ...additions.transactions], state: { imported: [...imported.values()], historyAliases: reconciled.state.historyAliases } }
+}
+
+/** Link unique history matches and retain the identities of previously imported authorizations. */
+function reconcileHistory (
+  history: readonly unknown[],
+  current: readonly OnlineOperation[],
+  previous: OnlineState
+): { linked: ReadonlySet<string>, state: OnlineState } {
+  const aliases = { ...previous.historyAliases }
   const imported = new Map(previous.imported.map(operation => [operationId(operation), operation]))
-  const seen = new Map<string, string>()
-  const additions: Transaction[] = []
   const candidates = new Map([...previous.imported, ...current].map(operation => [operationId(operation), operation]))
   const uniqueHistory = [...new Map(history.map(record => [text(record, 'transactionId'), record])).values()]
   const linked = new Set<string>()
   for (const operation of candidates.values()) {
     const matches = uniqueHistory.filter(record => matchingHistory(operation, record))
     const wasImported = imported.has(operationId(operation))
-    if (matches.length === 1 && [...candidates.values()].filter(candidate => matchingHistory(candidate, matches[0])).length === 1) {
-      linked.add(operationId(operation))
-      const id = text(matches[0], 'transactionId')
-      if (aliases[id] === undefined && (wasImported || operationDate(operation).getTime() !== number(matches[0], 'transactionDate'))) {
-        aliases[id] = { id: wasImported ? operationId(operation) : id, date: text(operation.record, 'operationDate') }
-      }
-      imported.delete(operationId(operation))
+    if (matches.length !== 1 || [...candidates.values()].filter(candidate => matchingHistory(candidate, matches[0])).length !== 1) continue
+    linked.add(operationId(operation))
+    const id = text(matches[0], 'transactionId')
+    if (aliases[id] === undefined && (wasImported || operationDate(operation).getTime() !== number(matches[0], 'transactionDate'))) {
+      aliases[id] = { id: wasImported ? operationId(operation) : id, date: text(operation.record, 'operationDate') }
     }
+    imported.delete(operationId(operation))
   }
+  return { linked, state: { imported: [...imported.values()], historyAliases: aliases } }
+}
+
+/** Convert current unmatched authorizations once without replaying saved records. */
+function newAuthorizations (
+  current: readonly OnlineOperation[],
+  accounts: readonly Account[],
+  linked: ReadonlySet<string>,
+  fromDate: Date,
+  toDate?: Date
+): { transactions: Transaction[], imported: OnlineOperation[] } {
+  const seen = new Map<string, string>()
+  const transactions: Transaction[] = []
+  const imported: OnlineOperation[] = []
   for (const operation of current) {
     const state = text(operation.record, 'state')
     console.assert(state === 'AUTHORIZED' || state === 'SETTLED', 'Unsupported MyAmeria online transaction state', { state })
     if (state === 'SETTLED') continue
     const date = operationDate(operation)
-    if (date < fromDate || (toDate != null && date > toDate)) continue
-    if (linked.has(operationId(operation))) continue
+    if (!withinPeriod(date, fromDate, toDate) || linked.has(operationId(operation))) continue
     const id = operationId(operation)
     const transaction = onlineTransaction(operation, accounts, date)
     const signature = JSON.stringify(transaction)
     console.assert(!seen.has(id) || seen.get(id) === signature, 'Conflicting MyAmeria online transaction identity')
     if (seen.has(id)) continue
     seen.set(id, signature)
-    imported.set(id, operation)
-    additions.push(transaction)
+    imported.push(operation)
+    transactions.push(transaction)
   }
-  const combined = transactions.map(transaction => aliasedTransaction(transaction, aliases))
-    .filter(transaction => transaction.date >= fromDate && (toDate == null || transaction.date <= toDate))
-  return { transactions: [...combined, ...additions], state: { imported: [...imported.values()], historyAliases: aliases } }
+  return { transactions, imported }
+}
+
+/** Apply the same inclusive period boundaries before and after history reconciliation. */
+function withinPeriod (date: Date, fromDate: Date, toDate?: Date): boolean {
+  return date >= fromDate && (toDate == null || date <= toDate)
 }
 
 /** Validate persisted financial identity metadata without trusting stored bank payloads. */
