@@ -1,4 +1,5 @@
-import { Account, ScrapeFunc, Transaction } from '../../types/zenmoney'
+import { Account, ExtendedTransaction, ScrapeFunc } from '../../types/zenmoney'
+import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { fetchAccounts, fetchCards, fetchTransactions, login } from './api'
 import { convertAccounts, convertCards, convertTransaction, mergeTransactionsByMovementId } from './converters'
 import { Currency } from './helpers'
@@ -11,11 +12,12 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   ZenMoney.saveData()
 
   const accounts: Account[] = []
-  const transactions: Transaction[] = []
+  const transactions: ExtendedTransaction[] = []
   const convertedProducts = [
     ...convertAccounts(await fetchAccounts(session)),
     ...convertCards(await fetchCards(session))
   ]
+  const allAccounts = convertedProducts.map(({ account }) => account)
 
   await Promise.all(convertedProducts.map(async ({ account, products }) => {
     accounts.push(account)
@@ -25,12 +27,12 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     await Promise.all(products.map(async product => {
       const apiTransactions = await fetchTransactions(session, product, account.instrument as keyof typeof Currency, fromDate, toDate ?? new Date())
       for (const apiTransaction of apiTransactions) {
-        transactions.push(convertTransaction(apiTransaction, account))
+        transactions.push(convertTransaction(apiTransaction, account, allAccounts))
       }
     }))
   }))
   return {
     accounts,
-    transactions: mergeTransactionsByMovementId(transactions)
+    transactions: adjustTransactions({ transactions: mergeTransactionsByMovementId(transactions) })
   }
 }

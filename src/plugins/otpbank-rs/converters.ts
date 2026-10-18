@@ -1,5 +1,4 @@
-import { Account, AccountType, ExtendedTransaction, Merchant, NonParsedMerchant } from '../../types/zenmoney'
-import { getOptNumber, getOptString } from '../../types/get'
+import { Account, AccountOrCard, AccountType, ExtendedTransaction, Merchant, NonParsedMerchant } from '../../types/zenmoney'
 import { ConvertResult, OtpAccount, OtpCard, OtpTransaction, Product } from './models'
 
 export function convertAccounts (apiAccounts: OtpAccount[]): ConvertResult[] {
@@ -30,6 +29,7 @@ function convertAccount (apiAccount: OtpAccount, accountsByCba: Record<string, C
         instrument: apiAccount.currencyCode,
         balance,
         creditLimit: 0,
+        ...(apiAccount.isDeposit ? { savings: true } : {}),
         syncIds: [cba]
       }
     }
@@ -38,20 +38,12 @@ function convertAccount (apiAccount: OtpAccount, accountsByCba: Record<string, C
   }
   account.products.push({
     id: apiAccount.accountNumber,
-    source: 'accountTurnover',
+    source: apiAccount.isDeposit ? 'depositTurnover' : 'accountTurnover',
     accountNumber: apiAccount.accountNumber,
+    productCodeCore: apiAccount.productCodeCore,
     currencyCodeNumeric: apiAccount.currencyCodeNumeric
   })
 
-  const pan = getOptString(apiAccount, 'pan')
-  if (pan != null) {
-    account.account.syncIds.push(pan)
-  }
-
-  const moneyAmount = getOptNumber(apiAccount, 'moneyAmount.value')
-  if (moneyAmount != null && Number.isFinite(moneyAmount)) {
-    account.account.creditLimit = moneyAmount - balance
-  }
   return newAccount ? account : null
 }
 
@@ -212,8 +204,15 @@ function isPlaceholderBookingDate (bookingDate: string): boolean {
   return bookingDate.startsWith('01.01.1900')
 }
 
-export function convertTransaction (apiTransaction: OtpTransaction, account: Account): ExtendedTransaction {
-  const merchant = parseMerchant(apiTransaction.title, apiTransaction.merchant)
+export function convertTransaction (apiTransaction: OtpTransaction, account: Account, accounts: AccountOrCard[] = []): ExtendedTransaction {
+  const isDeposit = apiTransaction.source === 'depositTurnover'
+  const depositNumber = apiTransaction.title.match(/^Prenos na partiju oročenog depozita (\d+)$/)?.[1]
+  const depositAccount = isDeposit && apiTransaction.amount > 0
+    ? account
+    : apiTransaction.amount < 0 && depositNumber != null
+      ? accounts.find(candidate => candidate.savings === true && candidate.id.slice(3, -2) === depositNumber && candidate.instrument === account.instrument)
+      : undefined
+  const merchant = isDeposit || depositAccount != null ? null : parseMerchant(apiTransaction.title, apiTransaction.merchant)
   const bookingDate = apiTransaction.bookingDate ?? ''
   const hasMeaningfulBookingDate = bookingDate !== '' && !isPlaceholderBookingDate(bookingDate)
   const completed = Boolean(
@@ -224,7 +223,7 @@ export function convertTransaction (apiTransaction: OtpTransaction, account: Acc
 
   const transaction: ExtendedTransaction = {
     date: apiTransaction.date,
-    hold: !completed,
+    hold: isDeposit ? (hasMeaningfulBookingDate ? false : null) : !completed,
     movements: [
       {
         id: movementId(account.id, apiTransaction.id, apiTransaction.date),
@@ -236,6 +235,11 @@ export function convertTransaction (apiTransaction: OtpTransaction, account: Acc
     ],
     merchant,
     comment: merchant === null ? apiTransaction.title : null
+  }
+
+  if (depositAccount != null) {
+    // The two bank references differ. Match only observed sides for this deposit/date/currency/amount.
+    transaction.groupKeys = [`deposit|${depositAccount.id}|${account.instrument}|${apiTransaction.date.getTime()}|${Math.abs(apiTransaction.amount)}`]
   }
 
   return transaction
