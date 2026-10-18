@@ -3,6 +3,7 @@ import { Account } from '../../types/zenmoney'
 export interface Auth {
   cookieHeader: string
   updatedAt: string
+  fingerprint?: string
 }
 
 export interface Session {

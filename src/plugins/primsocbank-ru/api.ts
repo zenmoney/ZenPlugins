@@ -19,16 +19,17 @@ async function retryWithAuth<T> (preferences: Preferences, session: Session, act
     if (!(e instanceof TemporaryUnavailableError)) {
       throw e
     }
-    session.auth = await fetchAuthorization(preferences)
+    session.auth = await fetchAuthorization(preferences, session.auth.fingerprint)
     return await action()
   }
 }
 
 export async function login (preferences: Preferences, auth?: Auth): Promise<Session> {
+  const fingerprint = auth?.fingerprint
   if (isReusableAuth(auth)) {
     return { auth }
   }
-  return { auth: await fetchAuthorization(preferences) }
+  return { auth: await fetchAuthorization(preferences, fingerprint) }
 }
 
 export async function fetchAccounts (preferences: Preferences, session: Session): Promise<unknown[]> {
