@@ -1,5 +1,10 @@
 import { OtpAccount, OtpCard, OtpTransaction } from './models'
 import { decode } from 'html-entities'
+import { getArray, getString } from '../../types/get'
+import moment from 'moment'
+
+// OTP web client 4.0.2395.0: RetailParameters.DepositAccountProductCodes.
+const depositProductCodes = new Set(['3', '6', '18', '19', '24', '25', '26', '27'])
 
 export function parseAccounts (apiAccounts: string[][]): OtpAccount[] {
   const accounts: OtpAccount[] = []
@@ -13,15 +18,16 @@ export function parseAccounts (apiAccounts: string[][]): OtpAccount[] {
 }
 
 function parseAccount (apiAccount: string[]): OtpAccount {
-  const moneyAmountValue = parseFloat(apiAccount[6] ?? '')
+  const productCodeCore = getString(apiAccount, '13')
+  const isDeposit = depositProductCodes.has(productCodeCore)
   const account: OtpAccount = {
     accountNumber: apiAccount[1],
+    productCodeCore,
+    isDeposit,
     description: apiAccount[2],
     currencyCode: apiAccount[3],
     balance: parseFloat(apiAccount[5]),
-    currencyCodeNumeric: apiAccount[14],
-    pan: apiAccount[4] ?? '',
-    moneyAmount: Number.isFinite(moneyAmountValue) ? { value: moneyAmountValue } : undefined
+    currencyCodeNumeric: apiAccount[14]
   }
   return account
 }
@@ -74,6 +80,33 @@ export function parseTransactions (apiTransactions: string[][]): OtpTransaction[
     }
   }
   return transactions
+}
+
+export function parseDepositTurnover (body: unknown): OtpTransaction[] {
+  // RetailAccountTurnoverTimeDepositDomesticPreviewMasterDetail-L has its own columns.
+  return getArray({ body }, 'body').flatMap(group => getArray(group, '1').map(row => {
+    const debit = getString(row, '7')
+    const credit = getString(row, '8')
+    const amount = debit !== '' ? -Number(debit) : Number(credit)
+    console.assert((debit !== '' || credit !== '') && Number.isFinite(amount), 'Invalid OTP deposit transaction amount')
+    const dateString = getString(row, '3')
+    const date = moment(dateString, 'DD.MM.YYYY HH:mm:ss', true)
+    console.assert(date.isValid(), 'Invalid OTP deposit transaction date')
+    const id = getString(row, '6')
+    console.assert(id !== '', 'Missing OTP deposit transaction reference')
+    return {
+      source: 'depositTurnover' as const,
+      id,
+      date: date.toDate(),
+      amount,
+      currencyCode: getString(row, '2'),
+      currencyCodeNumeric: getString(row, '1'),
+      title: decode(getString(row, '5')).trim(),
+      bookingDate: getString(row, '4'),
+      status: getString(row, '19'),
+      merchant: ''
+    }
+  }))
 }
 
 export function parseTransaction (apiTransaction: string[]): OtpTransaction {

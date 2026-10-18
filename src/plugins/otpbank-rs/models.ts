@@ -21,7 +21,7 @@ export interface Preferences {
 
 export interface Product {
   id: string
-  source: 'accountTurnover' | 'cardTurnover'
+  source: 'accountTurnover' | 'cardTurnover' | 'depositTurnover'
   accountNumber?: string
   currencyCodeNumeric?: string
   primaryCardId?: string
@@ -36,12 +36,12 @@ export interface ConvertResult {
 
 export interface OtpAccount {
   accountNumber: string
+  productCodeCore: string
+  isDeposit: boolean
   description: string
   currencyCode: string
   balance: number
   currencyCodeNumeric: string
-  pan?: string
-  moneyAmount?: { value: number }
 }
 
 export interface OtpCard {
@@ -57,6 +57,7 @@ export interface OtpCard {
 }
 
 export interface OtpTransaction {
+  source?: 'depositTurnover'
   id: string
   date: Date
   amount: number
