@@ -48,7 +48,17 @@ const expected: AccountPlan = {
     payoffInterval: null,
     payoffStep: 0
   }],
-  fetchParams: { source: 'history', deposits: [{ accountId: 'deposit:1010756356', productId: '1010756356' }] }
+  fetchParams: {
+    source: 'history',
+    cards: [
+      { accountId: '1570010000000000', cardId: '900000429' },
+      { accountId: '1570010000000001', cardId: '900000430' },
+      { accountId: '1570010000000002', cardId: '900000431' },
+      { accountId: '1570010000000003', cardId: '900000432' },
+      { accountId: '1570010000000004', cardId: '900000433' }
+    ],
+    deposits: [{ accountId: 'deposit:1010756356', productId: '1010756356' }]
+  }
 }
 
 it('converts the complete graph using available own funds and full account numbers (ACCOUNT-001/002/003)', () => {

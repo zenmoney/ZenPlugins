@@ -161,6 +161,11 @@ export async function fetchHistoryPage (accessToken: string, clientId: string, f
   })
 }
 
+/** Fetch the current card activity including authorized and settled entries. */
+export async function fetchOnlineTransactions (auth: Auth, cardId: string): Promise<unknown> {
+  return await request(`events/settled/${encodeURIComponent(cardId)}`, auth.accessToken, auth.clientId, {})
+}
+
 /** Fetch savings accounts and deposit contracts. */
 export async function fetchSavings (auth: Auth): Promise<unknown> {
   return await request('savings', auth.accessToken, auth.clientId, { page: '0', size: '500', skipApplications: 'true' })

@@ -1,0 +1,369 @@
+{
+  "onlineResponse": {
+    "status": "success",
+    "data": {
+      "totalCount": 9,
+      "entries": [
+        {
+          "id": "610143",
+          "transactionType": "debit:card-to-card",
+          "accountingType": "DEBIT",
+          "state": "AUTHORIZED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 762.91
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "BANK TRANSFER GATE 8 SAMPLE STR. CITYONE FRA",
+          "operationDate": "2026-08-18T11:41:43.000Z",
+          "workflowCode": "debit:card-to-card",
+          "date": "18 August",
+          "year": "2026",
+          "month": "August"
+        },
+        {
+          "id": "620257",
+          "transactionType": "purchase:pos",
+          "accountingType": "DEBIT",
+          "state": "AUTHORIZED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 1837.45
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "MARKETA GROUP LLC  CITYONE FRA",
+          "operationDate": "2026-08-17T16:53:47.000Z",
+          "workflowCode": "purchase:pos",
+          "date": "17 August",
+          "year": "2026",
+          "month": "August"
+        },
+        {
+          "id": "630389",
+          "transactionType": "purchase:pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 2641.75
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "CAFE-B C.CITYONE, EXAMPLESTREET 3456 Cityone FRA",
+          "operationDate": "2026-08-16T18:38:03.000Z",
+          "workflowCode": "purchase:pos",
+          "date": "16 August",
+          "year": "2026",
+          "month": "August"
+        },
+        {
+          "id": "640467",
+          "transactionType": "purchase:pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 529.38
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "SHOPCHAR EXAMPLEST 36/27 EXAMPLEST AVE. CITYONE FRA",
+          "operationDate": "2026-08-16T12:16:45.000Z",
+          "workflowCode": "purchase:pos",
+          "date": "16 August",
+          "year": "2026",
+          "month": "August"
+        },
+        {
+          "id": "650581",
+          "transactionType": "purchase:pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 83.19
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "SHOPCHAR EXAMPLEST 36/27 EXAMPLEST AVE. CITYONE FRA",
+          "operationDate": "2026-08-15T13:45:45.000Z",
+          "workflowCode": "purchase:pos",
+          "date": "15 August",
+          "year": "2026",
+          "month": "August"
+        },
+        {
+          "id": "650629",
+          "transactionType": "purchase:pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 147.62
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "SHOPCHAR EXAMPLEST 36/27 EXAMPLEST AVE. CITYONE FRA",
+          "operationDate": "2026-08-15T13:45:18.000Z",
+          "workflowCode": "purchase:pos",
+          "date": "15 August",
+          "year": "2026",
+          "month": "August"
+        },
+        {
+          "id": "960743",
+          "transactionType": "purchase:pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 3920.84
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "SHOPXYZ GROUP CJSC 28/4 AB EXAMPLEST STR. CITYONE FRA",
+          "operationDate": "2026-08-14T07:10:49.000Z",
+          "workflowCode": "purchase:pos",
+          "date": "14 August",
+          "year": "2026",
+          "month": "August"
+        },
+        {
+          "id": "870857",
+          "transactionType": "purchase:pos",
+          "accountingType": "DEBIT",
+          "state": "AUTHORIZED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 3920.84
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "SHOPXYZ GROUP 1 28/4 EXAMPLE ROADNAME STR. CITYONE FRA",
+          "operationDate": "2026-08-14T07:04:15.000Z",
+          "workflowCode": "purchase:pos",
+          "date": "14 August",
+          "year": "2026",
+          "month": "August"
+        },
+        {
+          "id": "870857",
+          "transactionType": "purchase:pos",
+          "accountingType": "DEBIT",
+          "state": "AUTHORIZED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 3920.84
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "SHOPXYZ GROUP 1 28/4 EXAMPLE ROADNAME STR. CITYONE FRA",
+          "operationDate": "2026-08-14T06:51:51.000Z",
+          "workflowCode": "purchase:pos",
+          "date": "14 August",
+          "year": "2026",
+          "month": "August"
+        }
+      ]
+    },
+    "errorMessages": null
+  },
+  "history": [
+    {
+      "swiftPayment": null,
+      "processedOperationId": "5add6762-0235-53a6-9479-a9a9833fbeb2",
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 762.91
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 762.91
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 762.91
+      },
+      "transactionType": "transfer:to-card",
+      "beneficiaryName": "JAMIE SAMPLE",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570090000000001",
+      "cardMaskedNumber": "40830********901",
+      "flowDirection": "EXPENSE",
+      "details": "External transfer",
+      "sourceSystem": "my-ameria",
+      "settledDate": 1787053303000,
+      "transactionDate": 1787053303000,
+      "additionalInfo": null,
+      "transactionId": "f9aae25f-8d47-5107-8cb5-dcb76b417c10",
+      "id": "f9aae25f-8d47-5107-8cb5-dcb76b417c10",
+      "workflowCode": "transfer:to-card",
+      "date": "18 August",
+      "year": "2026",
+      "month": "August"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 2641.75
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 2641.75
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 2641.75
+      },
+      "transactionType": "card",
+      "beneficiaryName": "Քարտային պրոցեսոր/հաշվարկներ",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570090000000002",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: CAFE-B CAFE-B 063 630389",
+      "sourceSystem": null,
+      "settledDate": 1786969579000,
+      "transactionDate": 1786969579000,
+      "additionalInfo": null,
+      "transactionId": "435c5e5f-fe62-550c-a9e7-afa66fad7b24",
+      "id": "435c5e5f-fe62-550c-a9e7-afa66fad7b24",
+      "workflowCode": "card",
+      "date": "17 August",
+      "year": "2026",
+      "month": "August"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 529.38
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 529.38
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 529.38
+      },
+      "transactionType": "card",
+      "beneficiaryName": "Քարտային պրոցեսոր/հաշվարկներ",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570090000000002",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: SHOPCHAR EXAMPLEST CITYONE FR 64",
+      "sourceSystem": null,
+      "settledDate": 1786969558000,
+      "transactionDate": 1786969558000,
+      "additionalInfo": null,
+      "transactionId": "6b375a8e-f716-5142-a365-d429cd56fb23",
+      "id": "6b375a8e-f716-5142-a365-d429cd56fb23",
+      "workflowCode": "card",
+      "date": "17 August",
+      "year": "2026",
+      "month": "August"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 83.19
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 83.19
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 83.19
+      },
+      "transactionType": "card",
+      "beneficiaryName": "Քարտային պրոցեսոր/հաշվարկներ",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570090000000002",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: SHOPCHAR EXAMPLEST CITYONE FR 65",
+      "sourceSystem": null,
+      "settledDate": 1786886020000,
+      "transactionDate": 1786886020000,
+      "additionalInfo": null,
+      "transactionId": "3aab1eb8-9c97-5ac2-a4fb-8e4556500562",
+      "id": "3aab1eb8-9c97-5ac2-a4fb-8e4556500562",
+      "workflowCode": "card",
+      "date": "16 August",
+      "year": "2026",
+      "month": "August"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 147.62
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 147.62
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 147.62
+      },
+      "transactionType": "card",
+      "beneficiaryName": "Քարտային պրոցեսոր/հաշվարկներ",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570090000000002",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: SHOPCHAR EXAMPLEST CITYONE FR 65",
+      "sourceSystem": null,
+      "settledDate": 1786885959000,
+      "transactionDate": 1786885959000,
+      "additionalInfo": null,
+      "transactionId": "4c156d8e-0688-5905-8317-32d1c137fada",
+      "id": "4c156d8e-0688-5905-8317-32d1c137fada",
+      "workflowCode": "card",
+      "date": "16 August",
+      "year": "2026",
+      "month": "August"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 3920.84
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 3920.84
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 3920.84
+      },
+      "transactionType": "card",
+      "beneficiaryName": "Քարտային պրոցեսոր/հաշվարկներ",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570090000000002",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: SHOPXYZ GROUP CJSC CITYONE FR 9",
+      "sourceSystem": null,
+      "settledDate": 1786801297000,
+      "transactionDate": 1786801297000,
+      "additionalInfo": null,
+      "transactionId": "435d23f0-d220-5b27-b57b-0658ba4e213c",
+      "id": "435d23f0-d220-5b27-b57b-0658ba4e213c",
+      "workflowCode": "card",
+      "date": "15 August",
+      "year": "2026",
+      "month": "August"
+    }
+  ]
+}

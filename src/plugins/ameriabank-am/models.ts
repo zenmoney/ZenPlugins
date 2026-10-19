@@ -45,6 +45,23 @@ export interface DepositSource {
 export interface HistoryPlan {
   readonly source: 'history'
   readonly deposits: readonly DepositSource[]
+  readonly cards: readonly CardSource[]
+}
+
+/** Card-only authorizations supplement the shared booked history. */
+export interface CardSource {
+  readonly accountId: string
+  readonly cardId: string
+}
+
+/** Complete untrusted Online entries for one selected card. */
+export interface OnlineSource extends CardSource {
+  readonly entries: readonly unknown[]
+}
+
+/** An emitted authorization retained only to link a later booked movement. */
+export interface OnlineOperation extends CardSource {
+  readonly record: unknown
 }
 
 /** Converted accounts and their complete history loading plan. */

@@ -1,5 +1,5 @@
 import fetchMock from 'fetch-mock'
-import { authenticate, fetchTransactions } from '../api'
+import { authenticate, fetchTransactions, fetchOnlineTransactions } from '../api'
 import { fetchAccounts, refreshToken } from '../fetchApi'
 import { Auth } from '../models'
 
@@ -108,5 +108,18 @@ describe('[model] MyAmeria transport', () => {
     expect(await fetchTransactions(auth, { source: 'history' }, new Date('2026-10-01'), new Date('2026-10-02'))).toEqual([])
     expect(fetchMock.calls(/history\?.*page=0&/)).toHaveLength(1)
     expect(fetchMock.calls(/history\?.*page=1&/)).toHaveLength(1)
+  })
+
+  // Model a transport failure without manufacturing a bank rejection format.
+  it('propagates an online source failure instead of returning partial history', async () => {
+    const failure = new Error('Modeled online source failure')
+    fetchMock.get('https://ob.myameria.am/api/events/settled/card-42?', { throws: failure })
+    await expect(fetchOnlineTransactions(auth, [{ accountId: 'account-42', cardId: 'card-42' }])).rejects.toBe(failure)
+  })
+
+  // Model an incomplete source independently of bank financial record interpretation.
+  it('rejects an incomplete online source rather than silently dropping its missing entries', async () => {
+    fetchMock.get('https://ob.myameria.am/api/events/settled/card-42?', { body: { status: 'success', data: { entries: [], totalCount: 1 } } })
+    await expect(fetchOnlineTransactions(auth, [{ accountId: 'account-42', cardId: 'card-42' }])).rejects.toThrow()
   })
 })

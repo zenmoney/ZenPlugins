@@ -4,7 +4,7 @@ import { join } from 'path'
 import { Auth, Preferences } from '../models'
 import { convertAccounts, convertTransactions, verifyDepositHistory } from '../converters'
 
-jest.mock('../api', () => ({ authenticate: jest.fn(), fetchAccountGraph: jest.fn(), fetchProducts: jest.fn(), fetchTransactions: jest.fn(), fetchExchangeDetails: jest.fn(), fetchDepositTransactions: jest.fn() }))
+jest.mock('../api', () => ({ authenticate: jest.fn(), fetchAccountGraph: jest.fn(), fetchProducts: jest.fn(), fetchTransactions: jest.fn(), fetchExchangeDetails: jest.fn(), fetchDepositTransactions: jest.fn(), fetchOnlineTransactions: jest.fn() }))
 const api: typeof import('../api') = jest.requireMock('../api')
 const { scrape }: typeof import('../index') = jest.requireActual('../index')
 const capture: BankCapture = JSON.parse(readFileSync(join(__dirname, './fixtures/capture.json'), 'utf8'))
@@ -30,6 +30,7 @@ describe('import entrypoint using the authorized anonymized capture', () => {
       return capture.history
     })
     jest.mocked(api.fetchExchangeDetails).mockResolvedValue(capture.details)
+    jest.mocked(api.fetchOnlineTransactions).mockResolvedValue([])
     jest.mocked(api.fetchDepositTransactions).mockResolvedValue(capture.depositHistory)
     setData.mockClear()
     saveData.mockClear()
@@ -48,7 +49,7 @@ describe('import entrypoint using the authorized anonymized capture', () => {
     expect(await scrape(args)).toEqual(expected)
     expect(await scrape({ ...args, isFirstRun: false })).toEqual(expected)
     expect(api.fetchTransactions).toHaveBeenCalledTimes(2)
-    expect(api.fetchTransactions).toHaveBeenCalledWith(auth, { source: 'history', deposits: [{ accountId: 'deposit:1010756356', productId: '1010756356' }] }, args.fromDate, expect.any(Date))
+    expect(api.fetchTransactions).toHaveBeenCalledWith(auth, convertAccounts(capture.graph, capture.products).fetchParams, args.fromDate, expect.any(Date))
     expect(ZenMoney.locale).toBe('ru')
   })
 
@@ -56,6 +57,31 @@ describe('import entrypoint using the authorized anonymized capture', () => {
     isAccountSkipped.mockReturnValue(true)
     expect(await scrape(args)).toEqual({ accounts: convertAccounts(capture.graph, capture.products).accounts, transactions: [] })
     expect(api.fetchTransactions).not.toHaveBeenCalled()
+    expect(api.fetchOnlineTransactions).not.toHaveBeenCalled()
+  })
+
+  it('imports current authorizations and saves reconciliation state only after a complete scrape', async () => {
+    const online: { onlineResponse: { data: { entries: unknown[] } } } = JSON.parse(readFileSync(join(__dirname, 'fixtures/online.json'), 'utf8'))
+    const entries = online.onlineResponse.data.entries.filter(entry => (entry as { id: string }).id === '620257')
+    jest.mocked(api.fetchOnlineTransactions).mockResolvedValue([{ cardId: '900000431', accountId: '1570010000000002', entries }])
+    const result = await scrape(args)
+    expect(result.transactions[result.transactions.length - 1]).toEqual({
+      date: new Date('2026-08-17T16:53:47.000Z'),
+      hold: false,
+      movements: [{ id: 'online:900000431:620257:2026-08-17T16:53:47.000Z:1570010000000002', account: { id: '1570010000000002' }, sum: -1837.45, fee: 0, invoice: null }],
+      merchant: { fullTitle: 'MARKETA GROUP LLC  CITYONE FRA', mcc: null, location: null },
+      comment: null
+    })
+    expect(api.fetchOnlineTransactions).toHaveBeenCalledWith(auth, convertAccounts(capture.graph, capture.products).fetchParams.cards)
+    expect(setData).toHaveBeenCalledWith('onlineTransactions', { imported: [{ accountId: '1570010000000002', cardId: '900000431', record: entries[0] }], historyAliases: {} })
+  })
+
+  // Model an online failure after history succeeded, preserving the latest authorization only.
+  it('[model] fails the complete scrape and preserves existing reconciliation state when online loading fails', async () => {
+    const failure = new Error('Modeled online loading failure')
+    jest.mocked(api.fetchOnlineTransactions).mockRejectedValue(failure)
+    await expect(scrape(args)).rejects.toBe(failure)
+    expect(setData.mock.calls).toEqual([['auth', auth]])
   })
 
   it('keeps confirmed transfers affecting an included account with mixed skips', async () => {
@@ -65,6 +91,7 @@ describe('import entrypoint using the authorized anonymized capture', () => {
     expect(result.transactions.every(t => t.movements.some(m => 'id' in m.account && m.account.id === '1570010000000005'))).toBe(true)
     expect(result.transactions.some(t => t.movements.length === 2)).toBe(true)
     expect(api.fetchTransactions).toHaveBeenCalledTimes(1)
+    expect(api.fetchOnlineTransactions).toHaveBeenCalledWith(auth, [])
   })
 
   it('imports verified deposits once and widens the request to full Armenian boundary days', async () => {

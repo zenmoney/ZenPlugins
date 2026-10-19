@@ -5,7 +5,7 @@ import { v4 as uuid } from 'uuid'
 import { authorizationCode, deviceCddc, loginPage, pageTemplate, pushPage, tokenNonce } from './authPage'
 import get, { getBoolean, getNumber, getString } from '../../types/get'
 import * as transport from './fetchApi'
-import { AccountGraph, Auth, ExchangeDetails, HistoryPlan, PersistAuth, Preferences, RefreshCredentials } from './models'
+import { AccountGraph, Auth, CardSource, OnlineSource, ExchangeDetails, HistoryPlan, PersistAuth, Preferences, RefreshCredentials } from './models'
 import { array, text } from './parse'
 
 /** Refresh compatible saved authorization before considering an interactive credential login. */
@@ -130,6 +130,20 @@ export async function fetchTransactions (auth: Auth, fetchParams: Pick<HistoryPl
     if (!getBoolean({ value: get(history, 'hasNext') }, 'value')) return records
   }
   throw new Error('MyAmeria history pagination limit exceeded')
+}
+
+/** Load each selected card once and reject an incomplete current activity response. */
+export async function fetchOnlineTransactions (auth: Auth, cards: readonly CardSource[]): Promise<readonly OnlineSource[]> {
+  const result: OnlineSource[] = []
+  for (const source of cards) {
+    const response = await transport.fetchOnlineTransactions(auth, source.cardId)
+    const entries = array(response, 'entries')
+    const total = getNumber({ value: get(response, 'totalCount') }, 'value')
+    console.assert(Number.isInteger(total) && total >= 0 && entries.length === total, 'Incomplete MyAmeria online transactions', { count: entries.length, total })
+    await Debug.checkpoint(`myameria-online-${source.cardId}`, transport.maskLog(response))
+    result.push({ ...source, entries })
+  }
+  return result
 }
 
 /** Load every one-based page of deposit history. */
