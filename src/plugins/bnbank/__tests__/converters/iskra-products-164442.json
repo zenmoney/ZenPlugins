@@ -1,0 +1,164 @@
+[
+  {
+    "log": 164442,
+    "build": 158,
+    "event": "6",
+    "url": "https://bnb-mobile.bnb.by/product-transaction/v1/operations/products",
+    "records": [
+      {
+        "cards": [
+          {
+            "id": "612",
+            "name": "Пластиковая Mastercard, BYN",
+            "balance": {
+              "integerPart": 24,
+              "fractionalPart": 55,
+              "currency": "BYN",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/1_2_3_mastercard_n_horizontal_small",
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/1_2_3_mastercard_horizontal_big"
+            },
+            "pan": "520000******0621"
+          },
+          {
+            "id": "2103",
+            "name": "Пластиковая Mastercard, BYN",
+            "balance": {
+              "integerPart": 1234,
+              "fractionalPart": 56,
+              "currency": "BYN",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/drobi_n_horizontal_small",
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/drobi_horizontal_big"
+            },
+            "pan": "530000******8241"
+          },
+          {
+            "id": "2137",
+            "name": "Оранжевая Цифровая",
+            "balance": {
+              "integerPart": 0,
+              "fractionalPart": 67,
+              "currency": "BYN",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/orange_mastercard_n_horizontal_small",
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/orange_mastercard_horizontal_big"
+            },
+            "pan": "530000******8742"
+          },
+          {
+            "id": "2217",
+            "name": "Цифровая Mastercard, BYN",
+            "balance": {
+              "integerPart": 24,
+              "fractionalPart": 55,
+              "currency": "BYN",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/1_2_3_mastercard_n_horizontal_small",
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/1_2_3_mastercard_horizontal_big"
+            },
+            "pan": "530000******3143"
+          },
+          {
+            "id": "5051",
+            "name": "Цифровая Белкарт, BYN",
+            "balance": {
+              "integerPart": 0,
+              "fractionalPart": 2,
+              "currency": "BYN",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/bc_premium_n_horizontal_small",
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/bc_premium_horizontal_big"
+            },
+            "pan": "910000******5244"
+          },
+          {
+            "id": "2104",
+            "name": "Оранжевая Цифровая",
+            "balance": {
+              "integerPart": 2,
+              "fractionalPart": 80,
+              "currency": "USD",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/visa_classic_air_horizontal_wallet_horizontal_small",
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/card/visa_classic_air_horizontal_wallet_horizontal_big"
+            },
+            "pan": "460000******7045"
+          }
+        ],
+        "accounts": [
+          {
+            "id": "714",
+            "name": "Текущий счет",
+            "balance": {
+              "integerPart": 0,
+              "fractionalPart": 2,
+              "currency": "BYN",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/account/curbyn260x160_horizontal_big",
+              "squareSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/account/curbyn60x60_square_small"
+            }
+          },
+          {
+            "id": "715",
+            "name": "Текущий счет",
+            "balance": {
+              "integerPart": 2500,
+              "fractionalPart": 0,
+              "currency": "USD",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/account/usd_260x160_horizontal_big",
+              "squareSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/account/usd_60x60_square_small"
+            }
+          },
+          {
+            "id": "719",
+            "name": "Текущий счет",
+            "balance": {
+              "integerPart": 60,
+              "fractionalPart": 42,
+              "currency": "EUR",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/account/eur_260x160_horizontal_big",
+              "squareSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/account/eur_60x60_square_small"
+            }
+          },
+          {
+            "id": "717",
+            "name": "Текущий счет",
+            "balance": {
+              "integerPart": 75,
+              "fractionalPart": 26,
+              "currency": "RUB",
+              "sign": "PLUS"
+            },
+            "content": {
+              "horizontalBig": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/account/rub_260x160_horizontal_big",
+              "squareSmall": "https://bnb-mobile.bnb.by/s3/prod-content-service-public/account/rub_60x60_square_small"
+            }
+          }
+        ],
+        "credits": [],
+        "deposits": []
+      }
+    ]
+  }
+]

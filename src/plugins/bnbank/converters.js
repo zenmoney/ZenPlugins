@@ -108,11 +108,15 @@ function convertIskraAccount (json, accountType) {
     currencyCode: currency,
     instrument: getInstrument(currency),
     balance,
-    syncID: [json.id]
+    syncID: json.id.length >= 4 ? [json.id] : []
   }
 
   if (typeof json.pan === 'string' && json.pan.length >= 4) {
     account.syncID.push(json.pan.slice(-4))
+  }
+  if (account.syncID.length === 0) {
+    // Iskra may only supply a short technical ID, with no account number or PAN.
+    account.syncID.push(`bnb:${json.id}`)
   }
   if (accountType === deposit) {
     const startDate = new Date(json.contractOpenDate)
