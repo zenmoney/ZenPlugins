@@ -1,0 +1,50 @@
+[
+  {
+    "log": 164489,
+    "build": 1,
+    "event": "1",
+    "url": "https://bakai24.bakai.kg/v2/auth",
+    "records": [
+      {
+        "result": -1004,
+        "message": "Превышена попытка ввода пароля, вы заблокированы на 20 минут!"
+      }
+    ]
+  },
+  {
+    "log": 165138,
+    "build": 1,
+    "event": "1",
+    "url": "https://bakai24.bakai.kg/v2/auth",
+    "records": [
+      {
+        "result": 1,
+        "message": "Неверное имя пользователя или пароль!"
+      }
+    ]
+  },
+  {
+    "log": 165617,
+    "build": 1,
+    "event": "1",
+    "url": "https://bakai24.bakai.kg/v2/auth",
+    "records": [
+      {
+        "result": 1,
+        "message": "К вашей учётной записи уже привязано максимальное количество устройств!"
+      }
+    ]
+  },
+  {
+    "log": 165715,
+    "build": 1,
+    "event": "8",
+    "url": "https://bakai24.bakai.kg/v2/card.online_statement",
+    "records": [
+      {
+        "result": -5000,
+        "message": "Выписка в приложении доступна только за 6 месяцев. Чтобы получить данные за больший период, обратитесь по номеру 6111 или в филиал Банка"
+      }
+    ]
+  }
+]

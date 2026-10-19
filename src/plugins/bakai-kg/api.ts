@@ -2,7 +2,7 @@ import crypto from 'crypto-js'
 import { v4 as uuid } from 'uuid'
 import moment from 'moment'
 import get, { getArray, getOptBoolean, getOptNumber, getOptString } from '../../types/get'
-import { InvalidPreferencesError, UserInteractionError } from '../../errors'
+import { BankMessageError, InvalidLoginOrPasswordError, InvalidPreferencesError, TemporaryError, UserInteractionError } from '../../errors'
 import { fetchAccountStatement, fetchAllAccounts, fetchAuthorization, fetchBalance, fetchConfirmation, fetchLogin, fetchSendOtp, fetchStatement, fetchVerifyOtp } from './fetchApi'
 import { AuthState, FetchParams, Preferences } from './models'
 
@@ -16,6 +16,18 @@ export function passwordFields (login: string, password: string): Record<string,
 
 function success (body: unknown, endpoint: string): void {
   const result = getOptNumber(body, 'result')
+  const message = result === 0 ? undefined : getOptString(body, 'message')
+  if (endpoint === 'auth') {
+    if (result === 1 && message === 'Неверное имя пользователя или пароль!') {
+      throw new InvalidLoginOrPasswordError(message)
+    }
+    if (result === 1 && message === 'К вашей учётной записи уже привязано максимальное количество устройств!') {
+      throw new BankMessageError(message)
+    }
+    if (result === -1004 && message === 'Превышена попытка ввода пароля, вы заблокированы на 20 минут!') {
+      throw new TemporaryError('Бакай Банк временно заблокировал вход после попыток ввода пароля. Повторите вход через 20 минут.')
+    }
+  }
   assert(result === 0, 'Unexpected bank result', { endpoint, result })
 }
 
