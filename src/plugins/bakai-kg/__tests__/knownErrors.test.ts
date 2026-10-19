@@ -43,12 +43,12 @@ it.each([
   expect(ZenMoney.readLine).not.toHaveBeenCalled()
 })
 
-it('keeps a rejected statement reportable while history-period handling is covered by PR #1203', async () => {
+it('keeps a bank statement rejection reportable for a supported history period', async () => {
   const failure = failures.find(fixture => fixture.log === 165715)?.records[0]
   expect(failure).toBeDefined()
   fetchMock.postOnce('https://bakai24.bakai.kg/v2/card.online_statement', { body: failure })
   const result = fetchTransactions({ ...pending, token: 'test-token', otpVerified: true },
-    { cardId: 1, accountId: 2 }, new Date('2026-04-01T00:00:00Z'))
+    { cardId: 1, accountId: 2 }, new Date('2026-10-01T00:00:00Z'))
   await expect(result).rejects.toBeInstanceOf(Error)
   await expect(result).rejects.not.toBeInstanceOf(ZPAPIError)
   await expect(result).rejects.toMatchObject({ message: expect.stringContaining('Unexpected bank result') })
