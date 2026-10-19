@@ -102,13 +102,17 @@ describe('[model] Belarusbank network log sanitization', () => {
     await fetchApi('users/auth/refresh-token', {
       method: 'POST',
       body: 'secret-raw-refresh-token',
+      sessionToken: 'secret-refresh-authorization',
+      tokenType: 'Bearer',
       rawStringBody: true,
       retry: false
     })
 
     expect(fetchMock.lastCall(url)?.[1]?.body).toBe('secret-raw-refresh-token')
+    expect(fetchMock.lastCall(url)?.[1]?.headers).toMatchObject({ Authorization: 'Bearer secret-refresh-authorization' })
     const logs = JSON.stringify(debug.mock.calls)
     expect(logs).not.toContain('secret-raw-refresh-token')
+    expect(logs).not.toContain('secret-refresh-authorization')
     expect(logs).toContain('refresh-diagnostic-id')
     expect(debug.mock.calls[0][1].body).toBe('<string[24]>')
   })

@@ -18,6 +18,7 @@ const MAX_TRANSACTION_PERIOD_DAYS = 15
 const MAX_TRANSACTION_LOOKBACK_MONTHS = 6
 const DAY_MS = 24 * 60 * 60 * 1000
 const MINSK_TIMEZONE_OFFSET_MS = 3 * 60 * 60 * 1000
+const TOKEN_REFRESH_SAFE_GAP_MS = 10000
 const formatApiDate = (date: Date): string => new Date(date.getTime() + MINSK_TIMEZONE_OFFSET_MS).toISOString().slice(0, 10)
 
 const normalizeProductIdentifier = (value: unknown): string | null => {
@@ -154,7 +155,7 @@ const parseAuth = (value: unknown, stage: 'hot' | 'cold'): AuthState => {
   return { sessionToken: sessionToken as string, refreshToken: refreshToken as string, tokenType: tokenType as string }
 }
 
-const getRefreshExpiry = (token: string): number | null => {
+const getTokenExpiry = (token: string): number | null => {
   const parts = token.split('.')
   if (parts.length !== 3) return null
   try {
@@ -171,10 +172,14 @@ export const authenticate = async (storedAuth: unknown, isInBackground: boolean)
   const refreshToken = getOptString(storedAuth, 'refreshToken')
   const tokenType = getOptString(storedAuth, 'tokenType')
   if (sessionToken != null && sessionToken.length > 0 && refreshToken != null && refreshToken.length > 0 && tokenType != null && tokenType.length > 0) {
-    const refreshExpiry = getRefreshExpiry(refreshToken)
+    const sessionExpiry = getTokenExpiry(sessionToken)
+    if (sessionExpiry != null && sessionExpiry >= Date.now() + TOKEN_REFRESH_SAFE_GAP_MS) {
+      return { sessionToken, refreshToken, tokenType }
+    }
+    const refreshExpiry = getTokenExpiry(refreshToken)
     if (refreshExpiry == null || refreshExpiry > Date.now()) {
       const response = await fetchApi<unknown>('users/auth/refresh-token', {
-        method: 'POST', body: refreshToken, rawStringBody: true, retry: false
+        method: 'POST', body: refreshToken, rawStringBody: true, sessionToken, tokenType, retry: false
       })
       console.assert(response.status >= 200 && response.status < 300, '[auth/hot] Refresh request failed', {
         status: response.status, errorCode: getOptNumber(response.body, 'errorInfo.code') ?? getOptString(response.body, 'errorInfo.code')
