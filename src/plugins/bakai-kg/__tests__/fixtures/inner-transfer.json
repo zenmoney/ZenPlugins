@@ -1,0 +1,65 @@
+{
+  "left": {
+    "accountId": 1003,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000001",
+    "operation": {
+      "date": "2021-08-04 03:48:31",
+      "date2": "2021-08-01 00:00:00",
+      "amount": -64722.82,
+      "currency": "KGS",
+      "location": null,
+      "operation_amount": -64722.82,
+      "operation_currency": "KGS",
+      "type": "Списание c карты",
+      "type_code": "120"
+    }
+  },
+  "right": {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": 64722.82,
+      "currency": "KGS",
+      "date": "2021-08-04T03:48:32+06:00",
+      "date2": "2021-08-04T03:48:32+06:00",
+      "location": "TEST BANK POSTING",
+      "operation_amount": 64722.82,
+      "operation_currency": "KGS",
+      "type": "Пополнение счета",
+      "type_code": "OPTP0422",
+      "utrnno": "000000012",
+      "merchant_id": "SJ625769",
+      "balance": 33121.63,
+      "rrn": "152198565077",
+      "mcc": "6010",
+      "terminal_id": "SJ625769"
+    }
+  },
+  "expected": {
+    "hold": null,
+    "date": "2021-08-03T21:48:31.000Z",
+    "movements": [
+      {
+        "id": null,
+        "account": {
+          "id": "1003"
+        },
+        "invoice": null,
+        "sum": -64722.82,
+        "fee": 0
+      },
+      {
+        "id": "000000012:credit",
+        "account": {
+          "id": "1000"
+        },
+        "invoice": null,
+        "sum": 64722.82,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  "provenance": "Derived from actual lifecycle/transfer captures; public amounts, dates and merchant identities substituted consistently."
+}

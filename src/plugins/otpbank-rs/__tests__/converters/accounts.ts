@@ -7,6 +7,8 @@ describe('convertAccounts', () => {
     const apiAccounts: OtpAccount[] = [
       {
         accountNumber: '123',
+        productCodeCore: '1',
+        isDeposit: false,
         description: 'Test Account',
         currencyCode: 'USD',
         balance: 1000,
@@ -30,6 +32,8 @@ describe('convertAccounts', () => {
     const apiAccounts: OtpAccount[] = [
       {
         accountNumber: '456',
+        productCodeCore: '4',
+        isDeposit: false,
         description: 'description',
         currencyCode: 'EUR',
         balance: 500,

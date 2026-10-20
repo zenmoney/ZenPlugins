@@ -1,12 +1,16 @@
 import qs from 'querystring'
 import * as setCookie from 'set-cookie-parser'
-import { UserInteractionError } from '../../errors'
+import { UserInteractionError, InvalidPreferencesError } from '../../errors'
 import { dateInTimezone, toISODateString } from '../../common/dateUtils'
 import { fetch, fetchJson, ParseError } from '../../common/network'
 import { cookieJar } from '../../common/network/cookies'
 import { WebView } from '../../common/webView'
 import { generateRandomString } from '../../common/utils'
 import { sanitize } from '../../common/sanitize'
+import { getResponseErrorCode } from './authResponse'
+import { loginMobile, recoverMobile, accountIdentity } from './mobileAuth'
+import { isMobileAuth, mobileSession } from './mobileSession'
+import { createMobileHistoryLoader } from './mobileHistory'
 
 const OFFICIAL_BASE_URL = 'https://login.bankhapoalim.co.il'
 const OFFICIAL_COOKIE_DOMAINS = [
@@ -15,7 +19,7 @@ const OFFICIAL_COOKIE_DOMAINS = [
   'login.bankhapoalim.co.il',
   '.login.bankhapoalim.co.il'
 ]
-const WEB_LOGIN_URL = `${OFFICIAL_BASE_URL}/cgi-bin/poalwwwc?reqName=getLogonPage`
+const WEB_LOGIN_URL = `${OFFICIAL_BASE_URL}/ng-portals/auth/he/`
 const WEB_SUCCESS_PATTERNS = [
   /\/portalserver\/HomePage/i,
   /\/ng-portals-bt\/rb\/he\//i,
@@ -73,7 +77,7 @@ function summarizeResponse (response) {
         url: sanitizeOfficialUrlForLog(response.url),
         contentType: getHeaderValue(response.headers, 'content-type'),
         isLoginPage: isOfficialLoginPageResponse(response),
-        errCode: typeof response.body?.error?.errCode === 'string' ? response.body.error.errCode : null
+        errCode: getResponseErrorCode(response)
       }
     : null
 }
@@ -161,6 +165,15 @@ function mergeCookieHeaders (currentCookieHeader, nextCookieHeader) {
   return Object.entries(mergedCookies)
     .map(([name, value]) => `${name}=${value}`)
     .join('; ')
+}
+
+function isRejectedSession (cookieHeader, rejectedCookieHeader, rejectedCookieHeaders = []) {
+  const session = parseCookieHeader(cookieHeader).SMSESSION
+  return [rejectedCookieHeader, ...rejectedCookieHeaders].some(rejectedHeader => {
+    if (!rejectedHeader) return false
+    if (cookieHeader === rejectedHeader) return true
+    return Boolean(session && parseCookieHeader(rejectedHeader).SMSESSION === session)
+  })
 }
 
 function mergeSetCookieHeaders (currentCookieHeader, setCookieHeader) {
@@ -251,6 +264,8 @@ function sanitizeFinancialBody (value, parentKey = null) {
   if (!value || typeof value !== 'object') return sanitize(value, true)
   return Object.fromEntries(Object.entries(value).map(([key, field]) => {
     if (key === 'commentExistenceSwitch' && (field === 0 || field === 1)) return [key, field]
+    if ((key === 'flow' && field === 'STEPUP') || (key === 'state' && field === 'STEPUPOTP')) return [key, field]
+    if ((key === 'result' || key === 'error') && field === null) return [key, field]
     if (key === 'code') {
       const isSelectorCode = ['currencyCode', 'detailedAccountTypeCode'].includes(parentKey) && Number.isFinite(field)
       return [key, isSelectorCode || field === 'STEPUPOTP' ? field : sanitize(field, true)]
@@ -481,7 +496,73 @@ function restoreAuth (rawAuth) {
 }
 
 export function normalizeStoredAuth (rawAuth) {
+  if (rawAuth?.transport === 'mobile') {
+    ensure(isMobileAuth(rawAuth), 'unexpected stored direct authentication state')
+    return { ...rawAuth }
+  }
   return restoreAuth(rawAuth)
+}
+
+export { isMobileAuth }
+
+export function authenticationMethod (preferences) {
+  const method = preferences?.authenticationMethod ?? 'web'
+  if (!['direct', 'web'].includes(method)) throw new InvalidPreferencesError('יש לבחור שיטת כניסה נתמכת.')
+  return method
+}
+
+export async function loginDirect ({ previousIdentity, onAuthUpdate, onInteraction, isInBackground, verify, allowInteraction = true, interactionError } = {}) {
+  if (isInBackground) throw new UserInteractionError()
+  if (!allowInteraction) throw interactionError || new Error('Bank Hapoalim session was rejected after interactive login')
+  const auth = await loginMobile({ previousIdentity, onAuthUpdate, onInteraction, isInBackground })
+  if (verify) await withAuthUpdates(auth, onAuthUpdate, verify)
+  return auth
+}
+
+export async function recoverDirectAuth (cookieSnapshot, { previousIdentity, onAuthUpdate } = {}) {
+  if (!cookieSnapshot) return null
+  const snapshot = JSON.parse(cookieSnapshot)
+  ensure(Array.isArray(snapshot?.cookies), 'unexpected legacy cookie snapshot')
+  const scoped = {
+    ...snapshot,
+    cookies: snapshot.cookies.filter(cookie => ['bankhapoalim.co.il', 'login.bankhapoalim.co.il', 'iphone.bankhapoalim.co.il']
+      .includes(String(cookie?.domain || '').replace(/^\./, '')))
+  }
+  try {
+    return await recoverMobile(JSON.stringify(scoped), previousIdentity, onAuthUpdate)
+  } catch (error) {
+    if (!isLikelyAuthGateError(error)) throw error
+    console.log('Bank Hapoalim direct recovery: stored cookies were rejected')
+    return null
+  }
+}
+
+async function persistDirectUpdate (auth) {
+  const updated = mobileSession(auth).snapshot(auth.identity, auth.acquiredAt)
+  if (updated.cookieStore === auth.cookieStore) return
+  Object.assign(auth, updated)
+  if (authUpdateCallbacks.has(auth)) await authUpdateCallbacks.get(auth)({ ...auth })
+}
+
+async function fetchDirectJson (url, auth, options, verify) {
+  const session = mobileSession(auth)
+  const response = await session.request(url, options)
+  try {
+    ensure(response.status >= 200 && response.status < 300, 'unexpected direct HTTP response', response, verify)
+  } catch (error) {
+    if (isLikelyAuthGateError(error)) session.close()
+    throw error
+  }
+  ensure(!response.body || typeof response.body !== 'object' || Array.isArray(response.body) ||
+    (!Object.prototype.hasOwnProperty.call(response.body, 'flow') && !Object.prototype.hasOwnProperty.call(response.body, 'state') && !(Object.prototype.hasOwnProperty.call(response.body, 'error') && response.body.error !== null)),
+  'unexpected direct response envelope', response)
+  if (new URL(url).pathname === '/ServerServices/general/accounts') {
+    // Portfolio changes between runs are legitimate. The entrypoint pins this
+    // fingerprint only while retrying an already-started statement.
+    auth.identity = accountIdentity(response.body)
+  }
+  await persistDirectUpdate(auth)
+  return response
 }
 
 function isOfficialLoginUrl (rawUrl) {
@@ -505,8 +586,8 @@ function isOfficialLoginPageResponse (response) {
 
 export function isLikelyAuthGateError (error) {
   const response = error?.responseSummary || error?.response
-  const code = response?.errCode || response?.body?.error?.errCode
-  // STEPUPOTP was observed in the official Hapoalim flow; generic statuses are not proof.
+  const code = getResponseErrorCode(response)
+  // Only observed STEPUPOTP forms or a confirmed login redirect allow recovery.
   return (response?.status === 401 && code === 'STEPUPOTP') ||
     (response?.status >= 200 && response?.status < 500 &&
       (response?.isLoginPage === true || isOfficialLoginPageResponse(response)))
@@ -534,7 +615,7 @@ export async function withSessionDeadline (operation, label) {
   }
 }
 
-export async function recoverAuthFromCookieStore (storedAuth, { onAuthUpdate = async () => {}, verify } = {}) {
+export async function recoverAuthFromCookieStore (storedAuth, { onAuthUpdate = async () => {}, verify, rejectedCookieHeader = null, rejectedCookieHeaders = [] } = {}) {
   const snapshot = await withSessionDeadline(() => cookieJar.serialize(), 'cookie store read')
   ensure(Array.isArray(snapshot?.cookies), 'unexpected cookie store snapshot')
   const cookies = snapshot.cookies.map(({ key, ...cookie }) => ({ ...cookie, name: key }))
@@ -563,6 +644,10 @@ export async function recoverAuthFromCookieStore (storedAuth, { onAuthUpdate = a
     auth.xsrfToken = previousAuth.xsrfToken
   }
 
+  if (isRejectedSession(auth.cookieHeader, rejectedCookieHeader, rejectedCookieHeaders)) {
+    console.log('Bank Hapoalim silent recovery: skipping already rejected accounts cookies')
+    return null
+  }
   try {
     await withSessionDeadline(
       () => fetchOfficialAccounts(auth, { log: false }),
@@ -628,12 +713,17 @@ function buildOfficialHeaders (auth, headers, { includeXsrf = false } = {}) {
 }
 
 async function fetchOfficialJson (path, auth, options = {}) {
+  const requestUrl = OFFICIAL_BASE_URL + path
+  const isAccountsProof = path === '/ServerServices/general/accounts?lang=he' && (options.method || 'GET') === 'GET'
   // Replay only this read request, not a full transaction import or a guessed OTP API.
-  const verify = candidate => fetchOfficialJson(path, candidate, {
-    ...options,
-    log: false,
-    headers: { ...options.headers, ...options.headers?.uuid ? { uuid: createRequestUuid() } : {} }
-  })
+  // Recovery already validates the complete accounts response; do not duplicate that GET.
+  const verify = isAccountsProof
+    ? undefined
+    : candidate => fetchOfficialJson(path, candidate, {
+      ...options,
+      log: false,
+      headers: { ...options.headers, ...options.headers?.uuid ? { uuid: createRequestUuid() } : {} }
+    })
   const {
     headers,
     includeXsrf = false,
@@ -642,9 +732,28 @@ async function fetchOfficialJson (path, auth, options = {}) {
     ...rest
   } = options
 
+  if (isMobileAuth(auth)) {
+    const response = await fetchDirectJson(requestUrl, auth, {
+      method: rest.method || 'GET',
+      ...rest.body === undefined ? {} : { body: typeof rest.body === 'string' ? rest.body : JSON.stringify(rest.body) },
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json;charset=UTF-8',
+        ...includeXsrf && auth.xsrfToken ? { 'X-XSRF-TOKEN': auth.xsrfToken } : {},
+        ...headers
+      }
+    }, verify)
+    if (rest.log !== false) {
+      console.debug('Bank Hapoalim direct financial response', {
+        url: sanitizeOfficialUrlForLog(response.url), status: response.status, body: sanitizeFinancialBody(response.body)
+      })
+    }
+    return response
+  }
+
   let response
   try {
-    response = await withSessionDeadline(() => fetchJson(OFFICIAL_BASE_URL + path, {
+    response = await withSessionDeadline(() => fetchJson(requestUrl, {
       method: 'GET',
       ...rest,
       headers: buildOfficialHeaders(auth, headers, { includeXsrf }),
@@ -754,6 +863,8 @@ export async function login ({
   skipHidden = false,
   verify,
   interactionError,
+  rejectedCookieHeader = null,
+  rejectedCookieHeaders = [],
   onAuthUpdate = async () => {},
   onInteraction = () => {}
 } = {}) {
@@ -771,6 +882,7 @@ export async function login ({
   let closedError = null
   let resolveClosed
   let loggedStepUp = false
+  let presented = false
   const closed = new Promise(resolve => { resolveClosed = resolve })
   const stopped = new Promise((resolve, reject) => { rejectStopped = reject })
   stopped.catch(() => {})
@@ -840,8 +952,8 @@ export async function login ({
     } catch (error) {
       if (!isLikelyAuthGateError(error)) throw error
       if (closedError) throw closedError
-      if (verify && !loggedStepUp) {
-        console.log('Bank Hapoalim step-up: waiting for bank confirmation')
+      if (presented && !loggedStepUp && getResponseErrorCode(error?.responseSummary || error?.response) === 'STEPUPOTP') {
+        console.log('Bank Hapoalim auth state still STEPUPOTP')
         loggedStepUp = true
       }
       return { auth: null, retryCookies: null }
@@ -919,7 +1031,7 @@ export async function login ({
 
     const initialCookies = await readCookies()
     let hiddenCookies = initialCookies
-    if (!skipHidden && hasOfficialSessionCookie(hiddenCookies)) {
+    if (!skipHidden && !isRejectedSession(hiddenCookies, rejectedCookieHeader, rejectedCookieHeaders) && hasOfficialSessionCookie(hiddenCookies)) {
       for (let attempt = 0; attempt < 3; attempt++) {
         const recovered = await probe(hiddenCookies)
         if (recovered.auth) {
@@ -928,15 +1040,20 @@ export async function login ({
         }
         if (!recovered.retryCookies) break
         hiddenCookies = recovered.retryCookies
+        if (isRejectedSession(hiddenCookies, rejectedCookieHeader, rejectedCookieHeaders)) break
         if (attempt === 2) throw new Error('Bank Hapoalim WebView session kept changing during verification')
       }
     }
     if (isInBackground) throw new UserInteractionError()
     if (!allowInteraction) throw interactionError || new Error('Bank Hapoalim session was rejected after interactive login')
 
+    console.log('Bank Hapoalim auth recovery: opening foreground bank login', {
+      reason: verify || isLikelyAuthGateError(interactionError) ? 'confirmed bank challenge' : 'no verified session'
+    })
     onInteraction()
     diagnostics.stage = 'showing bank login'
     await run(() => webView.show(), 'WebView presentation')
+    presented = true
     diagnostics.stage = 'loading bank login'
     await run(() => webView.goto(WEB_LOGIN_URL, { waitUntil: 'commit', timeout: 30000 }), 'WebView navigation', 30000)
 
@@ -1023,7 +1140,8 @@ async function fetchForeignCurrencyAccount (auth, accountId) {
   const response = await fetchOfficialJson(`/ServerServices/foreign-currency/transactions?${qs.stringify({
     type: 'business',
     accountId
-  })}`, auth)
+  })}`, auth, { headers: { 'Accept-Encoding': 'identity' } })
+  if (response.status === 204) return []
 
   const account = response.body
   if (account === null) {
@@ -1038,7 +1156,11 @@ async function fetchForeignCurrencyAccount (auth, accountId) {
 
 async function fetchDeposits (auth, url, structType, accountId) {
   const separator = url.includes('?') ? '&' : '?'
-  const response = await fetchOfficialJson(`${url}${separator}${qs.stringify({ accountId })}`, auth)
+  // Android native fetch rejects empty responses marked as gzip; request no compression.
+  const response = await fetchOfficialJson(`${url}${separator}${qs.stringify({ accountId })}`, auth, {
+    headers: { 'Accept-Encoding': 'identity' }
+  })
+  if (structType === 'saving' && response.status === 204) return []
   ensure(Array.isArray(response.body?.list), 'unexpected deposits response', response)
   const accounts = []
   for (const group of response.body.list) {
@@ -1052,7 +1174,10 @@ async function fetchDeposits (auth, url, structType, accountId) {
 }
 
 async function fetchLoans (auth, accountId) {
-  const response = await fetchOfficialJson(`/ServerServices/credit-and-mortgage/v3/loans?${qs.stringify({ accountId })}`, auth)
+  const response = await fetchOfficialJson(`/ServerServices/credit-and-mortgage/v3/loans?${qs.stringify({ accountId })}`, auth, {
+    headers: { 'Accept-Encoding': 'identity' }
+  })
+  if (response.status === 204) return []
   ensure(Array.isArray(response.body?.data), 'unexpected loans response', response)
   const accounts = []
   for (const account of response.body.data) {
@@ -1073,7 +1198,10 @@ async function fetchLoans (auth, accountId) {
 }
 
 async function fetchMortgages (auth, accountId) {
-  const response = await fetchOfficialJson(`/ServerServices/credit-and-mortgage/mortgages?${qs.stringify({ accountId })}`, auth)
+  const response = await fetchOfficialJson(`/ServerServices/credit-and-mortgage/mortgages?${qs.stringify({ accountId })}`, auth, {
+    headers: { 'Accept-Encoding': 'identity' }
+  })
+  if (response.status === 204) return []
   ensure(Array.isArray(response.body?.data), 'unexpected mortgages response', response)
   return response.body.data.map(account => {
     ensure(account && typeof account === 'object' && !Array.isArray(account), 'unexpected mortgage account', response)
@@ -1083,9 +1211,10 @@ async function fetchMortgages (auth, accountId) {
   })
 }
 
-export async function fetchAccounts (auth) {
+export async function fetchAccounts (auth, { onIdentity } = {}) {
   const response = await fetchOfficialAccounts(auth)
   ensure(response.body.length > 0, 'unexpected empty accounts inventory', response)
+  if (isMobileAuth(auth) && onIdentity) onIdentity(auth.identity)
 
   const accounts = []
   // Requests share rotating authentication; finish each before starting the next.
@@ -1199,6 +1328,16 @@ async function fetchOfficialTransactionsInterval (auth, product, fromDate, toDat
 export async function fetchTransactions (auth, product, fromDate, toDate) {
   ensure(fromDate instanceof Date && toDate instanceof Date && Number.isFinite(fromDate.getTime()) && Number.isFinite(toDate.getTime()) && fromDate <= toDate,
     'unexpected history interval')
+  if (isMobileAuth(auth) && product.type === 'account') {
+    const session = mobileSession(auth)
+    const load = createMobileHistoryLoader({
+      isActive: () => session.isActive(),
+      // An auth rejection restarts the complete history in the entrypoint.
+      // Never replay an old session's continuation token after a new login.
+      request: async (url, options) => await fetchDirectJson(url, auth, options)
+    })
+    return await load(product.id, fromDate, toDate)
+  }
   // Match the legacy formatted-date +02:00 interpretation, not the machine zone.
   // Actual bank DST semantics still require bank evidence before changing dates.
   const requestFromDate = dateInTimezone(fromDate, 120)

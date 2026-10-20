@@ -1,0 +1,82 @@
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" class='font-base'>
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+        <meta name="robots" content="noindex, nofollow">
+
+        <title>Ameria Authentication</title>
+        <link rel="icon" href="/auth/resources/7.0.1/login/lime/favicon.ico" />
+    <link href="/auth/resources/7.0.1/login/lime/css/vendors~main_4c66f.bundle.css" rel="stylesheet"><link href="/auth/resources/7.0.1/login/lime/css/main_b5e28.bundle.css" rel="stylesheet"></head>
+
+    <body class='font-base'>
+
+    <script>
+      window.params = {
+        locales: {
+          current: {},
+          supported: {},
+        },
+        realmName: "ameria",
+      };
+      window.params.locales.supported["hy"] = {
+        code: "hy",
+        label: "hy",
+        url: "/auth/realms/ameria/login-actions/authenticate?client_id=banqr-online&tab_id=fixture-tab_id&execution=fixture-execution&kc_locale=hy"
+      };
+      window.params.locales.supported["ru"] = {
+        code: "ru",
+        label: "Русский",
+        url: "/auth/realms/ameria/login-actions/authenticate?client_id=banqr-online&tab_id=fixture-tab_id&execution=fixture-execution&kc_locale=ru"
+      };
+      window.params.locales.current = {
+        code: "en",
+        label: "English",
+        url: "/auth/realms/ameria/login-actions/authenticate?client_id=banqr-online&tab_id=fixture-tab_id&execution=fixture-execution&kc_locale=en"
+      };
+      window.params.locales.supported["en"] = {
+        code: "en",
+        label: "English",
+        url: "/auth/realms/ameria/login-actions/authenticate?client_id=banqr-online&tab_id=fixture-tab_id&execution=fixture-execution&kc_locale=en"
+      };
+    </script>
+
+       <script>
+           window.params = {
+               ...window.params,
+               template: "login",
+               resourcesPath: "/auth/resources/7.0.1/login/lime",
+               actionUrl: "https://account.myameria.am/auth/realms/ameria/login-actions/authenticate?session_code=fixture-session_code&execution=fixture-execution&client_id=banqr-online&tab_id=fixture-tab_id",
+               username: "",
+               password: "",
+               registrationUrl: "/auth/realms/ameria/login-actions/registration?client_id=banqr-online&amp;tab_id=fixture-tab_id",
+               loginUrl: "/auth/realms/ameria/login-actions/authenticate?client_id=banqr-online&amp;tab_id=fixture-tab_id",
+               loginResetCredentialsUrl: "/auth/realms/ameria/login-actions/reset-credentials?client_id=banqr-online&amp;tab_id=fixture-tab_id",
+               sessionExpirationTime: "",
+               sessionIdentifier: "",
+               email: "",
+               showRegistration: false,
+               showRememberMe: false,
+               rememberMeChecked: false,
+               view: "login"
+           };
+
+                window.params.showRegistration = true;
+
+       </script>
+    <div id="root"></div>
+
+    <!-- Embedded WhosOn Start -->
+    <!-- <script type='text/javascript' src='//livechat.ameriabank.am/include.js?domain=www.ameriabank.am'></script>
+    <script type='text/javascript'>
+      if (sWOTrackPage) {
+          sWOTrackPage();
+      }
+    </script> -->
+
+    <!-- Embedded WhosOn End -->
+
+    <script type="text/javascript" src="/auth/resources/7.0.1/login/lime/js/libs_4c66f.js"></script><script type="text/javascript" src="/auth/resources/7.0.1/login/lime/js/main_b5e28.js"></script></body>
+    </html>

@@ -1,0 +1,6 @@
+export { default as answer } from './entry'
+export { default as source } from './entry.ts?format=iife&globalName=BundleScript&bundle'
+export { default as esm } from './entry.ts?format=esm&bundle'
+export { default as cjs } from './entry.ts?format=cjs&bundle'
+export { default as named } from './entry.ts?globalName=MyName&bundle'
+export { default as qualified } from './entry.ts?globalName=MyName.json&format=iife&bundle'

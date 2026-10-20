@@ -1,0 +1,22 @@
+[
+  {
+    "accountId": 1009,
+    "response": {
+      "balance": 1234.13,
+      "error_msg": null,
+      "credit_limit": 0,
+      "result": 0,
+      "message": ""
+    }
+  },
+  {
+    "accountId": 1010,
+    "response": {
+      "balance": 0,
+      "error_msg": null,
+      "credit_limit": 0,
+      "result": 0,
+      "message": ""
+    }
+  }
+]

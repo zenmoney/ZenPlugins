@@ -1,0 +1,499 @@
+[
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -19102.03,
+      "currency": "KGS",
+      "date": "2021-08-06T02:17:38+06:00",
+      "date2": "2021-08-05T20:17:37+06:00",
+      "location": "TEST TRANSFER SERVICE A",
+      "operation_amount": -228.85,
+      "operation_currency": "EUR",
+      "type": "Перевод с карты на карту (списание)",
+      "type_code": "781",
+      "utrnno": "000000000",
+      "merchant_id": "386890655247",
+      "balance": 130668,
+      "rrn": "304191409129",
+      "terminal_id": "NZWU0819",
+      "mcc": 6012,
+      "comment": null
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -58245.92,
+      "currency": "KGS",
+      "date": "2021-08-05T23:39:16+06:00",
+      "date2": "2021-08-05T17:39:16+06:00",
+      "location": "TEST MERCHANT 01",
+      "operation_amount": -10231.0,
+      "operation_currency": "RSD",
+      "type": "Покупка",
+      "type_code": "774",
+      "utrnno": "000000004",
+      "merchant_id": "78293158GQE5SGI",
+      "balance": 9744599,
+      "rrn": "822229807979",
+      "terminal_id": "WKS47451",
+      "mcc": 8021,
+      "comment": null
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -4367.87,
+      "currency": "KGS",
+      "date": "2021-08-05T21:18:41+06:00",
+      "date2": "2021-08-05T15:18:40+06:00",
+      "location": "TEST MERCHANT 02",
+      "operation_amount": -3357.0,
+      "operation_currency": "RSD",
+      "type": "Покупка",
+      "type_code": "680",
+      "utrnno": "000000008",
+      "merchant_id": "8663988",
+      "balance": 9513819,
+      "rrn": "030289493307",
+      "terminal_id": "NY213786",
+      "mcc": 4812,
+      "comment": null
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": 64722.82,
+      "currency": "KGS",
+      "date": "2021-08-04T03:48:32+06:00",
+      "date2": "2021-08-04T03:48:32+06:00",
+      "location": "TEST BANK POSTING",
+      "operation_amount": 64722.82,
+      "operation_currency": "KGS",
+      "type": "Пополнение счета",
+      "type_code": "OPTP0422",
+      "utrnno": "000000012",
+      "merchant_id": "SJ625769",
+      "balance": 33121.63,
+      "rrn": "152198565077",
+      "mcc": "6010",
+      "terminal_id": "SJ625769"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -4004.71,
+      "currency": "KGS",
+      "date": "2021-07-31T00:00:00+06:00",
+      "date2": "2021-08-05T07:11:23+06:00",
+      "location": "TEST MERCHANT 03",
+      "operation_amount": -65166.0,
+      "operation_currency": "RSD",
+      "type": "Снятие наличных в банкомате",
+      "type_code": "OPTP0001",
+      "utrnno": "000000015",
+      "merchant_id": "824917991353687",
+      "balance": 60942.32,
+      "rrn": null,
+      "mcc": "6011",
+      "terminal_id": "58432917"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -311.72,
+      "currency": "KGS",
+      "date": "2021-07-29T00:00:00+06:00",
+      "date2": "2021-08-01T07:17:16+06:00",
+      "location": "TEST MERCHANT 04",
+      "operation_amount": -368.0,
+      "operation_currency": "RSD",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000018",
+      "merchant_id": "W7049581816501",
+      "balance": 7853.96,
+      "rrn": null,
+      "mcc": "4215",
+      "terminal_id": "FN340552"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -287.0,
+      "currency": "KGS",
+      "date": "2021-07-25T00:00:00+06:00",
+      "date2": "2021-07-29T07:44:50+06:00",
+      "location": "TEST MERCHANT 05",
+      "operation_amount": -95.0,
+      "operation_currency": "USD",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000021",
+      "merchant_id": "249333956841318",
+      "balance": 49429.89,
+      "rrn": null,
+      "mcc": "5815",
+      "terminal_id": "        "
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -35.28,
+      "currency": "KGS",
+      "date": "2021-07-17T04:27:06+06:00",
+      "date2": "2021-07-16T22:27:05+06:00",
+      "location": "TEST MERCHANT 06",
+      "operation_amount": -5.0,
+      "operation_currency": "USD",
+      "type": "Покупка",
+      "type_code": "680",
+      "utrnno": "000000024",
+      "merchant_id": "481615753648328",
+      "balance": 24645,
+      "rrn": "590466556143",
+      "terminal_id": "48853817",
+      "mcc": 5999,
+      "comment": null
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": 35.28,
+      "currency": "KGS",
+      "date": "2021-07-17T04:27:06+06:00",
+      "date2": "2021-07-16T22:27:06+06:00",
+      "location": "TEST MERCHANT 06",
+      "operation_amount": 5.0,
+      "operation_currency": "USD",
+      "type": "Покупка Возврат",
+      "type_code": "680",
+      "utrnno": "000000024",
+      "merchant_id": "481615753648328",
+      "balance": 25242,
+      "rrn": "590466556143",
+      "terminal_id": "48853817",
+      "mcc": 5999,
+      "comment": null
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -74093.0,
+      "currency": "KGS",
+      "date": "2021-07-02T02:02:33+06:00",
+      "date2": "2021-07-02T02:02:33+06:00",
+      "location": "TEST MERCHANT 07",
+      "operation_amount": -74093.0,
+      "operation_currency": "KGS",
+      "type": "Платеж поставщику услуг - Payment",
+      "type_code": "OPTP0060",
+      "utrnno": "000000028",
+      "merchant_id": "LY584764",
+      "balance": 58379.94,
+      "rrn": "912889122773",
+      "mcc": "6534",
+      "terminal_id": "LY584764"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -5620.14,
+      "currency": "KGS",
+      "date": "2021-06-01T15:56:03+06:00",
+      "date2": "2021-06-01T15:56:03+06:00",
+      "location": "TEST BANK POSTING",
+      "operation_amount": -5620.14,
+      "operation_currency": "KGS",
+      "type": "Списание со счета",
+      "type_code": "OPTP0402",
+      "utrnno": "000000031",
+      "merchant_id": "SJ625769",
+      "balance": 2504.15,
+      "rrn": "926339953521",
+      "mcc": "6010",
+      "terminal_id": "SJ625769"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -75241.0,
+      "currency": "KGS",
+      "date": "2021-05-25T00:00:00+06:00",
+      "date2": "2021-05-28T07:18:02+06:00",
+      "location": "TEST TRANSFER SERVICE B",
+      "operation_amount": -782.0,
+      "operation_currency": "USD",
+      "type": "Р2Р списание",
+      "type_code": "OPTP0010",
+      "utrnno": "000000033",
+      "merchant_id": "614483858997289",
+      "balance": 35554.43,
+      "rrn": null,
+      "mcc": "6012",
+      "terminal_id": "85451589"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -7174.82,
+      "currency": "KGS",
+      "date": "2021-05-20T00:00:00+06:00",
+      "date2": "2021-05-23T10:29:11+06:00",
+      "location": "TEST MERCHANT 08",
+      "operation_amount": -61.55,
+      "operation_currency": "EUR",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000036",
+      "merchant_id": "641291948225018",
+      "balance": 34339.06,
+      "rrn": null,
+      "mcc": "5734",
+      "terminal_id": "        "
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -5685.96,
+      "currency": "KGS",
+      "date": "2021-05-15T00:00:00+06:00",
+      "date2": "2021-05-20T10:49:39+06:00",
+      "location": "TEST MERCHANT 09",
+      "operation_amount": -1128.0,
+      "operation_currency": "MKD",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000038",
+      "merchant_id": "LYB786887895",
+      "balance": 1221.46,
+      "rrn": null,
+      "mcc": "5541",
+      "terminal_id": "H0642766"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -4521.93,
+      "currency": "KGS",
+      "date": "2021-03-16T00:00:00+06:00",
+      "date2": "2021-03-20T07:44:52+06:00",
+      "location": "TEST MERCHANT 10",
+      "operation_amount": -3959.0,
+      "operation_currency": "AMD",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000041",
+      "merchant_id": "68502659",
+      "balance": 11049.91,
+      "rrn": null,
+      "mcc": "5812",
+      "terminal_id": "99287078"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -347.23,
+      "currency": "KGS",
+      "date": "2021-03-12T00:00:00+06:00",
+      "date2": "2021-03-17T07:10:37+06:00",
+      "location": "TEST MERCHANT 11",
+      "operation_amount": -53.0,
+      "operation_currency": "PLN",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000044",
+      "merchant_id": "28717953",
+      "balance": 1537.32,
+      "rrn": null,
+      "mcc": "5311",
+      "terminal_id": "97403493"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -8396.67,
+      "currency": "KGS",
+      "date": "2021-03-03T00:00:00+06:00",
+      "date2": "2021-03-06T07:26:05+06:00",
+      "location": "TEST MERCHANT 12",
+      "operation_amount": -36305.0,
+      "operation_currency": "HUF",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000047",
+      "merchant_id": "0503TH1424",
+      "balance": 72640.83,
+      "rrn": null,
+      "mcc": "5541",
+      "terminal_id": "XKX4167I"
+    }
+  },
+  {
+    "accountId": 1000,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
+    "operation": {
+      "amount": -4025.26,
+      "currency": "KGS",
+      "date": "2021-03-02T00:00:00+06:00",
+      "date2": "2021-03-05T07:36:40+06:00",
+      "location": "TEST MERCHANT 13",
+      "operation_amount": -48737.0,
+      "operation_currency": "HUF",
+      "type": "Снятие наличных в банкомате",
+      "type_code": "OPTP0001",
+      "utrnno": "000000050",
+      "merchant_id": "2549811933",
+      "balance": 58874.32,
+      "rrn": null,
+      "mcc": "6011",
+      "terminal_id": "AVOC2234"
+    }
+  },
+  {
+    "accountId": 1003,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000001",
+    "operation": {
+      "date": "2021-08-04T03:48:03",
+      "date2": "2021-08-03T21:48:03",
+      "amount": 76298.54,
+      "currency": "KGS",
+      "location": "TEST SHOP 14>g.Test City                    KG",
+      "operation_amount": 76298.54,
+      "operation_currency": "KGS",
+      "type": "депозиты (перевод и поступление)",
+      "type_code": "210000"
+    }
+  },
+  {
+    "accountId": 1003,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000001",
+    "operation": {
+      "date": "2021-08-04 03:48:31",
+      "date2": "2021-08-01 00:00:00",
+      "amount": -64722.82,
+      "currency": "KGS",
+      "location": null,
+      "operation_amount": -64722.82,
+      "operation_currency": "KGS",
+      "type": "Списание c карты",
+      "type_code": "120"
+    }
+  },
+  {
+    "accountId": 1006,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000008",
+    "operation": {
+      "amount": 94.0,
+      "currency": "USD",
+      "date": "2021-06-01T15:56:04+06:00",
+      "date2": "2021-06-01T15:56:04+06:00",
+      "location": "TEST BANK POSTING",
+      "operation_amount": 94.0,
+      "operation_currency": "USD",
+      "type": "Пополнение счета",
+      "type_code": "OPTP0422",
+      "utrnno": "000000053",
+      "merchant_id": "SJ625769",
+      "balance": 9.11,
+      "rrn": "700427246814",
+      "mcc": "6010",
+      "terminal_id": "SJ625769"
+    }
+  },
+  {
+    "accountId": 1006,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000008",
+    "operation": {
+      "amount": -889.26,
+      "currency": "USD",
+      "date": "2021-06-01T00:00:00+06:00",
+      "date2": "2021-06-04T07:34:38+06:00",
+      "location": "TEST MERCHANT 17",
+      "operation_amount": -69.23,
+      "operation_currency": "EUR",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000055",
+      "merchant_id": "K1NJTIMW72U12WY",
+      "balance": 9.11,
+      "rrn": null,
+      "mcc": "5734",
+      "terminal_id": "T7U0EVHT"
+    }
+  },
+  {
+    "accountId": 1006,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000008",
+    "operation": {
+      "amount": -95.0,
+      "currency": "USD",
+      "date": "2021-04-26T00:00:00+06:00",
+      "date2": "2021-04-29T07:42:04+06:00",
+      "location": "TEST MERCHANT 18",
+      "operation_amount": -95.0,
+      "operation_currency": "USD",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000058",
+      "merchant_id": "7742025702765",
+      "balance": 60.66,
+      "rrn": null,
+      "mcc": "7372",
+      "terminal_id": "55097502"
+    }
+  },
+  {
+    "accountId": 1006,
+    "sourceFlowId": "00000000-0000-4000-8000-000000000008",
+    "operation": {
+      "amount": -293.98,
+      "currency": "USD",
+      "date": "2021-04-04T00:00:00+06:00",
+      "date2": "2021-04-09T07:33:10+06:00",
+      "location": "TEST MERCHANT 19",
+      "operation_amount": -51994.58,
+      "operation_currency": "RSD",
+      "type": "Покупка",
+      "type_code": "OPTP0000",
+      "utrnno": "000000061",
+      "merchant_id": "5453262",
+      "balance": 1.8,
+      "rrn": null,
+      "mcc": "5999",
+      "terminal_id": "WQ538752"
+    }
+  }
+]

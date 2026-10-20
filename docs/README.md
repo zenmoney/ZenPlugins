@@ -19,13 +19,14 @@ Read the listed pages or sections once. Combine routes only when the task crosse
 | Authentication | [Authentication](plugins/authentication.md), [runtime state/input](plugins/runtime.md), [errors](plugins/errors.md), [sanitization](debugging/log-sanitization.md) |
 | Error classification | [Errors](plugins/errors.md), [sanitization](debugging/log-sanitization.md); [authentication](plugins/authentication.md) only when changing auth transitions |
 | Network request or diagnostic | [Architecture boundaries](plugins/architecture.md#boundaries), [errors](plugins/errors.md), [sanitization](debugging/log-sanitization.md) |
-| WebView, TCP or WebSocket API | [Event semantics](plugins/runtime.md#event-emitters), the affected [WebView](plugins/webview.md), [Socket](plugins/socket.md) or [WebSocket](plugins/websocket.md) contract; combine with the network/authentication route when those behaviors change |
+| WebView, TCP or WebSocket API | [Event semantics](plugins/runtime.md#event-emitters), the affected [WebView](webview/README.md), [Socket](plugins/socket.md) or [WebSocket](plugins/websocket.md) contract; [permissions](webview/permissions.md) for page-level overrides; combine with the network/authentication route when those behaviors change |
 | Scrape settings or packaging | Affected [preferences](plugins/scrape/preferences.md) or [manifest](plugins/scrape/manifest.md) page |
 | Focused plugin review, log analysis, or incident | [Diagnostics](debugging/README.md), [errors](plugins/errors.md), [sanitization](debugging/log-sanitization.md), [authentication](plugins/authentication.md) when present; for scrape, [quality assessment](plugins/scrape/quality/README.md). Use the needed log/database/metric reference from diagnostics |
 | Full plugin review | The focused-review policies above, plus [architecture](plugins/architecture.md), [runtime](plugins/runtime.md), and the affected type's contract; cover the whole supported integration |
 | Device reproduction | [Bootloader](debugging/bootloader.md) |
 | Protocol research | [Research guide](development/protocol-research.md) and affected integration notes |
 | Nordigen integration | [Shared-provider rules](plugins/scrape/nordigen.md), plus the route for the actual change |
+| Build tooling or script string imports | [Script bundles](project/bundles.md) |
 | Git or hosting operations | [Identity](project/workflow.md#repository-identity), [access](project/workflow.md#git-and-hosting-access), [branches and PR/MR state](project/workflow.md#branches-and-submission); for GitLab, [SSH operations](project/gitlab.md); for PR/MR creation/update, also [submission checks](project/workflow.md#submission-checks) and [completion criteria](project/workflow.md#completion-criteria) |
 | Documentation | [Maintenance](project/documentation.md) |
 

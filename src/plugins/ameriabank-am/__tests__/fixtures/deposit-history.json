@@ -1,0 +1,260 @@
+{
+  "history": [
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "USD",
+        "value": 24000
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 9224640
+      },
+      "transactionAmount": {
+        "currency": "USD",
+        "value": 24000
+      },
+      "transactionType": "deposit:replenishment",
+      "beneficiaryName": "ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 004",
+      "debitAccountNumber": "1570010000000007",
+      "creditAccountNumber": "1570090000000001",
+      "flowDirection": "EXPENSE",
+      "details": "N NA100002 Ավանդի ներգրավում",
+      "sourceSystem": null,
+      "settledDate": 1748498525000,
+      "transactionDate": 1748498525000,
+      "additionalInfo": null,
+      "transactionId": "99e0e1fb-e308-5ca1-ad95-d881ab6807ba",
+      "id": "99e0e1fb-e308-5ca1-ad95-d881ab6807ba",
+      "workflowCode": "deposit:replenishment",
+      "date": "29 May",
+      "year": "2025",
+      "month": "May"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "USD",
+        "value": 27.84
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 10619.1
+      },
+      "transactionAmount": {
+        "currency": "USD",
+        "value": 27.84
+      },
+      "transactionType": "charge:tax",
+      "beneficiaryName": "ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 099",
+      "debitAccountNumber": "1570010000000007",
+      "creditAccountNumber": "1570010000000030",
+      "flowDirection": "EXPENSE",
+      "details": "Հարկի գանձում տոկոսի կապիտալացումի",
+      "sourceSystem": null,
+      "settledDate": 1764370242000,
+      "transactionDate": 1764370242000,
+      "additionalInfo": null,
+      "transactionId": "4df629d0-a695-5708-bca6-a2d69ba144ad",
+      "id": "4df629d0-a695-5708-bca6-a2d69ba144ad",
+      "workflowCode": "charge:tax",
+      "date": "29 November",
+      "year": "2025",
+      "month": "November"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "USD",
+        "value": 27.84
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 10619.1
+      },
+      "transactionAmount": {
+        "currency": "USD",
+        "value": 27.84
+      },
+      "transactionType": "debt-repayment:interest",
+      "beneficiaryName": "ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 004",
+      "debitAccountNumber": "1570080000000000",
+      "creditAccountNumber": "1570010000000007",
+      "flowDirection": "INCOME",
+      "details": "Հարկի գանձում տոկոսի կապիտալացումի",
+      "sourceSystem": null,
+      "settledDate": 1764370242000,
+      "transactionDate": 1764370242000,
+      "additionalInfo": null,
+      "transactionId": "9c99efa6-2cde-54d3-9644-1338457110d9",
+      "id": "9c99efa6-2cde-54d3-9644-1338457110d9",
+      "workflowCode": "debt-repayment:interest",
+      "date": "29 November",
+      "year": "2025",
+      "month": "November"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "USD",
+        "value": 250.41
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 95514
+      },
+      "transactionAmount": {
+        "currency": "USD",
+        "value": 250.41
+      },
+      "transactionType": "interest:capitalization",
+      "beneficiaryName": "ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 004",
+      "debitAccountNumber": "1570080000000000",
+      "creditAccountNumber": "1570010000000007",
+      "flowDirection": "INCOME",
+      "details": "N NA100002 Տոկոսների կապիտալացում",
+      "sourceSystem": null,
+      "settledDate": 1764370242000,
+      "transactionDate": 1764370242000,
+      "additionalInfo": null,
+      "transactionId": "2b480710-99bb-548e-8fcf-a31984e643a4",
+      "id": "2b480710-99bb-548e-8fcf-a31984e643a4",
+      "workflowCode": "interest:capitalization",
+      "date": "29 November",
+      "year": "2025",
+      "month": "November"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "USD",
+        "value": 250.41
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 95514
+      },
+      "transactionAmount": {
+        "currency": "USD",
+        "value": 250.41
+      },
+      "transactionType": "deposit:capitalization",
+      "beneficiaryName": "ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 004",
+      "debitAccountNumber": "1570010000000007",
+      "creditAccountNumber": "1570090000000001",
+      "flowDirection": "EXPENSE",
+      "details": "N NA100002 Տոկոսների կապիտալացում",
+      "sourceSystem": null,
+      "settledDate": 1764370242000,
+      "transactionDate": 1764370242000,
+      "additionalInfo": null,
+      "transactionId": "5e6d0127-ea4c-53d3-9272-5cba21002966",
+      "id": "5e6d0127-ea4c-53d3-9272-5cba21002966",
+      "workflowCode": "deposit:capitalization",
+      "date": "29 November",
+      "year": "2025",
+      "month": "November"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "USD",
+        "value": 264.06
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 97221.6
+      },
+      "transactionAmount": {
+        "currency": "USD",
+        "value": 264.06
+      },
+      "transactionType": "deposit:capitalization",
+      "beneficiaryName": "ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 004",
+      "debitAccountNumber": "1570010000000007",
+      "creditAccountNumber": "1570090000000001",
+      "flowDirection": "EXPENSE",
+      "details": "N NA100002 Տոկոսների կապիտալացում",
+      "sourceSystem": null,
+      "settledDate": 1780267052000,
+      "transactionDate": 1780267052000,
+      "additionalInfo": null,
+      "transactionId": "d533fd82-fe8a-5565-82b6-3732d8664053",
+      "id": "d533fd82-fe8a-5565-82b6-3732d8664053",
+      "workflowCode": "deposit:capitalization",
+      "date": "01 June",
+      "year": "2026",
+      "month": "June"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "USD",
+        "value": 293.4
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 108024
+      },
+      "transactionAmount": {
+        "currency": "USD",
+        "value": 293.4
+      },
+      "transactionType": "interest:capitalization",
+      "beneficiaryName": "ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 004",
+      "debitAccountNumber": "1570080000000000",
+      "creditAccountNumber": "1570010000000007",
+      "flowDirection": "INCOME",
+      "details": "N NA100002 Տոկոսների կապիտալացում,",
+      "sourceSystem": null,
+      "settledDate": 1780267052000,
+      "transactionDate": 1780267052000,
+      "additionalInfo": null,
+      "transactionId": "076b51a4-672f-524d-9f91-92822cd73f53",
+      "id": "076b51a4-672f-524d-9f91-92822cd73f53",
+      "workflowCode": "interest:capitalization",
+      "date": "01 June",
+      "year": "2026",
+      "month": "June"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "USD",
+        "value": 29.34
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 10802.4
+      },
+      "transactionAmount": {
+        "currency": "USD",
+        "value": 29.34
+      },
+      "transactionType": "charge:tax",
+      "beneficiaryName": "ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 099",
+      "debitAccountNumber": "1570010000000007",
+      "creditAccountNumber": "1570010000000030",
+      "flowDirection": "EXPENSE",
+      "details": "Հարկի գանձում տոկոսի կապիտալացումի",
+      "sourceSystem": null,
+      "settledDate": 1780267052000,
+      "transactionDate": 1780267052000,
+      "additionalInfo": null,
+      "transactionId": "e9fb42a4-da79-52e2-bd40-5114e93cf6ee",
+      "id": "e9fb42a4-da79-52e2-bd40-5114e93cf6ee",
+      "workflowCode": "charge:tax",
+      "date": "01 June",
+      "year": "2026",
+      "month": "June"
+    }
+  ]
+}

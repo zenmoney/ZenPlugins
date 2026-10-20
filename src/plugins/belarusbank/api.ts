@@ -1,11 +1,15 @@
-import { BankMessageError, InvalidOtpCodeError, UserInteractionError } from '../../errors'
+import { BankMessageError } from '../../errors'
+import Base64 from 'crypto-js/enc-base64'
+import Utf8 from 'crypto-js/enc-utf8'
+import { getOptNumber, getOptString } from '../../types/get'
+import { authorizeInWebView } from './sso'
 import { parsePdf } from '../../common/pdfUtils'
 import { convertCard, convertCardTransaction, convertCredit, convertDeposit, convertPaymentHistoryTransaction } from './converters'
 import { fetchApi, type ApiResponse } from './fetchApi'
 import { asNonEmptyString, getLastCardDigits, toNumber } from './helpers'
-import { APP_VERSION, AUTH_DATA_KEY, DEVICE_UID_DATA_KEY, type AuthState, type PreferenceInput, type ProductAccount } from './models'
+import type { AuthState, ProductAccount } from './models'
 import { parseStatementTransactions } from './statement'
-import type { AccountsResponse, BankAccount, Card, CardTransactionsResponse, CardsResponse, Credit, CreditsResponse, ErrorInfo, ErrorResponse, LoginPreparationResponse, LoginRequest, LoginResponse, PaymentHistoryItem, PaymentHistoryResponse } from './types/fetch'
+import type { AccountsResponse, BankAccount, Card, CardTransactionsResponse, CardsResponse, Credit, CreditsResponse, ErrorInfo, ErrorResponse, PaymentHistoryItem, PaymentHistoryResponse } from './types/fetch'
 
 const PAGE_SIZE = 100
 const PAYMENT_HISTORY_PAGE_SIZE = 300
@@ -14,6 +18,7 @@ const MAX_TRANSACTION_PERIOD_DAYS = 15
 const MAX_TRANSACTION_LOOKBACK_MONTHS = 6
 const DAY_MS = 24 * 60 * 60 * 1000
 const MINSK_TIMEZONE_OFFSET_MS = 3 * 60 * 60 * 1000
+const TOKEN_REFRESH_SAFE_GAP_MS = 10000
 const formatApiDate = (date: Date): string => new Date(date.getTime() + MINSK_TIMEZONE_OFFSET_MS).toISOString().slice(0, 10)
 
 const normalizeProductIdentifier = (value: unknown): string | null => {
@@ -138,211 +143,52 @@ const assertSuccess = <T extends ErrorResponse>(response: ApiResponse<T>, contex
   throw new BankMessageError(getErrorMessage(response.body, `Ошибка Беларусбанка (HTTP ${response.status})`))
 }
 
-const makeDeviceUid = (): string => {
-  const bytes = Array.from({ length: 16 }, () => Math.floor(Math.random() * 256))
-  bytes[6] = (bytes[6] & 0x0f) | 0x40
-  bytes[8] = (bytes[8] & 0x3f) | 0x80
-  const hex = bytes.map((value) => `0${value.toString(16)}`.slice(-2)).join('')
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+const parseAuth = (value: unknown, stage: 'hot' | 'cold'): AuthState => {
+  const sessionToken = getOptString(value, 'sessionToken') ?? getOptString(value, 'token')
+  const refreshToken = getOptString(value, 'refreshToken')
+  const tokenType = getOptString(value, 'tokenType')
+  console.assert(
+    sessionToken != null && sessionToken.length > 0 && refreshToken != null && refreshToken.length > 0 && tokenType != null && tokenType.length > 0,
+    `[auth/${stage}] Missing required authorization tokens`,
+    { hasSessionToken: Boolean(sessionToken), hasRefreshToken: Boolean(refreshToken), hasTokenType: Boolean(tokenType) }
+  )
+  return { sessionToken: sessionToken as string, refreshToken: refreshToken as string, tokenType: tokenType as string }
 }
 
-const getDeviceUid = (): string => {
-  const stored = ZenMoney.getData(DEVICE_UID_DATA_KEY, null)
-  if (typeof stored === 'string' && stored.length > 0) return stored
-
-  const deviceUid = makeDeviceUid()
-  ZenMoney.setData(DEVICE_UID_DATA_KEY, deviceUid)
-  ZenMoney.saveData()
-  return deviceUid
-}
-
-const normalizePhone = (login: string): string | null => {
-  const phone = login.replace(/[\s()-]/g, '')
-  return /^\+?375\d{9}$/.test(phone) ? (phone.startsWith('+') ? phone : `+${phone}`) : null
-}
-
-const makeLoginRequest = (preferences: PreferenceInput): LoginRequest => {
-  const login = preferences.login.trim()
-  const phone = normalizePhone(login)
-
-  return {
-    appVersion: APP_VERSION,
-    deviceModel: 'ZenMoney',
-    deviceUid: getDeviceUid(),
-    ...(phone == null ? { login } : { mobilePhone: phone }),
-    osType: 'Android',
-    osVersion: '16',
-    password: preferences.password,
-    token: ''
+const getTokenExpiry = (token: string): number | null => {
+  const parts = token.split('.')
+  if (parts.length !== 3) return null
+  try {
+    const payload: unknown = JSON.parse(Utf8.stringify(Base64.parse(parts[1].replace(/-/g, '+').replace(/_/g, '/'))))
+    const exp = getOptNumber(payload, 'exp')
+    return exp != null && Number.isFinite(exp) ? exp * 1000 : null
+  } catch {
+    return null
   }
 }
 
-const saveAuth = (login: string, response: LoginResponse, previous?: AuthState): AuthState => {
-  const sessionToken = response.sessionToken ?? response.token ?? previous?.sessionToken
-  const refreshToken = response.refreshToken ?? previous?.refreshToken
-  const tokenType = response.tokenType ?? previous?.tokenType ?? 'Bearer'
-
-  if (sessionToken == null || refreshToken == null) {
-    throw new Error('Belarusbank auth response does not contain required tokens')
-  }
-
-  const auth: AuthState = { login, sessionToken, refreshToken, tokenType }
-  ZenMoney.setData(AUTH_DATA_KEY, auth)
-  ZenMoney.saveData()
-  return auth
-}
-
-const loadAuth = (): AuthState | null => {
-  const value = ZenMoney.getData(AUTH_DATA_KEY, null) as Partial<AuthState> | null
-  if (
-    value == null ||
-    typeof value.login !== 'string' ||
-    typeof value.sessionToken !== 'string' ||
-    typeof value.refreshToken !== 'string' ||
-    typeof value.tokenType !== 'string'
-  ) return null
-
-  return value as AuthState
-}
-
-const tryRefresh = async (login: string, auth: AuthState): Promise<AuthState | null> => {
-  const response = await fetchApi<LoginResponse>('users/auth/refresh-token', {
-    method: 'POST',
-    body: auth.refreshToken,
-    rawStringBody: true,
-    retry: false
-  })
-
-  if (response.status >= 200 && response.status < 300) return saveAuth(login, response.body, auth)
-  if ([400, 401, 403].includes(response.status)) return null
-
-  throw new BankMessageError(getErrorMessage(response.body, `Ошибка обновления сессии Беларусбанка (HTTP ${response.status})`))
-}
-
-const tryDirectLogin = async (preferences: PreferenceInput): Promise<AuthState | null> => {
-  const response = await fetchApi<LoginResponse>('users/auth/login', {
-    method: 'POST',
-    body: makeLoginRequest(preferences),
-    retry: false
-  })
-
-  if (response.status >= 200 && response.status < 300) return saveAuth(preferences.login.trim(), response.body)
-  if ([400, 401, 403].includes(response.status)) return null
-
-  throw new BankMessageError(getErrorMessage(response.body, `Ошибка доверенного входа Беларусбанка (HTTP ${response.status})`))
-}
-
-const tryTrustedLogin = async (preferences: PreferenceInput): Promise<AuthState | null> => {
-  const preparation = await fetchApi<LoginPreparationResponse>('users/auth/login/preparation', {
-    method: 'POST',
-    query: { loginMode: 'PIN' },
-    body: makeLoginRequest(preferences),
-    retry: false
-  })
-
-  if (!(preparation.status >= 200 && preparation.status < 300)) {
-    if ([400, 401, 403].includes(preparation.status)) return null
-    throw new BankMessageError(getErrorMessage(preparation.body, `Ошибка доверенного входа Беларусбанка (HTTP ${preparation.status})`))
-  }
-
-  if (typeof preparation.body.requestId !== 'string' || preparation.body.requestId.length === 0) return null
-
-  const confirmation = await fetchApi<LoginResponse>(`users/auth/login/${encodeURIComponent(preparation.body.requestId)}`, {
-    method: 'POST',
-    body: { requestId: preparation.body.requestId },
-    retry: false
-  })
-
-  if (confirmation.status >= 200 && confirmation.status < 300) return saveAuth(preferences.login.trim(), confirmation.body)
-  if ([400, 401, 403].includes(confirmation.status)) return null
-
-  throw new BankMessageError(getErrorMessage(confirmation.body, `Ошибка подтверждения доверенного входа Беларусбанка (HTTP ${confirmation.status})`))
-}
-
-const loginWithSms = async (preferences: PreferenceInput, isInBackground: boolean): Promise<AuthState> => {
-  if (isInBackground) throw new UserInteractionError()
-
-  const preparation = await fetchApi<LoginPreparationResponse>('users/auth/login/preparation', {
-    method: 'POST',
-    body: makeLoginRequest(preferences),
-    retry: false
-  })
-
-  if (!(preparation.status >= 200 && preparation.status < 300)) {
-    const errorInfo = getErrorInfo(preparation.body)
-    const code = String(errorInfo?.code ?? '')
-    const message = getErrorMessage(preparation.body, 'Не удалось войти в Беларусбанк')
-
-    if (code === '1011' || /логин|парол|зарегистр|login|password/i.test(message)) {
-      const link = ZenMoney.application.platform === 'ios' ? 'https://apps.apple.com/by/app/belarusbank/id6773332798' : 'https://play.google.com/store/apps/details?id=by.softclub.belarusbank'
-      throw new BankMessageError(`Для синхронизации необходимо зарегистрироваться в новом приложении Беларусбанка: ${link}`)
+export const authenticate = async (storedAuth: unknown, isInBackground: boolean): Promise<AuthState> => {
+  const sessionToken = getOptString(storedAuth, 'sessionToken')
+  const refreshToken = getOptString(storedAuth, 'refreshToken')
+  const tokenType = getOptString(storedAuth, 'tokenType')
+  if (sessionToken != null && sessionToken.length > 0 && refreshToken != null && refreshToken.length > 0 && tokenType != null && tokenType.length > 0) {
+    const sessionExpiry = getTokenExpiry(sessionToken)
+    if (sessionExpiry != null && sessionExpiry >= Date.now() + TOKEN_REFRESH_SAFE_GAP_MS) {
+      return { sessionToken, refreshToken, tokenType }
     }
-
-    if (preparation.status >= 500) throw new Error()
-    throw new Error(message)
+    const refreshExpiry = getTokenExpiry(refreshToken)
+    if (refreshExpiry == null || refreshExpiry > Date.now()) {
+      const response = await fetchApi<unknown>('users/auth/refresh-token', {
+        method: 'POST', body: refreshToken, rawStringBody: true, sessionToken, tokenType, retry: false
+      })
+      console.assert(response.status >= 200 && response.status < 300, '[auth/hot] Refresh request failed', {
+        status: response.status, errorCode: getOptNumber(response.body, 'errorInfo.code') ?? getOptString(response.body, 'errorInfo.code')
+      })
+      return parseAuth(response.body, 'hot')
+    }
+    console.log('[auth/hot] Saved refresh token expired; starting cold authentication')
   }
-
-  if (typeof preparation.body.requestId !== 'string' || preparation.body.requestId.length === 0) {
-    throw new Error('Belarusbank login preparation response does not contain requestId')
-  }
-
-  let codeWord: string | undefined
-  if (preparation.body.needCodeWord === true) {
-    const answer = await ZenMoney.readLine('Введите кодовое слово для входа в Беларусбанк', {
-      inputType: 'text',
-      time: 120000
-    })
-    codeWord = answer?.trim()
-    if (codeWord == null || codeWord.length === 0) throw new InvalidOtpCodeError('Кодовое слово не введено')
-  }
-
-  const code = await ZenMoney.readLine('Введите 6-значный код из SMS от Беларусбанка', {
-    inputType: 'number',
-    time: 120000
-  })
-  const normalizedCode = code?.trim()
-  if (normalizedCode == null || normalizedCode.length === 0) throw new InvalidOtpCodeError('Код из SMS не введён')
-
-  const confirmationPayload = {
-    requestId: preparation.body.requestId,
-    code: normalizedCode,
-    ...(codeWord == null ? {} : { codeWord })
-  }
-  const confirmation = await fetchApi<LoginResponse>(`users/auth/login/${encodeURIComponent(preparation.body.requestId)}`, {
-    method: 'POST',
-    query: {
-      code: normalizedCode,
-      codeWord
-    },
-    body: confirmationPayload,
-    retry: false
-  })
-
-  if (!(confirmation.status >= 200 && confirmation.status < 300)) {
-    const message = getErrorMessage(confirmation.body, 'Неверный код подтверждения Беларусбанка')
-    if (confirmation.status === 400 || confirmation.status === 401) throw new InvalidOtpCodeError(message)
-    throw new BankMessageError(message)
-  }
-
-  return saveAuth(preferences.login.trim(), confirmation.body)
-}
-
-export const authenticate = async (preferences: PreferenceInput, isInBackground: boolean): Promise<AuthState> => {
-  const normalizedLogin = preferences.login.trim()
-  const stored = loadAuth()
-
-  if (stored?.login === normalizedLogin) {
-    const refreshed = await tryRefresh(normalizedLogin, stored)
-    if (refreshed != null) return refreshed
-  }
-
-  const direct = await tryDirectLogin(preferences)
-  if (direct != null) return direct
-
-  const trusted = await tryTrustedLogin(preferences)
-  if (trusted != null) return trusted
-
-  return await loginWithSms(preferences, isInBackground)
+  return parseAuth(await authorizeInWebView(isInBackground), 'cold')
 }
 
 interface SessionInput {

@@ -50,6 +50,7 @@ const LOCALE: Record<HomeCreditLocale, LocalePatterns> = {
       'Покупки и траты',
       'Пополнения',
       'Исходящие переводы',
+      'Платежи за услуги в приложении',
       'Refund',
       'Возврат'
     ]),

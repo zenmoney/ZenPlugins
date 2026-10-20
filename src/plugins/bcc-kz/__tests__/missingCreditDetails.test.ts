@@ -6,6 +6,8 @@ const { convertAccounts }: { convertAccounts: (accounts: unknown[]) => unknown }
 
 afterEach(() => { fetchMock.restore(); jest.restoreAllMocks() })
 
+// Missing details also occur in reports 168008/169059 (build 77). The native host
+// rejects a null totalAmountDue; omit unknown debt instead of inventing a zero.
 it('converts the complete account graph when the bank returns no additional card details', async () => {
   ;(global as { ZenMoney?: unknown }).ZenMoney = { features: {} }
   const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
@@ -24,7 +26,6 @@ it('converts the complete account graph when the bank returns no additional card
         savings: false,
         available: 308262.21,
         creditLimit: 500000,
-        totalAmountDue: null,
         gracePeriodEndDate: new Date('2026-11-11T00:00:00+06:00'),
         virtual: true
       }]

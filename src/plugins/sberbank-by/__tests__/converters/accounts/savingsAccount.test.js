@@ -4,8 +4,8 @@ describe('convertSavingsAccount', () => {
   it.each([
     [
       {
-        id: '470c803e-4fa0-49af-9fd2-b9deb43677f4',
-        name: 'Автошкола + машина',
+        id: '00000000-0000-4000-8000-000000000001',
+        name: 'Цель один + цель два',
         created: 1575574380000,
         closed: 1585325791000,
         status: 'OPENED',
@@ -15,19 +15,19 @@ describe('convertSavingsAccount', () => {
         image: null,
         imageURL: null,
         contractCurrency: '933',
-        contractId: '7824229',
+        contractId: '1000007',
         balance: 100,
-        phone: '375298106295',
+        phone: '375290000001',
         email: null,
         contractKindName: 'Текущий (расчетный) счет "Копилка" в белорусских рублях',
         percRate: 3,
         settings: [
           {
-            id: 'a6e588d4-e9f9-40a4-a7ad-b91a168ed9aa',
+            id: '00000000-0000-4000-8000-000000000002',
             status: 'DISABLE',
             refillType: 'INCOME',
-            cardId: '764704950',
-            cardPan: '449655******0276',
+            cardId: '100000008',
+            cardPan: '411111******5555',
             contractId: null,
             fixedAmount: null,
             fixedSchedule: null,
@@ -40,11 +40,11 @@ describe('convertSavingsAccount', () => {
             startDate: null,
             nextDate: 1581800400000
           }, {
-            id: '3e674b43-1c3d-4949-be95-207251c85a7d',
+            id: '00000000-0000-4000-8000-000000000003',
             status: 'DISABLE',
             refillType: 'INCOME',
-            cardId: '764704950',
-            cardPan: '449655******0276',
+            cardId: '100000008',
+            cardPan: '411111******5555',
             contractId: null,
             fixedAmount: null,
             fixedSchedule: null,
@@ -58,16 +58,16 @@ describe('convertSavingsAccount', () => {
             nextDate: 1583701200000
           }
         ],
-        ibannum: 'BY95BPSB3014F000000007824229'
+        ibannum: 'BY87BPSB3014F100000000000009'
       },
       {
         account: {
-          id: '470c803e-4fa0-49af-9fd2-b9deb43677f4',
+          id: '00000000-0000-4000-8000-000000000001',
           type: 'checking',
-          title: 'Автошкола + машина',
+          title: 'Цель один + цель два',
           instrument: 'BYN',
           syncID: [
-            'BY95BPSB3014F000000007824229'
+            'BY87BPSB3014F100000000000009'
           ],
           balance: 100,
           savings: true,
@@ -77,8 +77,8 @@ describe('convertSavingsAccount', () => {
     ],
     [
       {
-        id: '470c803e-4fa0-49af-9fd2-b9deb43677f4',
-        name: 'Автошкола + машина',
+        id: '00000000-0000-4000-8000-000000000001',
+        name: 'Цель один + цель два',
         created: 1575574380000,
         closed: 1585325791000,
         status: 'CLOSED',
@@ -88,19 +88,19 @@ describe('convertSavingsAccount', () => {
         image: null,
         imageURL: null,
         contractCurrency: '933',
-        contractId: '7824229',
+        contractId: '1000007',
         balance: 0,
-        phone: '375298106295',
+        phone: '375290000001',
         email: null,
         contractKindName: 'Текущий (расчетный) счет "Копилка" в белорусских рублях',
         percRate: 3,
         settings: [
           {
-            id: 'a6e588d4-e9f9-40a4-a7ad-b91a168ed9aa',
+            id: '00000000-0000-4000-8000-000000000002',
             status: 'DISABLE',
             refillType: 'INCOME',
-            cardId: '764704950',
-            cardPan: '449655******0276',
+            cardId: '100000008',
+            cardPan: '411111******5555',
             contractId: null,
             fixedAmount: null,
             fixedSchedule: null,
@@ -113,11 +113,11 @@ describe('convertSavingsAccount', () => {
             startDate: null,
             nextDate: 1581800400000
           }, {
-            id: '3e674b43-1c3d-4949-be95-207251c85a7d',
+            id: '00000000-0000-4000-8000-000000000003',
             status: 'DISABLE',
             refillType: 'INCOME',
-            cardId: '764704950',
-            cardPan: '449655******0276',
+            cardId: '100000008',
+            cardPan: '411111******5555',
             contractId: null,
             fixedAmount: null,
             fixedSchedule: null,
@@ -131,16 +131,16 @@ describe('convertSavingsAccount', () => {
             nextDate: 1583701200000
           }
         ],
-        ibannum: 'BY95BPSB3014F000000007824229'
+        ibannum: 'BY87BPSB3014F100000000000009'
       },
       {
         account: {
-          id: '470c803e-4fa0-49af-9fd2-b9deb43677f4',
+          id: '00000000-0000-4000-8000-000000000001',
           type: 'checking',
-          title: 'Автошкола + машина',
+          title: 'Цель один + цель два',
           instrument: 'BYN',
           syncID: [
-            'BY95BPSB3014F000000007824229'
+            'BY87BPSB3014F100000000000009'
           ],
           balance: 0,
           savings: true,
@@ -150,7 +150,7 @@ describe('convertSavingsAccount', () => {
     ],
     [
       {
-        id: '2d9f51bb-f6cb-4f90-be39-c1ba0291013f',
+        id: '00000000-0000-4000-8000-000000000004',
         name: null,
         created: 1612550526000,
         closed: null,
@@ -161,22 +161,22 @@ describe('convertSavingsAccount', () => {
         image: null,
         imageURL: null,
         contractCurrency: '933',
-        contractId: '8589770',
+        contractId: '1000028',
         balance: 100,
         phone: null,
         email: null,
         contractKindName: 'Текущий (расчетный) счет "Копилка" в белорусских рублях',
         percRate: 3,
         settings: [],
-        ibannum: 'BY24BPSB3014F000000008589770'
+        ibannum: 'BY15BPSB3014F100000000000044'
       },
       {
         account: {
-          id: '2d9f51bb-f6cb-4f90-be39-c1ba0291013f',
+          id: '00000000-0000-4000-8000-000000000004',
           type: 'checking',
           title: 'Активная копилка',
           instrument: 'BYN',
-          syncID: ['BY24BPSB3014F000000008589770'],
+          syncID: ['BY15BPSB3014F100000000000044'],
           balance: 100,
           savings: true,
           archive: false

@@ -1,0 +1,91 @@
+{
+  "accountId": 1006,
+  "before": {
+    "amount": -33.34,
+    "currency": "USD",
+    "date": "2021-02-18T17:27:46+06:00",
+    "date2": "2021-02-18T11:27:46+06:00",
+    "location": "TEST MERCHANT 20",
+    "operation_amount": -91,
+    "operation_currency": "EUR",
+    "type": "Покупка",
+    "type_code": "680",
+    "utrnno": "000000101",
+    "merchant_id": "BLCZNRYAL9G5FNN",
+    "balance": 110,
+    "rrn": "576271209654",
+    "terminal_id": "5NAIBESD",
+    "mcc": 7372,
+    "comment": null
+  },
+  "after": {
+    "amount": -33.34,
+    "currency": "USD",
+    "date": "2021-02-18T00:00:00+06:00",
+    "date2": "2021-02-22T08:05:01+06:00",
+    "location": "TEST MERCHANT 20",
+    "operation_amount": -91,
+    "operation_currency": "EUR",
+    "type": "Покупка",
+    "type_code": "OPTP0000",
+    "utrnno": "000000101",
+    "merchant_id": "BLCZNRYAL9G5FNN",
+    "balance": 1.1,
+    "rrn": null,
+    "mcc": "7372",
+    "terminal_id": "5NAIBESD"
+  },
+  "expectedBefore": {
+    "hold": null,
+    "date": "2021-02-18T11:27:46.000Z",
+    "movements": [
+      {
+        "id": "000000101:debit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": {
+          "sum": -91,
+          "instrument": "EUR"
+        },
+        "sum": -33.34,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "TEST MERCHANT 20",
+      "city": null,
+      "country": null,
+      "mcc": 7372,
+      "location": null
+    },
+    "comment": null
+  },
+  "expectedAfter": {
+    "hold": null,
+    "date": "2021-02-17T18:00:00.000Z",
+    "movements": [
+      {
+        "id": "000000101:debit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": {
+          "sum": -91,
+          "instrument": "EUR"
+        },
+        "sum": -33.34,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "TEST MERCHANT 20",
+      "city": null,
+      "country": null,
+      "mcc": 7372,
+      "location": null
+    },
+    "comment": null
+  },
+  "provenance": "Derived from actual lifecycle/transfer captures; public amounts, dates and merchant identities substituted consistently."
+}

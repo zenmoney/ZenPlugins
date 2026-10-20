@@ -1,5 +1,4 @@
 import fetchMock from 'fetch-mock'
-import { TemporaryUnavailableError } from '../../../errors'
 import { fetchApi } from '../fetchApi'
 import { BASE_API_URL } from '../models'
 
@@ -103,25 +102,29 @@ describe('[model] Belarusbank network log sanitization', () => {
     await fetchApi('users/auth/refresh-token', {
       method: 'POST',
       body: 'secret-raw-refresh-token',
+      sessionToken: 'secret-refresh-authorization',
+      tokenType: 'Bearer',
       rawStringBody: true,
       retry: false
     })
 
     expect(fetchMock.lastCall(url)?.[1]?.body).toBe('secret-raw-refresh-token')
+    expect(fetchMock.lastCall(url)?.[1]?.headers).toMatchObject({ Authorization: 'Bearer secret-refresh-authorization' })
     const logs = JSON.stringify(debug.mock.calls)
     expect(logs).not.toContain('secret-raw-refresh-token')
+    expect(logs).not.toContain('secret-refresh-authorization')
     expect(logs).toContain('refresh-diagnostic-id')
     expect(debug.mock.calls[0][1].body).toBe('<string[24]>')
   })
 
-  it('masks query credentials in failed-response logs while retaining upstream network error handling', async () => {
+  it('masks query credentials in failed-response logs and preserves the original transport failure', async () => {
     const error = new Error('[NER] connection reset')
     fetchMock.once(new RegExp(`${BASE_API_URL}users/auth/login/challenge-id\\?`), { throws: error })
 
     await expect(fetchApi('users/auth/login/challenge-id', {
       query: { code: 'secret-failed-otp', codeWord: 'secret-failed-code-word', requestId: 'failure-diagnostic-id' },
       retry: false
-    })).rejects.toBeInstanceOf(TemporaryUnavailableError)
+    })).rejects.toBe(error)
 
     expect(debug.mock.calls.map(([kind]) => kind)).toEqual(['request', 'response'])
     expect(debug.mock.calls[1][3]).toBe(error)

@@ -37,6 +37,7 @@ Run from the repository root. Clone the public repository with `git clone https:
 | `yarn lint src/plugins/<PLUGIN_ID>` | Check plugin style without modifying files |
 | `yarn tsc --noEmit` | Repository TypeScript checking |
 | `yarn test` | Full lint, type-check, and Jest suite |
+| `yarn test:playwright` | Separate Playwright Test suite in Chromium and WebKit; see [browser test setup](testing.md#browser-tests) |
 | `yarn test src/plugins/<PLUGIN_ID>` | Filter the final Jest command; lint and TypeScript checking still cover the repository |
 | `yarn build <PLUGIN_ID> [<PLUGIN_ID> ...]` | Production bundles in `build/`; multiple plugins build in parallel |
 | `yarn start <PLUGIN_ID>` | Browser development harness |

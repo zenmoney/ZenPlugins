@@ -1,0 +1,183 @@
+{
+  "provenance": {
+    "capturedAt": "2026-10-18",
+    "webClientVersion": "4.0.2395.0",
+    "scenario": "A term deposit in GetAllAccountBalance rejects GetTransactionalAccountTurnover; the deposit method returns its opening credit.",
+    "sanitization": "Complete account rows and selected debit/credit records retained; personal names, addresses, identifiers and financial amounts anonymized while preserving formats, account relationships and both transfer sides.",
+    "depositAccountProductCodes": "3,6,18,19,24,25,26,27"
+  },
+  "accounts": [
+    [
+      "",
+      "325000000000000101",
+      "Tekući računi fizičkih lica u RSD",
+      "RSD",
+      "1100.00",
+      "1000.00",
+      "",
+      "",
+      "",
+      "1",
+      "00000001",
+      "TEST USER",
+      "",
+      "1",
+      "941",
+      "",
+      "N",
+      "True",
+      "325000000000000101",
+      "100.00",
+      "",
+      "1",
+      "0"
+    ],
+    [
+      "",
+      "325000000000000201",
+      "Tekući računi fizičkih lica u EUR",
+      "EUR",
+      "50.00",
+      "49.00",
+      "",
+      "",
+      "",
+      "1",
+      "00000002",
+      "TEST USER",
+      "",
+      "4",
+      "978",
+      "",
+      "N",
+      "True",
+      "325000000000000201",
+      "1.00",
+      "",
+      "1",
+      "0"
+    ],
+    [
+      "",
+      "325000000000000301",
+      "Oročeni depozit - isplata kamate po isteku roka - 6m u RSD",
+      "RSD",
+      "100000.00",
+      "100000.00",
+      "",
+      "",
+      "",
+      "1",
+      "00000003",
+      "TEST USER",
+      "",
+      "3",
+      "941",
+      "",
+      "N",
+      "True",
+      "325000000000000301",
+      "0.00",
+      "",
+      "1",
+      "0"
+    ]
+  ],
+  "depositTurnover": [
+    [
+      [
+        "",
+        "",
+        ""
+      ],
+      [
+        [
+          "",
+          "941",
+          "RSD",
+          "05.10.2026 00:00:00",
+          "05.10.2026 00:00:00",
+          "Otvaranje partije dinarske štednje - dugoročni ulozi                            ",
+          "FOV00000000001",
+          "",
+          "100000",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "3",
+          "",
+          "Ostalo",
+          "",
+          "",
+          "Izvršen",
+          "Banka"
+        ]
+      ]
+    ]
+  ],
+  "checkingTurnover": [
+    [
+      [
+        "",
+        "",
+        ""
+      ],
+      [
+        [
+          "",
+          "941",
+          "RSD",
+          "05.10.2026 00:00:00",
+          "Prenos na partiju oročenog depozita 0000000000003",
+          "",
+          "TEST USER",
+          "05.10.2026 00:00:00",
+          "FOV00000000002",
+          "100000",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "325000000000000101",
+          "",
+          "izvršen",
+          "",
+          "TEST ADDRESS",
+          "",
+          "TEST ADDRESS",
+          "",
+          "Ostalo",
+          "Banka",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "0.00",
+          "",
+          "1000.00",
+          "",
+          "0"
+        ]
+      ]
+    ]
+  ],
+  "rejectedTurnover": {
+    "ErrorCode": "Err_96460/2",
+    "Message": "Usluga nije dostupna za izabrani proizvod. (Err_96460/2)"
+  }
+}

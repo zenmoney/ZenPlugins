@@ -2,7 +2,7 @@ import { fetch, FetchResponse } from '../../common/network'
 import { InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesError, TemporaryError, TemporaryUnavailableError } from '../../errors'
 import { Auth, Preferences, Product, ProductKind, Session } from './models'
 import { getArray, getNumber, getOptArray, getOptNumber, getOptString } from '../../types/get'
-import { generateRandomString } from '../../common/utils'
+import { generateRandomString, generateUUID } from '../../common/utils'
 
 const bankBaseUrl = 'https://psl.pskb.com'
 const mobileJsonUrl = `${bankBaseUrl}/mobileService/3.0/json`
@@ -17,6 +17,9 @@ const pageSize = 50
 // The history endpoint can include a boundary item again on the next page.
 const visiblePageSize = pageSize - 1
 const maxAuthRedirects = 12
+const authUrlLogMask = {
+  query: { state: true, session_state: true, code: true, session_code: true, execution: true, tab_id: true, client_data: true }
+}
 
 export interface LoginRedirect {
   redirectUrl: string
@@ -25,6 +28,20 @@ export interface LoginRedirect {
 
 interface LoginFlowSession {
   cookieHeader: string
+  fingerprint: string
+}
+
+function sanitizeLoginFormBody (body: unknown): unknown {
+  if (typeof body !== 'string') {
+    return '<redacted>'
+  }
+  const params = new URLSearchParams(body)
+  for (const name of Array.from(params.keys())) {
+    if (!['locale', 'reqId', 'fingerprint', 'fsitecode'].includes(name)) {
+      params.set(name, '<redacted>')
+    }
+  }
+  return params.toString()
 }
 
 function formBody (params: Record<string, string>): string {
@@ -191,22 +208,19 @@ async function fetchWithLoginCookies (url: string, session: LoginFlowSession, op
     body: options.body,
     log: options.log,
     sanitizeRequestLog: {
+      url: authUrlLogMask,
       headers: {
         Cookie: true,
-        cookie: true
+        cookie: true,
+        Referer: true
       },
-      body: {
-        username: true,
-        password: true,
-        otp: true,
-        code: true,
-        smsCode: true,
-        token: true
-      }
+      body: sanitizeLoginFormBody
     },
     sanitizeResponseLog: {
+      url: authUrlLogMask,
       headers: {
-        'set-cookie': true
+        'set-cookie': true,
+        location: true
       },
       body: true
     }
@@ -254,19 +268,34 @@ async function submitLoginForm (url: string, session: LoginFlowSession, params: 
 
 async function completeLoginFlow (response: FetchResponse, session: LoginFlowSession): Promise<Auth> {
   for (let i = 0; i < 4; i++) {
+    assert(response.status === 200, 'Unexpected Primsocbank login page status', { status: response.status })
     const html = getTextBody(response)
     assertNoLoginError(html)
+    const action = extractFormAction(html)
+    if (action != null && new URL(action, response.url).searchParams.get('execution') === 'custom-webauthn-register' && /<input\b[^>]*\bname=["']skip["']/i.test(html)) {
+      // The bank offers optional passkey registration; its "Later" button submits skip=true.
+      response = await submitLoginForm(resolveRedirectUrl(action, response.url), session, {
+        ...extractHiddenFormFields(html),
+        skip: 'true'
+      })
+      continue
+    }
     const otpFieldName = findOtpFieldName(html)
     if (otpFieldName == null) {
-      if (session.cookieHeader === '') {
-        throw new TemporaryUnavailableError()
-      }
+      // /login/index.js completes the SSO callback with this request before opening accounts.
+      const completion = await fetchWithLoginCookies(`${mobileJsonUrl}/loginInfo`, session, {
+        method: 'POST',
+        headers: { ...defaultHeaders, 'X-Login-Script-Request': 'true' },
+        body: formBody({ locale: 'ru', reqId: makeRequestId(), fingerprint: session.fingerprint })
+      })
+      const result = getOptNumber(parseJsonBody(completion), 'response.result')
+      assert(completion.status === 200 && result === 0 && session.cookieHeader !== '', 'Primsocbank SSO completion failed', { status: completion.status, result })
       return {
         cookieHeader: session.cookieHeader,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        fingerprint: session.fingerprint
       }
     }
-    const action = extractFormAction(html)
     if (action == null) {
       throw new TemporaryUnavailableError()
     }
@@ -276,6 +305,7 @@ async function completeLoginFlow (response: FetchResponse, session: LoginFlowSes
     }
     response = await submitLoginForm(action, session, {
       ...extractHiddenFormFields(html),
+      fingerprint: session.fingerprint,
       [otpFieldName]: otpCode.trim()
     })
   }
@@ -396,9 +426,10 @@ function validatePreferences (preferences: Preferences): void {
   }
 }
 
-export async function fetchAuthorization (preferences: Preferences): Promise<Auth> {
+export async function fetchAuthorization (preferences: Preferences, fingerprint?: string): Promise<Auth> {
   validatePreferences(preferences)
-  const loginFlowSession: LoginFlowSession = { cookieHeader: '' }
+  // The bank's functions.js uses a UUID when browser fingerprinting is unavailable.
+  const loginFlowSession: LoginFlowSession = { cookieHeader: '', fingerprint: fingerprint ?? generateUUID() }
 
   const loginInfoResponse = await fetchFollowingLoginRedirects(`${mobileJsonUrl}/loginInfo`, loginFlowSession, {
     method: 'POST',
@@ -427,6 +458,7 @@ export async function fetchAuthorization (preferences: Preferences): Promise<Aut
 
   const response = await submitLoginForm(action, loginFlowSession, {
     ...extractHiddenFormFields(loginPage),
+    fingerprint: loginFlowSession.fingerprint,
     username: preferences.login.trim(),
     password: preferences.password,
     fsitecode: 'primsoc',

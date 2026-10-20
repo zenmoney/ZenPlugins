@@ -2,13 +2,24 @@ import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { OtpTransaction, Preferences, Session, OtpAccount, OtpCard, Product } from './models'
 import { getCookies } from '../yettelbank-rs/helpers'
 import { checkResponseAndSetCookies, Currency, getCurrencyCodeNumeric } from './helpers'
-import { parseAccounts, parseCardTurnover, parseCards, parseTransactions } from './parsers'
+import { parseAccounts, parseCardTurnover, parseCards, parseDepositTurnover, parseTransactions } from './parsers'
+import { getOptString } from '../../types/get'
 import moment from 'moment'
 
 const baseUrl = 'https://ebank.otpbanka.rs/RetailV4/Protected/Services/'
 
 async function fetchApi (url: string, options?: FetchOptions): Promise<FetchResponse> {
-  return await fetchJson(baseUrl + url, options ?? {})
+  return await fetchJson(baseUrl + url, {
+    parse: body => {
+      console.assert(typeof body === 'string', 'OTP Bank response must be JSON text')
+      return JSON.parse((body).replace(/^\uFEFF/, '')) as unknown
+    },
+    sanitizeRequestLog: {
+      headers: { Cookie: true, Cookies: true, Authorization: true },
+      body: { username: true, otp: true, sid: true, sessionID: true }
+    },
+    ...options
+  })
 }
 
 async function fetchLogin (username: string, otp: string): Promise<void> {
@@ -20,7 +31,37 @@ async function fetchLogin (username: string, otp: string): Promise<void> {
       appType: 'AUTH_1',
       sessionID: 1
     },
-    sanitizeResponseLog: { headers: { 'set-cookie': true } }
+    sanitizeResponseLog: {
+      headers: { 'set-cookie': true },
+      body: {
+        Address: true,
+        Street: true,
+        StreetNumber: true,
+        Locality: true,
+        PhoneNumber: true,
+        MobileNumber: true,
+        CorePhoneNumber: true,
+        BirthDate: true,
+        Username: true,
+        Email: true,
+        FirstName: true,
+        LastName: true,
+        Name: true,
+        FullName: true,
+        SocialIdentityNumber: true,
+        Ticket: true,
+        RequestToken: true,
+        IdToken: true,
+        SessionID: true,
+        SessionGuid: true,
+        GeneratedSessionID: true,
+        SMSSessionID: true,
+        HolosSessionID: true,
+        SecurityComponent: true,
+        EncryptedSecurityUserID: true,
+        HistoryPins: true
+      }
+    }
   })
   checkResponseAndSetCookies(response)
 }
@@ -57,13 +98,16 @@ async function fetchCards (login: string): Promise<OtpCard[]> {
   return parseCards(response.body as string[][])
 }
 
-async function fetchAccountTransactions (accountNumber: string, currencyCode: string, fromDate: Date, toDate: Date): Promise<OtpTransaction[]> {
+async function fetchAccountTransactions (product: Product, currencyCode: string, fromDate: Date, toDate: Date): Promise<OtpTransaction[]> {
   if (toDate === null) toDate = new Date()
-  const response = await fetchApi('DataService.svc/GetTransactionalAccountTurnover', {
+  const isDeposit = product.source === 'depositTurnover'
+  console.assert(product.productCodeCore != null && product.productCodeCore !== '', 'Missing OTP account product code')
+  const endpoint = isDeposit ? 'GetTimeDepositAccountTurnoverOTPV4' : 'GetTransactionalAccountTurnover'
+  const response = await fetchApi(`DataService.svc/${endpoint}`, {
     method: 'POST',
     body: {
-      accountNumber,
-      productCoreID: '1',
+      accountNumber: product.accountNumber ?? product.id,
+      productCoreID: product.productCodeCore,
       filterParam: {
         CurrencyCodeNumeric: currencyCode,
         FromDate: moment(fromDate).format('DD.MM.YYYY'),
@@ -71,16 +115,28 @@ async function fetchAccountTransactions (accountNumber: string, currencyCode: st
         ItemType: '',
         ItemCount: '',
         FromAmount: 0,
-        ToAmount: 0
+        ToAmount: 0,
+        Description: ''
       },
-      gridName: 'RetailAccountTurnoverTransactionPreviewMasterDetail-L'
+      gridName: isDeposit
+        ? 'RetailAccountTurnoverTimeDepositDomesticPreviewMasterDetail-L'
+        : 'RetailAccountTurnoverTransactionPreviewMasterDetail-L'
     },
     headers: {
       Cookies: getCookies()
     },
     sanitizeResponseLog: { headers: { 'set-cookie': true } }
   })
+  console.assert(response.status === 200, 'OTP account history request failed', {
+    endpoint,
+    status: response.status,
+    errorCode: getOptString(response.body, 'ErrorCode')
+  })
   checkResponseAndSetCookies(response)
+
+  if (isDeposit) {
+    return parseDepositTurnover(response.body)
+  }
 
   const responseBody = response.body as string[][][][]
   return responseBody.length !== 0 ? parseTransactions(responseBody[0][1]) : []
@@ -144,6 +200,5 @@ export async function fetchProductTransactions (session: Session, product: Produ
     return await fetchCardTransactions(product.primaryCardId, product.productCodeCore, accountType, fromDate, toDate)
   }
 
-  const accountNumber = product.accountNumber ?? product.id
-  return await fetchAccountTransactions(accountNumber, getCurrencyCodeNumeric(accountCurrency), fromDate, toDate)
+  return await fetchAccountTransactions(product, product.currencyCodeNumeric ?? getCurrencyCodeNumeric(accountCurrency), fromDate, toDate)
 }

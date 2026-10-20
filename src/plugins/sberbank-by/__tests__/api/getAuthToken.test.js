@@ -3,9 +3,9 @@ import { getAuthToken } from '../../api'
 describe('getAuthToken', () => {
   it.each([
     [
-      'Алексей986',
-      'Hedm,dsfe',
-      'Basic 0JDQu9C10LrRgdC10Lk5ODY6SGVkbSxkc2Zl'
+      'ТестовыйПользователь',
+      'test-password',
+      'Basic 0KLQtdGB0YLQvtCy0YvQudCf0L7Qu9GM0LfQvtCy0LDRgtC10LvRjDp0ZXN0LXBhc3N3b3Jk'
     ]
   ])('counts auth token', (login, password, token) => {
     expect(getAuthToken({ login, password })).toEqual(token)

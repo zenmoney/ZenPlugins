@@ -3,6 +3,8 @@ import { EventEmitter } from 'events'
 import type { WebViewGotoOptions, WebViewNavigationPolicy } from '../../../common/webView'
 import { IncompatibleVersionError, UserInteractionError, ZPAPIError } from '../../../errors'
 
+const accountsStepUp = jest.requireActual<Record<string, unknown>>('../__fixtures__/accounts-stepupotp.json')
+
 const BASE = 'https://login.bankhapoalim.co.il'
 const ACCOUNTS = BASE + '/ServerServices/general/accounts?lang=he'
 const PORTAL = BASE + '/portalserver/HomePage'
@@ -14,6 +16,7 @@ interface LoginOptions {
   isInBackground?: boolean
   allowInteraction?: boolean
   skipHidden?: boolean
+  rejectedCookieHeader?: string | null
   verify?: (auth: Auth) => Promise<unknown>
   interactionError?: Error
   onAuthUpdate?: (auth: Auth) => Promise<void>
@@ -26,9 +29,9 @@ interface Api {
 }
 interface ModelResponse { status: number, headers?: Record<string, string>, body?: unknown }
 
-// [model] Fake native sessions and HTTP envelopes test lifecycle, persistence and isolation;
-// they do not establish Hapoalim response formats or real Android cookie sharing.
-describe('[model] Hapoalim typed WebView lifecycle', () => {
+// Only the complete response fixture is observed; runtime coordination is modeled.
+// [model] cases below exercise synthetic runtime/transport invariants, not bank schemas.
+describe('Hapoalim typed WebView lifecycle', () => {
   let api: Api
   let nativeCookies: string
   let pageUrl: string | null
@@ -116,18 +119,19 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(timerCount).toBe(0)
   })
 
-  it('uses the native constructor, verifies accounts and owns cleanup', async () => {
+  it('[model] uses the native constructor, verifies accounts and owns cleanup', async () => {
     const auth = await finish(api.login())
     expect(auth).toEqual({ cookieHeader: nativeCookies, xsrfToken: 'model-xsrf', restContext: 'pib', acquiredAt: Date.now() })
     expect(show).toHaveBeenCalledTimes(1)
-    expect(goto).toHaveBeenCalledWith(expect.stringContaining('getLogonPage'), expect.objectContaining({ waitUntil: 'commit', timeout: 30000 }))
+    // Android comparison on 2026-10-15: legacy entry stayed blank; direct auth entry rendered the form.
+    expect(goto).toHaveBeenCalledWith(BASE + '/ng-portals/auth/he/', expect.objectContaining({ waitUntil: 'commit', timeout: 30000 }))
     expect(cookieRead).toHaveBeenCalledWith(ACCOUNTS)
     expect(close).toHaveBeenCalledTimes(1)
     expect(nativeIsClosed).not.toHaveBeenCalled()
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it.each([false, true])('recovers native cookies while hidden (background: %s)', async isInBackground => {
+  it.each([false, true])('[model] recovers native cookies while hidden (background: %s)', async isInBackground => {
     nativeCookies = 'SMSESSION=hidden-session; XSRF-TOKEN=hidden-token'
     const persisted = jest.fn(async () => {})
     const auth = await finish(api.login({ isInBackground, onAuthUpdate: persisted }))
@@ -138,7 +142,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(close).toHaveBeenCalledTimes(1)
   })
 
-  it('raises the background control signal before cold login or navigation', async () => {
+  it('[model] raises the background control signal before cold login or navigation', async () => {
     const outcome = api.login({ isInBackground: true }).catch((error: unknown) => error)
     expect(await finish(outcome)).toBeInstanceOf(UserInteractionError)
     expect(show).not.toHaveBeenCalled()
@@ -146,21 +150,22 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(requestCount()).toBe(0)
   })
 
-  it('does not repeat an already used interactive flow', async () => {
+  it('[model] does not repeat an already used interactive flow', async () => {
     const outcome = api.login({ allowInteraction: false }).catch((error: unknown) => error)
     expect(await finish(outcome)).toBeInstanceOf(Error)
     expect(show).not.toHaveBeenCalled()
     expect(goto).not.toHaveBeenCalled()
   })
 
-  it('reports a missing WebView API only when login needs to construct it', async () => {
+  it('[model] reports a missing WebView API only when login needs to construct it', async () => {
     global.ZenMoney = {} as unknown as typeof ZenMoney
     await expect(api.login()).rejects.toBeInstanceOf(IncompatibleVersionError)
   })
 
-  it.each([401, 403, 429, 503])('does not start cold login after unknown HTTP %s', async status => {
+  it.each([401, 403, 429, 503])('[model] does not start cold login after unknown HTTP %s', async status => {
     nativeCookies = 'SMSESSION=hidden'
-    accountsResponse.mockReturnValue({ status, body: {} })
+    const failure = Object.assign(new Error('MODEL_UNCLASSIFIED_HTTP'), { responseSummary: { status, errCode: null, isLoginPage: false } })
+    accountsResponse.mockRejectedValue(failure)
     const outcome = api.login().catch((error: unknown) => error)
     const error = await finish(outcome)
     expect(error).toBeInstanceOf(Error)
@@ -169,7 +174,79 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(goto).not.toHaveBeenCalled()
   })
 
-  it('falls through from a confirmed login redirect to foreground login', async () => {
+  // [model] Empty HTTP bodies exercise real ParseError/summary transport, not a bank schema.
+  it.each([401, 403, 429, 503])('[model] keeps neutral non-JSON HTTP %s failures reportable without cold login', async status => {
+    nativeCookies = 'SMSESSION=hidden'
+    accountsResponse.mockReturnValue({ status, body: '' })
+    const error = await finish(api.login().catch((error: unknown) => error))
+    expect(error).toMatchObject({ responseSummary: { status, errCode: null } })
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(show).not.toHaveBeenCalled()
+    expect(goto).not.toHaveBeenCalled()
+  })
+
+  it('[model] does not repeat an accounts proof for identical already rejected native cookies in background', async () => {
+    nativeCookies = 'SMSESSION=already-rejected'
+    const error = await finish(api.login({ isInBackground: true, rejectedCookieHeader: nativeCookies }).catch((error: unknown) => error))
+    expect(error).toBeInstanceOf(UserInteractionError)
+    expect(requestCount()).toBe(0)
+    expect(show).not.toHaveBeenCalled()
+    expect(goto).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    'TS=model; SMSESSION=already-rejected; XSRF-TOKEN=model-new',
+    'XSRF-TOKEN=model-old; SMSESSION=already-rejected',
+    'SMSESSION=already-rejected'
+  ])('[model] does not retry a rejected session merely because native cookies were serialized differently %#', async cookies => {
+    nativeCookies = cookies
+    const rejectedCookieHeader = 'SMSESSION=already-rejected; XSRF-TOKEN=model-old'
+    const error = await finish(api.login({ isInBackground: true, rejectedCookieHeader }).catch((error: unknown) => error))
+    expect(error).toBeInstanceOf(UserInteractionError)
+    expect(requestCount()).toBe(0)
+    expect(show).not.toHaveBeenCalled()
+    expect(goto).not.toHaveBeenCalled()
+  })
+
+  it('[model] still verifies a genuinely rotated native session after an accounts rejection', async () => {
+    nativeCookies = 'TS=model; SMSESSION=rotated; XSRF-TOKEN=model-new'
+    const auth = await finish(api.login({ isInBackground: true, rejectedCookieHeader: 'SMSESSION=already-rejected' }))
+    expect(auth.cookieHeader).toBe(nativeCookies)
+    expect(requestCount()).toBe(2)
+    expect(show).not.toHaveBeenCalled()
+  })
+
+  // [model] Native cookies may change back to a rejected session during the hidden proof.
+  it('[model] does not retry hidden verification after native cookies rotate back to a rejected session', async () => {
+    cookieRead.mockResolvedValueOnce('SMSESSION=rotated').mockResolvedValueOnce('SMSESSION=already-rejected')
+    const error = await finish(api.login({ isInBackground: true, rejectedCookieHeader: 'SMSESSION=already-rejected' }).catch((error: unknown) => error))
+    expect(error).toBeInstanceOf(UserInteractionError)
+    expect(requestCount()).toBe(1)
+    expect(show).not.toHaveBeenCalled()
+    expect(goto).not.toHaveBeenCalled()
+    expect(close).toHaveBeenCalledTimes(1)
+  })
+
+  // [model] Server permission can clear after interactive auth without changing the rejected cookie.
+  it('[model] verifies foreground accounts clearance without rotating an already rejected native session', async () => {
+    nativeCookies = 'SMSESSION=previously-rejected; XSRF-TOKEN=model-xsrf'
+    const rejectedCookieHeader = nativeCookies
+    goto.mockImplementation(async () => { pageUrl = PORTAL })
+    accountsResponse.mockReturnValueOnce({ status: 401, body: accountsStepUp })
+    const persisted = jest.fn(async (_auth: Auth) => {})
+    const running = api.login({ rejectedCookieHeader, onAuthUpdate: persisted })
+    await flush()
+    await flush(1000)
+    const auth = await finish(running)
+    expect(auth.cookieHeader).toBe(rejectedCookieHeader)
+    expect(accountsResponse).toHaveBeenCalledTimes(2)
+    expect(show).toHaveBeenCalledTimes(1)
+    expect(goto).toHaveBeenCalledTimes(1)
+    expect(persisted).toHaveBeenCalledWith(expect.objectContaining({ cookieHeader: rejectedCookieHeader }))
+    expect(close).toHaveBeenCalledTimes(1)
+  })
+
+  it('[model] falls through from a confirmed login redirect to foreground login', async () => {
     nativeCookies = 'SMSESSION=expired'
     accountsResponse.mockReturnValueOnce({ status: 302, headers: { location: BASE + '/ng-portals/auth/he/' } })
     const auth = await finish(api.login())
@@ -177,7 +254,51 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(show).toHaveBeenCalledTimes(1)
   })
 
-  it('releases navigation even while accounts verification is unresolved', async () => {
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    it('recovers from the observed accounts state and only persists verified native cookies', async () => {
+      nativeCookies = 'SMSESSION=expired'
+      accountsResponse.mockReturnValueOnce({ status: 401, headers: { 'content-type': 'text/*' }, body: accountsStepUp })
+      const persisted = jest.fn(async (_auth: Auth) => {})
+      const auth = await finish(api.login({ onAuthUpdate: persisted }))
+      expect(show).toHaveBeenCalledTimes(1)
+      expect(persisted.mock.calls[0][0]).toMatchObject({ cookieHeader: expect.stringContaining('model-session') })
+      expect(auth.cookieHeader).not.toContain('expired')
+      expect(close).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    it('guards the observed native accounts state in background without cold navigation or persistence', async () => {
+      nativeCookies = 'SMSESSION=expired'
+      accountsResponse.mockReturnValue({ status: 401, body: accountsStepUp })
+      const persisted = jest.fn(async () => {})
+      const error = await finish(api.login({ isInBackground: true, onAuthUpdate: persisted }).catch((error: unknown) => error))
+      expect(error).toBeInstanceOf(UserInteractionError)
+      expect(show).not.toHaveBeenCalled()
+      expect(goto).not.toHaveBeenCalled()
+      expect(persisted).not.toHaveBeenCalled()
+      expect(requestCount()).toBe(1)
+      expect(console.log).not.toHaveBeenCalledWith('Bank Hapoalim auth state still STEPUPOTP')
+    })
+  })
+
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    it('bounds a continuing observed step-up instead of returning an empty successful login', async () => {
+      accountsResponse.mockReturnValue({ status: 401, body: accountsStepUp })
+      const persisted = jest.fn(async () => {})
+      const outcome = api.login({ onAuthUpdate: persisted }).catch((error: unknown) => error)
+      await flush()
+      for (let elapsed = 0; elapsed < 10 * 60 * 1000; elapsed += 1000) await flush(1000)
+      expect(await outcome).toMatchObject({ message: 'Bank Hapoalim WebView login timed out' })
+      expect(show).toHaveBeenCalledTimes(1)
+      expect(persisted).not.toHaveBeenCalled()
+      expect(close).toHaveBeenCalledTimes(1)
+      expect(console.log).toHaveBeenCalledWith('Bank Hapoalim auth state still STEPUPOTP')
+      expect((console.log as jest.Mock).mock.calls.filter(([message]) => message === 'Bank Hapoalim auth state still STEPUPOTP')).toHaveLength(1)
+    })
+  })
+
+  it('[model] releases navigation even while accounts verification is unresolved', async () => {
     let resolveResponse: ((response: { status: number, body: unknown[] }) => void) | undefined
     accountsResponse.mockImplementation(async () => await new Promise(resolve => { resolveResponse = resolve }))
     const result = api.login()
@@ -189,7 +310,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     await finish(result)
   })
 
-  it.each(['cookies', 'accounts', 'navigation', 'presentation'])('bounds hung %s and discards late results', async stage => {
+  it.each(['cookies', 'accounts', 'navigation', 'presentation'])('[model] bounds hung %s and discards late results', async stage => {
     let resolveLate: (() => void) | undefined
     const late = new Promise<void>(resolve => { resolveLate = resolve })
     const persisted = jest.fn(async () => {})
@@ -210,7 +331,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(persisted).not.toHaveBeenCalled()
   })
 
-  it('bounds the complete user login wait and detaches the close listener', async () => {
+  it('[model] bounds the complete user login wait and detaches the close listener', async () => {
     goto.mockImplementation(async () => {})
     const outcome = api.login().catch((error: unknown) => error)
     await flush()
@@ -221,7 +342,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('keeps an already started HTTP verification alive after a committed page closes', async () => {
+  it('[model] keeps an already started HTTP verification alive after a committed page closes', async () => {
     let resolveLate: (() => void) | undefined
     const late = new Promise<void>(resolve => { resolveLate = resolve })
     accountsResponse.mockImplementation(async () => { await late; return { status: 200, body: [] } })
@@ -236,7 +357,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(fetchMock.called(PORTAL)).toBe(true)
   })
 
-  it.each(['hidden', 'navigation'])('keeps an unexpected %s close reportable', async phase => {
+  it.each(['hidden', 'navigation'])('[model] keeps an unexpected %s close reportable', async phase => {
     let resolveLate: (() => void) | undefined
     const late = new Promise<void>(resolve => { resolveLate = resolve })
     if (phase === 'hidden') cookieRead.mockImplementation(async () => { await late; return '' })
@@ -251,7 +372,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     await flush()
   })
 
-  it('preserves verified auth when close interrupts the final native-cookie read', async () => {
+  it('[model] preserves verified auth when close interrupts the final native-cookie read', async () => {
     let resolveLate: ((cookies: string) => void) | undefined
     cookieRead.mockResolvedValueOnce('').mockImplementationOnce(async () => nativeCookies)
       .mockImplementationOnce(async () => await new Promise<string>(resolve => { resolveLate = resolve }))
@@ -269,7 +390,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(auth.cookieHeader).not.toContain('late')
   })
 
-  it('does not call native close again after a successful closed-page verification', async () => {
+  it('[model] does not call native close again after a successful closed-page verification', async () => {
     let resolveResponse: ((response: ModelResponse) => void) | undefined
     accountsResponse.mockImplementation(async () => await new Promise<ModelResponse>(resolve => { resolveResponse = resolve }))
     close.mockRejectedValue(new Error('already closed'))
@@ -281,7 +402,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  it('persists portal cookie rotation before a later discovery request fails', async () => {
+  it('[model] persists portal cookie rotation before a later discovery request fails', async () => {
     portalResponse.mockResolvedValue({ status: 200, headers: { 'set-cookie': 'SMSESSION=portal-rotated; Path=/' }, body: 'no context' })
     fetchMock.get(BASE + '/ng-portals-bt/rb/he/homepage', { status: 500, body: 'model failure' })
     const persisted = jest.fn(async () => {})
@@ -290,7 +411,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(persisted).toHaveBeenCalledWith(expect.objectContaining({ cookieHeader: expect.stringContaining('SMSESSION=portal-rotated') }))
   })
 
-  it('backs off a persistent portal gate and immediately retries a changed session', async () => {
+  it('[model] backs off a persistent portal gate and immediately retries a changed session', async () => {
     accountsResponse.mockResolvedValue({ status: 401, body: { error: { errCode: 'STEPUPOTP' } } })
     const outcome = api.login()
     await flush()
@@ -304,7 +425,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(accountsResponse).toHaveBeenCalledTimes(count + 1)
   })
 
-  it('does not probe a new session until the bank reaches an authenticated portal URL', async () => {
+  it('[model] does not probe a new session until the bank reaches an authenticated portal URL', async () => {
     goto.mockImplementation(async () => { nativeCookies = 'SMSESSION=partial'; pageUrl = BASE + '/ng-portals/auth/he/' })
     const outcome = api.login()
     await flush()
@@ -315,7 +436,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(accountsResponse).toHaveBeenCalledTimes(1)
   })
 
-  it.each([false, true])('bypasses rejected hidden auth for operation-specific step-up (background: %s)', async isInBackground => {
+  it.each([false, true])('[model] bypasses rejected hidden auth for operation-specific step-up (background: %s)', async isInBackground => {
     nativeCookies = 'SMSESSION=accounts-only'
     const outcome = api.login({ skipHidden: true, isInBackground }).catch((error: unknown) => error)
     const result = await finish(outcome)
@@ -330,7 +451,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     }
   })
 
-  it.each([false, true])('waits for the actual challenged request, regardless of cookie rotation (%s)', async rotate => {
+  it.each([false, true])('[model] waits for the actual challenged request, regardless of cookie rotation (%s)', async rotate => {
     nativeCookies = 'SMSESSION=rejected; XSRF-TOKEN=rejected-xsrf'
     goto.mockImplementation(async () => { pageUrl = PORTAL })
     let allowed = false
@@ -362,12 +483,12 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect((await finish(result)).cookieHeader).toBe(nativeCookies)
     expect(close).toHaveBeenCalledTimes(1)
     expect(new Set(requestIds).size).toBe(requestIds.length)
-    const markers = jest.mocked(console.log).mock.calls.filter(([message]) => message === 'Bank Hapoalim step-up: waiting for bank confirmation')
+    const markers = jest.mocked(console.log).mock.calls.filter(([message]) => message === 'Bank Hapoalim auth state still STEPUPOTP')
     expect(markers).toHaveLength(1)
     expect(JSON.stringify(markers)).not.toMatch(/rejected-xsrf|SMSESSION=rejected/)
   })
 
-  it('preserves accepted HTTP proof when a hidden view closes during portal discovery', async () => {
+  it('[model] preserves accepted HTTP proof when a hidden view closes during portal discovery', async () => {
     nativeCookies = 'SMSESSION=hidden; XSRF-TOKEN=hidden-xsrf'
     portalResponse.mockImplementation(async () => { view.emit('close'); return { status: 200, body: 'restContext: "/pib"' } })
     const persisted = jest.fn(async () => {})
@@ -379,7 +500,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('settles a hidden in-flight HTTP proof after a native close', async () => {
+  it('[model] settles a hidden in-flight HTTP proof after a native close', async () => {
     nativeCookies = 'SMSESSION=hidden'
     accountsResponse.mockImplementation(async () => { view.emit('close'); return { status: 200, body: [] } })
     expect((await finish(api.login())).restContext).toBe('pib')
@@ -388,7 +509,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('persists a 404 portal cookie rotation before trying the next official portal', async () => {
+  it('[model] persists a 404 portal cookie rotation before trying the next official portal', async () => {
     nativeCookies = 'SMSESSION=hidden'
     portalResponse.mockResolvedValue({ status: 404, headers: { 'set-cookie': 'SMSESSION=rotated404; Path=/' }, body: '' })
     const persisted = jest.fn(async (_auth: Auth) => {})
@@ -401,7 +522,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(auth).toMatchObject({ cookieHeader: 'SMSESSION=rotated404', restContext: 'pib' })
   })
 
-  it('replays the exact failed portal read through its captured auth gate verifier', async () => {
+  it('[model] replays the exact failed portal read through its captured auth gate verifier', async () => {
     portalResponse.mockResolvedValueOnce({ status: 302, headers: { location: '/ng-portals/auth/he/' }, body: '' })
       .mockResolvedValueOnce({ status: 200, body: 'restContext: "/pib"' })
     const error = await finish(api.login().catch((error: unknown) => error))
@@ -413,13 +534,13 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(close).toHaveBeenCalledTimes(1)
   })
 
-  it('retains the original auth diagnostic when interaction is unavailable', async () => {
+  it('[model] retains the original auth diagnostic when interaction is unavailable', async () => {
     const original = new Error('model original auth diagnostic')
     expect(await finish(api.login({ allowInteraction: false, interactionError: original }).catch((error: unknown) => error))).toBe(original)
     expect(show).not.toHaveBeenCalled()
   })
 
-  it.each([401, 503])('does not hide an unknown challenged-request HTTP %s behind login', async status => {
+  it.each([401, 503])('[model] does not hide an unknown challenged-request HTTP %s behind login', async status => {
     nativeCookies = 'SMSESSION=hidden'
     let response: ModelResponse = { status: 401, body: { error: { errCode: 'STEPUPOTP' } } }
     fetchMock.post((url: string) => url.startsWith(BASE + '/pib/current-account/transactions?'), () => response)
@@ -434,7 +555,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(persisted).not.toHaveBeenCalled()
   })
 
-  it('bounds a challenged HTTP proof and ignores its late cookie rotation', async () => {
+  it('[model] bounds a challenged HTTP proof and ignores its late cookie rotation', async () => {
     nativeCookies = 'SMSESSION=hidden'
     let resolveLate: ((response: ModelResponse) => void) | undefined
     let pending = false
@@ -459,7 +580,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('reports closing a committed login while waiting without a proof in flight', async () => {
+  it('[model] reports closing a committed login while waiting without a proof in flight', async () => {
     goto.mockImplementation(async () => { pageUrl = BASE + '/ng-portals/auth/he/' })
     const persisted = jest.fn(async () => {})
     const outcome = api.login({ onAuthUpdate: persisted }).catch((error: unknown) => error)
@@ -474,7 +595,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('rejects a snapshot replaced during verification and verifies the replacement', async () => {
+  it('[model] rejects a snapshot replaced during verification and verifies the replacement', async () => {
     let probes = 0
     accountsResponse.mockImplementation(() => {
       probes++
@@ -491,7 +612,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(JSON.stringify(persisted.mock.calls)).not.toContain('model-session')
   })
 
-  it('retains server-rotated auth while non-session native cookies change', async () => {
+  it('[model] retains server-rotated auth while non-session native cookies change', async () => {
     accountsResponse.mockImplementation(() => {
       nativeCookies += '; TS=rotated'
       return { status: 200, headers: { 'set-cookie': 'SMSESSION=server-rotated; Path=/; Secure' }, body: [] }
@@ -500,7 +621,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(auth.cookieHeader).toContain('SMSESSION=server-rotated')
   })
 
-  it.each([false, true])('re-verifies a replaced hidden session without presenting login (background: %s)', async isInBackground => {
+  it.each([false, true])('[model] re-verifies a replaced hidden session without presenting login (background: %s)', async isInBackground => {
     nativeCookies = 'SMSESSION=initial; XSRF-TOKEN=initial-token'
     accountsResponse.mockImplementationOnce(() => {
       nativeCookies = 'SMSESSION=replacement; XSRF-TOKEN=replacement-token'
@@ -515,7 +636,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(JSON.stringify(persisted.mock.calls)).not.toContain('SMSESSION=initial')
   })
 
-  it('bounds repeated hidden session replacement without falling back to cold login', async () => {
+  it('[model] bounds repeated hidden session replacement without falling back to cold login', async () => {
     nativeCookies = 'SMSESSION=initial'
     accountsResponse.mockImplementation(() => {
       nativeCookies += '-next'
@@ -527,7 +648,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(show).not.toHaveBeenCalled()
   })
 
-  it('closes even if detaching a listener fails', async () => {
+  it('[model] closes even if detaching a listener fails', async () => {
     const error = new Error('native event bridge failed')
     jest.spyOn(NativeWebView.prototype, 'off').mockImplementation(() => { throw error })
     const outcome = api.login().catch((error: unknown) => error)
@@ -535,7 +656,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(close).toHaveBeenCalledTimes(1)
   })
 
-  it('bounds native cleanup and preserves verified auth', async () => {
+  it('[model] bounds native cleanup and preserves verified auth', async () => {
     close.mockImplementation(async () => await new Promise(() => {}))
     const persisted = jest.fn(async () => {})
     const outcome = api.login({ onAuthUpdate: persisted }).catch((error: unknown) => error)
@@ -546,7 +667,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(await finish(outcome)).toMatchObject({ message: 'Bank Hapoalim WebView close timed out' })
   })
 
-  it('retries a rejected close once after yielding without discarding verified auth', async () => {
+  it('[model] retries a rejected close once after yielding without discarding verified auth', async () => {
     close.mockRejectedValueOnce(new Error('model pending native policy'))
     const persisted = jest.fn(async () => {})
     expect((await finish(api.login({ onAuthUpdate: persisted }))).cookieHeader).toContain('SMSESSION=model-session')
@@ -555,7 +676,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('accepts confirmed native closure without relying on a detached event listener', async () => {
+  it('[model] accepts confirmed native closure without relying on a detached event listener', async () => {
     close.mockRejectedValueOnce(new Error('model native close tore down the view but rejected'))
     nativeIsClosed.mockResolvedValue(true)
     expect((await finish(api.login())).cookieHeader).toContain('SMSESSION=model-session')
@@ -564,7 +685,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('logs a sanitized retry timeout while preserving the original close diagnostic', async () => {
+  it('[model] logs a sanitized retry timeout while preserving the original close diagnostic', async () => {
     const initial = new Error('model first close rejected')
     close.mockRejectedValueOnce(initial).mockImplementationOnce(async () => await new Promise(() => {}))
     const outcome = api.login().catch((error: unknown) => error)
@@ -578,7 +699,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it.each(['rejection', 'malformed', 'timeout'])('preserves the first close error when isClosed fails: %s', async mode => {
+  it.each(['rejection', 'malformed', 'timeout'])('[model] preserves the first close error when isClosed fails: %s', async mode => {
     const initial = new Error('model first close rejected')
     close.mockRejectedValueOnce(initial)
     if (mode === 'rejection') nativeIsClosed.mockRejectedValueOnce(new Error('MODEL_PRIVATE_NATIVE_DIAGNOSTIC'))
@@ -597,7 +718,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('retains persisted auth when the global login deadline interrupts completion', async () => {
+  it('[model] retains persisted auth when the global login deadline interrupts completion', async () => {
     goto.mockImplementation(async () => { pageUrl = BASE + '/ng-portals/auth/he/' })
     portalResponse.mockImplementation(async () => await new Promise(() => {}))
     const snapshots: Auth[] = []
@@ -629,7 +750,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(portalResponse).toHaveBeenCalledTimes(1)
   })
 
-  it('does not discover or persist a portal context after the global deadline even if native HTTP settles later', async () => {
+  it('[model] does not discover or persist a portal context after the global deadline even if native HTTP settles later', async () => {
     goto.mockImplementation(async () => { pageUrl = BASE + '/ng-portals/auth/he/' })
     let resolvePortal: ((response: ModelResponse) => void) | undefined
     portalResponse.mockImplementation(async () => await new Promise<ModelResponse>(resolve => { resolvePortal = resolve }))
@@ -654,7 +775,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('bounds step-up request replays throughout the ten-minute wait', async () => {
+  it('[model] bounds step-up request replays throughout the ten-minute wait', async () => {
     nativeCookies = 'SMSESSION=waiting'
     goto.mockImplementation(async () => { pageUrl = PORTAL })
     fetchMock.post((url: string) => url.startsWith(BASE + '/pib/current-account/transactions?'), { status: 401, body: { error: { errCode: 'STEPUPOTP' } } })
@@ -672,7 +793,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('preserves a physical persistence failure and skips further discovery', async () => {
+  it('[model] preserves a physical persistence failure and skips further discovery', async () => {
     const error = new Error('saveData failed')
     const outcome = api.login({ onAuthUpdate: async () => { throw error } }).catch((error: unknown) => error)
     expect(await finish(outcome)).toBe(error)
@@ -680,7 +801,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(close).toHaveBeenCalledTimes(1)
   })
 
-  it('persists verified auth before portal discovery fails', async () => {
+  it('[model] persists verified auth before portal discovery fails', async () => {
     portalResponse.mockImplementation(async () => await new Promise(() => {}))
     const persisted = jest.fn(async () => {})
     const outcome = api.login({ onAuthUpdate: persisted }).catch((error: unknown) => error)
@@ -691,7 +812,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(persisted.mock.calls[0]).toEqual([expect.objectContaining({ cookieHeader: nativeCookies })])
   })
 
-  it.each([false, true])('reports cleanup failures without replacing a prior failure (%s)', async priorFailure => {
+  it.each([false, true])('[model] reports cleanup failures without replacing a prior failure (%s)', async priorFailure => {
     const cleanup = new Error('native close failed')
     const initial = new Error('native navigation failed')
     close.mockRejectedValue(cleanup)
@@ -702,7 +823,7 @@ describe('[model] Hapoalim typed WebView lifecycle', () => {
     expect(view.listenerCount('close')).toBe(0)
   })
 
-  it('does not log cookie values or auth-bearing navigation queries', async () => {
+  it('[model] does not log cookie values or auth-bearing navigation queries', async () => {
     goto.mockImplementation(async () => {
       nativeCookies = 'SMSESSION=SECRET_SESSION; XSRF-TOKEN=SECRET_XSRF'
       pageUrl = PORTAL

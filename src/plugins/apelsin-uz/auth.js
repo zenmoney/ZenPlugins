@@ -1,6 +1,6 @@
 import { fetchJson } from '../../common/network'
 import { generateRandomString } from '../../common/utils'
-import { InvalidPreferencesError, TemporaryError } from '../../errors'
+import { InvalidLoginOrPasswordError, InvalidPreferencesError, TemporaryError } from '../../errors'
 
 const baseUrl = 'https://id.uzum.uz/api'
 const apelsinApiBaseUrl = 'https://mobile.apelsin.uz/api'
@@ -48,7 +48,8 @@ async function getAuthApiToken () {
   const endpoint = '/auth/token'
   const response = await fetchJson(baseUrl + endpoint, {
     method: 'POST',
-    headers: defaultHeaders
+    headers: defaultHeaders,
+    sanitizeResponseLog: { headers: { 'x-access-token': true, 'x-refresh-token': true, 'set-cookie': true } }
   })
 
   console.assert(response.ok, 'unexpected auth token response', response)
@@ -73,7 +74,7 @@ async function registerDevice () {
       isEmulator: false,
       isRooted: false
     },
-    sanitizeRequestLog: { body: { deviceId: true } }
+    sanitizeRequestLog: { body: { deviceId: true }, headers: { authorization: true } }
   })
 
   console.assert(response.ok, 'unexpected device response', response)
@@ -131,7 +132,7 @@ async function validateSmsCode (smsCode) {
     body: {
       code: smsCode
     },
-    sanitizeRequestLog: { headers: { authorization: true } },
+    sanitizeRequestLog: { body: { code: true }, headers: { authorization: true } },
     sanitizeResponseLog: { headers: { 'x-access-token': true, 'x-refresh-token': true } }
   })
 
@@ -164,12 +165,16 @@ async function validatePassword (password) {
     body: {
       password
     },
-    sanitizeRequestLog: { headers: { authorization: true } },
+    sanitizeRequestLog: { body: { password: true }, headers: { authorization: true } },
     sanitizeResponseLog: { headers: { 'x-access-token': true, 'x-refresh-token': true } }
   })
 
   if (response.body?.errorMessage === 'Пользователь не зарегистрирован' || response.body?.errorMessage === 'Неверный SMS-код') {
     throw new InvalidPreferencesError()
+  }
+
+  if (response.status === 403 && response.body?.baseError?.code === 'wrong_password') {
+    throw new InvalidLoginOrPasswordError()
   }
 
   console.assert(response.ok, 'unexpected password validate response', response)

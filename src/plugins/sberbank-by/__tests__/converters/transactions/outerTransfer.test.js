@@ -9,17 +9,17 @@ describe('convertTransaction', () => {
     [
       {
         sourceSystem: 3,
-        eventId: '326776225',
-        contractId: '7443073',
+        eventId: '100000072',
+        contractId: '1000044',
         contractCurrency: null,
-        cardPAN: '449655******4664',
+        cardPAN: '411111******4040',
         cardExpiryDate: null,
-        cardId: '712203896',
+        cardId: '100000073',
         eventDate: 1579184312000,
         processingDate: null,
         transactionType: 0,
         transactionCode: '656',
-        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 547087******0521',
+        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 544444******4141',
         operationCode: null,
         merchantId: null,
         merchantName: null,
@@ -29,8 +29,8 @@ describe('convertTransaction', () => {
         accountSum: null,
         commissionSum: null,
         commissionCurrency: null,
-        rnnCode: '122282653135',
-        authorizationCode: '568851',
+        rnnCode: '100000000034',
+        authorizationCode: '100032',
         eventStatus: 0,
         mccCode: null,
         errorDescription: null,
@@ -41,7 +41,7 @@ describe('convertTransaction', () => {
         souAuthorizationCode: null,
         souTransactionSum: null,
         souTransactionCurrency: null,
-        souEventId: '326776225',
+        souEventId: '100000072',
         qrPaymentId: null,
         fileId: null,
         printDocs: null,
@@ -52,7 +52,7 @@ describe('convertTransaction', () => {
         date: new Date(1579184312000),
         movements: [
           {
-            id: '326776225',
+            id: '100000072',
             account: { id: 'account' },
             invoice: null,
             sum: -32,
@@ -64,7 +64,7 @@ describe('convertTransaction', () => {
               type: 'ccard',
               instrument: 'BYN',
               company: null,
-              syncIds: ['0521']
+              syncIds: ['4141']
             },
             invoice: null,
             sum: 32,
@@ -72,23 +72,23 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 547087******0521'
+        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 544444******4141'
       }
     ],
     [
       {
         sourceSystem: 3,
-        eventId: '343436884',
-        contractId: '6106312',
+        eventId: '100000074',
+        contractId: '1000033',
         contractCurrency: null,
-        cardPAN: '543553******6029',
+        cardPAN: '555555******3535',
         cardExpiryDate: null,
-        cardId: '436148424',
+        cardId: '100000068',
         eventDate: 1588096168000,
         processingDate: null,
         transactionType: -1,
         transactionCode: '4408561',
-        transactionName: 'Пополнение вклада 218271833',
+        transactionName: 'Пополнение вклада 100000083',
         operationCode: null,
         merchantId: null,
         merchantName: null,
@@ -98,8 +98,8 @@ describe('convertTransaction', () => {
         accountSum: null,
         commissionSum: null,
         commissionCurrency: null,
-        rnnCode: '011993113038',
-        authorizationCode: '539370',
+        rnnCode: '100000000035',
+        authorizationCode: '100026',
         eventStatus: 0,
         mccCode: null,
         errorDescription: null,
@@ -110,7 +110,7 @@ describe('convertTransaction', () => {
         souAuthorizationCode: null,
         souTransactionSum: null,
         souTransactionCurrency: null,
-        souEventId: '343436884',
+        souEventId: '100000074',
         qrPaymentId: null,
         fileId: null,
         printDocs: null,
@@ -121,7 +121,7 @@ describe('convertTransaction', () => {
         date: new Date(1588096168000),
         movements: [
           {
-            id: '343436884',
+            id: '100000074',
             account: { id: 'account' },
             invoice: null,
             sum: -50,
@@ -141,23 +141,23 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Пополнение вклада 218271833'
+        comment: 'Пополнение вклада 100000083'
       }
     ],
     [
       {
         sourceSystem: 3,
-        eventId: '330271258',
-        contractId: '7461149',
+        eventId: '100000075',
+        contractId: '1000045',
         contractCurrency: null,
-        cardPAN: '449655******6105',
+        cardPAN: '411111******4242',
         cardExpiryDate: null,
-        cardId: '732299433',
+        cardId: '100000076',
         eventDate: 1581261100000,
         processingDate: null,
         transactionType: 0,
         transactionCode: '656',
-        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 535104******7634',
+        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 533333******4343',
         operationCode: null,
         merchantId: null,
         merchantName: null,
@@ -167,8 +167,8 @@ describe('convertTransaction', () => {
         accountSum: null,
         commissionSum: null,
         commissionCurrency: null,
-        rnnCode: '122340440776',
-        authorizationCode: '356489',
+        rnnCode: '100000000036',
+        authorizationCode: '100033',
         eventStatus: 0,
         mccCode: null,
         errorDescription: null,
@@ -179,7 +179,7 @@ describe('convertTransaction', () => {
         souAuthorizationCode: null,
         souTransactionSum: null,
         souTransactionCurrency: null,
-        souEventId: '330271258',
+        souEventId: '100000075',
         qrPaymentId: null,
         fileId: null,
         printDocs: null,
@@ -190,7 +190,7 @@ describe('convertTransaction', () => {
         date: new Date(1581261100000),
         movements: [
           {
-            id: '330271258',
+            id: '100000075',
             account: { id: 'account' },
             invoice: {
               instrument: 'EUR',
@@ -205,7 +205,7 @@ describe('convertTransaction', () => {
               type: 'ccard',
               instrument: 'EUR',
               company: null,
-              syncIds: ['7634']
+              syncIds: ['4343']
             },
             invoice: null,
             sum: 507.5,
@@ -213,23 +213,23 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 535104******7634'
+        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 533333******4343'
       }
     ],
     [
       {
         sourceSystem: 3,
-        eventId: '73652236',
-        contractId: '7213990',
+        eventId: '10000006',
+        contractId: '1000046',
         contractCurrency: '840',
-        cardPAN: '449655******3315',
+        cardPAN: '411111******4545',
         cardExpiryDate: null,
-        cardId: '656646861',
+        cardId: '100000077',
         eventDate: 1593711351000,
         processingDate: 1593723600000,
         transactionType: -1,
         transactionCode: '205',
-        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 449655******6523',
+        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 411111******4646',
         operationCode: null,
         merchantId: '0822061',
         merchantName: 'USL 369 SOU BPS-Sberbank',
@@ -239,8 +239,8 @@ describe('convertTransaction', () => {
         accountSum: 42.59,
         commissionSum: null,
         commissionCurrency: '840',
-        rnnCode: '018483518316',
-        authorizationCode: '256709',
+        rnnCode: '100000000037',
+        authorizationCode: '100034',
         eventStatus: 1,
         mccCode: '6012',
         errorDescription: null,
@@ -251,7 +251,7 @@ describe('convertTransaction', () => {
         souAuthorizationCode: null,
         souTransactionSum: null,
         souTransactionCurrency: null,
-        souEventId: '353431327',
+        souEventId: '100000078',
         qrPaymentId: null,
         fileId: null,
         printDocs: null,
@@ -262,7 +262,7 @@ describe('convertTransaction', () => {
         date: new Date(1593711351000),
         movements: [
           {
-            id: '73652236',
+            id: '10000006',
             account: { id: 'account' },
             invoice: {
               instrument: 'EUR',
@@ -277,7 +277,7 @@ describe('convertTransaction', () => {
               type: 'ccard',
               instrument: 'EUR',
               company: null,
-              syncIds: ['6523']
+              syncIds: ['4646']
             },
             invoice: null,
             sum: 102,
@@ -285,23 +285,23 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 449655******6523'
+        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 411111******4646'
       }
     ],
     [
       {
         sourceSystem: 3,
-        eventId: '86441347',
-        contractId: '5468414',
+        eventId: '10000007',
+        contractId: '1000047',
         contractCurrency: '933',
-        cardPAN: '449655******1474',
+        cardPAN: '411111******4747',
         cardExpiryDate: null,
-        cardId: '693126322',
+        cardId: '100000079',
         eventDate: 1594814489000,
         processingDate: 1594846800000,
         transactionType: 1,
         transactionCode: '206',
-        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 449655******1474',
+        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 411111******4747',
         operationCode: null,
         merchantId: '0822061',
         merchantName: 'USL 369 SOU BPS-Sberbank',
@@ -311,8 +311,8 @@ describe('convertTransaction', () => {
         accountSum: 110,
         commissionSum: null,
         commissionCurrency: '933',
-        rnnCode: '019783890623',
-        authorizationCode: '509500',
+        rnnCode: '100000000038',
+        authorizationCode: '100035',
         eventStatus: 1,
         mccCode: '6012',
         errorDescription: null,
@@ -323,7 +323,7 @@ describe('convertTransaction', () => {
         souAuthorizationCode: null,
         souTransactionSum: null,
         souTransactionCurrency: null,
-        souEventId: '355079860',
+        souEventId: '100000080',
         qrPaymentId: null,
         fileId: null,
         printDocs: null,
@@ -334,7 +334,7 @@ describe('convertTransaction', () => {
         date: new Date(1594814489000),
         movements: [
           {
-            id: '86441347',
+            id: '10000007',
             account: { id: 'account' },
             invoice: null,
             sum: 110,
@@ -342,23 +342,23 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 449655******1474'
+        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 411111******4747'
       }
     ],
     [
       {
         sourceSystem: 3,
-        eventId: '73503202',
-        contractId: '6648369',
+        eventId: '10000008',
+        contractId: '1000048',
         contractCurrency: '933',
-        cardPAN: '449655******8859',
+        cardPAN: '411111******4848',
         cardExpiryDate: null,
-        cardId: '525792235',
+        cardId: '100000081',
         eventDate: 1593982800000,
         processingDate: 1593723600000,
         transactionType: 1,
         transactionCode: '225',
-        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 543553******6492',
+        transactionName: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 555555******4949',
         operationCode: null,
         merchantId: '0822061',
         merchantName: 'USL 369 SOU BPS-Sberbank',
@@ -368,8 +368,8 @@ describe('convertTransaction', () => {
         accountSum: 79,
         commissionSum: null,
         commissionCurrency: '933',
-        rnnCode: '018483499227',
-        authorizationCode: '278205',
+        rnnCode: '100000000039',
+        authorizationCode: '100036',
         eventStatus: 1,
         mccCode: '6012',
         errorDescription: null,
@@ -380,7 +380,7 @@ describe('convertTransaction', () => {
         souAuthorizationCode: null,
         souTransactionSum: null,
         souTransactionCurrency: null,
-        souEventId: '353412335',
+        souEventId: '100000082',
         qrPaymentId: null,
         fileId: null,
         printDocs: null,
@@ -391,7 +391,7 @@ describe('convertTransaction', () => {
         date: new Date(1593982800000),
         movements: [
           {
-            id: '73503202',
+            id: '10000008',
             account: { id: 'account' },
             invoice: null,
             sum: 79,
@@ -399,23 +399,23 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 543553******6492'
+        comment: 'Перевод BYN на "чужие" карты в пределах БПС-Сбербанка 555555******4949'
       }
     ],
     [
       {
         sourceSystem: 4,
-        eventId: '66254730000108283831953',
-        contractId: '5449238',
+        eventId: '10000000000000000000001',
+        contractId: '1000042',
         contractCurrency: null,
-        cardPAN: '543553******0710',
+        cardPAN: '555555******3838',
         cardExpiryDate: null,
-        cardId: '1030186865',
+        cardId: '1000000012',
         eventDate: 1616508629000,
         processingDate: null,
         transactionType: null,
         transactionCode: '01000P',
-        transactionName: 'P2P SOU BPS-Sberbank > Minsk BLR Терминал: W2P90020 RRN:108283831953 AuthCode:662547',
+        transactionName: 'P2P SOU BPS-Sberbank > Minsk BLR Терминал: W2P90020 RRN:100000000040 AuthCode:100037',
         operationCode: null,
         merchantId: '0822061',
         merchantName: null,
@@ -425,8 +425,8 @@ describe('convertTransaction', () => {
         accountSum: null,
         commissionSum: 0,
         commissionCurrency: '933',
-        rnnCode: '108283831953',
-        authorizationCode: '662547',
+        rnnCode: '100000000040',
+        authorizationCode: '100037',
         eventStatus: 0,
         mccCode: null,
         errorDescription: null,
@@ -448,7 +448,7 @@ describe('convertTransaction', () => {
         date: new Date(1616508629000),
         movements: [
           {
-            id: '66254730000108283831953',
+            id: '10000000000000000000001',
             account: { id: 'account' },
             invoice: null,
             sum: -300,

@@ -1,0 +1,12 @@
+{
+  "provenance": {
+    "source": "Derived from authorized private capture; public financial and identity values replaced by user request.",
+    "sessionId": "00000000-0000-4000-8000-000000000014"
+  },
+  "response": {
+    "verified": false,
+    "code": 42,
+    "device_name": "iPhone | Apple iPhone 13 Pro Max | ios 18.7.1",
+    "result": 0
+  }
+}

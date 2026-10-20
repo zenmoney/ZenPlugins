@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="phone"
+        obligatory="true"
+        inputType="phone"
+        title="Номер телефона BakAi"
+        dialogTitle="Номер телефона"
+        dialogMessage="Введите номер с кодом страны, только цифры, без знака +."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Номер телефона BakAi|********"
+    />
+    <EditTextPreference
+        key="countryCode"
+        obligatory="true"
+        defaultValue="RU"
+        title="Страна номера телефона"
+        dialogTitle="Страна номера телефона"
+        dialogMessage="Двухбуквенный код страны номера, выбранной при входе в BakAi. Для российского номера — RU."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Страна номера телефона|{@s}"
+    />
+    <EditTextPreference
+        key="password"
+        obligatory="true"
+        inputType="textPassword"
+        title="Пароль BakAi"
+        dialogTitle="Пароль BakAi"
+        dialogMessage="Введите пароль входа в BakAi, а не короткий код разблокировки приложения."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||********"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="С какой даты загружать операции"
+        dialogTitle="Начало истории"
+        dialogMessage="Для импорта карт выберите дату не ранее шести месяцев назад. Более ранняя дата доступна только при синхронизации текущих счетов без карт."
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="|Начало истории|{@s}"
+    />
+</PreferenceScreen>

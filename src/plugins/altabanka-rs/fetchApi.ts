@@ -18,6 +18,15 @@ async function fetchApi (url: string, token: string, options?: FetchOptions): Pr
 
   return await fetchJson(baseUrl + url, {
     method: 'POST',
+    parse: body => {
+      console.assert(typeof body === 'string', 'Alta Bank response must be JSON text')
+      return JSON.parse(body.replace(/^\uFEFF/, '')) as unknown
+    },
+    sanitizeRequestLog: {
+      headers: { Cookie: true, Authorization: true, 'X-Holos-RequestToken': true },
+      body: { username: true, otp: true }
+    },
+    sanitizeResponseLog: { headers: { 'set-cookie': true } },
     ...options,
     headers: {
       ...headers,
@@ -39,7 +48,37 @@ export async function fetchEnvironment (token: string): Promise<Environment> {
 export async function fetchLogin (token: string, username: string, otp: string): Promise<void> {
   await fetchApi('RetailLoginService.svc/LoginUO', token, {
     body: { username, otp, appType: 'AUTH_1', sessionID: 1 },
-    sanitizeRequestLog: true
+    sanitizeResponseLog: {
+      headers: { 'set-cookie': true },
+      body: {
+        Address: true,
+        Street: true,
+        StreetNumber: true,
+        Locality: true,
+        PhoneNumber: true,
+        MobileNumber: true,
+        CorePhoneNumber: true,
+        BirthDate: true,
+        Username: true,
+        Email: true,
+        FirstName: true,
+        LastName: true,
+        Name: true,
+        FullName: true,
+        SocialIdentityNumber: true,
+        SessionID: true,
+        SessionGuid: true,
+        Ticket: true,
+        RequestToken: true,
+        IdToken: true,
+        HolosSessionID: true,
+        GeneratedSessionID: true,
+        SMSSessionID: true,
+        SecurityComponent: true,
+        EncryptedSecurityUserID: true,
+        HistoryPins: true
+      }
+    }
   })
 }
 

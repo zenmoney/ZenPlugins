@@ -2,12 +2,14 @@
 
 import { makePluginDataApi } from '../../../ZPAPI.pluginData'
 import { EventEmitter } from 'events'
+import { createHash } from 'crypto'
 
 const BASE = 'https://login.bankhapoalim.co.il'
 const ACCOUNTS_PATH = '/ServerServices/general/accounts'
+const accountsStepUp = require('../__fixtures__/accounts-stepupotp.json')
 const savedAuth = { cookieHeader: 'SMSESSION=stale', restContext: 'pib', acquiredAt: 1 }
 const options = {
-  preferences: {},
+  preferences: { authenticationMethod: 'web' },
   fromDate: new Date('2026-09-01T00:00:00Z'),
   toDate: new Date('2026-09-28T00:00:00Z')
 }
@@ -17,9 +19,9 @@ const refusalShapes = [
   { status: 200, headers: { 'content-type': 'application/json' }, body: { error: 'unknown auth response' } }
 ]
 
-// [model] Fake native and HTTP boundaries exercise the real entrypoint, cookie polyfill
-// and converters. Synthetic account envelopes are not evidence of bank schemas.
-describe('[model] hapoalim real session orchestration', () => {
+// Observed-response classification uses the complete fixture in separate non-model suites.
+// [model] cases below exercise synthetic runtime/transport invariants, not bank schemas.
+describe('hapoalim real session orchestration', () => {
   const originalFetch = global.fetch
   const NativeHeaders = global.Headers
   const originalURL = global.URL
@@ -116,6 +118,16 @@ describe('[model] hapoalim real session orchestration', () => {
     nativeCookies = [{ name: 'SMSESSION', value: 'stale', domain: 'login.bankhapoalim.co.il', path: '/', secure: true }]
   })
 
+  function prepareMain () {
+    global.ZenMoney.getPreferences = () => ({ startDate: '2026-09-01', authenticationMethod: 'web' })
+    global.ZenMoney.manifest = { isSubscriptionRequired: false }
+    global.ZenMoney.features = { transactionDtoV2: true, dateProcessing: true }
+    global.ZenMoney.addAccount = jest.fn()
+    global.ZenMoney.addTransaction = jest.fn()
+    global.ZenMoney.setResult = jest.fn()
+    return require('../../../common/adapters').adaptScrapeToMain(scrape)
+  }
+
   afterEach(() => {
     jest.useRealTimers()
     for (const spy of consoleSpies) spy.mockRestore()
@@ -125,7 +137,7 @@ describe('[model] hapoalim real session orchestration', () => {
     global.ZenMoney = originalZenMoney
   })
 
-  it.each(refusalShapes.slice(0, 1))('completes one foreground login and both accounts after a confirmed refusal %#', async refusal => {
+  it.each(refusalShapes.slice(0, 1))('[model] completes one foreground login and both accounts after a confirmed refusal %#', async refusal => {
     loadRuntime(refusal)
     const result = await scrape({ ...options, isInBackground: false })
     expect(nativeShow).toHaveBeenCalledTimes(1)
@@ -146,7 +158,234 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(nativeCookies).toEqual(expect.arrayContaining([expect.objectContaining({ key: 'SMSESSION', value: 'fresh-rotated' })]))
   })
 
-  it.each(refusalShapes.slice(1).flatMap(refusal => [false, true].map(isInBackground => ({ refusal, isInBackground }))))('keeps ambiguous auth and never opens login %#', async ({ refusal, isInBackground }) => {
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    it.each([false, true])('recovers only native-origin-proven accounts step-up, never guesses its URL (omit URL: %s)', async omitUrl => {
+      loadRuntime({ status: 401, headers: { 'content-type': 'text/*' }, body: accountsStepUp, omitUrl })
+      if (omitUrl) {
+        await expect(scrape({ ...options, isInBackground: false })).rejects.toMatchObject({ responseSummary: { status: 401, errCode: null } })
+        expect(nativeShow).not.toHaveBeenCalled()
+        expect(dataApi.currentData.auth).toMatchObject(savedAuth)
+        return
+      }
+      const result = await scrape({ ...options, isInBackground: false })
+      expect(result.accounts.map(account => account.id)).toEqual(['12-702-1001', '12-702-1002'])
+      expect(nativeShow).toHaveBeenCalledTimes(1)
+      expect(dataApi.currentData.auth.cookieHeader).toContain('SMSESSION=fresh-rotated')
+      expect(global.ZenMoney.fetch.mock.calls.filter(([url]) => new URL(url).pathname === ACCOUNTS_PATH)).toHaveLength(3)
+    })
+  })
+
+  // [model] Full result after observed collection 204; synthetic history verifies
+  // that both checking sources, movement signs and ownership survive the fix.
+  it.each([['savingsDeposits'], ['savingsDeposits', 'loans', 'mortgages'], ['savingsDeposits', 'loans', 'mortgages', 'fxInventory']].map(endpoints => ({ endpoints })))('[model] returns both checking accounts and their full history after 204 at $endpoints', async ({ endpoints }) => {
+    loadRuntime(null)
+    const implementation = global.ZenMoney.fetch.getMockImplementation()
+    const historyIds = []
+    global.ZenMoney.fetch.mockImplementation(async (url, init) => {
+      const parsed = new URL(url)
+      if (endpoints.some(endpoint => endpoint === 'fxInventory'
+        ? parsed.pathname.startsWith('/ServerServices/foreign-currency/') && !parsed.searchParams.has('retrievalStartDate')
+        : parsed.pathname.endsWith('/' + endpoint))) {
+        expect(init.headers.get('accept-encoding')).toBe('identity')
+        return { status: 204, url, headers: new NativeHeaders(), text: async () => '' }
+      }
+      if (parsed.pathname.endsWith('/current-account/transactions')) {
+        const id = parsed.searchParams.get('accountId')
+        historyIds.push(id)
+        const row = {
+          serialNumber: 1,
+          eventAmount: id.endsWith('1001') ? 10 : 20,
+          eventActivityTypeCode: id.endsWith('1001') ? 1 : 2,
+          formattedEventDate: '2026-09-10T00:00:00.000Z',
+          activityDescription: 'model',
+          transactionType: 'REGULAR',
+          rejectedDataEventPertainingIndication: 'N'
+        }
+        return { status: 200, url, headers: new NativeHeaders(), text: async () => JSON.stringify({ transactions: [row] }) }
+      }
+      return await implementation(url, init)
+    })
+    expect(await scrape({ ...options, isInBackground: false })).toEqual({
+      accounts: [1001, 1002].map(number => ({
+        id: `12-702-${number}`,
+        type: 'checking',
+        title: `*${number} חשבון נוכחי`,
+        instrument: 'ILS',
+        syncID: [`12-702-${number}`],
+        balance: 100,
+        creditLimit: 0
+      })),
+      transactions: [1001, 1002].map(number => ({
+        hold: false,
+        date: new Date('2026-09-10T00:00:00+02:00'),
+        movements: [{ id: null, account: { id: `12-702-${number}` }, invoice: null, sum: number === 1001 ? 10 : -20, fee: 0 }],
+        merchant: { country: null, city: null, title: 'model', mcc: null, location: null },
+        comment: null
+      }))
+    })
+    expect(historyIds).toEqual(['12-702-1001', '12-702-1002'])
+    expect(nativeShow).not.toHaveBeenCalled()
+  })
+
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    it('uses already authenticated native cookies for the observed accounts step-up without showing login', async () => {
+      loadRuntime({ status: 401, headers: { 'content-type': 'text/*' }, body: accountsStepUp }, { auth: savedAuth }, 'SMSESSION=fresh')
+      const result = await scrape({ ...options, isInBackground: true })
+      expect(result.accounts.map(account => account.id)).toEqual(['12-702-1001', '12-702-1002'])
+      expect(nativeShow).not.toHaveBeenCalled()
+      expect(global.ZenMoney.fetch.mock.calls.some(([url]) => url.includes('getLogonPage'))).toBe(false)
+      expect(global.ZenMoney.fetch.mock.calls.filter(([url]) => new URL(url).pathname === ACCOUNTS_PATH)).toHaveLength(3)
+    })
+  })
+
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    it('reports the observed step-up in background before any login navigation', async () => {
+      const { UserInteractionError } = require('../../../errors')
+      loadRuntime({ status: 401, headers: { 'content-type': 'text/*' }, body: accountsStepUp })
+      await expect(scrape({ ...options, isInBackground: true })).rejects.toBeInstanceOf(UserInteractionError)
+      expect(nativeShow).not.toHaveBeenCalled()
+      expect(dataApi.currentData.auth).toMatchObject(savedAuth)
+      expect(global.ZenMoney.fetch.mock.calls.every(([url]) => !url.includes('getLogonPage'))).toBe(true)
+    })
+  })
+
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    it('does not resend already rejected accounts cookies through either recovery store in background', async () => {
+      const { UserInteractionError } = require('../../../errors')
+      loadRuntime({ status: 401, body: accountsStepUp }, { auth: savedAuth }, savedAuth.cookieHeader)
+      await expect(scrape({ ...options, isInBackground: true })).rejects.toBeInstanceOf(UserInteractionError)
+      expect(global.ZenMoney.fetch.mock.calls.filter(([url]) => new URL(url).pathname === ACCOUNTS_PATH)).toHaveLength(1)
+      expect(nativeShow).not.toHaveBeenCalled()
+      expect(dataApi.currentData.auth).toMatchObject(savedAuth)
+    })
+  })
+
+  // [model] The jar session is proven then rejected on replay; do not retry an earlier rejected native session.
+  it('[model] retains every rejected accounts session across jar recovery and operation replay', async () => {
+    const { UserInteractionError } = require('../../../errors')
+    loadRuntime({ status: 401, headers: { 'set-cookie': 'SMSESSION=fresh; Path=/; Secure' }, body: accountsStepUp }, { auth: savedAuth }, savedAuth.cookieHeader)
+    const implementation = global.ZenMoney.fetch.getMockImplementation()
+    let freshReads = 0
+    global.ZenMoney.fetch.mockImplementation(async (url, init) => {
+      if (new URL(url).pathname === ACCOUNTS_PATH && init.headers.get('cookie')?.includes('SMSESSION=fresh')) {
+        freshReads++
+        if (freshReads === 2) {
+          throw Object.assign(new Error('MODEL_REPLAY_AUTH_GATE'), {
+            isAccountsResponse: true, responseSummary: { status: 401, errCode: 'STEPUPOTP', isLoginPage: false }
+          })
+        }
+      }
+      return await implementation(url, init)
+    })
+    await expect(scrape({ ...options, isInBackground: true })).rejects.toBeInstanceOf(UserInteractionError)
+    const staleReads = global.ZenMoney.fetch.mock.calls.filter(([url, init]) => new URL(url).pathname === ACCOUNTS_PATH && init.headers.get('cookie')?.includes('SMSESSION=stale'))
+    expect(staleReads).toHaveLength(1)
+    expect(freshReads).toBe(2)
+    expect(nativeShow).not.toHaveBeenCalled()
+    expect(dataApi.currentData.auth.cookieHeader).toContain('SMSESSION=fresh')
+  })
+
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    it.each([
+      'TS=model; SMSESSION=stale; XSRF-TOKEN=model-new',
+      'XSRF-TOKEN=model-new; SMSESSION=stale',
+      'SMSESSION=stale'
+    ])('does not repeat rejected session proof for differently ordered jar/native cookies %#', async nativeHeader => {
+      const { UserInteractionError } = require('../../../errors')
+      const auth = { ...savedAuth, cookieHeader: 'XSRF-TOKEN=model-old; TS=model; SMSESSION=stale' }
+      loadRuntime({ status: 401, body: accountsStepUp }, { auth }, nativeHeader)
+      nativeCookies = [
+        { name: 'TS', value: 'model', domain: 'login.bankhapoalim.co.il', path: '/', secure: true },
+        { name: 'SMSESSION', value: 'stale', domain: 'login.bankhapoalim.co.il', path: '/', secure: true }
+      ]
+      await expect(scrape({ ...options, isInBackground: true })).rejects.toBeInstanceOf(UserInteractionError)
+      expect(global.ZenMoney.fetch.mock.calls.filter(([url]) => new URL(url).pathname === ACCOUNTS_PATH)).toHaveLength(1)
+      expect(nativeShow).not.toHaveBeenCalled()
+      expect(dataApi.currentData.auth).toMatchObject(auth)
+    })
+  })
+
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    it('reports native failure once without publishing success, accounts, history or lastSuccessDate', async () => {
+      const previousSuccess = '2026-09-27T00:00:00.000Z'
+      loadRuntime({ status: 401, headers: { 'content-type': 'text/*' }, body: accountsStepUp }, {
+        auth: savedAuth, 'scrape/lastSuccessDate': previousSuccess
+      })
+      nativeShow.mockRejectedValue(new Error('MODEL_RENDERER_FAILURE'))
+      // Host outcome is setResult, not resolution of the SDK wrapper's promise.
+      await prepareMain()({ isInBackground: false })
+      expect(global.ZenMoney.setResult).toHaveBeenCalledTimes(1)
+      expect(global.ZenMoney.setResult.mock.calls[0][0]).toMatchObject({ message: '[RUE] MODEL_RENDERER_FAILURE' })
+      expect(global.ZenMoney.setResult.mock.calls[0][0].success).not.toBe(true)
+      expect(global.ZenMoney.addAccount).not.toHaveBeenCalled()
+      expect(global.ZenMoney.addTransaction).not.toHaveBeenCalled()
+      expect(dataApi.currentData['scrape/lastSuccessDate']).toBe(previousSuccess)
+      expect(dataApi.currentData.auth).toMatchObject(savedAuth)
+    })
+  })
+
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    // [model] SDK publication ordering and two-owner coordination, not bank history formats.
+    it('[model] publishes one real SDK success only after the observed step-up and both histories complete', async () => {
+      loadRuntime({ status: 401, headers: { 'content-type': 'text/*' }, body: accountsStepUp })
+      const implementation = global.ZenMoney.fetch.getMockImplementation()
+      global.ZenMoney.fetch.mockImplementation(async (url, init) => {
+        if (new URL(url).pathname.endsWith('/current-account/transactions')) {
+          return {
+            status: 200,
+            url,
+            headers: new NativeHeaders(),
+            text: async () => JSON.stringify({
+              transactions: [{
+                eventAmount: 7,
+                eventActivityTypeCode: 1,
+                activityDescription: 'MODEL PAYMENT',
+                formattedEventDate: '2026-10-09T00:00:00.000Z',
+                transactionType: 'REGULAR',
+                rejectedDataEventPertainingIndication: 'N'
+              }]
+            })
+          }
+        }
+        return await implementation(url, init)
+      })
+      await prepareMain()({ isInBackground: false })
+      expect(global.ZenMoney.setResult.mock.calls).toEqual([[{ success: true }]])
+      expect(global.ZenMoney.addAccount).toHaveBeenCalledTimes(1)
+      expect(global.ZenMoney.addAccount.mock.calls[0][0].map(account => account.id)).toEqual(['12-702-1001', '12-702-1002'])
+      expect(global.ZenMoney.addTransaction).toHaveBeenCalledTimes(1)
+      expect(global.ZenMoney.addTransaction.mock.calls[0][0].map(transaction => transaction.movements[0].sum)).toEqual([7, 7])
+      expect(dataApi.currentData['scrape/lastSuccessDate']).toEqual(expect.any(String))
+      expect(nativeShow).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('[model] coordination with the complete observed accounts fixture', () => {
+    // [model] Direct second-owner failure must not publish first-owner partial results.
+    it('[model] publishes no success or first-account partial data after recovery then second history failure', async () => {
+      const previousSuccess = '2026-09-27T00:00:00.000Z'
+      loadRuntime({ status: 401, body: accountsStepUp }, { auth: savedAuth, 'scrape/lastSuccessDate': previousSuccess })
+      const implementation = global.ZenMoney.fetch.getMockImplementation()
+      global.ZenMoney.fetch.mockImplementation(async (url, init) => {
+        const parsed = new URL(url)
+        if (parsed.pathname.endsWith('/current-account/transactions') && parsed.searchParams.get('accountId') === '12-702-1002') {
+          throw Object.assign(new Error('MODEL_SECOND_HISTORY_FAILURE'), { responseSummary: { status: 503, errCode: null, isLoginPage: false } })
+        }
+        return await implementation(url, init)
+      })
+      await prepareMain()({ isInBackground: false })
+      expect(global.ZenMoney.setResult).toHaveBeenCalledTimes(1)
+      expect(global.ZenMoney.setResult.mock.calls[0][0]).toMatchObject({ responseSummary: { status: 503 } })
+      expect(global.ZenMoney.setResult.mock.calls[0][0].success).not.toBe(true)
+      expect(global.ZenMoney.addAccount).not.toHaveBeenCalled()
+      expect(global.ZenMoney.addTransaction).not.toHaveBeenCalled()
+      expect(dataApi.currentData['scrape/lastSuccessDate']).toBe(previousSuccess)
+      expect(dataApi.currentData.auth.cookieHeader).toContain('SMSESSION=fresh-rotated')
+      expect(nativeShow).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it.each(refusalShapes.slice(1).flatMap(refusal => [false, true].map(isInBackground => ({ refusal, isInBackground }))))('[model] keeps ambiguous auth and never opens login %#', async ({ refusal, isInBackground }) => {
     loadRuntime(refusal)
     await expect(scrape({ ...options, isInBackground })).rejects.toBeDefined()
     expect(nativeShow).not.toHaveBeenCalled()
@@ -154,14 +393,14 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(dataApi.currentData.auth).toMatchObject(savedAuth)
   })
 
-  it.each([429, 500, 503])('does not open login or clear auth on HTTP %s in foreground', async status => {
+  it.each([429, 500, 503])('[model] does not open login or clear auth on HTTP %s in foreground', async status => {
     loadRuntime({ status, headers: { 'content-type': 'text/html' }, body: 'maintenance' })
     await expect(scrape({ ...options, isInBackground: false })).rejects.toBeDefined()
     expect(nativeOpenWebView).not.toHaveBeenCalled()
     expect(dataApi.currentData.auth).toMatchObject(savedAuth)
   })
 
-  it('restores rotated JS fetch cookies across plugin instances without a new login', async () => {
+  it('[model] restores rotated JS fetch cookies across plugin instances without a new login', async () => {
     loadRuntime(refusalShapes[0])
     await scrape({ ...options, isInBackground: false })
     const persistedData = JSON.parse(JSON.stringify(dataApi.currentData))
@@ -174,7 +413,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect((await global.ZenMoney.getCookies()).find(cookie => cookie.name === 'SMSESSION').value).toBe('fresh-rotated')
   })
 
-  it('syncs both accounts on an older host when persisted HTTP auth remains valid', async () => {
+  it('[model] syncs both accounts on an older host when persisted HTTP auth remains valid', async () => {
     loadRuntime(null)
     delete global.ZenMoney.WebView
     const result = await scrape({ ...options, isInBackground: true })
@@ -184,7 +423,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(dataApi.currentData.auth.cookieHeader).toContain('SMSESSION=fresh-rotated')
   })
 
-  it('preserves the published raw XSRF header form for an encoded cookie', async () => {
+  it('[model] preserves the published raw XSRF header form for an encoded cookie', async () => {
     const token = 'model%2Ftoken%3D'
     loadRuntime(null, { auth: { ...savedAuth, cookieHeader: `SMSESSION=stale; XSRF-TOKEN=${token}`, xsrfToken: token } })
     const implementation = global.ZenMoney.fetch.getMockImplementation()
@@ -198,7 +437,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(nativeShow).not.toHaveBeenCalled()
   })
 
-  it('keeps same-session XSRF on a silent transaction retry when the JS jar only has SMSESSION', async () => {
+  it('[model] keeps same-session XSRF on a silent transaction retry when the JS jar only has SMSESSION', async () => {
     nativeCookies = [{ name: 'SMSESSION', value: 'current', domain: 'login.bankhapoalim.co.il', path: '/', secure: true }]
     loadRuntime(null, { auth: { cookieHeader: 'SMSESSION=current; XSRF-TOKEN=stable', xsrfToken: 'stable', restContext: 'pib' } })
     const implementation = global.ZenMoney.fetch.getMockImplementation()
@@ -219,7 +458,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(dataApi.currentData.auth.cookieHeader).toContain('XSRF-TOKEN=stable')
   })
 
-  it('passes a verified rotation to the next product request and preserves it after history fails', async () => {
+  it('[model] passes a verified rotation to the next product request and preserves it after history fails', async () => {
     loadRuntime(null)
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     global.ZenMoney.fetch.mockImplementation(async (url, init) => {
@@ -238,7 +477,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(nativeShow).not.toHaveBeenCalled()
   })
 
-  it('does not start another account request after an unknown product failure', async () => {
+  it('[model] does not start another account request after an unknown product failure', async () => {
     loadRuntime(null)
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     global.ZenMoney.fetch.mockImplementation(async (url, init) => {
@@ -253,7 +492,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(nativeShow).not.toHaveBeenCalled()
   })
 
-  it('bounds a hung regular HTTP request and does not persist its late rotation', async () => {
+  it('[model] bounds a hung regular HTTP request and does not persist its late rotation', async () => {
     jest.useFakeTimers({ doNotFake: ['performance'] })
     loadRuntime(null)
     let resolveLate
@@ -273,7 +512,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(jest.getTimerCount()).toBe(0)
   })
 
-  it.each([false, true])('does not confuse accounts access with transaction step-up (background: %s)', async isInBackground => {
+  it.each([false, true])('[model] does not confuse accounts access with transaction step-up (background: %s)', async isInBackground => {
     loadRuntime(null, { auth: savedAuth }, 'SMSESSION=accounts-only')
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     global.ZenMoney.fetch.mockImplementation(async (url, init) => {
@@ -295,7 +534,7 @@ describe('[model] hapoalim real session orchestration', () => {
     }
   })
 
-  it('finishes a server-side OTP challenge without changing native cookies', async () => {
+  it('[model] finishes a server-side OTP challenge without changing native cookies', async () => {
     loadRuntime(null, { auth: savedAuth }, 'SMSESSION=accounts-only', true)
     let historyAllowed = false
     nativeShow.mockImplementation(async () => { historyAllowed = true })
@@ -312,7 +551,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(dataApi.currentData.auth.cookieHeader).toContain('SMSESSION=fresh-rotated')
   })
 
-  it('never persists a different accounts-only JS jar after history rejects its proof', async () => {
+  it('[model] never persists a different accounts-only JS jar after history rejects its proof', async () => {
     nativeCookies = [{ name: 'SMSESSION', value: 'jar-accounts-only', domain: 'login.bankhapoalim.co.il', path: '/', secure: true }]
     const original = { ...savedAuth, cookieHeader: 'SMSESSION=stale; native-proof=model-native', xsrfToken: null }
     loadRuntime(null, { auth: original })
@@ -329,7 +568,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(nativeShow).not.toHaveBeenCalled()
   })
 
-  it('keeps customer response bodies and account-query identifiers out of regular network logs', async () => {
+  it('[model] keeps customer response bodies and account-query identifiers out of regular network logs', async () => {
     loadRuntime(null)
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     global.ZenMoney.fetch.mockImplementation(async (url, init) => {
@@ -354,7 +593,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(logs).toContain('"currentAccountCreditFrame":0')
   })
 
-  it('keeps the later account auth error and does not present a second login', async () => {
+  it('[model] keeps the later account auth error and does not present a second login', async () => {
     loadRuntime(refusalShapes[0])
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     global.ZenMoney.fetch.mockImplementation(async (url, init) => {
@@ -367,7 +606,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(nativeShow).toHaveBeenCalledTimes(1)
   })
 
-  it('imports every row from split histories of both accounts, including equal-looking payments', async () => {
+  it('[model] imports every row from split histories of both accounts, including equal-looking payments', async () => {
     loadRuntime(null)
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     const windows = []
@@ -403,7 +642,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(nativeShow).not.toHaveBeenCalled()
   })
 
-  it('rejects the whole scrape if a later account reaches an unprovable single-day limit', async () => {
+  it('[model] rejects the whole scrape if a later account reaches an unprovable single-day limit', async () => {
     loadRuntime(null)
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     global.ZenMoney.fetch.mockImplementation(async (url, init) => {
@@ -417,7 +656,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(nativeShow).not.toHaveBeenCalled()
   })
 
-  it('keeps skipped account metadata and loads only the other account history', async () => {
+  it('[model] keeps skipped account metadata and loads only the other account history', async () => {
     loadRuntime(null)
     global.ZenMoney.isAccountSkipped.mockImplementation(id => id === '12-702-1001')
     const result = await scrape(options)
@@ -426,7 +665,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(histories.map(url => url.searchParams.get('accountId'))).toEqual(['12-702-1002'])
   })
 
-  it.each([false, true])('filters exact inclusive edges without imposing now on an unbounded upper date: %s', unbounded => {
+  it.each([false, true])('[model] filters exact inclusive edges without imposing now on an unbounded upper date: %s', unbounded => {
     return (async () => {
       loadRuntime(null)
       const implementation = global.ZenMoney.fetch.getMockImplementation()
@@ -442,7 +681,7 @@ describe('[model] hapoalim real session orchestration', () => {
     })()
   })
 
-  it('documents safe lower-bound over-inclusion for an IDT-midnight start in the legacy frame', async () => {
+  it('[model] documents safe lower-bound over-inclusion for an IDT-midnight start in the legacy frame', async () => {
     loadRuntime(null)
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     const days = ['2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02']
@@ -475,7 +714,7 @@ describe('[model] hapoalim real session orchestration', () => {
     expect(nativeShow).not.toHaveBeenCalled()
   })
 
-  it('keeps the first calendar day when the host passes a UTC midnight boundary', async () => {
+  it('[model] keeps the first calendar day when the host passes a UTC midnight boundary', async () => {
     loadRuntime(null)
     const financialDiagnostics = {
       arrearsAmount: 1,
@@ -596,13 +835,133 @@ describe('[model] hapoalim real session orchestration', () => {
     }
   })
 
-  it('loads both currency balances of each main account without mixing their histories', async () => {
+  // [model] Preserve the complete graph and checking histories when only the
+  // recognized maturity-label rendering changes; these are not live bank records.
+  const endLabel = '\u05e1\u05d5\u05e3 \u05e4\u05d9\u05e7\u05d3\u05d5\u05df'
+  const legacyLabel = '1   ' + endLabel
+  it.each([
+    [endLabel, legacyLabel], [legacyLabel, endLabel], [endLabel, endLabel], [legacyLabel, legacyLabel],
+    ['\u200f' + endLabel + '\u200e', ' 1\t' + endLabel + ' ']
+  ].flatMap(descriptions => [false, true].map(sharedSerial => ({ descriptions, sharedSerial }))))('[model] retains both parents, four deposits and complete histories for payout renderings $descriptions (shared serial: $sharedSerial)', async ({ descriptions, sharedSerial }) => {
+    loadRuntime(null)
+    const implementation = global.ZenMoney.fetch.getMockImplementation()
+    global.ZenMoney.fetch.mockImplementation(async (url, init) => {
+      const parsed = new URL(url)
+      const number = parsed.searchParams.get('accountId')?.endsWith('1002') ? 1002 : 1001
+      if (parsed.pathname.endsWith('/deposits')) {
+        const deposits = [0, 1].map(index => ({
+          depositSerialId: (sharedSerial ? 1001 : number) * 10 + index + 1,
+          detailedAccountTypeCode: 26,
+          linkageTypeCode: 1,
+          shortProductName: 'model deposit ' + index,
+          principalAmount: 5000 + index * 1000 + number - 1001,
+          revaluedTotalAmount: index === 0 ? 0 : 6500 + number - 1001,
+          adjustedInterest: index === 0 ? null : 0.5,
+          formattedAgreementOpeningDate: '2026-06-01T00:00:00.000Z',
+          formattedPaymentDate: '2026-08-30T00:00:00.000Z',
+          interestCreditingMethodDescription: '\u05dc\u05e2\u05d5"\u05e9',
+          interestPaymentDescription: descriptions[number - 1001]
+        }))
+        return { status: 200, url, headers: new NativeHeaders(), text: async () => JSON.stringify({ list: [{ data: deposits }] }) }
+      }
+      if (parsed.pathname.endsWith('/current-account/transactions')) {
+        return {
+          status: 200,
+          url,
+          headers: new NativeHeaders(),
+          text: async () => JSON.stringify({
+            transactions: [{
+              eventAmount: number === 1001 ? 10 : 20,
+              eventActivityTypeCode: number === 1001 ? 1 : 2,
+              formattedEventDate: '2026-09-15T00:00:00.000Z',
+              transactionType: 'REGULAR',
+              rejectedDataEventPertainingIndication: 'N',
+              activityDescription: 'model'
+            }]
+          })
+        }
+      }
+      return await implementation(url, init)
+    })
+    const expected = {
+      accounts: [1001, 1002].flatMap(number => [
+        { id: `12-702-${number}`, type: 'checking', title: `*${number} חשבון נוכחי`, instrument: 'ILS', syncID: [`12-702-${number}`], balance: 100, creditLimit: 0 },
+        ...[0, 1].map(index => ({
+          id: `hapoalim-deposit:${createHash('sha256').update(`12-702-${number}`).digest('hex')}:${(sharedSerial ? 1001 : number) * 10 + index + 1}`,
+          type: 'deposit',
+          title: 'model deposit ' + index,
+          instrument: 'ILS',
+          syncID: [String((sharedSerial ? 1001 : number) * 10 + index + 1), `hapoalim-deposit:${createHash('sha256').update(`12-702-${number}`).digest('hex')}:${(sharedSerial ? 1001 : number) * 10 + index + 1}`, ...sharedSerial ? [] : [String(number * 10 + index + 1).slice(-4)]],
+          balance: index === 0 ? 0 : 6500 + number - 1001,
+          startBalance: 5000 + index * 1000 + number - 1001,
+          startDate: new Date('2026-06-01T00:00:00+02:00'),
+          percent: index === 0 ? null : 0.5,
+          capitalization: false,
+          endDateOffsetInterval: 'day',
+          endDateOffset: 90,
+          payoffInterval: null,
+          payoffStep: 1
+        }))
+      ]),
+      transactions: [1001, 1002].map(number => ({
+        hold: false,
+        date: new Date('2026-09-15T00:00:00+02:00'),
+        movements: [{ id: null, account: { id: `12-702-${number}` }, invoice: null, sum: number === 1001 ? 10 : -20, fee: 0 }],
+        merchant: { country: null, city: null, title: 'model', mcc: null, location: null },
+        comment: null
+      }))
+    }
+    expect(await scrape(options)).toEqual(expected)
+    expect(await scrape(options)).toEqual(expected)
+    const histories = global.ZenMoney.fetch.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/current-account/transactions'))
+    expect(histories.map(([url]) => new URL(url).searchParams.get('accountId'))).toEqual(['12-702-1001', '12-702-1002', '12-702-1001', '12-702-1002'])
+  })
+
+  it.each([1, 2])('[model] rejects an unknown payout on parent%s without returning partial checking histories', async parent => {
+    loadRuntime(null)
+    const implementation = global.ZenMoney.fetch.getMockImplementation()
+    global.ZenMoney.fetch.mockImplementation(async (url, init) => {
+      const parsed = new URL(url)
+      const number = parsed.searchParams.get('accountId')?.endsWith('1002') ? 1002 : 1001
+      if (parsed.pathname.endsWith('/deposits')) {
+        return {
+          status: 200,
+          url,
+          headers: new NativeHeaders(),
+          text: async () => JSON.stringify({
+            list: [{
+              data: [{
+                depositSerialId: number * 10,
+                detailedAccountTypeCode: 26,
+                linkageTypeCode: 1,
+                principalAmount: 5000,
+                revaluedTotalAmount: 5100,
+                adjustedInterest: 0.5,
+                formattedAgreementOpeningDate: '2026-06-01T00:00:00.000Z',
+                formattedPaymentDate: '2026-08-30T00:00:00.000Z',
+                interestCreditingMethodDescription: '\u05dc\u05e2\u05d5"\u05e9',
+                interestPaymentDescription: (number - 1000 === parent ? '2 ' : '') + endLabel
+              }]
+            }]
+          })
+        }
+      }
+      return await implementation(url, init)
+    })
+    await expect(scrape(options)).rejects.toThrow(/deposit interest conditions/)
+    expect(global.ZenMoney.fetch.mock.calls.some(([url]) => new URL(url).pathname.endsWith('/current-account/transactions'))).toBe(false)
+  })
+
+  it.each([[200, 200], [200, 204], [204, 200], [204, 204]].map(statuses => ({ statuses })))('[model] preserves both-parent balances and FX histories for inventory statuses $statuses', async ({ statuses }) => {
     loadRuntime(null)
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     global.ZenMoney.fetch.mockImplementation(async (url, init) => {
       const parsed = new URL(url)
       if (!parsed.pathname.startsWith('/ServerServices/foreign-currency/')) return await implementation(url, init)
       const id = parsed.searchParams.get('accountId')
+      const inventory = !parsed.searchParams.has('retrievalStartDate')
+      expect(init.headers.get('accept-encoding')).toBe(inventory ? 'identity' : null)
+      if (inventory && statuses[id.endsWith('1001') ? 0 : 1] === 204) return { status: 204, url, headers: new NativeHeaders(), text: async () => '' }
       const balances = [[19, 142, 'USD'], [100, 143, 'EUR']].map(([code, detail, instrument]) => ({
         currencyCode: code,
         detailedAccountTypeCode: detail,
@@ -614,16 +973,19 @@ describe('[model] hapoalim real session orchestration', () => {
       return { status: 200, url, headers: new NativeHeaders(), text: async () => JSON.stringify({ balancesAndLimitsDataList: balances }) }
     })
     const result = await scrape(options)
-    expect(result.accounts.map(account => [account.id, account.instrument])).toEqual([
-      ['12-702-1001', 'ILS'], ['12-702-1001142', 'USD'], ['12-702-1001143', 'EUR'],
-      ['12-702-1002', 'ILS'], ['12-702-1002142', 'USD'], ['12-702-1002143', 'EUR']
-    ])
-    expect(result.transactions.map(transaction => [transaction.movements[0].account.id, transaction.movements[0].sum])).toEqual([
-      ['12-702-1001142', 7], ['12-702-1001143', 7], ['12-702-1002142', 9], ['12-702-1002143', 9]
-    ])
+    expect(result.accounts.map(account => [account.id, account.instrument])).toEqual([1001, 1002].flatMap((number, i) => [
+      [`12-702-${number}`, 'ILS'], ...statuses[i] === 200 ? [[`12-702-${number}142`, 'USD'], [`12-702-${number}143`, 'EUR']] : []
+    ]))
+    expect(result.transactions.map(transaction => [transaction.movements[0].account.id, transaction.movements[0].sum])).toEqual([1001, 1002].flatMap((number, i) =>
+      statuses[i] === 200 ? [[`12-702-${number}142`, number === 1001 ? 7 : 9], [`12-702-${number}143`, number === 1001 ? 7 : 9]] : []
+    ))
+    expect(global.ZenMoney.fetch.mock.calls.filter(([url]) => {
+      const parsed = new URL(url)
+      return parsed.pathname.startsWith('/ServerServices/foreign-currency/') && parsed.searchParams.has('retrievalStartDate')
+    })).toHaveLength(statuses.filter(status => status === 200).length * 2)
   })
 
-  it.each([false, true])('awaits auth/cookie persistence before first-run advice and preserves its failure (%s)', failsAlert => {
+  it.each([false, true])('[model] awaits auth/cookie persistence before first-run advice and preserves its failure (%s)', failsAlert => {
     return (async () => {
       loadRuntime(null)
       const originalSaveData = global.ZenMoney.saveData.bind(global.ZenMoney)
@@ -658,7 +1020,7 @@ describe('[model] hapoalim real session orchestration', () => {
     })()
   })
 
-  it('does not show first-run advice when cookie persistence fails', async () => {
+  it('[model] does not show first-run advice when cookie persistence fails', async () => {
     loadRuntime(null)
     const failure = new Error('model cookie persistence failed')
     const cookieSave = jest.spyOn(global.ZenMoney, 'saveCookies').mockRejectedValue(failure)
@@ -669,7 +1031,7 @@ describe('[model] hapoalim real session orchestration', () => {
     } finally { cookieSave.mockRestore() }
   })
 
-  it.each([undefined, null, new Date('invalid')])('rejects a missing/invalid start instead of silently loading three months: %s', fromDate => {
+  it.each([undefined, null, new Date('invalid')])('[model] rejects a missing/invalid start instead of silently loading three months: %s', fromDate => {
     return (async () => {
       loadRuntime(null)
       await expect(scrape({ ...options, preferences: { startDate: '2018-01-01' }, fromDate })).rejects.toThrow(/interval/)

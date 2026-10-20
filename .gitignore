@@ -59,6 +59,7 @@ Thumbs.db
 /.shared-cache
 
 # repository docs/plans
+.agents/
 AGENT.md
 plans/archive/
 **/plans/archive/

@@ -1,0 +1,102 @@
+{
+  "source": "Complete users/info and users/<id>/clients responses from authorized 2026-10-07 capture; identities and contacts replaced consistently",
+  "userInfo": {
+    "status": "success",
+    "data": {
+      "userInfo": {
+        "sub": "fixture-id",
+        "user-channel": "ONLINE",
+        "phoneNumber": "fixture-mobile_phone",
+        "email_verified": true,
+        "name": "FIXTURE USER",
+        "groups": [
+          "regular-users"
+        ],
+        "preferred_username": "fixture-preferred_username",
+        "given_name": "fixture-firstName",
+        "locale": "en",
+        "family_name": "fixture-lastName",
+        "email": "fixture-email",
+        "id": "fixture-id"
+      }
+    },
+    "errorMessages": null
+  },
+  "clients": {
+    "status": "success",
+    "data": {
+      "clients": [
+        {
+          "default": true,
+          "id": "fixture-client",
+          "type": "INDIVIDUAL",
+          "state": "ACTIVE",
+          "grade": "FULL_ACCESS",
+          "segment": null,
+          "contacts": [
+            {
+              "type": "MOBILE_PHONE",
+              "value": "fixture-mobile_phone"
+            },
+            {
+              "type": "EMAIL",
+              "value": "fixture-email"
+            }
+          ],
+          "addresses": [
+            {
+              "type": "REGISTRATION",
+              "value": "fixture-registration"
+            },
+            {
+              "type": "RESIDENTIAL",
+              "value": "fixture-residential"
+            }
+          ],
+          "additionalInfo": {
+            "ENGLISH_NAME": "FIXTURE USER",
+            "IS_ARMENIAN_RESIDENT": "true",
+            "ONBOARDING_STATUS": "UNKNOWN",
+            "SEGMENT": "PERSONA_STATUS"
+          },
+          "labels": [],
+          "clientPlatformComponentCodes": [
+            "ONLINE",
+            "MOBILE"
+          ],
+          "prefix": null,
+          "comment": null,
+          "membershipTypes": [
+            "FIRST_SIGNER"
+          ],
+          "isDefault": true,
+          "clientToUserPlatformComponentCodes": [
+            "ONLINE",
+            "MOBILE"
+          ],
+          "firstName": "fixture-firstName",
+          "lastName": "fixture-lastName",
+          "middleName": null,
+          "socialSecurityNumber": "fixture-socialSecurityNumber",
+          "passportNumber": "fixture-passportNumber",
+          "identificationCard": null,
+          "phone": null,
+          "birthDate": "1990-01-01",
+          "staffData": null,
+          "branch": "707",
+          "imageIdentifier": null,
+          "identified": true,
+          "bankReferenceId": "fixture-bankReferenceId",
+          "ssnPassportSkipped": false,
+          "authSchemeId": 2505,
+          "limitSchemeId": 51,
+          "stateSyncDate": "2026-10-07T07:38:50.495Z",
+          "ownershipType": "OWNER",
+          "created": null
+        }
+      ],
+      "totalCount": 1
+    },
+    "errorMessages": null
+  }
+}

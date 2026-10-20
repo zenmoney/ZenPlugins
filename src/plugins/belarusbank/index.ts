@@ -2,7 +2,7 @@ import md5 from 'crypto-js/md5'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import type { ExtendedTransaction, ScrapeFunc } from '../../types/zenmoney'
 import { authenticate, getGeneralPaymentHistory, getProducts, getStatementTransactions } from './api'
-import type { PreferenceInput } from './models'
+import { AUTH_DATA_KEY, type PreferenceInput } from './models'
 
 const PAYMENT_DUPLICATE_WINDOW_MS = 0
 const LEGACY_TRANSACTION_ID_STATE_KEY = 'belarusbankTransactionIds'
@@ -125,15 +125,15 @@ const mergeStatementAndPaymentHistory = (
   return [...statementTransactions, ...unmatchedPayments]
 }
 
-export const scrape: ScrapeFunc<PreferenceInput> = async ({ preferences, fromDate, toDate, isInBackground }) => {
+export const scrape: ScrapeFunc<PreferenceInput> = async ({ fromDate, toDate, isInBackground }) => {
   ZenMoney.locale = 'ru'
   clearLegacyTransactionIdState()
-  const auth = await authenticate(preferences, isInBackground)
-  console.log('[BELARUSBANK:AUTH] Success')
+
+  const auth = await authenticate(ZenMoney.getData(AUTH_DATA_KEY, null), isInBackground)
+  ZenMoney.setData(AUTH_DATA_KEY, auth)
+  ZenMoney.saveData()
 
   const products = await getProducts(auth)
-  console.log('[BELARUSBANK:PRODUCTS] Successfully fetched', products.length, 'product(s)')
-
   const transactions: ExtendedTransaction[] = []
   const transactionEndDate = toDate ?? new Date()
   const cards = products.filter((product) =>

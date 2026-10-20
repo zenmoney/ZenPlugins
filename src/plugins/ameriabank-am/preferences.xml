@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference key="login" obligatory="true" inputType="text" title="Логин MyAmeria" dialogTitle="Логин MyAmeria" positiveButtonText="ОК" negativeButtonText="Отмена" summary="||{@s}" />
+    <EditTextPreference key="password" obligatory="true" inputType="textPassword" title="Пароль MyAmeria" dialogTitle="Пароль MyAmeria" positiveButtonText="ОК" negativeButtonText="Отмена" summary="||***********" />
+    <EditTextPreference key="startDate" obligatory="true" inputType="date" title="Дата начала проверки истории" defaultValue="2026-10-01T00:00:00.000+04:00" dialogTitle="Дата начала проверки истории" positiveButtonText="ОК" negativeButtonText="Отмена" summary="|Дата начала|{@s}" />
+</PreferenceScreen>

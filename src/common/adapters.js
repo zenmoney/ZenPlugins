@@ -134,7 +134,7 @@ function publishWithSuccessDate (host, successAttemptDate, publish) {
     return publish()
   } catch (error) {
     try {
-      // Restore only our checkpoint, never another run's newer date or confirmed auth.
+      // Restore only our checkpoint, never another run's date or confirmed auth.
       if (host.getData(SCRAPE_LAST_SUCCESS_DATE_KEY) === successAttemptDate) {
         host.setData(SCRAPE_LAST_SUCCESS_DATE_KEY, previousValue ?? null)
         host.saveData()
@@ -518,20 +518,29 @@ export function adaptScrapeToGlobalApi (scrape) {
     const reportError = (error) => {
       let presentation
       try {
-        // Non-extensible built-in errors need a mutable copy for presentation flags.
         let presentable = error
-        if ((error instanceof ZPAPIError || _.isError(error)) && !Object.isExtensible(error)) {
-          presentable = Object.assign(Object.create(Object.getPrototypeOf(error)), error)
-          Object.defineProperties(presentable, {
-            message: { value: error.message, writable: true, configurable: true, enumerable: false },
-            stack: { value: error.stack, writable: true, configurable: true, enumerable: false }
+        if (error instanceof ZPAPIError || _.isError(error)) {
+          const lockedProperty = ['message', 'stack', 'fatal', 'allowRetry', 'allow_retry', 'toString'].some(key => {
+            const descriptor = Object.getOwnPropertyDescriptor(error, key)
+            return descriptor && (!descriptor.configurable || !descriptor.writable)
           })
+          if (!Object.isExtensible(error) || lockedProperty) {
+            // Keep mutable errors' identity; copy read-only errors before adding UI flags.
+            presentable = Object.create(Object.getPrototypeOf(error))
+            for (const key of Object.keys(error)) {
+              Object.defineProperty(presentable, key, { value: error[key], writable: true, configurable: true, enumerable: true })
+            }
+            Object.defineProperties(presentable, {
+              message: { value: error.message, writable: true, configurable: true, enumerable: false },
+              stack: { value: error.stack, writable: true, configurable: true, enumerable: false }
+            })
+          }
         }
         presentation = getPresentationError(presentable, isFirstRun)
       } catch (presentationError) {
         const errorType = error instanceof ZPAPIError ? 'ZPAPIError' : _.isError(error) ? 'Error' : typeof error
         console.warn('Error presentation failed; sending generic failure', { errorType })
-        // This fallback must not read host locale or invoke presentation again.
+        // Do not read host locale or attempt the failed presentation path again.
         presentation = {
           message: '[RUE] Error presentation failed',
           fatal: false,
@@ -543,7 +552,7 @@ export function adaptScrapeToGlobalApi (scrape) {
       try {
         host.setResult(presentation)
       } catch (_) {
-        // The native boundary may have consumed a result before throwing; do not retry again.
+        // The native host may already have consumed the result; never attempt a third delivery.
         console.warn('Error result callback failed; native outcome is unknown')
       }
     }

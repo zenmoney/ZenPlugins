@@ -1,5 +1,7 @@
 import { flatten, isEqual } from 'lodash'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
+import { trimSyncId } from '../../common/accounts'
+import { SHA256 } from 'jshashes'
 
 export function convertAccounts (apiAccounts) {
   ensure(Array.isArray(apiAccounts), 'unexpected accounts graph')
@@ -32,17 +34,43 @@ export function convertAccounts (apiAccounts) {
         plan,
         record: apiAccount.structType === 'foreignCurrencyAccount' ? apiAccount.balancesAndLimitsDataList[index] : apiAccount,
         sourceAccountId: apiAccount.sourceAccountId ?? apiAccount.mainProductId ?? null,
+        ...['deposit', 'saving'].includes(apiAccount.structType) && apiAccount.sourceAccountId !== undefined
+          ? { depositLegacyId: plan.account.syncID[0] }
+          : {},
         structType: apiAccount.structType
       })))
     }
   }
+  const deposits = accounts.filter(source => ['deposit', 'saving'].includes(source.structType))
+  ensure(deposits.every(source => source.depositLegacyId === undefined) || deposits.every(source => source.depositLegacyId !== undefined),
+    'unexpected account identity', { field: 'sourceAccountId' })
   const unique = new Map()
   for (const source of accounts) {
     const previous = unique.get(source.plan.account.id)
     ensure(!previous || isEqual(previous, source), 'conflicting account identity', { structType: source.structType, field: 'id', sources: 2 })
     if (!previous) unique.set(source.plan.account.id, source)
   }
-  return [...unique.values()].map(source => source.plan)
+  const sources = [...unique.values()]
+  const suffixCounts = new Map()
+  for (const source of sources) {
+    const ids = source.plan.account.syncID ?? source.plan.account.syncIds
+    const legacyIds = source.depositLegacyId === undefined ? ids : [source.depositLegacyId]
+    for (const suffix of new Set(legacyIds.map(id => id.length < 4 ? id : trimSyncId(id)))) {
+      const key = `${source.plan.account.instrument}:${suffix}`
+      suffixCounts.set(key, (suffixCounts.get(key) || 0) + 1)
+    }
+  }
+  return sources.map(source => {
+    if (source.depositLegacyId !== undefined) {
+      const suffix = source.depositLegacyId.slice(-4)
+      // Preserve previously trimmed matching keys only when the full legacy
+      // graph proves they cannot identify another balance.
+      if (suffixCounts.get(`${source.plan.account.instrument}:${suffix}`) === 1) {
+        source.plan.account.syncID = [...new Set([...source.plan.account.syncID, suffix])]
+      }
+    }
+    return source.plan
+  })
 }
 
 function ensure (condition, message, context) {
@@ -183,8 +211,23 @@ function convertCurrentAccount (apiAccount) {
   }
 }
 
+function isDepositInterestPaidAtEnd (description) {
+  if (typeof description !== 'string') return false
+  const normalized = description.replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').trim().replace(/\s+/g, ' ')
+  return normalized === '\u05e1\u05d5\u05e3 \u05e4\u05d9\u05e7\u05d3\u05d5\u05df' || normalized === '1 \u05e1\u05d5\u05e3 \u05e4\u05d9\u05e7\u05d3\u05d5\u05df'
+}
+
 function convertDeposit (apiAccount) {
-  const id = requireIdentity(apiAccount.depositSerialId ?? apiAccount.agreementOpeningDate, 'depositSerialId/agreementOpeningDate')
+  const legacyId = requireIdentity(apiAccount.depositSerialId ?? apiAccount.agreementOpeningDate, 'depositSerialId/agreementOpeningDate')
+  const parent = apiAccount.sourceAccountId
+  if (parent !== undefined) {
+    ensure(typeof parent === 'string' && /^\d+-\d+-\d+$/.test(parent), 'unexpected account identity', { field: 'sourceAccountId' })
+    parent.split('-').forEach(part => requireIdentity(part, 'sourceAccountId'))
+  }
+  const id = parent === undefined ? legacyId : `hapoalim-deposit:${new SHA256().hex(parent)}:${legacyId}`
+  // Keep the legacy alias for matching when unambiguous. The adapter removes
+  // shared aliases; pairing equal suffixes also prevents trimming the scoped ID.
+  const syncID = parent === undefined ? [legacyId] : [legacyId, id]
   const isContinuous = apiAccount.depositingMethodDescription === 'הפקדה רציפה'
   ensure(isContinuous
     ? apiAccount.detailedAccountTypeCode === 54 && apiAccount.linkageTypeCode === 1
@@ -201,7 +244,7 @@ function convertDeposit (apiAccount) {
         savings: true,
         title,
         instrument: 'ILS',
-        syncID: [id],
+        syncID,
         balance: requireNonnegativeBalance(apiAccount.revaluedTotalAmount ?? apiAccount.revaluedBalance, 'revaluedTotalAmount/revaluedBalance', 'saving')
       }
     }
@@ -212,7 +255,7 @@ function convertDeposit (apiAccount) {
   ensure(count > 0, 'unexpected deposit term', { structType: apiAccount.structType, field: 'formattedAgreementOpeningDate/formattedPaymentDate' })
   const balance = requireNonnegativeBalance(apiAccount.revaluedTotalAmount ?? apiAccount.revaluedBalance, 'revaluedTotalAmount/revaluedBalance', 'deposit')
   const paysToChecking = apiAccount.interestCreditingMethodDescription === 'לעו"ש'
-  const paysAtEnd = apiAccount.interestPaymentDescription === '1   סוף פיקדון'
+  const paysAtEnd = isDepositInterestPaidAtEnd(apiAccount.interestPaymentDescription)
   ensure(paysToChecking && paysAtEnd, 'unexpected deposit interest conditions', { structType: apiAccount.structType, field: 'interestCreditingMethodDescription/interestPaymentDescription' })
   return {
     mainProduct: null,
@@ -221,9 +264,7 @@ function convertDeposit (apiAccount) {
       type: 'deposit',
       title,
       instrument: 'ILS',
-      syncID: [
-        id
-      ],
+      syncID,
       balance,
       startBalance: requirePrincipal(apiAccount.principalAmount, 'principalAmount', 'deposit'),
       startDate,
@@ -279,15 +320,17 @@ export function convertTransaction (apiTransaction, account, sourceType = 'accou
     'formattedEventDate/formattedExecutingDate/formattedValueDate', sourceType)
   const isFx = sourceType === 'foreignCurrencyAccount'
   ensure(!isFx || apiTransaction.currencySwiftCode === account.instrument, 'unexpected foreign currency transaction instrument', { sourceType, field: 'currencySwiftCode' })
+  // The captured intraday bucket does not establish pending or settled status.
+  const isToday = !isFx && apiTransaction.transactionType === 'TODAY' && apiTransaction.serialNumber === 0 && apiTransaction.rejectedDataEventPertainingIndication === ''
   // The observed FX record has no rejection flag; checking records do.
-  ensure(apiTransaction.transactionType === 'REGULAR' && (apiTransaction.rejectedDataEventPertainingIndication === 'N' || (isFx && apiTransaction.rejectedDataEventPertainingIndication === undefined)),
+  ensure(isToday || (apiTransaction.transactionType === 'REGULAR' && (apiTransaction.rejectedDataEventPertainingIndication === 'N' || (isFx && apiTransaction.rejectedDataEventPertainingIndication === undefined))),
     'unexpected transaction status', { sourceType, field: 'transactionType/rejectedDataEventPertainingIndication' })
   if (apiTransaction.eventAmount === 0) {
     return null
   }
   const merchantTitle = typeof apiTransaction.activityDescription === 'string' ? apiTransaction.activityDescription.trim() : ''
   const transaction = {
-    hold: false,
+    hold: isToday ? null : false,
     date,
     movements: [
       {

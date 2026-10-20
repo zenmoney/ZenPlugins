@@ -17,7 +17,7 @@
         obligatory="true"
         title="Flex Query ID"
         dialogTitle="Flex Query ID"
-        dialogMessage="Enter the ID of your Mint-compatible Flex Query. This report is used to retrieve your portfolio summary."
+        dialogMessage="Enter the ID of your Mint-compatible Flex Query. Select XML as its output format. This report is used to retrieve your portfolio summary."
         positiveButtonText="OK"
         negativeButtonText="Cancel"
         summary="|queryId|{@s}"

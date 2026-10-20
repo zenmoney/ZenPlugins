@@ -1,6 +1,30 @@
 import { fetch } from '../../common/network'
+import { InvalidPreferencesError } from '../../errors'
 
 const FLEX_URL = 'https://gdcdyn.interactivebrokers.com/Universal/servlet/FlexStatementService'
+
+function sanitizeReport (body: unknown): unknown {
+  if (typeof body !== 'string') return body
+  return body
+    .replace(/(<ReferenceCode>)[^<]*(<\/ReferenceCode>)/g, '$1<redacted>$2')
+    .replace(/(\b(?:name|accountName|accountAlias)=)(["'])(.*?)\2/gi, '$1$2<redacted>$2')
+    // The recorded CSV has a separate account identity section before history.
+    .replace(/(^"ClientAccountID","Name"[^\r\n]*\r?\n"[^"]*",)"(?:[^"]|"")*"/gm, '$1"<redacted>"')
+}
+
+const responseLogMask = {
+  headers: { 'set-cookie': true, authorization: true },
+  body: sanitizeReport
+}
+
+function requestLogMask (reference: boolean): unknown {
+  return {
+    headers: { cookie: true, authorization: true },
+    body: (body: unknown) => typeof body === 'string'
+      ? body.replace(reference ? /(^|&)(t|q)=[^&]*/g : /(^|&)(t)=[^&]*/g, '$1$2=<redacted>')
+      : body
+  }
+}
 
 /**
  * Main function: requests Flex XML using token + queryId
@@ -20,7 +44,9 @@ async function sendRequest (token: string, queryId: string): Promise<string> {
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+    body,
+    sanitizeRequestLog: requestLogMask(false),
+    sanitizeResponseLog: responseLogMask
   })
 
   const text: string = response.body as string
@@ -50,7 +76,9 @@ async function getStatement (token: string, ref: string): Promise<string> {
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+    body,
+    sanitizeRequestLog: requestLogMask(true),
+    sanitizeResponseLog: responseLogMask
   })
 
   const text: string = response.body as string
@@ -63,6 +91,9 @@ async function getStatement (token: string, ref: string): Promise<string> {
   }
 
   // Verify that this is Flex XML
+  if (text.startsWith('"ClientAccountID","Name","CurrencyPrimary"')) {
+    throw new InvalidPreferencesError('Select XML as the output format of your Interactive Brokers Flex Query, then synchronize again.')
+  }
   if (!text.includes('<FlexQueryResponse')) {
     throw new Error('IBKR returned unexpected format (not Flex XML)')
   }

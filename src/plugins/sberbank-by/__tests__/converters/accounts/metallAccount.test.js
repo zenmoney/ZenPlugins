@@ -14,10 +14,10 @@ describe('convertAccount', () => {
             backColor1: '#CC9F2E',
             backColor2: '#D6C85A',
             contractType: 6,
-            contractId: '10535590',
-            contractNumber: '1278147',
+            contractId: '10000001',
+            contractNumber: '1271515',
             refContractNumber: null,
-            account: 'BY11BPSB1393F000000001278147',
+            account: 'BY13BPSB1393F000000001271515',
             name: 'Обезличенный металл. счет (золото)',
             currencyCode: '959',
             currencyName: 'AU',
@@ -37,7 +37,7 @@ describe('convertAccount', () => {
             percentAccuralUrgent: null,
             percentUrgent: null,
             departmentNumber: '369-703',
-            contractAccount: 'BY28BPSB13937030000319590000',
+            contractAccount: 'BY23BPSB13931000000000000043',
             isGracePeriod: null,
             isUseInDebitTransactions: 0,
             overdraftLimit: null,
@@ -76,17 +76,17 @@ describe('convertAccount', () => {
       {
         products: [],
         accountsByContractNumber: {
-          1278147: { id: '10535590', instrument: 'A98' }
+          1271515: { id: '10000001', instrument: 'A98' }
         },
         accounts: [
           {
             balance: 146,
-            id: '10535590',
+            id: '10000001',
             instrument: 'A98',
             syncID: [
-              'BY11BPSB1393F000000001278147'
+              'BY13BPSB1393F000000001271515'
             ],
-            title: '*8147',
+            title: '*1515',
             type: 'ccard'
           }
         ]
