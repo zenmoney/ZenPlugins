@@ -90,7 +90,7 @@ async function withForegroundReauthRetry (fn, state) {
 }
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground, isFirstRun }) {
-  ZenMoney.locale = 'he'
+  ZenMoney.locale = 'ru'
   const direct = authenticationMethod(preferences) === 'direct'
 
   const upperDate = toDate
@@ -171,7 +171,7 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
   if (!isMobileAuth(state.auth)) await saveCookieStore()
 
   if (isFirstRun && !isInBackground && ZenMoney.alert) {
-    await ZenMoney.alert('לקבלת תוצאות מיטביות, אנו ממליצים לא לסנכרן כרטיסי כאל, ישראקרט ומקס דרך הבנק אלא ישירות דרך חברות האשראי.')
+    await ZenMoney.alert('Рекомендуем подключать карты Cal, Isracard и Max напрямую к платёжным компаниям, а не через банк.')
   }
 
   return {

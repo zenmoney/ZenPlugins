@@ -273,7 +273,7 @@ function convertDeposit (apiAccount) {
       endDateOffsetInterval: interval,
       endDateOffset: count,
       payoffInterval: null,
-      payoffStep: 1
+      payoffStep: 0
     }
   }
 }

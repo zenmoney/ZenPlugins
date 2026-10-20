@@ -117,6 +117,62 @@ describe('[model] direct native authentication', () => {
     expect(save).not.toHaveBeenCalled()
   })
 
+  it.each([0, 1, 2].flatMap(position => [401, 204, 500].map(status => ({ position, status }))))(
+    'stops unknown HTTP $status at authentication step $position without persistence or another request', async ({ position, status }) => {
+      const { fetch, input, save } = setup(true)
+      const implementation = fetch.getMockImplementation()
+      if (implementation === undefined) throw new Error('Missing model implementation')
+      let requestIndex = 0
+      // [model] A failed transport envelope must not be classified from a
+      // fabricated bank error body or continue to SMS/account verification.
+      fetch.mockImplementation(async (url, options) => requestIndex++ === position
+        ? response(String(url), null, undefined, status)
+        : await implementation(url, options))
+
+      const error: unknown = await loginMobile({ onAuthUpdate: save }).catch((error: unknown) => error)
+
+      expect(error).toBeInstanceOf(Error)
+      expect(error).not.toBeInstanceOf(ZPAPIError)
+      expect(error).toMatchObject({ message: 'Bank Hapoalim authentication request failed' })
+      expect(fetch).toHaveBeenCalledTimes(position + 1)
+      expect(input).toHaveBeenCalledTimes(position < 2 ? 2 : 3)
+      expect(save).not.toHaveBeenCalled()
+    })
+
+  it.each([0, 1, 2])('bounds a non-resolving native input at step%s and ignores its late completion', async position => {
+    const { fetch, input, save } = setup(true)
+    jest.useFakeTimers({ doNotFake: ['performance'] })
+    let release: ((value: string) => void) | undefined
+    const gate = new Promise<string>(resolve => { release = resolve })
+    const answers = ['CANARY_USER', 'CANARY_PASSWORD', '123456']
+    input.mockImplementation(async () => {
+      const index = 3 - answers.length
+      const answer = answers.shift() ?? ''
+      return index === position ? await gate : answer
+    })
+    const close = jest.spyOn(MobileSession.prototype, 'close')
+    let failure: unknown
+    const pending = loginMobile({ onAuthUpdate: save }).catch((error: unknown) => { failure = error })
+    for (let i = 0; i < 10 && input.mock.calls.length < position + 1; i++) await flush()
+    expect(input).toHaveBeenCalledTimes(position + 1)
+    const requestsBeforeTimeout = fetch.mock.calls.length
+
+    jest.advanceTimersByTime(180000)
+    await flush()
+    await pending
+
+    expect(failure).toBeInstanceOf(Error)
+    expect(failure).not.toBeInstanceOf(ZPAPIError)
+    expect(failure).toMatchObject({ message: 'Bank Hapoalim direct login timed out' })
+    expect(close).toHaveBeenCalled()
+    release?.('CANARY_LATE_INPUT')
+    await flush()
+    expect(fetch).toHaveBeenCalledTimes(requestsBeforeTimeout)
+    expect(input).toHaveBeenCalledTimes(position + 1)
+    expect(save).not.toHaveBeenCalled()
+    expect(jest.getTimerCount()).toBe(0)
+  })
+
   it('rejects an authenticated different customer before saving or loading financial history', async () => {
     const { fetch, save } = setup()
     await expect(loginMobile({ previousIdentity: accountIdentity(parents.slice(0, 1)), onAuthUpdate: save })).rejects.toThrow('account set differs')

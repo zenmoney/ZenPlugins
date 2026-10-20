@@ -507,7 +507,7 @@ export { isMobileAuth }
 
 export function authenticationMethod (preferences) {
   const method = preferences?.authenticationMethod ?? 'web'
-  if (!['direct', 'web'].includes(method)) throw new InvalidPreferencesError('יש לבחור שיטת כניסה נתמכת.')
+  if (!['direct', 'web'].includes(method)) throw new InvalidPreferencesError('Выберите поддерживаемый способ входа.')
   return method
 }
 

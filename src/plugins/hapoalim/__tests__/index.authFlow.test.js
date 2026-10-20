@@ -75,7 +75,13 @@ describe('[model] hapoalim auth orchestration', () => {
     expect(fetchAccounts).toHaveBeenCalledWith(savedAuth)
     expect(fetchTransactions).toHaveBeenCalledWith(savedAuth, product, options.fromDate, options.toDate)
     expect(login).not.toHaveBeenCalled()
-    expect(global.ZenMoney.locale).toBe('he')
+    expect(global.ZenMoney.locale).toBe('ru')
+  })
+
+  it('shows the first-run card synchronization advice in Russian', async () => {
+    load()
+    await scrape({ ...options, isFirstRun: true, isInBackground: false })
+    expect(global.ZenMoney.alert).toHaveBeenCalledWith('Рекомендуем подключать карты Cal, Isracard и Max напрямую к платёжным компаниям, а не через банк.')
   })
 
   it('honors an explicit return to WebView instead of reusing the mobile transport', async () => {
