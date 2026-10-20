@@ -1,0 +1,1401 @@
+{
+  "historyEntries": [
+    {
+      "id": "00000000-0000-7000-8000-000000001003",
+      "transaction": {
+        "original": {
+          "amount": "74.11",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "64.66",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "64.66",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.872568",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_EXCHANGE",
+        "transactionSubtype": "HST_AUTO_EXCHANGE",
+        "status": "HTS_ACCEPTED",
+        "title": "Exchange USD to EUR",
+        "subTitle": "1 USD = 0.872568 EUR",
+        "createdAt": "2026-09-25T21:52:44Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_CREDIT"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "account": {
+            "number": "GB45TCCL00000000000001",
+            "bic": "TCCLGB3L"
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": null
+      },
+      "hasAttachment": false,
+      "tagMap": null
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001004",
+      "transaction": {
+        "original": {
+          "amount": "7569.00",
+          "currency": "RSD"
+        },
+        "settlement": {
+          "amount": "64.66",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "64.66",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.008543",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_ACCEPTED",
+        "title": "1005",
+        "subTitle": null,
+        "createdAt": "2026-09-25T21:52:43Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001002",
+            "maskedCardNumber": "555555******1005",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "SHOPPSTER DOO",
+          "addressLine1": "BEOGRAD",
+          "addressLine2": "SRB",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "5331"
+        },
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "true"
+      }
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000001005",
+      "transaction": {
+        "original": {
+          "amount": "47.33",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "41.27",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "41.27",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.872024",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_EXCHANGE",
+        "transactionSubtype": "HST_AUTO_EXCHANGE",
+        "status": "HTS_ACCEPTED",
+        "title": "Exchange USD to EUR",
+        "subTitle": "1 USD = 0.872024 EUR",
+        "createdAt": "2026-09-25T19:37:23Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_CREDIT"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "account": {
+            "number": "GB45TCCL00000000000001",
+            "bic": "TCCLGB3L"
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": null
+      },
+      "hasAttachment": false,
+      "tagMap": null
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001006",
+      "transaction": {
+        "original": {
+          "amount": "41.27",
+          "currency": "EUR"
+        },
+        "settlement": {
+          "amount": "41.27",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "41.27",
+          "currency": "EUR"
+        },
+        "exchangeRate": "1.000000",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_ACCEPTED",
+        "title": "1005",
+        "subTitle": null,
+        "createdAt": "2026-09-25T19:37:22Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001002",
+            "maskedCardNumber": "555555******1005",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "PAYPAL *MIKROTIK",
+          "addressLine1": "4029357733",
+          "addressLine2": "LVA",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "5732"
+        },
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "true"
+      }
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000001007",
+      "transaction": {
+        "original": {
+          "amount": "188.93",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "164.95",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "164.95",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.873078",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_EXCHANGE",
+        "transactionSubtype": "HST_AUTO_EXCHANGE",
+        "status": "HTS_ACCEPTED",
+        "title": "Exchange USD to EUR",
+        "subTitle": "1 USD = 0.873078 EUR",
+        "createdAt": "2026-09-23T22:28:11Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_CREDIT"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "account": {
+            "number": "GB45TCCL00000000000001",
+            "bic": "TCCLGB3L"
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": null
+      },
+      "hasAttachment": false,
+      "tagMap": null
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001008",
+      "transaction": {
+        "original": {
+          "amount": "164.95",
+          "currency": "EUR"
+        },
+        "settlement": {
+          "amount": "164.95",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "164.95",
+          "currency": "EUR"
+        },
+        "exchangeRate": "1.000000",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_ACCEPTED",
+        "title": "1005",
+        "subTitle": null,
+        "createdAt": "2026-09-23T22:28:11Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001002",
+            "maskedCardNumber": "555555******1005",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "PAYPAL *MIKROTIK",
+          "addressLine1": "4029357733",
+          "addressLine2": "LVA",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "5732"
+        },
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "true"
+      }
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001009",
+      "transaction": {
+        "original": {
+          "amount": "1.00",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "1.00",
+          "currency": "USD"
+        },
+        "settlementEur": {
+          "amount": "0.88",
+          "currency": "EUR"
+        },
+        "exchangeRate": "1.000000",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "USD"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_REJECTED",
+        "title": "1005",
+        "subTitle": null,
+        "createdAt": "2026-09-23T22:27:58Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001002",
+            "maskedCardNumber": "555555******1005",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "PAYPAL",
+          "addressLine1": "Luxembourg",
+          "addressLine2": "LUX",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "5999"
+        },
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "true"
+      }
+    },
+    {
+      "id": "00000000-0000-764c-8000-000000001000",
+      "transaction": {
+        "original": {
+          "amount": "600.00",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "600.00",
+          "currency": "USD"
+        },
+        "settlementEur": {
+          "amount": "533.55",
+          "currency": "EUR"
+        },
+        "exchangeRate": "1.000000",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "USD"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_TRANSFER_IN",
+        "transactionSubtype": "HST_BUDDY",
+        "status": "HTS_ACCEPTED",
+        "title": "Money transfer",
+        "subTitle": null,
+        "createdAt": "2026-09-23T17:39:22Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4 10000 Example City",
+          "addressLine2": null,
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3LXXX",
+              "direction": "HTD_CREDIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Taylor Example",
+          "addressLine1": null,
+          "addressLine2": null,
+          "account": {
+            "number": "GB00000000000000001000",
+            "bic": null
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {}
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000001010",
+      "transaction": {
+        "original": {
+          "amount": "33.18",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "28.61",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "28.61",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.862441",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_EXCHANGE",
+        "transactionSubtype": "HST_AUTO_EXCHANGE",
+        "status": "HTS_ACCEPTED",
+        "title": "Exchange USD to EUR",
+        "subTitle": "1 USD = 0.862441 EUR",
+        "createdAt": "2026-09-20T16:52:42Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_CREDIT"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "account": {
+            "number": "GB45TCCL00000000000001",
+            "bic": "TCCLGB3L"
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": null
+      },
+      "hasAttachment": false,
+      "tagMap": null
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001011",
+      "transaction": {
+        "original": {
+          "amount": "3349.80",
+          "currency": "RSD"
+        },
+        "settlement": {
+          "amount": "28.61",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "28.61",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.008541",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_ACCEPTED",
+        "title": "1005",
+        "subTitle": null,
+        "createdAt": "2026-09-20T16:52:42Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001002",
+            "maskedCardNumber": "555555******1005",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Wolt doo",
+          "addressLine1": "Belgrade",
+          "addressLine2": "SRB",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "4789"
+        },
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "true"
+      }
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000001012",
+      "transaction": {
+        "original": {
+          "amount": "9.06",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "7.74",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "7.74",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.855114",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_EXCHANGE",
+        "transactionSubtype": "HST_AUTO_EXCHANGE",
+        "status": "HTS_ACCEPTED",
+        "title": "Exchange USD to EUR",
+        "subTitle": "1 USD = 0.855114 EUR",
+        "createdAt": "2026-09-07T18:41:53Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_CREDIT"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "account": {
+            "number": "GB45TCCL00000000000001",
+            "bic": "TCCLGB3L"
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": null
+      },
+      "hasAttachment": false,
+      "tagMap": null
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001013",
+      "transaction": {
+        "original": {
+          "amount": "903.74",
+          "currency": "RSD"
+        },
+        "settlement": {
+          "amount": "7.74",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "7.74",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.008564",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_ACCEPTED",
+        "title": "1004",
+        "subTitle": null,
+        "createdAt": "2026-09-07T18:41:53Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001001",
+            "maskedCardNumber": "555555******1004",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "MP101 OAZA",
+          "addressLine1": "BEOGRAD",
+          "addressLine2": "SRB",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "5411"
+        },
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "false"
+      }
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001014",
+      "transaction": {
+        "original": {
+          "amount": "10544.45",
+          "currency": "RSD"
+        },
+        "settlement": {
+          "amount": "10544.45",
+          "currency": "RSD"
+        },
+        "settlementEur": {
+          "amount": "88.29",
+          "currency": "EUR"
+        },
+        "exchangeRate": "1.000000",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "RSD"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_REJECTED",
+        "title": "1004",
+        "subTitle": null,
+        "createdAt": "2026-09-06T15:20:00Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001001",
+            "maskedCardNumber": "555555******1004",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "LIDL 156 BEOGRAD",
+          "addressLine1": "BEOGRAD",
+          "addressLine2": "SRB",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "5999"
+        },
+        "reasonCode": "HRR_CARD_0003",
+        "reasonDescription": "(Not enough funds on your account)",
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "false"
+      }
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000001015",
+      "transaction": {
+        "original": {
+          "amount": "21.43",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "18.26",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "18.26",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.852412",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_EXCHANGE",
+        "transactionSubtype": "HST_AUTO_EXCHANGE",
+        "status": "HTS_ACCEPTED",
+        "title": "Exchange USD to EUR",
+        "subTitle": "1 USD = 0.852412 EUR",
+        "createdAt": "2026-09-06T13:35:17Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_CREDIT"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "account": {
+            "number": "GB45TCCL00000000000001",
+            "bic": "TCCLGB3L"
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": null
+      },
+      "hasAttachment": false,
+      "tagMap": null
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001016",
+      "transaction": {
+        "original": {
+          "amount": "2130.90",
+          "currency": "RSD"
+        },
+        "settlement": {
+          "amount": "18.26",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "18.26",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.008569",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_ACCEPTED",
+        "title": "1005",
+        "subTitle": null,
+        "createdAt": "2026-09-06T13:35:17Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001002",
+            "maskedCardNumber": "555555******1005",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "MP101 OAZA",
+          "addressLine1": "BEOGRAD",
+          "addressLine2": "SRB",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "5411"
+        },
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "false"
+      }
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000001017",
+      "transaction": {
+        "original": {
+          "amount": "5.53",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "4.71",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "4.71",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.852418",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_EXCHANGE",
+        "transactionSubtype": "HST_AUTO_EXCHANGE",
+        "status": "HTS_ACCEPTED",
+        "title": "Exchange USD to EUR",
+        "subTitle": "1 USD = 0.852418 EUR",
+        "createdAt": "2026-09-05T18:09:11Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_CREDIT"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "account": {
+            "number": "GB45TCCL00000000000001",
+            "bic": "TCCLGB3L"
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": null
+      },
+      "hasAttachment": false,
+      "tagMap": null
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001018",
+      "transaction": {
+        "original": {
+          "amount": "550.00",
+          "currency": "RSD"
+        },
+        "settlement": {
+          "amount": "4.71",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "4.71",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.008564",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_ACCEPTED",
+        "title": "1004",
+        "subTitle": null,
+        "createdAt": "2026-09-05T18:09:10Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001001",
+            "maskedCardNumber": "555555******1004",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "PANDA STYLE",
+          "addressLine1": "BEOGRAD",
+          "addressLine2": "SRB",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "5999"
+        },
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "false"
+      }
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000001019",
+      "transaction": {
+        "original": {
+          "amount": "28.28",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "24.10",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "24.10",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.852410",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_EXCHANGE",
+        "transactionSubtype": "HST_AUTO_EXCHANGE",
+        "status": "HTS_ACCEPTED",
+        "title": "Exchange USD to EUR",
+        "subTitle": "1 USD = 0.85241 EUR",
+        "createdAt": "2026-09-05T17:23:21Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_CREDIT"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "account": {
+            "number": "GB45TCCL00000000000001",
+            "bic": "TCCLGB3L"
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": null
+      },
+      "hasAttachment": false,
+      "tagMap": null
+    },
+    {
+      "id": "00000000-0000-3000-8000-000000001020",
+      "transaction": {
+        "original": {
+          "amount": "2812.00",
+          "currency": "RSD"
+        },
+        "settlement": {
+          "amount": "24.10",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "24.10",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.008570",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_PURCHASE",
+        "transactionSubtype": "HST_CARD",
+        "status": "HTS_ACCEPTED",
+        "title": "1004",
+        "subTitle": null,
+        "createdAt": "2026-09-05T17:23:21Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": {
+            "id": "00000000-0000-4000-8000-000000001001",
+            "maskedCardNumber": "555555******1004",
+            "cardAlias": null,
+            "type": "Mastercard"
+          },
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "DM DROGERIE MARKT J038",
+          "addressLine1": "BEOGRAD  SAVS",
+          "addressLine2": "SRB",
+          "account": null,
+          "card": null
+        },
+        "terminal": {
+          "mcc": "5999"
+        },
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": {
+          "loyaltyProgram": null
+        }
+      },
+      "hasAttachment": false,
+      "tagMap": {
+        "ecommerceTransaction": "false"
+      }
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000001021",
+      "transaction": {
+        "original": {
+          "amount": "0.91",
+          "currency": "USD"
+        },
+        "settlement": {
+          "amount": "0.77",
+          "currency": "EUR"
+        },
+        "settlementEur": {
+          "amount": "0.77",
+          "currency": "EUR"
+        },
+        "exchangeRate": "0.852416",
+        "fee": {
+          "amount": {
+            "amount": "0.00",
+            "currency": "EUR"
+          },
+          "chargeType": null
+        },
+        "transactionType": "HTP_EXCHANGE",
+        "transactionSubtype": "HST_AUTO_EXCHANGE",
+        "status": "HTS_ACCEPTED",
+        "title": "Exchange USD to EUR",
+        "subTitle": "1 USD = 0.852416 EUR",
+        "createdAt": "2026-09-05T17:09:15Z",
+        "owner": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "accounts": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "number": "LT733130000000000002",
+              "bic": "BZENLT22",
+              "direction": "HTD_CREDIT"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "number": "GB45TCCL00000000000001",
+              "bic": "TCCLGB3L",
+              "direction": "HTD_DEBIT"
+            }
+          ],
+          "card": null,
+          "merchantDetails": null
+        },
+        "party": {
+          "name": "Alex Example",
+          "addressLine1": "Example Street 12/4",
+          "addressLine2": "10000 Example City",
+          "account": {
+            "number": "GB45TCCL00000000000001",
+            "bic": "TCCLGB3L"
+          },
+          "card": null
+        },
+        "terminal": null,
+        "reasonCode": null,
+        "reasonDescription": null,
+        "externalTransactionUrl": null,
+        "additionalInfo": null
+      },
+      "hasAttachment": false,
+      "tagMap": null
+    }
+  ],
+  "isLastPage": false
+}

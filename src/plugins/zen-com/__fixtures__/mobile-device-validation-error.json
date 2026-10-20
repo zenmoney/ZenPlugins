@@ -1,0 +1,16 @@
+{
+  "error": {
+    "code": "validation_error",
+    "status": 400,
+    "message": "Validation failed for argument [0] in public com.zen.code.casv2.contract.rest.authentication.response.CreateAuthenticationResponse com.zen.code.casv2.authentication.infrastructure.AuthenticationControllerV2.authenticate(com.zen.code.casv2.contract.rest.authentication.request.CreateAuthenticationRequest): [Field error in object 'createAuthenticationRequest' on field 'metadata.deviceId': rejected value []; codes [Size.createAuthenticationRequest.metadata.deviceId,Size.metadata.deviceId,Size.deviceId,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAuthenticationRequest.metadata.deviceId,metadata.deviceId]; arguments []; default message [metadata.deviceId],2147483647,10]; default message [size must be between 10 and 2147483647]] ",
+    "errors": [
+      {
+        "code": "validation_error",
+        "field": "deviceId",
+        "message": "size must be between 10 and 2147483647"
+      }
+    ],
+    "data": {},
+    "privateDebug": null
+  }
+}

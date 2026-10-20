@@ -1,0 +1,1113 @@
+{
+  "accounts": [
+    {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "accountNumber": "LT520000000000001001",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "AED",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "accountNumber": "LT250000000000001002",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "AUD",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000000007",
+      "accountNumber": "LT950000000000001003",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.000",
+      "currency": "BHD",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": null
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "accountNumber": "LT680000000000001004",
+      "bic": "BZENLT22",
+      "routingCode": "BZENLT22",
+      "routingCodeType": "CA",
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "CAD",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "accountNumber": "LT410000000000001005",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "CHF",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "accountNumber": "LT140000000000001006",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "CNY",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "accountNumber": "LT840000000000001007",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "CZK",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000012",
+      "accountNumber": "LT570000000000001008",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "DKK",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "accountNumber": "LT733130000000000002",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.31",
+      "currency": "EUR",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.31",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 1.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": {
+          "accountNumber": "LT733130000000000002",
+          "country": {
+            "code": "LT",
+            "name": "Lithuania"
+          },
+          "bic": "BZENLT22",
+          "routingCode": null,
+          "routingCodeType": null,
+          "accountDescription": {
+            "accountNumberLabelCode": "IBAN",
+            "bicLabelCode": "BIC_SWIFT",
+            "regionLabelCode": "Euro area"
+          }
+        },
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": false
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "accountNumber": "LT030000000000001010",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "GBP",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": false
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000013",
+      "accountNumber": "LT730000000000001011",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "HKD",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000014",
+      "accountNumber": "LT460000000000001012",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "HUF",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000000015",
+      "accountNumber": "LT190000000000001013",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "IDR",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": null
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000016",
+      "accountNumber": "LT000000000000001002",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "ILS",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000017",
+      "accountNumber": "LT620000000000001015",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0",
+      "currency": "JPY",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000018",
+      "accountNumber": "LT350000000000001016",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "KES",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000000019",
+      "accountNumber": "LT080000000000001017",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.000",
+      "currency": "KWD",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": null
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000020",
+      "accountNumber": "LT780000000000001018",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "MXN",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000000021",
+      "accountNumber": "LT510000000000001019",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "MYR",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": null
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000022",
+      "accountNumber": "LT240000000000001020",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "NOK",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000023",
+      "accountNumber": "LT940000000000001021",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "NZD",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000000024",
+      "accountNumber": "LT670000000000001022",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.000",
+      "currency": "OMR",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": null
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000000025",
+      "accountNumber": "LT400000000000001023",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "PHP",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": null
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "accountNumber": "LT130000000000001024",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "PLN",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "10",
+      "hidden": false
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000026",
+      "accountNumber": "LT830000000000001025",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "QAR",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000027",
+      "accountNumber": "LT560000000000001026",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "RON",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000028",
+      "accountNumber": "LT290000000000001027",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "SAR",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000029",
+      "accountNumber": "LT020000000000001028",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "SEK",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000030",
+      "accountNumber": "LT720000000000001029",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "SGD",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000031",
+      "accountNumber": "LT450000000000001030",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "THB",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000032",
+      "accountNumber": "LT180000000000001031",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "TRY",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000033",
+      "accountNumber": "LT880000000000001032",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0",
+      "currency": "UGX",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "accountNumber": "LT463130000000000003",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "USD",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": false
+    },
+    {
+      "id": "00000000-0000-7000-8000-000000000034",
+      "accountNumber": "LT340000000000001034",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0",
+      "currency": "VND",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": null
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000035",
+      "accountNumber": "LT070000000000001035",
+      "bic": "BZENLT22",
+      "routingCode": null,
+      "routingCodeType": null,
+      "bank": "ZEN.COM",
+      "balance": "0.00",
+      "currency": "ZAR",
+      "privilege": "WRITE",
+      "convertedBalance": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "accountDescriptionCode": null,
+      "relativeSize": 0.0,
+      "canSendTransfer": true,
+      "virtualAccounts": {
+        "local": null,
+        "international": {
+          "accountNumber": "GB45TCCL00000000000001",
+          "country": {
+            "code": "GB",
+            "name": "United Kingdom and Northern Ireland"
+          },
+          "bic": "TCCLGB3L",
+          "routingCode": null,
+          "routingCodeType": null
+        }
+      },
+      "minimalTopUpValue": "3",
+      "hidden": true
+    }
+  ],
+  "totalBalance": "0.31",
+  "totalBalanceCurrency": "EUR",
+  "hiddenAccountsRelativeSize": null
+}

@@ -1,0 +1,19 @@
+{
+  "id": "00000000-0000-4000-8000-000000000002",
+  "status": "ACTIVE",
+  "method": "FACE_REAUTH",
+  "firstName": "Fixture",
+  "lastName": "Customer",
+  "attemptLimit": 5,
+  "attempts": [
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "provider": "IVP_IDENFY",
+      "data": {
+        "authToken": "fixture-rejected-face-token"
+      },
+      "status": "FAILED",
+      "createdAt": "2026-10-18T19:06:03Z"
+    }
+  ]
+}
