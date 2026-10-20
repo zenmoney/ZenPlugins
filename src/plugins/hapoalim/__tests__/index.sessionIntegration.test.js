@@ -900,7 +900,7 @@ describe('hapoalim real session orchestration', () => {
           endDateOffsetInterval: 'day',
           endDateOffset: 90,
           payoffInterval: null,
-          payoffStep: 1
+          payoffStep: 0
         }))
       ]),
       transactions: [1001, 1002].map(number => ({

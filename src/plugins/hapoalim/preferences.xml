@@ -2,24 +2,24 @@
 <PreferenceScreen>
     <ListPreference
         key="authenticationMethod"
-        title="שיטת כניסה"
-        dialogTitle="שיטת כניסה"
-        entries="כניסה ישירה|כניסה בחלון הבנק"
+        title="Способ входа"
+        dialogTitle="Способ входа"
+        entries="Прямой вход|Вход через окно банка"
         entryValues="direct|web"
         defaultValue="web"
-        positiveButtonText="בסדר"
-        negativeButtonText="בטל"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
         summary="||{@s}"
     />
     <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"
-        title="מאיזה תאריך לטעון פעולות"
+        title="С какой даты загружать операции"
         defaultValue="2018-01-01T00:00:00.000Z"
-        dialogTitle="מאיזה תאריך לטעון פעולות"
-        positiveButtonText="בסדר"
-        negativeButtonText="בטל"
+        dialogTitle="С какой даты загружать операции"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
         summary="|startDate|{@s}"
     />
 </PreferenceScreen>

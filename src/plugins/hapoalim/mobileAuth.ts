@@ -89,8 +89,8 @@ export async function loginMobile ({ isInBackground = false, previousIdentity, o
   }
   try {
     onInteraction()
-    let identifier: string | null = await input('קוד משתמש בבנק הפועלים', 'text')
-    let password: string | null = await input('סיסמה בבנק הפועלים', 'textPassword')
+    let identifier: string | null = await input('Логин Bank Hapoalim', 'text')
+    let password: string | null = await input('Пароль Bank Hapoalim', 'textPassword')
     let body: unknown
     try {
       // Public APK44.2.0 La/a.F appends loop indices, not MD5 bytes. This
@@ -105,7 +105,7 @@ export async function loginMobile ({ isInBackground = false, previousIdentity, o
       if (bankState(body) !== 'otp-required' || !record(body) || !Object.prototype.hasOwnProperty.call(body, 'error') || body.error !== null) throw new Error('Bank Hapoalim did not confirm the SMS challenge')
       const csrf = session.csrf()
       if (csrf === null || csrf === '' || csrf.length > 4096) throw new Error('Bank Hapoalim SMS challenge is missing its scoped CSRF cookie')
-      let otp: string | null = await input('קוד האימות שהתקבל ב-SMS', 'numberPassword')
+      let otp: string | null = await input('Код из SMS', 'numberPassword')
       try {
         if (!/^\d{4,10}$/.test(otp)) throw new Error('Bank Hapoalim required verification code was not provided')
         body = await request('/authenticate/logonotp/verify', { appId: MOBILE_APP_ID, csrffield: csrf, flow: 'authenticate', state: 'logonotp', otp, mfp })

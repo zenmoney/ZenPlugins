@@ -1,4 +1,5 @@
 import { convertAccounts } from '../../../converters'
+import { ZPAPI } from '../../../../../ZPAPI'
 
 describe('convertAccounts', () => {
   it.each([
@@ -109,7 +110,7 @@ describe('convertAccounts', () => {
             capitalization: false,
             endDateOffset: 90,
             endDateOffsetInterval: 'day',
-            payoffStep: 1,
+            payoffStep: 0,
             payoffInterval: null
           }
         }
@@ -206,6 +207,8 @@ describe('convertAccounts', () => {
     ]
   ])('converts deposit', (apiAccounts, accounts) => {
     expect(convertAccounts(apiAccounts)).toEqual(accounts)
+    const native = new ZPAPI({ manifest: {}, preferences: {}, data: {} })
+    expect(() => native.addAccount(convertAccounts(apiAccounts).map(plan => plan.account))).not.toThrow()
     expect(convertAccounts([...apiAccounts, ...apiAccounts])).toEqual(accounts)
     const changeIgnoredField = account => accounts[0].account.type === 'checking'
       ? { ...account, accountNumber: account.accountNumber + 1, eventNumber: account.eventNumber + 1 }
