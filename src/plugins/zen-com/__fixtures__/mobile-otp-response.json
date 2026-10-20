@@ -1,0 +1,9 @@
+{
+  "authenticationId": "00000000-0000-4000-8000-000000000001",
+  "nextFactor": "OTP",
+  "accessToken": {
+    "token": "fixture-mobile-otp-access-token",
+    "validUntil": "2026-10-18T12:38:02Z"
+  },
+  "blockadeExpirationTime": "2026-10-18T12:23:32Z"
+}

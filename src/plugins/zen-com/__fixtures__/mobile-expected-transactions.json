@@ -1,0 +1,521 @@
+[
+  {
+    "date": "2026-10-13T20:39:04.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000036:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": -852,
+        "invoice": null,
+        "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "EUR",
+          "company": null,
+          "syncIds": null
+        },
+        "sum": 852,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Taylor Example",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": null
+  },
+  {
+    "date": "2026-10-13T20:37:56.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-3000-8000-000000000037:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": -2.25,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "UAB ZEN.COM",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Fee for account top-up Apple Pay **1001"
+  },
+  {
+    "date": "2026-10-13T20:37:56.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000038:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": 77.25,
+        "invoice": null,
+        "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": "ccard",
+          "instrument": "EUR",
+          "company": null,
+          "syncIds": [
+            "41111111******1001"
+          ]
+        },
+        "sum": -77.25,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "UAB ZEN.COM",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "ZEN account top-up Apple Pay **1001"
+  },
+  {
+    "date": "2026-10-13T20:36:51.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000041:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": 107.31,
+        "invoice": {
+          "sum": 120.89,
+          "instrument": "USD"
+        },
+        "fee": 0
+      },
+      {
+        "id": "00000000-0000-7000-8000-000000000041:00000000-0000-4000-8000-000000000002",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        },
+        "sum": -120.89,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  {
+    "date": "2026-10-13T20:22:02.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-3000-8000-000000000042:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": -1.2,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "UAB ZEN.COM",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Fee for account top-up Mastercard **1002"
+  },
+  {
+    "date": "2026-10-13T20:22:02.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000043:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": 41.2,
+        "invoice": null,
+        "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": "ccard",
+          "instrument": "EUR",
+          "company": null,
+          "syncIds": [
+            "55555555******1002"
+          ]
+        },
+        "sum": -41.2,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "UAB ZEN.COM",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "ZEN account top-up Mastercard **1002"
+  },
+  {
+    "date": "2026-10-13T20:17:15.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-3000-8000-000000000044:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": -18.9,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "UAB ZEN.COM",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Fee for account top-up Visa **1003"
+  },
+  {
+    "date": "2026-10-13T20:17:15.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000045:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": 648.9,
+        "invoice": null,
+        "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": "ccard",
+          "instrument": "EUR",
+          "company": null,
+          "syncIds": [
+            "41111111******1003"
+          ]
+        },
+        "sum": -648.9,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "UAB ZEN.COM",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "ZEN account top-up Visa **1003"
+  },
+  {
+    "date": "2026-09-27T16:16:13.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000046:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": 11.19,
+        "invoice": {
+          "sum": 13.12,
+          "instrument": "USD"
+        },
+        "fee": 0
+      },
+      {
+        "id": "00000000-0000-7000-8000-000000000046:00000000-0000-4000-8000-000000000002",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        },
+        "sum": -13.12,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  {
+    "date": "2026-09-27T16:16:12.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-3000-8000-000000000047:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": -11.19,
+        "invoice": {
+          "sum": -1309.65,
+          "instrument": "RSD"
+        },
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "MP101 OAZA",
+      "city": "BEOGRAD",
+      "country": "SRB",
+      "mcc": 5411,
+      "location": null
+    },
+    "comment": null
+  },
+  {
+    "date": "2026-09-27T16:03:42.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-3000-8000-000000000049:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": -8.63,
+        "invoice": {
+          "sum": -1010,
+          "instrument": "RSD"
+        },
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "DING YI FENG",
+      "city": "BEOGRAD",
+      "country": "SRB",
+      "mcc": 5411,
+      "location": null
+    },
+    "comment": null
+  },
+  {
+    "date": "2026-09-27T16:03:42.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000048:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": 8.63,
+        "invoice": {
+          "sum": 10.12,
+          "instrument": "USD"
+        },
+        "fee": 0
+      },
+      {
+        "id": "00000000-0000-7000-8000-000000000048:00000000-0000-4000-8000-000000000002",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        },
+        "sum": -10.12,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  {
+    "date": "2026-09-27T15:53:48.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000050:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": 9.14,
+        "invoice": {
+          "sum": 10.72,
+          "instrument": "USD"
+        },
+        "fee": 0
+      },
+      {
+        "id": "00000000-0000-7000-8000-000000000050:00000000-0000-4000-8000-000000000002",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        },
+        "sum": -10.72,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  {
+    "date": "2026-09-27T15:53:46.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-3000-8000-000000000051:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": -9.14,
+        "invoice": {
+          "sum": -1070,
+          "instrument": "RSD"
+        },
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "PANDA STYLE",
+      "city": "BEOGRAD",
+      "country": "SRB",
+      "mcc": 5999,
+      "location": null
+    },
+    "comment": null
+  },
+  {
+    "date": "2026-09-27T12:39:00.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-3000-8000-000000000053:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": -104.68,
+        "invoice": {
+          "sum": -12252.25,
+          "instrument": "RSD"
+        },
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "LIDL 156 BEOGRAD",
+      "city": "BEOGRAD",
+      "country": "SRB",
+      "mcc": 5999,
+      "location": null
+    },
+    "comment": null
+  },
+  {
+    "date": "2026-09-27T12:39:00.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000052:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": 104.68,
+        "invoice": {
+          "sum": 122.67,
+          "instrument": "USD"
+        },
+        "fee": 0
+      },
+      {
+        "id": "00000000-0000-7000-8000-000000000052:00000000-0000-4000-8000-000000000002",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        },
+        "sum": -122.67,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  {
+    "date": "2026-09-26T12:30:44.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-3000-8000-000000000055:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": -30.16,
+        "invoice": {
+          "sum": -3529.8,
+          "instrument": "RSD"
+        },
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Wolt doo",
+      "city": "Belgrade",
+      "country": "SRB",
+      "mcc": 4789,
+      "location": null
+    },
+    "comment": null
+  },
+  {
+    "date": "2026-09-26T12:30:44.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "00000000-0000-7000-8000-000000000054:00000000-0000-4000-8000-000000000001",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "sum": 30.16,
+        "invoice": {
+          "sum": 34.71,
+          "instrument": "USD"
+        },
+        "fee": 0
+      },
+      {
+        "id": "00000000-0000-7000-8000-000000000054:00000000-0000-4000-8000-000000000002",
+        "account": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        },
+        "sum": -34.71,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  }
+]

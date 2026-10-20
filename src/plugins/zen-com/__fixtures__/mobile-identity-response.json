@@ -1,0 +1,11 @@
+{
+  "authenticationId": "00000000-0000-4000-8000-000000000001",
+  "nextFactor": "IDENTITY",
+  "accessToken": {
+    "token": "fixture-mobile-identity-access-token",
+    "validUntil": "2026-10-18T12:42:24Z"
+  },
+  "refreshToken": null,
+  "user": null,
+  "blockadeExpirationTime": null
+}

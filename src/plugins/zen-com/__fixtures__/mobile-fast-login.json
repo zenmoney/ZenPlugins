@@ -1,0 +1,19 @@
+{
+  "authenticationId": "00000000-0000-7000-8000-000000001022",
+  "nextFactor": null,
+  "accessToken": {
+    "token": "fixture-completed-accessToken",
+    "validUntil": "2026-10-20T12:14:04Z"
+  },
+  "refreshToken": {
+    "token": "fixture-completed-refreshToken",
+    "validUntil": "2026-10-20T12:24:04Z"
+  },
+  "user": {
+    "contextId": "00000000-0000-4000-8000-000000001023",
+    "externalReferenceId": "00000000-0000-4000-8000-000000001024",
+    "state": "EXISTING",
+    "login": "+000000000000"
+  },
+  "blockadeExpirationTime": null
+}

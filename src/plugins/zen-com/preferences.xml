@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        defaultValue="2018-01-01T00:00:00.000Z"
+        dialogTitle="From what date to load transactions"
+        dialogMessage="Enter your phone number, SMS code and ZEN.COM app passcode when requested. Your passcode is saved in this connection for automatic sign-in. If a selfie is required, complete verification in your browser, return to Zenmoney and close the face verification window to continue synchronization. Supports personal currency accounts with purchases, top-ups, fees, transfers, MoneySend credits, ATM withdrawals and currency exchanges. Refunds and cash deposits are not yet supported."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>

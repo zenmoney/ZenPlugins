@@ -1,0 +1,9 @@
+{
+  "authenticationId": "00000000-0000-4000-8000-000000000001",
+  "blockadeExpirationTime": "2026-10-18T12:37:06Z",
+  "accessToken": {
+    "token": "fixture-mobile-initialized-identity-token",
+    "validUntil": "2026-10-18T12:51:37Z"
+  },
+  "verificationId": "00000000-0000-4000-8000-000000000002"
+}
