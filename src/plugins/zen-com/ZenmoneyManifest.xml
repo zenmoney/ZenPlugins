@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>zen-com</id>
-    <company>0</company>
+    <company>16204</company>
     <description>Synchronize ZEN.COM personal currency accounts, card payments, top-ups, fees, transfers, MoneySend credits, ATM withdrawals and currency exchanges. Mobile sign-in uses your phone number, SMS code and ZEN.COM app passcode. If a selfie is requested, complete it in your browser, return to Zenmoney and close the verification window. Refunds and cash deposits are not yet supported.</description>
     <version>1.0</version>
     <build>1</build>
