@@ -131,7 +131,7 @@ it('excludes a booked payment whose verified initiation precedes the requested i
 function lifecycleScenario (): { fixture: { onlineResponse: { data: { entries: unknown[] } }, preauthorization: unknown, settledPreauthorization: unknown, bookedHistory: unknown[] }, account: AccountOrCard, source: OnlineSource, fromDate: Date } {
   const fixture: { onlineResponse: { data: { entries: unknown[] } }, preauthorization: unknown, settledPreauthorization: unknown, bookedHistory: unknown[] } = JSON.parse(readFileSync(join(__dirname, '../../fixtures/online-lifecycle.json'), 'utf8'))
   const account = { id: '1570010000000002', type: AccountType.ccard as const, title: 'Visa AMD', instrument: 'AMD', syncIds: ['1570010000000002'], balance: 0 }
-  const source = { accountId: account.id, cardId: '100000002', entries: fixture.onlineResponse.data.entries }
+  const source = { accountId: account.id, cardId: '100000002', entries: fixture.onlineResponse.data.entries.slice(0, 4) }
   return { fixture, account, source, fromDate: new Date('2026-05-01T00:00:00+04:00') }
 }
 
@@ -154,7 +154,7 @@ it('[model] reconciles the observed pre-purchase and completion identities once 
   const imported = source.entries.slice(0, 4).map(record => ({ accountId: account.id, cardId: source.cardId, record }))
   const state = { imported, historyAliases: {} }
   const expected = [0, 2].map(index => ({ ...imported[index], origin: { id: `online:${source.cardId}:${(imported[index + 1].record as { id: string }).id}:${(imported[index + 1].record as { operationDate: string }).operationDate}`, date: (imported[index + 1].record as { operationDate: string }).operationDate } }))
-  expect(combineOnlineTransactions([], [], [source], [account], fromDate, undefined, state)).toEqual({ transactions: [], state: { imported: expected, historyAliases: {} } })
+  expect(combineOnlineTransactions([], [], [source], [account], fromDate, undefined, state)).toEqual({ transactions: completedPurchases(), state: { imported: expected, historyAliases: {} } })
 })
 
 it('matches the observed online and booked merchant spellings without changing their text (ID-001)', () => {
@@ -206,7 +206,7 @@ it('[model] retains the original purchase identities when only their completions
   const imported = source.entries.slice(0, 4).map(record => ({ accountId: account.id, cardId: source.cardId, record }))
   const first = combineOnlineTransactions([], [], [source], [account], fromDate, undefined, { imported, historyAliases: {} })
   const entries = [source.entries[2], source.entries[0]]
-  expect(combineOnlineTransactions([], [], [{ ...source, entries }], [account], fromDate, undefined, JSON.parse(JSON.stringify(first.state)))).toEqual(first)
+  expect(combineOnlineTransactions([], [], [{ ...source, entries }], [account], fromDate, undefined, JSON.parse(JSON.stringify(first.state)))).toEqual({ transactions: completedPurchases().reverse(), state: first.state })
 })
 
 /** Reuse the complete account graph for the same observed source account and receiving card. */
@@ -276,4 +276,45 @@ it('[model] keeps the full transfer and its booked identities stable across over
   const first = combineOnlineTransactions(history, booked, [source], accounts, fromDate)
   const repeated = { ...source, entries: [...source.entries, ...source.entries] }
   expect(combineOnlineTransactions([...history, ...history], booked, [repeated], accounts, fromDate, undefined, first.state)).toEqual({ transactions: expected, state: { imported: [], historyAliases: {} } })
+})
+
+/** Expected final payments derived from the complete observed completion/pre-purchase pairs. */
+function completedPurchases (): Transaction[] {
+  return [{
+    date: new Date('2026-05-27T13:19:19.000Z'),
+    hold: false,
+    movements: [{ id: 'online:100000002:710143:2026-05-27T13:19:19.000Z:1570010000000002', account: { id: '1570010000000002' }, sum: -2873.41, fee: 0, invoice: null }],
+    merchant: { fullTitle: 'RIDEAPP.GO 42/7 EXAMPLE STR. SAMPLECITY FRA', mcc: null, location: null },
+    comment: null
+  }, {
+    date: new Date('2026-05-27T07:41:25.000Z'),
+    hold: false,
+    movements: [{ id: 'online:100000002:720257:2026-05-27T07:41:25.000Z:1570010000000002', account: { id: '1570010000000002' }, sum: -1639.27, fee: 0, invoice: null }],
+    merchant: { fullTitle: 'RIDEAPP.GO 42/7 EXAMPLE STR. SAMPLECITY FRA', mcc: null, location: null },
+    comment: null
+  }]
+}
+
+it('imports the observed settled completions once before their booked history arrives (STATUS-001, TRANSFER-004)', () => {
+  const { account, source, fromDate } = lifecycleScenario()
+  const entries = source.entries.slice(0, 4)
+  expect(combineOnlineTransactions([], [], [{ ...source, entries }], [account], fromDate).transactions).toEqual(completedPurchases())
+})
+
+// Model source arrival order using complete observed records without inventing bank responses.
+it('[model] preserves an emitted completion identity when its initiation record arrives later (ID-001, DATE-001)', () => {
+  const { account, source, fromDate } = lifecycleScenario()
+  const first = combineOnlineTransactions([], [], [{ ...source, entries: [source.entries[0]] }], [account], fromDate)
+  const expected = completedPurchases()[0]
+  const movement = { ...expected.movements[0], id: 'online:100000002:710143:2026-05-27T17:04:19.000Z:1570010000000002' }
+  expect(first.transactions).toEqual([{ ...expected, date: new Date('2026-05-27T17:04:19.000Z'), movements: [movement] }])
+  const current = { ...source, entries: source.entries.slice(0, 2) }
+  const second = combineOnlineTransactions([], [], [current], [account], fromDate, undefined, first.state)
+  expect(second.transactions).toEqual([{ ...expected, movements: [movement] }])
+  expect(combineOnlineTransactions([], [], [current], [account], fromDate, undefined, JSON.parse(JSON.stringify(second.state)))).toEqual(second)
+})
+
+it('filters completed purchases by initiation date rather than completion date (DATE-001)', () => {
+  const { account, source } = lifecycleScenario()
+  expect(combineOnlineTransactions([], [], [source], [account], new Date('2026-05-27T14:00:00.000Z')).transactions).toEqual([])
 })

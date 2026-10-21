@@ -43,7 +43,8 @@ remain intact.
 
 Online authorizations are pending transactions (`hold: true`) under
 [STATUS-001](../../../../../docs/plugins/scrape/quality/amounts-and-statuses.md#status-001-preserve-lifecycle-states);
-settled Online entries are supplied by shared history. Observed same-code
+completed Online purchases are emitted without a hold until shared history supplies
+their booked counterpart. A settled reservation alone is not a completed purchase. Observed same-code
 operations at distinct timestamps remain separate unless lifecycle evidence
 supports a match. The fixture contains no refund or cancellation linkage for those
 records; matching only by amount, merchant or short reference is insufficient.
@@ -86,8 +87,9 @@ purchase examples.
 
 Only unique pre-purchase/completion pairs with identical card/account, bank
 reference, direction, currency, amount and merchant text are linked within the
-booking window. Completion retains the initial movement identity and date in
-optional `origin` metadata. Unrelated same-code payments remain distinct. Saved
+booking window. Completion retains an already emitted movement identity and the
+initiation date in optional `origin` metadata. When neither stage was emitted,
+the pre-purchase identity is used. Unrelated same-code payments remain distinct. Saved
 metadata never replays absent transactions, and the plugin does not delete
 existing ordinary duplicates. Tests using settled pairs as previously imported
 state are labeled `[model]`; they verify identity migration and persistence without
