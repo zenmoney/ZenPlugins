@@ -1,5 +1,5 @@
 {
-  "source": "Complete users/info and users/<id>/clients responses from authorized 2026-10-07 capture; identities and contacts replaced consistently",
+  "source": "Complete authorized users/info and users/<id>/clients responses; identities, contacts and dates use public-safe examples",
   "userInfo": {
     "status": "success",
     "data": {
@@ -81,7 +81,7 @@
           "passportNumber": "fixture-passportNumber",
           "identificationCard": null,
           "phone": null,
-          "birthDate": "1990-01-01",
+          "birthDate": "1986-01-01",
           "staffData": null,
           "branch": "707",
           "imageIdentifier": null,
@@ -90,7 +90,7 @@
           "ssnPassportSkipped": false,
           "authSchemeId": 2505,
           "limitSchemeId": 51,
-          "stateSyncDate": "2026-10-07T07:38:50.495Z",
+          "stateSyncDate": "2022-10-07T07:38:50.495Z",
           "ownershipType": "OWNER",
           "created": null
         }

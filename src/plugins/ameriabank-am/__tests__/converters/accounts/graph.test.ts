@@ -39,7 +39,7 @@ const expected: AccountPlan = {
     instrument: 'USD',
     syncIds: ['NA100002'],
     balance: 24514.47,
-    startDate: new Date('2025-05-29'),
+    startDate: new Date('2021-05-29'),
     startBalance: 24000,
     capitalization: true,
     percent: 2.3,

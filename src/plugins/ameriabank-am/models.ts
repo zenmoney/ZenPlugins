@@ -59,9 +59,10 @@ export interface OnlineSource extends CardSource {
   readonly entries: readonly unknown[]
 }
 
-/** An emitted authorization retained only to link a later booked movement. */
+/** An emitted online operation retained only to link a later booked movement. */
 export interface OnlineOperation extends CardSource {
   readonly record: unknown
+  readonly origin?: { readonly id: string, readonly date: string }
 }
 
 /** Converted accounts and their complete history loading plan. */

@@ -1,0 +1,235 @@
+{
+  "onlineResponse": {
+    "status": "success",
+    "data": {
+      "totalCount": 5,
+      "entries": [
+        {
+          "id": "710143",
+          "transactionType": "purchasecompletion:e-pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 2873.41
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "RIDEAPP.GO 42/7 EXAMPLE STR. SAMPLECITY FRA",
+          "operationDate": "2026-05-27T17:04:19.000Z",
+          "workflowCode": "purchasecompletion:e-pos",
+          "date": "27 May",
+          "year": "2026",
+          "month": "May"
+        },
+        {
+          "id": "710143",
+          "transactionType": "pre-purchase:e-pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 2873.41
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "RIDEAPP.GO 42/7 EXAMPLE STR. SAMPLECITY FRA",
+          "operationDate": "2026-05-27T13:19:19.000Z",
+          "workflowCode": "pre-purchase:e-pos",
+          "date": "27 May",
+          "year": "2026",
+          "month": "May"
+        },
+        {
+          "id": "720257",
+          "transactionType": "purchasecompletion:e-pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 1639.27
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "RIDEAPP.GO 42/7 EXAMPLE STR. SAMPLECITY FRA",
+          "operationDate": "2026-05-27T11:26:25.000Z",
+          "workflowCode": "purchasecompletion:e-pos",
+          "date": "27 May",
+          "year": "2026",
+          "month": "May"
+        },
+        {
+          "id": "720257",
+          "transactionType": "pre-purchase:e-pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 1639.27
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "RIDEAPP.GO 42/7 EXAMPLE STR. SAMPLECITY FRA",
+          "operationDate": "2026-05-27T07:41:25.000Z",
+          "workflowCode": "pre-purchase:e-pos",
+          "date": "27 May",
+          "year": "2026",
+          "month": "May"
+        },
+        {
+          "id": "730389",
+          "transactionType": "purchase:e-pos",
+          "accountingType": "DEBIT",
+          "state": "SETTLED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 71.53
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "PAYPOINT 4 8.SAMPLE STR SAMPLECITY FRA",
+          "operationDate": "2026-05-22T12:24:29.000Z",
+          "workflowCode": "purchase:e-pos",
+          "date": "22 May",
+          "year": "2026",
+          "month": "May"
+        }
+      ]
+    },
+    "errorMessages": null
+  },
+  "preauthorization": {
+    "id": "740467",
+    "transactionType": "pre-purchase:e-pos",
+    "accountingType": "DEBIT",
+    "state": "AUTHORIZED",
+    "amount": {
+      "currency": "USD",
+      "amount": 92.47
+    },
+    "correspondentAccountNumber": "1570010000000003",
+    "correspondentAccountName": "",
+    "details": "PAYMENT *TUTOR FR  12345678 FRA",
+    "operationDate": "2026-05-23T11:42:40.000Z",
+    "workflowCode": "pre-purchase:e-pos",
+    "date": "23 մայիսի",
+    "year": "2026",
+    "month": "մայիս"
+  },
+  "bookedHistory": [
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 1639.27
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 1639.27
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 1639.27
+      },
+      "transactionType": "card",
+      "beneficiaryName": "«ՕՐԻՆԱԿ ԾԱՌԱՅՈՒԹՅՈՒՆ» ՍՊԸ",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570090000000003",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: RIDEAPP. GO SAMPLECITY FR 750581",
+      "sourceSystem": null,
+      "settledDate": 1778842969000,
+      "transactionDate": 1778842969000,
+      "additionalInfo": null,
+      "transactionId": "aaa75f1d-c1a2-5583-87f1-39c6398c5223",
+      "id": "aaa75f1d-c1a2-5583-87f1-39c6398c5223",
+      "workflowCode": "card",
+      "date": "15 May",
+      "year": "2026",
+      "month": "May"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 3261.19
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 3261.19
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 3261.19
+      },
+      "transactionType": "card",
+      "beneficiaryName": "«ՕՐԻՆԱԿ ԾԱՌԱՅՈՒԹՅՈՒՆ» ՍՊԸ",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570090000000003",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: RIDEAPP. GO SAMPLECITY FR 760629",
+      "sourceSystem": null,
+      "settledDate": 1775646754000,
+      "transactionDate": 1775646754000,
+      "additionalInfo": null,
+      "transactionId": "f0e9491e-4ae4-5a44-8b2d-3fa0cfa1514e",
+      "id": "f0e9491e-4ae4-5a44-8b2d-3fa0cfa1514e",
+      "workflowCode": "card",
+      "date": "08 April",
+      "year": "2026",
+      "month": "April"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 881.63
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 881.63
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 881.63
+      },
+      "transactionType": "card",
+      "beneficiaryName": "«ՕՐԻՆԱԿ ԾԱՌԱՅՈՒԹՅՈՒՆ» ՍՊԸ",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570090000000003",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: RIDEAPP. GO SAMPLECITY FR 770743",
+      "sourceSystem": null,
+      "settledDate": 1775051233000,
+      "transactionDate": 1775051233000,
+      "additionalInfo": null,
+      "transactionId": "2f63c8d9-322b-5670-a071-482c8fd8a0ab",
+      "id": "2f63c8d9-322b-5670-a071-482c8fd8a0ab",
+      "workflowCode": "card",
+      "date": "01 April",
+      "year": "2026",
+      "month": "April"
+    }
+  ],
+  "settledPreauthorization": {
+    "id": "740467",
+    "transactionType": "pre-purchase:e-pos",
+    "accountingType": "DEBIT",
+    "state": "SETTLED",
+    "amount": {
+      "currency": "USD",
+      "amount": 92.47
+    },
+    "correspondentAccountNumber": "1570010000000003",
+    "correspondentAccountName": "",
+    "details": "PAYMENT *TUTOR FR  12345678 FRA",
+    "operationDate": "2026-05-23T11:42:40.000Z",
+    "workflowCode": "pre-purchase:e-pos",
+    "date": "23 May",
+    "year": "2026",
+    "month": "May"
+  }
+}
