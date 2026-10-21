@@ -26,12 +26,49 @@ export function combineOnlineTransactions (
   saved?: unknown
 ): { transactions: Transaction[], state: OnlineState } {
   const current = sources.flatMap(source => source.entries.map(record => ({ accountId: source.accountId, cardId: source.cardId, record })))
-  const reconciled = reconcileHistory(history, current, savedState(saved))
-  const additions = newAuthorizations(current, accounts, reconciled.linked, fromDate, toDate)
+  const previous = savedState(saved)
+  const evidence = [...previous.imported, ...current]
+  const purchases = purchaseOperations(current, evidence)
+  const reconciled = reconcileHistory(history, purchases, { ...previous, imported: purchaseOperations(previous.imported, evidence) })
+  const additions = newAuthorizations(purchases, accounts, reconciled.linked, fromDate, toDate)
   const imported = new Map([...reconciled.state.imported, ...additions.imported].map(operation => [operationId(operation), operation]))
   const combined = transactions.map(transaction => aliasedTransaction(transaction, reconciled.state.historyAliases))
     .filter(transaction => withinPeriod(transaction.date, fromDate, toDate))
   return { transactions: [...combined, ...additions.transactions], state: { imported: [...imported.values()], historyAliases: reconciled.state.historyAliases } }
+}
+
+/** Collapse only unique, explicitly related pre-purchase/completion pairs and retain the initial identity. */
+function purchaseOperations (operations: readonly OnlineOperation[], evidence: readonly OnlineOperation[]): OnlineOperation[] {
+  const known = new Map<string, OnlineOperation>()
+  for (const operation of evidence) {
+    const state = text(operation.record, 'state')
+    console.assert(state === 'AUTHORIZED' || state === 'SETTLED', 'Unsupported MyAmeria online transaction state', { state })
+    const origin = operation.origin ?? known.get(rawOperationId(operation))?.origin
+    known.set(rawOperationId(operation), origin === undefined ? operation : { ...operation, origin })
+  }
+  const candidates = [...known.values()]
+  const normalized = operations.map(operation => {
+    const origin = known.get(rawOperationId(operation))?.origin
+    const matches = candidates.filter(candidate => matchingPurchase(candidate, operation))
+    if (matches.length !== 1 || candidates.filter(candidate => matchingPurchase(matches[0], candidate)).length !== 1) {
+      return origin === undefined ? operation : { ...operation, origin }
+    }
+    return { ...operation, origin: { id: operationId(matches[0]), date: operationDate(matches[0]).toISOString() } }
+  })
+  const completed = new Set(normalized.filter(operation => text(operation.record, 'transactionType') === 'purchasecompletion:e-pos').flatMap(operation => operation.origin === undefined ? [] : [operation.origin.id]))
+  return normalized.filter(operation => text(operation.record, 'transactionType') !== 'pre-purchase:e-pos' || !completed.has(operationId(operation)))
+}
+
+/** A shared short reference alone cannot identify a purchase lifecycle. */
+function matchingPurchase (authorization: OnlineOperation, completion: OnlineOperation): boolean {
+  if (text(authorization.record, 'transactionType') !== 'pre-purchase:e-pos' || text(completion.record, 'transactionType') !== 'purchasecompletion:e-pos') return false
+  if (authorization.accountId !== completion.accountId || authorization.cardId !== completion.cardId) return false
+  for (const path of ['id', 'accountingType', 'amount.currency', 'details', 'correspondentAccountNumber']) {
+    if (text(authorization.record, path) !== text(completion.record, path)) return false
+  }
+  if (number(authorization.record, 'amount.amount') !== number(completion.record, 'amount.amount')) return false
+  const elapsed = new Date(text(completion.record, 'operationDate')).getTime() - new Date(text(authorization.record, 'operationDate')).getTime()
+  return elapsed >= 0 && elapsed <= 7 * 86400000
 }
 
 /** Link unique history matches and retain the identities of previously imported authorizations. */
@@ -52,7 +89,7 @@ function reconcileHistory (
     linked.add(operationId(operation))
     const id = text(matches[0], 'transactionId')
     if (aliases[id] === undefined && (wasImported || operationDate(operation).getTime() !== number(matches[0], 'transactionDate'))) {
-      aliases[id] = { id: wasImported ? operationId(operation) : id, date: text(operation.record, 'operationDate') }
+      aliases[id] = { id: wasImported ? operationId(operation) : id, date: operationDate(operation).toISOString() }
     }
     imported.delete(operationId(operation))
   }
@@ -96,7 +133,13 @@ function withinPeriod (date: Date, fromDate: Date, toDate?: Date): boolean {
 /** Validate persisted financial identity metadata without trusting stored bank payloads. */
 function savedState (saved: unknown): OnlineState {
   if (saved === undefined || saved === null) return { imported: [], historyAliases: {} }
-  const imported = array(saved, 'imported').map(item => ({ accountId: text(item, 'accountId'), cardId: text(item, 'cardId'), record: get(item, 'record') }))
+  const imported = array(saved, 'imported').map(item => {
+    const operation = { accountId: text(item, 'accountId'), cardId: text(item, 'cardId'), record: get(item, 'record') }
+    if (get(item, 'origin') === undefined) return operation
+    const origin = { id: text(item, 'origin.id'), date: text(item, 'origin.date') }
+    console.assert(origin.id === `online:${operation.cardId}:${text(operation.record, 'id')}:${origin.date}` && Number.isFinite(new Date(origin.date).getTime()), 'Invalid MyAmeria purchase origin')
+    return { ...operation, origin }
+  })
   const rawAliases = get(saved, 'historyAliases')
   console.assert(rawAliases !== null && typeof rawAliases === 'object' && !Array.isArray(rawAliases), 'Invalid MyAmeria online identity state')
   const historyAliases = Object.fromEntries(Object.entries(rawAliases as Record<string, unknown>).map(([key, value]) => {
@@ -109,12 +152,17 @@ function savedState (saved: unknown): OnlineState {
 
 /** Card identity, authorization code and initiation time distinguish repeated authorization codes. */
 function operationId (operation: OnlineOperation): string {
+  return operation.origin?.id ?? rawOperationId(operation)
+}
+
+/** Preserve the original movement identifiers for ordinary, unrelated online operations. */
+function rawOperationId (operation: OnlineOperation): string {
   return `online:${operation.cardId}:${text(operation.record, 'id')}:${text(operation.record, 'operationDate')}`
 }
 
 /** Validate the bank's explicit timestamp independently of the local time zone. */
 function operationDate (operation: OnlineOperation): Date {
-  const date = new Date(text(operation.record, 'operationDate'))
+  const date = new Date(operation.origin?.date ?? text(operation.record, 'operationDate'))
   console.assert(Number.isFinite(date.getTime()), 'Invalid MyAmeria online operation date')
   return date
 }
@@ -131,11 +179,17 @@ function matchingHistory (operation: OnlineOperation, history: unknown): boolean
   if (elapsed < 0 || elapsed > 7 * 86400000) return false
   const descriptor = text(history, 'details').replace(/^Ք: /, '')
   const reference = descriptor.match(/ (\d+)$/)?.[1]
-  const merchant = text(record, 'details').trim().split(/\s+/)[0]
-  return reference !== undefined && text(record, 'id').startsWith(reference) && descriptor.startsWith(`${merchant} `)
+  return reference !== undefined && text(record, 'id').startsWith(reference) && matchingCardMerchant(text(record, 'details'), descriptor)
 }
 
-/** Authorizations are ordinary transactions by explicit user choice; bank ambiguities remain distinct. */
+/** Compare merchant prefixes while tolerating the observed whitespace after punctuation in history. */
+export function matchingCardMerchant (onlineDetails: string, historyDetails: string): boolean {
+  const merchant = onlineDetails.trim().replace(/\.\s+/g, '.').split(/\s+/)[0]
+  const descriptor = historyDetails.replace(/^Ք: /, '').replace(/\.\s+/g, '.')
+  return descriptor.startsWith(`${merchant} `)
+}
+
+/** Pending authorizations must be eligible for application reconciliation when they disappear. */
 function onlineTransaction (operation: OnlineOperation, accounts: readonly Account[], date: Date): Transaction {
   const record = operation.record
   const account = accounts.find(account => account.id === operation.accountId)
@@ -149,7 +203,7 @@ function onlineTransaction (operation: OnlineOperation, accounts: readonly Accou
   const currency = text(record, 'amount.currency')
   return {
     date,
-    hold: false,
+    hold: true,
     movements: [{ id: `${operationId(operation)}:${account.id}`, account: { id: account.id }, sum: currency === account.instrument ? sum : null, fee: 0, invoice: currency === account.instrument ? null : { sum, instrument: currency } }],
     merchant: { fullTitle: text(record, 'details').trim(), mcc: null, location: null },
     comment: null

@@ -12,7 +12,7 @@ const depositCapture: { history: readonly unknown[] } = JSON.parse(readFileSync(
 
 describe('import entrypoint using the authorized anonymized capture', () => {
   const preferences: Preferences = { login: 'fixture-user', password: 'fixture-password' }
-  const args = { preferences, fromDate: new Date('2026-07-01T00:00:00+04:00'), isFirstRun: true, isInBackground: true }
+  const args = { preferences, fromDate: new Date('2022-07-01T00:00:00+04:00'), isFirstRun: true, isInBackground: true }
   const auth: Auth = { clientAuth: 'client-auth', clientId: 'client-id', refreshToken: 'rotated', accessToken: 'access', expiresAt: 1 }
   const previousHost = Object.getOwnPropertyDescriptor(global, 'ZenMoney')
   const setData = jest.fn()
@@ -66,9 +66,9 @@ describe('import entrypoint using the authorized anonymized capture', () => {
     jest.mocked(api.fetchOnlineTransactions).mockResolvedValue([{ cardId: '900000431', accountId: '1570010000000002', entries }])
     const result = await scrape(args)
     expect(result.transactions[result.transactions.length - 1]).toEqual({
-      date: new Date('2026-08-17T16:53:47.000Z'),
-      hold: false,
-      movements: [{ id: 'online:900000431:620257:2026-08-17T16:53:47.000Z:1570010000000002', account: { id: '1570010000000002' }, sum: -1837.45, fee: 0, invoice: null }],
+      date: new Date('2022-08-17T16:53:47.000Z'),
+      hold: true,
+      movements: [{ id: 'online:900000431:620257:2022-08-17T16:53:47.000Z:1570010000000002', account: { id: '1570010000000002' }, sum: -1837.45, fee: 0, invoice: null }],
       merchant: { fullTitle: 'MARKETA GROUP LLC  CITYONE FRA', mcc: null, location: null },
       comment: null
     })
@@ -95,8 +95,8 @@ describe('import entrypoint using the authorized anonymized capture', () => {
   })
 
   it('imports verified deposits once and widens the request to full Armenian boundary days', async () => {
-    const fromDate = new Date('2025-05-29T06:02:05Z')
-    const toDate = new Date('2026-05-31T22:37:32Z')
+    const fromDate = new Date('2021-05-29T06:02:05Z')
+    const toDate = new Date('2022-05-31T22:37:32Z')
     const accounts = convertAccounts(capture.graph, capture.products).accounts
     const deposit = accounts.filter(a => a.type === 'deposit')[0]
     const links = verifyDepositHistory(capture.depositHistory, depositCapture.history, deposit, fromDate, toDate)
@@ -104,12 +104,12 @@ describe('import entrypoint using the authorized anonymized capture', () => {
     const expected = { accounts, transactions: convertTransactions(depositCapture.history, accounts, {}, fromDate, toDate, links) }
     expect(await scrape({ ...args, fromDate, toDate })).toEqual(expected)
     expect(await scrape({ ...args, fromDate, toDate, isFirstRun: false })).toEqual(expected)
-    expect(api.fetchTransactions).toHaveBeenCalledWith(auth, expect.any(Object), new Date('2025-05-29T00:00:00+04:00'), new Date('2026-06-02T00:00:00+04:00'))
+    expect(api.fetchTransactions).toHaveBeenCalledWith(auth, expect.any(Object), new Date('2021-05-29T00:00:00+04:00'), new Date('2022-06-02T00:00:00+04:00'))
     expect(api.fetchDepositTransactions).toHaveBeenCalledTimes(2)
   })
 
   it('retains confirmed deposit transfers when only the deposit is selected', async () => {
-    const fromDate = new Date('2025-05-29T00:00:00+04:00')
+    const fromDate = new Date('2021-05-29T00:00:00+04:00')
     const accounts = convertAccounts(capture.graph, capture.products).accounts
     const deposit = accounts.filter(a => a.type === 'deposit')[0]
     const links = verifyDepositHistory(capture.depositHistory, depositCapture.history, deposit, fromDate)
@@ -120,7 +120,7 @@ describe('import entrypoint using the authorized anonymized capture', () => {
   })
 
   it('keeps only observed funding movements without loading a skipped deposit ledger', async () => {
-    const fromDate = new Date('2025-05-29T00:00:00+04:00')
+    const fromDate = new Date('2021-05-29T00:00:00+04:00')
     const accounts = convertAccounts(capture.graph, capture.products).accounts
     jest.mocked(api.fetchTransactions).mockResolvedValue(depositCapture.history)
     isAccountSkipped.mockImplementation((id?: string) => id === 'deposit:1010756356')
@@ -138,7 +138,7 @@ describe('import entrypoint using the authorized anonymized capture', () => {
   // Model a missing required counterpart, without inventing an alternate bank payload.
   it('[model] rejects partial shared history before returning any accounts or transactions', async () => {
     jest.mocked(api.fetchTransactions).mockResolvedValue(depositCapture.history.slice(1))
-    await expect(scrape({ ...args, fromDate: new Date('2025-05-29T00:00:00+04:00') })).rejects.toThrow()
+    await expect(scrape({ ...args, fromDate: new Date('2021-05-29T00:00:00+04:00') })).rejects.toThrow()
   })
 
   // Model a network failure, independent of bank error formats.
