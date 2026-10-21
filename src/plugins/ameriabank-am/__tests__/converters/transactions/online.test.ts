@@ -154,7 +154,7 @@ it('[model] reconciles the observed pre-purchase and completion identities once 
   const imported = source.entries.slice(0, 4).map(record => ({ accountId: account.id, cardId: source.cardId, record }))
   const state = { imported, historyAliases: {} }
   const expected = [0, 2].map(index => ({ ...imported[index], origin: { id: `online:${source.cardId}:${(imported[index + 1].record as { id: string }).id}:${(imported[index + 1].record as { operationDate: string }).operationDate}`, date: (imported[index + 1].record as { operationDate: string }).operationDate } }))
-  expect(combineOnlineTransactions([], [], [source], [account], fromDate, undefined, state)).toEqual({ transactions: completedPurchases(), state: { imported: expected, historyAliases: {} } })
+  expect(combineOnlineTransactions([], [], [source], [account], fromDate, undefined, state)).toEqual({ transactions: [], state: { imported: expected, historyAliases: {} } })
 })
 
 it('matches the observed online and booked merchant spellings without changing their text (ID-001)', () => {
@@ -206,7 +206,7 @@ it('[model] retains the original purchase identities when only their completions
   const imported = source.entries.slice(0, 4).map(record => ({ accountId: account.id, cardId: source.cardId, record }))
   const first = combineOnlineTransactions([], [], [source], [account], fromDate, undefined, { imported, historyAliases: {} })
   const entries = [source.entries[2], source.entries[0]]
-  expect(combineOnlineTransactions([], [], [{ ...source, entries }], [account], fromDate, undefined, JSON.parse(JSON.stringify(first.state)))).toEqual({ transactions: completedPurchases().reverse(), state: first.state })
+  expect(combineOnlineTransactions([], [], [{ ...source, entries }], [account], fromDate, undefined, JSON.parse(JSON.stringify(first.state)))).toEqual({ transactions: [], state: first.state })
 })
 
 /** Reuse the complete account graph for the same observed source account and receiving card. */
@@ -278,43 +278,45 @@ it('[model] keeps the full transfer and its booked identities stable across over
   expect(combineOnlineTransactions([...history, ...history], booked, [repeated], accounts, fromDate, undefined, first.state)).toEqual({ transactions: expected, state: { imported: [], historyAliases: {} } })
 })
 
-/** Expected final payments derived from the complete observed completion/pre-purchase pairs. */
-function completedPurchases (): Transaction[] {
-  return [{
-    date: new Date('2026-05-27T13:19:19.000Z'),
-    hold: false,
-    movements: [{ id: 'online:100000002:710143:2026-05-27T13:19:19.000Z:1570010000000002', account: { id: '1570010000000002' }, sum: -2873.41, fee: 0, invoice: null }],
-    merchant: { fullTitle: 'RIDEAPP.GO 42/7 EXAMPLE STR. SAMPLECITY FRA', mcc: null, location: null },
-    comment: null
-  }, {
-    date: new Date('2026-05-27T07:41:25.000Z'),
-    hold: false,
-    movements: [{ id: 'online:100000002:720257:2026-05-27T07:41:25.000Z:1570010000000002', account: { id: '1570010000000002' }, sum: -1639.27, fee: 0, invoice: null }],
-    merchant: { fullTitle: 'RIDEAPP.GO 42/7 EXAMPLE STR. SAMPLECITY FRA', mcc: null, location: null },
-    comment: null
-  }]
-}
-
-it('imports the observed settled completions once before their booked history arrives (STATUS-001, TRANSFER-004)', () => {
+it('waits for booked history after the observed Online purchases settle (STATUS-001)', () => {
   const { account, source, fromDate } = lifecycleScenario()
-  const entries = source.entries.slice(0, 4)
-  expect(combineOnlineTransactions([], [], [{ ...source, entries }], [account], fromDate).transactions).toEqual(completedPurchases())
+  expect(combineOnlineTransactions([], [], [source], [account], fromDate)).toEqual({ transactions: [], state: { imported: [], historyAliases: {} } })
 })
 
-// Model source arrival order using complete observed records without inventing bank responses.
-it('[model] preserves an emitted completion identity when its initiation record arrives later (ID-001, DATE-001)', () => {
+// Model legacy completion metadata without replaying the previously imported ordinary transaction.
+it('[model] preserves an older completion identity when its initiation record arrives later (ID-001, DATE-001)', () => {
   const { account, source, fromDate } = lifecycleScenario()
-  const first = combineOnlineTransactions([], [], [{ ...source, entries: [source.entries[0]] }], [account], fromDate)
-  const expected = completedPurchases()[0]
-  const movement = { ...expected.movements[0], id: 'online:100000002:710143:2026-05-27T17:04:19.000Z:1570010000000002' }
-  expect(first.transactions).toEqual([{ ...expected, date: new Date('2026-05-27T17:04:19.000Z'), movements: [movement] }])
+  const record = source.entries[0]
+  const state = { imported: [{ accountId: account.id, cardId: source.cardId, record }], historyAliases: {} }
   const current = { ...source, entries: source.entries.slice(0, 2) }
-  const second = combineOnlineTransactions([], [], [current], [account], fromDate, undefined, first.state)
-  expect(second.transactions).toEqual([{ ...expected, movements: [movement] }])
-  expect(combineOnlineTransactions([], [], [current], [account], fromDate, undefined, JSON.parse(JSON.stringify(second.state)))).toEqual(second)
+  const expected = { transactions: [], state: { imported: [{ accountId: account.id, cardId: source.cardId, record, origin: { id: 'online:100000002:710143:2026-05-27T17:04:19.000Z', date: '2026-05-27T13:19:19.000Z' } }], historyAliases: {} } }
+  const first = combineOnlineTransactions([], [], [current], [account], fromDate, undefined, state)
+  expect([first, combineOnlineTransactions([], [], [current], [account], fromDate, undefined, first.state)]).toEqual([expected, expected])
 })
 
 it('filters completed purchases by initiation date rather than completion date (DATE-001)', () => {
   const { account, source } = lifecycleScenario()
   expect(combineOnlineTransactions([], [], [source], [account], new Date('2026-05-27T14:00:00.000Z')).transactions).toEqual([])
+})
+
+/** Load complete sanitized Online and booked records without authorization-reference overlap. */
+function referenceFreeScenario (): { history: unknown[], account: AccountOrCard, source: OnlineSource, fromDate: Date } {
+  const fixture: { onlineResponse: { entries: unknown[] }, history: unknown[] } = JSON.parse(readFileSync(join(__dirname, '../../fixtures/reference-free-purchases.json'), 'utf8'))
+  const account = { id: '1570010000000002', type: AccountType.ccard as const, title: 'Visa AMD', instrument: 'AMD', syncIds: ['1570010000000002'], balance: 0 }
+  return { history: fixture.history, account, source: { accountId: account.id, cardId: '900000431', entries: fixture.onlineResponse.entries }, fromDate: new Date('2024-03-01T00:00:00.000Z') }
+}
+
+it('returns the four booked purchases once despite their settled Online records (ID-001, STATUS-001)', () => {
+  const { history, account, source, fromDate } = referenceFreeScenario()
+  const booked = convertTransactions(history, [account], {}, fromDate)
+  expect(combineOnlineTransactions(history, booked, [source], [account], fromDate)).toEqual({ transactions: booked, state: { imported: [], historyAliases: {} } })
+})
+
+// Model metadata from an older version that emitted settled Online purchases as ordinary expenses.
+it('[model] does not replay previously emitted settled purchases alongside booked history (ID-001)', () => {
+  const { history, account, source, fromDate } = referenceFreeScenario()
+  const booked = convertTransactions(history, [account], {}, fromDate)
+  const state = { imported: source.entries.map(record => ({ accountId: account.id, cardId: source.cardId, record })), historyAliases: {} }
+  const first = combineOnlineTransactions(history, booked, [source], [account], fromDate, undefined, state)
+  expect([first.transactions, combineOnlineTransactions(history, booked, [source], [account], fromDate, undefined, first.state).transactions]).toEqual([booked, booked])
 })

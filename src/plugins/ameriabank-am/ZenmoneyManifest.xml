@@ -3,7 +3,7 @@
     <id>ameriabank-am</id>
     <company>15472</company>
     <description>Импорт счетов и операций Ameriabank в Дзен-мани. Введите логин и пароль MyAmeria и подтвердите вход в приложении MyAmeria.</description>
-    <version>0.4</version>
+    <version>0.5</version>
     <build>1</build>
     <modular>true</modular>
     <files>

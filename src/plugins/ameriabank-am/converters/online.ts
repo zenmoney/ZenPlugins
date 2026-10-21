@@ -107,7 +107,7 @@ function confirmedInternalTransfer (id: string, transactions: readonly Transacti
   ))
 }
 
-/** Include pending authorizations and completed purchases that have not appeared in booked history. */
+/** Supplement booked history only with current pending authorizations. */
 function unbookedOnlineTransactions (
   current: readonly OnlineOperation[],
   accounts: readonly Account[],
@@ -121,7 +121,7 @@ function unbookedOnlineTransactions (
   for (const operation of current) {
     const state = text(operation.record, 'state')
     console.assert(state === 'AUTHORIZED' || state === 'SETTLED', 'Unsupported MyAmeria online transaction state', { state })
-    if (state === 'SETTLED' && !['purchase:pos', 'purchase:e-pos', 'purchasecompletion:e-pos'].includes(text(operation.record, 'transactionType'))) continue
+    if (state === 'SETTLED') continue
     const date = operationDate(operation)
     if (!withinPeriod(date, fromDate, toDate) || linked.has(operationId(operation))) continue
     const id = operationId(operation)
