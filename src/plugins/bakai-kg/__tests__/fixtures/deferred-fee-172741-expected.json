@@ -1,0 +1,165 @@
+[
+  {
+    "hold": null,
+    "date": "2026-10-21T11:36:38+06:00",
+    "movements": [
+      {
+        "id": "723660074:debit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": {
+          "sum": -520,
+          "instrument": "NZD"
+        },
+        "sum": -300.9,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Hobbiton Movie Set Tou",
+      "city": null,
+      "country": null,
+      "mcc": 7991,
+      "location": null
+    },
+    "comment": null
+  },
+  {
+    "hold": null,
+    "date": "2026-10-21T04:48:17+06:00",
+    "movements": [
+      {
+        "id": "723444419:credit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": null,
+        "sum": 336.95,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  {
+    "hold": null,
+    "date": "2026-10-21T02:38:34+06:00",
+    "movements": [
+      {
+        "id": "723329018:debit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": {
+          "sum": -441,
+          "instrument": "NZD"
+        },
+        "sum": -254.16,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Immigration New Zealan",
+      "city": null,
+      "country": null,
+      "mcc": 9399,
+      "location": null
+    },
+    "comment": null
+  },
+  {
+    "hold": null,
+    "date": "2026-10-21T02:34:56+06:00",
+    "movements": [
+      {
+        "id": "723329549:credit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": null,
+        "sum": 22.46,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  {
+    "hold": null,
+    "date": "2026-10-21T02:31:35+06:00",
+    "movements": [
+      {
+        "id": "723328956:credit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": null,
+        "sum": 235.86,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  {
+    "hold": null,
+    "date": "2026-10-18T20:07:27+06:00",
+    "movements": [
+      {
+        "id": "710317684:debit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": {
+          "sum": -520,
+          "instrument": "NZD"
+        },
+        "sum": -299.69,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Hobbiton Movie Set Tou",
+      "city": null,
+      "country": null,
+      "mcc": 7991,
+      "location": null
+    },
+    "comment": null
+  },
+  {
+    "hold": null,
+    "date": "2026-10-18T20:02:24+06:00",
+    "movements": [
+      {
+        "id": "710301130:credit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": null,
+        "sum": 322.86,
+        "fee": -20
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  },
+  {
+    "hold": null,
+    "date": "2026-10-18T20:01:12+06:00",
+    "movements": [
+      {
+        "id": "710300985:credit",
+        "account": {
+          "id": "1006"
+        },
+        "invoice": null,
+        "sum": 11.13,
+        "fee": 0
+      }
+    ],
+    "merchant": null,
+    "comment": null
+  }
+]

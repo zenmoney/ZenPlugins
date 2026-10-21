@@ -78,7 +78,7 @@ function merchantFor (record: unknown, code: string): Merchant | null {
   }
 }
 
-export function convertTransaction (record: unknown, account: AccountOrCard): ExtendedTransaction {
+export function convertTransaction (record: unknown, account: AccountOrCard, fee = 0): ExtendedTransaction {
   if (account.type === AccountType.checking) return convertAccountTransaction(record, account)
   const amount = getOptNumber(record, 'amount')
   const original = getOptNumber(record, 'operation_amount')
@@ -86,6 +86,7 @@ export function convertTransaction (record: unknown, account: AccountOrCard): Ex
   const originalCurrency = getOptString(record, 'operation_currency')
   const code = getOptString(record, 'type_code')
   assert(amount != null && Number.isFinite(amount) && original != null && Number.isFinite(original), 'Bank operation amount is invalid')
+  assert(amount !== 0, 'Zero-value bank operation requires statement context')
   assert(currency === account.instrument && originalCurrency != null && /^[A-Z]{3}$/.test(originalCurrency), 'Bank operation currency is invalid')
   assert(code != null && code !== '', 'Bank operation type is missing')
   assert(amount * original >= 0, 'Bank operation amounts have contradictory signs')
@@ -96,9 +97,9 @@ export function convertTransaction (record: unknown, account: AccountOrCard): Ex
     id: sourceId == null || sourceId === '' ? null : `${sourceId}:${amount < 0 ? 'debit' : 'credit'}`,
     account: { id: account.id },
     invoice: originalCurrency === account.instrument ? null : { sum: original, instrument: originalCurrency },
-    sum: amount,
-    // No separate fee breakdown is supplied. Preserve the complete account effect.
-    fee: 0
+    sum: amount - fee,
+    // A matched deferred issuer fee is already included in the net account amount.
+    fee
   }
   const comment = getOptString(record, 'comment')?.replace(/\s+/g, ' ').trim()
   const transaction: ExtendedTransaction = {
@@ -122,7 +123,7 @@ export function convertTransaction (record: unknown, account: AccountOrCard): Ex
   if ((code === 'OPTP0422' && amount > 0) || (code === '120' && amount < 0)) {
     // Observed opposite sides match within one second. This is a minute-based
     // heuristic, not a shared bank reference. An absent side stays unpaired.
-    transaction.groupKeys = [`bakai:${currency}:${Math.abs(amount)}:${Math.floor(date.getTime() / 60000)}`]
+    transaction.groupKeys = [`bakai:${currency}:${Math.abs(amount - fee)}:${Math.floor(date.getTime() / 60000)}`]
   }
   return transaction
 }
@@ -147,7 +148,27 @@ function convertAccountTransaction (record: unknown, account: AccountOrCard): Ex
 }
 
 export function convertTransactions (records: unknown[], account: AccountOrCard, fromDate: Date, toDate?: Date): ExtendedTransaction[] {
-  const result = records.map(record => convertTransaction(record, account)).filter(transaction =>
+  const deferred = new Set<unknown>()
+  const fees = new Map<unknown, number>()
+  if (account.type === AccountType.ccard) {
+    for (const record of records) {
+      if (getOptString(record, 'type_code') !== 'OPTP0119' || getOptNumber(record, 'amount') !== 0) continue
+      const fee = getOptNumber(record, 'operation_amount')
+      const date = operationDate(getOptString(record, 'date'))
+      const matches = records.filter(credit => {
+        const net = getOptNumber(credit, 'amount')
+        const gross = getOptNumber(credit, 'operation_amount')
+        return ['OPTP0422', 'OPTP0026'].includes(getOptString(credit, 'type_code') ?? '') &&
+          net != null && net > 0 && gross != null && Number.isFinite(gross) && fee != null && fee < 0 &&
+          [record, credit].every(item => getOptString(item, 'currency') === account.instrument && getOptString(item, 'operation_currency') === account.instrument) &&
+          Math.round((net - gross) * 100) === Math.round(fee * 100) && operationDate(getOptString(credit, 'date')) >= date
+      })
+      assert(matches.length === 1 && !fees.has(matches[0]), 'Deferred issuer fee cannot be matched unambiguously')
+      fees.set(matches[0], fee as number)
+      deferred.add(record)
+    }
+  }
+  const result = records.filter(record => !deferred.has(record)).map(record => convertTransaction(record, account, fees.get(record) ?? 0)).filter(transaction =>
     transaction.date.getTime() >= fromDate.getTime() && (toDate == null || transaction.date.getTime() <= toDate.getTime())
   )
   const ids = new Set<string>()
