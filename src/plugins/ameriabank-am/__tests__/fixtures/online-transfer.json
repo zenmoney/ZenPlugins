@@ -1,0 +1,63 @@
+{
+  "onlineResponse": {
+    "status": "success",
+    "data": {
+      "totalCount": 1,
+      "entries": [
+        {
+          "id": "810143",
+          "transactionType": "account:credit",
+          "accountingType": "CREDIT",
+          "state": "AUTHORIZED",
+          "amount": {
+            "currency": "AMD",
+            "amount": 42873.61
+          },
+          "correspondentAccountNumber": "1570010000000002",
+          "correspondentAccountName": "",
+          "details": "EXAMPLEBANK API GATE 7 A.EXAMPLE STR. SAMPLECITY FRA",
+          "operationDate": "2026-05-28T07:16:44.000Z",
+          "workflowCode": "account:credit",
+          "date": "28 May",
+          "year": "2026",
+          "month": "May"
+        }
+      ]
+    },
+    "errorMessages": null
+  },
+  "history": [
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 42873.61
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 42873.61
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 42873.61
+      },
+      "transactionType": "transfer:between-own-accounts",
+      "beneficiaryName": "ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 004",
+      "debitAccountNumber": "1570010000000005",
+      "creditAccountNumber": "1570010000000002",
+      "flowDirection": "EXPENSE",
+      "details": "Transfer of own funds",
+      "sourceSystem": null,
+      "settledDate": 1779952604000,
+      "transactionDate": 1779952604000,
+      "additionalInfo": null,
+      "transactionId": "0f857c57-b772-5f54-b58b-8f2222eda1af",
+      "id": "0f857c57-b772-5f54-b58b-8f2222eda1af",
+      "workflowCode": "transfer:between-own-accounts",
+      "date": "28 May",
+      "year": "2026",
+      "month": "May"
+    }
+  ]
+}

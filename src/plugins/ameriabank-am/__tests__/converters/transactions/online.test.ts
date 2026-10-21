@@ -1,9 +1,10 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { AccountOrCard, AccountType } from '../../../../../types/zenmoney'
+import { Account, AccountOrCard, AccountType, Transaction } from '../../../../../types/zenmoney'
 import { OnlineSource } from '../../../models'
 import { combineOnlineTransactions, matchingCardMerchant } from '../../../converters/online'
-import { convertTransactions } from '../../../converters'
+import { convertAccounts, convertTransactions } from '../../../converters'
+import { BankCapture } from '../../../testModels'
 
 /** Load complete observed records without sharing mutable test state. */
 function scenario (): { fixture: { onlineResponse: { data: { entries: unknown[] } }, history: unknown[] }, account: AccountOrCard, source: OnlineSource, fromDate: Date } {
@@ -206,4 +207,73 @@ it('[model] retains the original purchase identities when only their completions
   const first = combineOnlineTransactions([], [], [source], [account], fromDate, undefined, { imported, historyAliases: {} })
   const entries = [source.entries[2], source.entries[0]]
   expect(combineOnlineTransactions([], [], [{ ...source, entries }], [account], fromDate, undefined, JSON.parse(JSON.stringify(first.state)))).toEqual(first)
+})
+
+/** Reuse the complete account graph for the same observed source account and receiving card. */
+function transferScenario (): { history: unknown[], accounts: Account[], source: OnlineSource, fromDate: Date, expected: Transaction[], pending: Transaction[] } {
+  const fixture: { onlineResponse: { data: { entries: unknown[] } }, history: unknown[] } = JSON.parse(readFileSync(join(__dirname, '../../fixtures/online-transfer.json'), 'utf8'))
+  const capture: BankCapture = JSON.parse(readFileSync(join(__dirname, '../../fixtures/capture.json'), 'utf8'))
+  const accounts = convertAccounts(capture.graph, capture.products).accounts
+  const source = { accountId: '1570010000000002', cardId: '900000431', entries: fixture.onlineResponse.data.entries }
+  const fromDate = new Date('2026-05-28T00:00:00+04:00')
+  const expected: Transaction[] = [{
+    date: new Date('2026-05-28T07:16:44.000Z'),
+    hold: false,
+    movements: [
+      { id: '0f857c57-b772-5f54-b58b-8f2222eda1af:1570010000000005', account: { id: '1570010000000005' }, sum: -42873.61, fee: 0, invoice: null },
+      { id: '0f857c57-b772-5f54-b58b-8f2222eda1af:1570010000000002', account: { id: '1570010000000002' }, sum: 42873.61, fee: 0, invoice: null }
+    ],
+    merchant: null,
+    comment: 'Transfer of own funds'
+  }]
+  const pending: Transaction[] = [{
+    date: new Date('2026-05-28T07:16:44.000Z'),
+    hold: true,
+    movements: [{ id: 'online:900000431:810143:2026-05-28T07:16:44.000Z:1570010000000002', account: { id: source.accountId }, sum: 42873.61, fee: 0, invoice: null }],
+    merchant: { fullTitle: 'EXAMPLEBANK API GATE 7 A.EXAMPLE STR. SAMPLECITY FRA', mcc: null, location: null },
+    comment: null
+  }]
+  return { history: fixture.history, accounts, source, fromDate, expected, pending }
+}
+
+it('returns the observed full own-account transfer once despite the receiving card authorization (TRANSFER-004)', () => {
+  const { history, accounts, source, fromDate, expected } = transferScenario()
+  const booked = convertTransactions(history, accounts, {}, fromDate)
+  expect(combineOnlineTransactions(history, booked, [source], accounts, fromDate)).toEqual({ transactions: expected, state: { imported: [], historyAliases: {} } })
+})
+
+// Model an earlier import of the observed card-side credit; the full transfer must keep its booked IDs.
+it('[model] keeps booked transfer identities when removing a previously imported receiving authorization (ID-001, TRANSFER-004)', () => {
+  const { history, accounts, source, fromDate, expected } = transferScenario()
+  const booked = convertTransactions(history, accounts, {}, fromDate)
+  const imported = source.entries.map(record => ({ accountId: source.accountId, cardId: source.cardId, record }))
+  expect(combineOnlineTransactions(history, booked, [source], accounts, fromDate, undefined, { imported, historyAliases: {} })).toEqual({ transactions: expected, state: { imported: [], historyAliases: {} } })
+})
+
+it('preserves the observed incoming authorization while its booked transfer is unavailable (STATUS-001, TRANSFER-001)', () => {
+  const { accounts, source, fromDate, pending } = transferScenario()
+  expect(combineOnlineTransactions([], [], [source], accounts, fromDate).transactions).toEqual(pending)
+})
+
+// Model a repeat import after the transient card-side record has disappeared.
+it('[model] removes obsolete receiving-credit metadata without replaying it alongside the full transfer (TRANSFER-004)', () => {
+  const { history, accounts, source, fromDate, expected } = transferScenario()
+  const booked = convertTransactions(history, accounts, {}, fromDate)
+  const imported = source.entries.map(record => ({ accountId: source.accountId, cardId: source.cardId, record }))
+  expect(combineOnlineTransactions(history, booked, [], accounts, fromDate, undefined, { imported, historyAliases: {} })).toEqual({ transactions: expected, state: { imported: [], historyAliases: {} } })
+})
+
+// Model missing converted counterpart evidence without altering the observed bank records.
+it('[model] retains the receiving authorization when no confirmed full transfer was converted (TRANSFER-001)', () => {
+  const { history, accounts, source, fromDate, pending } = transferScenario()
+  expect(combineOnlineTransactions(history, [], [source], accounts, fromDate).transactions).toEqual(pending)
+})
+
+// Model repeated imports and overlapping copies of the same complete observed records.
+it('[model] keeps the full transfer and its booked identities stable across overlapping imports (TRANSFER-004, ID-001)', () => {
+  const { history, accounts, source, fromDate, expected } = transferScenario()
+  const booked = convertTransactions(history, accounts, {}, fromDate)
+  const first = combineOnlineTransactions(history, booked, [source], accounts, fromDate)
+  const repeated = { ...source, entries: [...source.entries, ...source.entries] }
+  expect(combineOnlineTransactions([...history, ...history], booked, [repeated], accounts, fromDate, undefined, first.state)).toEqual({ transactions: expected, state: { imported: [], historyAliases: {} } })
 })

@@ -93,3 +93,27 @@ existing ordinary duplicates. Tests using settled pairs as previously imported
 state are labeled `[model]`; they verify identity migration and persistence without
 inventing earlier bank responses. Application-side hold cleanup and the captured
 purchase pairs reaching booked history remain unverified.
+
+`online-transfer.json` contains a complete receiving-card `account:credit`
+authorization and its approved `transfer:between-own-accounts` history record.
+The records share an exact operation timestamp, amount, currency and receiving
+account. History confirms the full transfer but labels its direction `EXPENSE`;
+Online describes the receiving side as `CREDIT`. The former direction comparison
+therefore returned the full transfer plus a separate incoming authorization.
+
+The fixture retains every selected record field; the Online envelope count
+reflects the selected subset. Account numbers, operation UUIDs, authorization
+references, account-holder names and merchant/address text use public-safe
+replacements. Dates and timestamps are shifted consistently, and the transfer
+amount is replaced equally across both sources and all monetary fields. Account mapping
+is consistent with the source account and receiving card in `capture.json`, whose
+complete graph is reused by the regression tests.
+
+Opposite-direction reconciliation requires converted output confirming a complete
+two-movement internal transfer under the same bank identity. Account, currency,
+amount and exact timestamp checks still apply. Uniqueness is assessed per account
+side. Booked transfer movement IDs remain authoritative; a prior one-sided
+authorization must not rename both sides. Tests verify the full monetary result,
+previous-import metadata cleanup, repeated/overlapping imports, and preservation
+of the pending credit without confirmed converted transfer evidence. Debit-side
+authorization and cross-currency overlaps remain evidence gaps for this incident.

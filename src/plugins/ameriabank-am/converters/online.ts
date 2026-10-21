@@ -29,7 +29,7 @@ export function combineOnlineTransactions (
   const previous = savedState(saved)
   const evidence = [...previous.imported, ...current]
   const purchases = purchaseOperations(current, evidence)
-  const reconciled = reconcileHistory(history, purchases, { ...previous, imported: purchaseOperations(previous.imported, evidence) })
+  const reconciled = reconcileHistory(history, transactions, purchases, { ...previous, imported: purchaseOperations(previous.imported, evidence) })
   const additions = newAuthorizations(purchases, accounts, reconciled.linked, fromDate, toDate)
   const imported = new Map([...reconciled.state.imported, ...additions.imported].map(operation => [operationId(operation), operation]))
   const combined = transactions.map(transaction => aliasedTransaction(transaction, reconciled.state.historyAliases))
@@ -74,6 +74,7 @@ function matchingPurchase (authorization: OnlineOperation, completion: OnlineOpe
 /** Link unique history matches and retain the identities of previously imported authorizations. */
 function reconcileHistory (
   history: readonly unknown[],
+  transactions: readonly Transaction[],
   current: readonly OnlineOperation[],
   previous: OnlineState
 ): { linked: ReadonlySet<string>, state: OnlineState } {
@@ -81,19 +82,27 @@ function reconcileHistory (
   const imported = new Map(previous.imported.map(operation => [operationId(operation), operation]))
   const candidates = new Map([...previous.imported, ...current].map(operation => [operationId(operation), operation]))
   const uniqueHistory = [...new Map(history.map(record => [text(record, 'transactionId'), record])).values()]
+  const transfers = new Set(uniqueHistory.map(record => text(record, 'transactionId')).filter(id => confirmedInternalTransfer(id, transactions)))
   const linked = new Set<string>()
   for (const operation of candidates.values()) {
-    const matches = uniqueHistory.filter(record => matchingHistory(operation, record))
+    const matches = uniqueHistory.filter(record => matchingHistory(operation, record, transfers))
     const wasImported = imported.has(operationId(operation))
-    if (matches.length !== 1 || [...candidates.values()].filter(candidate => matchingHistory(candidate, matches[0])).length !== 1) continue
+    if (matches.length !== 1 || [...candidates.values()].filter(candidate => candidate.accountId === operation.accountId && matchingHistory(candidate, matches[0], transfers)).length !== 1) continue
     linked.add(operationId(operation))
     const id = text(matches[0], 'transactionId')
-    if (aliases[id] === undefined && (wasImported || operationDate(operation).getTime() !== number(matches[0], 'transactionDate'))) {
+    if (!transfers.has(id) && aliases[id] === undefined && (wasImported || operationDate(operation).getTime() !== number(matches[0], 'transactionDate'))) {
       aliases[id] = { id: wasImported ? operationId(operation) : id, date: operationDate(operation).toISOString() }
     }
     imported.delete(operationId(operation))
   }
   return { linked, state: { imported: [...imported.values()], historyAliases: aliases } }
+}
+
+/** A converted two-sided internal transfer confirms both account movements under the same bank identity. */
+function confirmedInternalTransfer (id: string, transactions: readonly Transaction[]): boolean {
+  return transactions.some(transaction => transaction.movements.length === 2 && transaction.movements.every(movement =>
+    'id' in movement.account && movement.id === `${id}:${movement.account.id}`
+  ))
 }
 
 /** Convert current unmatched authorizations once without replaying saved records. */
@@ -168,11 +177,12 @@ function operationDate (operation: OnlineOperation): Date {
 }
 
 /** Require direction, account, currency and amount plus a bank reference or exact transfer timestamp. */
-function matchingHistory (operation: OnlineOperation, history: unknown): boolean {
+function matchingHistory (operation: OnlineOperation, history: unknown, transfers: ReadonlySet<string>): boolean {
   const record = operation.record
   const debit = text(record, 'accountingType') === 'DEBIT'
   const account = text(history, debit ? 'debitAccountNumber' : 'creditAccountNumber')
-  if (account !== operation.accountId || text(history, 'flowDirection') !== (debit ? 'EXPENSE' : 'INCOME')) return false
+  if (account !== operation.accountId) return false
+  if (text(history, 'flowDirection') !== (debit ? 'EXPENSE' : 'INCOME') && !transfers.has(text(history, 'transactionId'))) return false
   if (text(record, 'amount.currency') !== text(history, 'transactionAmount.currency') || number(record, 'amount.amount') !== number(history, 'transactionAmount.value')) return false
   const elapsed = number(history, 'transactionDate') - operationDate(operation).getTime()
   if (text(history, 'transactionType') !== 'card') return elapsed === 0
