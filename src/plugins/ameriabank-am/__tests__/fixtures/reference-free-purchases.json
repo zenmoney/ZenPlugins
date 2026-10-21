@@ -1,0 +1,209 @@
+{
+  "onlineResponse": {
+    "totalCount": 4,
+    "entries": [
+      {
+        "id": "710001",
+        "transactionType": "purchase:pos",
+        "accountingType": "DEBIT",
+        "state": "SETTLED",
+        "amount": {
+          "currency": "AMD",
+          "amount": 18437
+        },
+        "correspondentAccountNumber": "1570010000000002",
+        "correspondentAccountName": "",
+        "details": "CITYONE MARKET HALL 7 MAINROAD AVE. CITYONE FRA",
+        "operationDate": "2024-03-17T16:49:06.000Z",
+        "workflowCode": "purchase:pos",
+        "date": "17 մարտի",
+        "year": "2024",
+        "month": "մարտ"
+      },
+      {
+        "id": "710002",
+        "transactionType": "purchase:pos",
+        "accountingType": "DEBIT",
+        "state": "SETTLED",
+        "amount": {
+          "currency": "AMD",
+          "amount": 287
+        },
+        "correspondentAccountNumber": "1570010000000002",
+        "correspondentAccountName": "",
+        "details": "BAKERYA MAINROAD 7 MAINROAD AVE. CITYONE FRA",
+        "operationDate": "2024-03-17T15:50:27.000Z",
+        "workflowCode": "purchase:pos",
+        "date": "17 մարտի",
+        "year": "2024",
+        "month": "մարտ"
+      },
+      {
+        "id": "710003",
+        "transactionType": "purchase:pos",
+        "accountingType": "DEBIT",
+        "state": "SETTLED",
+        "amount": {
+          "currency": "AMD",
+          "amount": 3189
+        },
+        "correspondentAccountNumber": "1570010000000002",
+        "correspondentAccountName": "",
+        "details": "BAKERYA MAINROAD 7 MAINROAD AVE. CITYONE FRA",
+        "operationDate": "2024-03-17T15:39:23.000Z",
+        "workflowCode": "purchase:pos",
+        "date": "17 մարտի",
+        "year": "2024",
+        "month": "մարտ"
+      },
+      {
+        "id": "710004",
+        "transactionType": "purchase:pos",
+        "accountingType": "DEBIT",
+        "state": "SETTLED",
+        "amount": {
+          "currency": "AMD",
+          "amount": 6137.42
+        },
+        "correspondentAccountNumber": "1570010000000002",
+        "correspondentAccountName": "",
+        "details": "SHOPXYZ GROUP LLC  CITYONE FRA",
+        "operationDate": "2024-03-16T14:36:38.000Z",
+        "workflowCode": "purchase:pos",
+        "date": "16 մարտի",
+        "year": "2024",
+        "month": "մարտ"
+      }
+    ]
+  },
+  "history": [
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 6137.42
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 6137.42
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 6137.42
+      },
+      "transactionType": "card",
+      "beneficiaryName": "Example payment processor",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570010000000011",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: SHOPXYZ GROUP LLC SHOPXYZ GROUP 0",
+      "sourceSystem": null,
+      "settledDate": 1710850274000,
+      "transactionDate": 1710850274000,
+      "additionalInfo": null,
+      "transactionId": "10000000-0000-4000-8000-000000000001",
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workflowCode": "card",
+      "date": "19 մարտի",
+      "year": "2024",
+      "month": "մարտ"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 287
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 287
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 287
+      },
+      "transactionType": "card",
+      "beneficiaryName": "Example payment processor",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570010000000011",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: BAKERYA MAINROAD CITYONE FR",
+      "sourceSystem": null,
+      "settledDate": 1710829552000,
+      "transactionDate": 1710829552000,
+      "additionalInfo": null,
+      "transactionId": "10000000-0000-4000-8000-000000000002",
+      "id": "10000000-0000-4000-8000-000000000002",
+      "workflowCode": "card",
+      "date": "19 մարտի",
+      "year": "2024",
+      "month": "մարտ"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 3189
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 3189
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 3189
+      },
+      "transactionType": "card",
+      "beneficiaryName": "Example payment processor",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570010000000011",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: BAKERYA MAINROAD CITYONE FR",
+      "sourceSystem": null,
+      "settledDate": 1710829514000,
+      "transactionDate": 1710829514000,
+      "additionalInfo": null,
+      "transactionId": "10000000-0000-4000-8000-000000000003",
+      "id": "10000000-0000-4000-8000-000000000003",
+      "workflowCode": "card",
+      "date": "19 մարտի",
+      "year": "2024",
+      "month": "մարտ"
+    },
+    {
+      "swiftPayment": null,
+      "status": "APPROVED",
+      "settledAmount": {
+        "currency": "AMD",
+        "value": 18437
+      },
+      "domesticAmount": {
+        "currency": "AMD",
+        "value": 18437
+      },
+      "transactionAmount": {
+        "currency": "AMD",
+        "value": 18437
+      },
+      "transactionType": "card",
+      "beneficiaryName": "Example market processor",
+      "debitAccountNumber": "1570010000000002",
+      "creditAccountNumber": "1570010000000012",
+      "flowDirection": "EXPENSE",
+      "details": "Ք: CITYONE MARKET HALL CITYONE",
+      "sourceSystem": null,
+      "settledDate": 1710829514000,
+      "transactionDate": 1710829514000,
+      "additionalInfo": null,
+      "transactionId": "10000000-0000-4000-8000-000000000004",
+      "id": "10000000-0000-4000-8000-000000000004",
+      "workflowCode": "card",
+      "date": "19 մարտի",
+      "year": "2024",
+      "month": "մարտ"
+    }
+  ]
+}

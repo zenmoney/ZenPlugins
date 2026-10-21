@@ -43,8 +43,9 @@ remain intact.
 
 Online authorizations are pending transactions (`hold: true`) under
 [STATUS-001](../../../../../docs/plugins/scrape/quality/amounts-and-statuses.md#status-001-preserve-lifecycle-states);
-completed Online purchases are emitted without a hold until shared history supplies
-their booked counterpart. A settled reservation alone is not a completed purchase. Observed same-code
+settled Online records are identity evidence only and do not produce financial
+movements. Completed purchases come from approved shared history. A settled
+reservation alone is not a completed purchase. Observed same-code
 operations at distinct timestamps remain separate unless lifecycle evidence
 supports a match. The fixture contains no refund or cancellation linkage for those
 records; matching only by amount, merchant or short reference is insufficient.
@@ -119,3 +120,27 @@ authorization must not rename both sides. Tests verify the full monetary result,
 previous-import metadata cleanup, repeated/overlapping imports, and preservation
 of the pending credit without confirmed converted transfer evidence. Debit-side
 authorization and cross-currency overlaps remain evidence gaps for this incident.
+
+`reference-free-purchases.json` preserves four complete settled Online purchases
+and their complete approved history counterparts from a local Android Bootloader
+capture of plugin 0.4 build 1. The fresh scrape emitted both sources separately.
+The booked descriptions omit the authorization references: two share merchant
+words before differing location/address text, another ends after its location,
+and another repeats its merchant brand followed by outlet zero. All four pairs
+agree on account, debit direction, original currency and amount, and fall within
+the existing seven-day booking window.
+
+Identifiers, processor names, merchant/place/address text, amounts and dates use
+consistent public-safe replacements. All timestamps share one fixed offset;
+display month/year fields follow the shifted dates. Selected objects retain every
+source field and significant whitespace. The Online envelope count describes the
+selected subset. No authentication state or raw capture is included.
+
+The regression returns each booked purchase once and does not emit settled Online
+records as additional expenses. Online supplements booked history only while the
+bank explicitly reports AUTHORIZED, with hold: true. When Online becomes SETTLED
+before history arrives, the payment waits for booked history; the bank-reported
+available balance remains authoritative. This known timing gap avoids guessing
+identity from merchants or equal amounts. No statement download is needed.
+Model coverage verifies that metadata saved by older versions cannot replay the
+settled expenses. Already stored ordinary duplicates are not deleted by the plugin.
