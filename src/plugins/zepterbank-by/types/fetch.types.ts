@@ -56,6 +56,7 @@ export interface FetchCardAccount extends FetchAccountBase {
 export interface FetchCardAccountMeta {
   _meta: {
     cardTransactionsFetchId: string
+    cardTransactionsFetchIds?: string[]
     productStatementFetchId: string
   }
 }

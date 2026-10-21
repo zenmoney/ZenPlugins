@@ -1,6 +1,6 @@
 import { fetchAccounts, fetchLogin, fetchCardTransactions, fetchProductStatement } from './fetchApi'
 import type { Account, Transaction } from '../../types/zenmoney'
-import { convertCardAccount, convertCurrentAccount, convertCardTransaction, convertStatementTransaction } from './converters'
+import { convertAccounts, convertCardTransaction, convertStatementTransaction } from './converters'
 import { BankMessageError, InvalidLoginOrPasswordError } from '../../errors'
 import { convertDateToYyyyMmDd, convertIsoDateStringToDate, getBusinessDateIdentityKey } from './helpers'
 import { mergeTransactions } from './mergeTransactions'
@@ -86,24 +86,18 @@ export const getAccounts = async ({ sessionToken }: { sessionToken: string }): P
     throw new BankMessageError(error.errorInfo.errorText)
   }
 
-  const { cards = [], accounts = [] } = data.products
-
-  return [
-    ...cards.map((acc) => convertCardAccount(acc)),
-    ...accounts.map((acc) => convertCurrentAccount(acc))
-  ]
+  return convertAccounts(data.products)
 }
 
 export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sessionToken: string, fromDate: Date, toDate: Date | undefined }, account: Account & FetchAccountMeta): Promise<Transaction[]> => {
-  const [cardTransactionsResponse, productStatementResponse] = await Promise.all([
-    (account._meta.cardTransactionsFetchId != null
-      ? fetchCardTransactions({
-        sessionToken,
-        from: convertDateToYyyyMmDd(fromDate),
-        to: convertDateToYyyyMmDd(toDate ?? new Date()),
-        cardId: account._meta.cardTransactionsFetchId
-      })
-      : Promise.resolve(null)),
+  const cardIds = account._meta.cardTransactionsFetchId == null ? [] : account._meta.cardTransactionsFetchIds ?? [account._meta.cardTransactionsFetchId]
+  const [cardTransactionsResponses, productStatementResponse] = await Promise.all([
+    Promise.all(cardIds.map(async cardId => await fetchCardTransactions({
+      sessionToken,
+      from: convertDateToYyyyMmDd(fromDate),
+      to: convertDateToYyyyMmDd(toDate ?? new Date()),
+      cardId
+    }))),
     fetchProductStatement({
       sessionToken,
       from: convertDateToYyyyMmDd(fromDate),
@@ -112,10 +106,11 @@ export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sess
     })
   ])
 
-  if (cardTransactionsResponse?.error != null) {
-    console.error('[GET_TRANSACTIONS] Card transactions error', cardTransactionsResponse.error)
-
-    throw new BankMessageError(cardTransactionsResponse.error.errorInfo.errorText)
+  for (const response of cardTransactionsResponses) {
+    if (response.error != null) {
+      console.error('[GET_TRANSACTIONS] Card transactions error', response.error)
+      throw new BankMessageError(response.error.errorInfo.errorText)
+    }
   }
 
   if (productStatementResponse.error != null) {
@@ -124,7 +119,7 @@ export const getTransactions = async ({ sessionToken, fromDate, toDate }: { sess
     throw new BankMessageError(productStatementResponse.error.errorInfo.errorText)
   }
 
-  const historyTransactions = dropCompletedPendingPurchases(cardTransactionsResponse?.data ?? [])
+  const historyTransactions = dropCompletedPendingPurchases(cardTransactionsResponses.flatMap(response => response.data ?? []))
     .filter((op) => op.amount !== '0.00')
     .map((op) => convertCardTransaction(op, account))
 

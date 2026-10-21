@@ -6,10 +6,12 @@ import {
   FetchCardTransaction,
   FetchStatementOperation,
   FetchCardAccountMeta,
-  FetchCurrentAccountMeta
+  FetchCurrentAccountMeta,
+  FetchAccountMeta
 } from './types/fetch.types'
 import { convertIsoDateStringToDate, getBusinessDateIdentityKey } from './helpers'
 import { appendCashbackComment } from './cashback.js'
+import get, { getOptArray } from '../../types/get'
 
 export type TransactionIdentityStage = 'pending' | 'posted'
 export type TransactionWithIdentityStage = Transaction & { identityStage?: TransactionIdentityStage }
@@ -95,6 +97,38 @@ const getStatementDedupDate = (fetchTransaction: FetchStatementOperation): Date 
   }
 
   return convertIsoDateStringToDate(`${fetchTransaction.balanceDate}T00:00:00`)
+}
+
+export const convertAccounts = (products: unknown): Array<Account & FetchAccountMeta> => {
+  console.assert(products != null && typeof products === 'object' && !Array.isArray(products), 'Zepter products are missing')
+  console.assert(['cards', 'accounts'].every(key => get(products, key) === undefined || getOptArray(products, key) != null), 'Zepter product collection is invalid')
+  const cards = (getOptArray(products, 'cards') ?? []) as FetchCardAccount[]
+  const accounts = (getOptArray(products, 'accounts') ?? []) as FetchCurrentAccount[]
+  const groups = new Map<string, FetchCardAccount[]>()
+  for (const card of cards) {
+    const key = `${card.productId}|${card.currencyIso}`
+    const group = groups.get(key) ?? []
+    group.push(card)
+    groups.set(key, group)
+  }
+  const converted = [...groups.values()].map(group => {
+    // Log 171911 contains old/current card records for the same IBAN and balance.
+    const ordered = [...group].sort((left, right) => {
+      const byStatus = Number(left.status !== '0') - Number(right.status !== '0')
+      return byStatus !== 0 ? byStatus : left.productCardId.localeCompare(right.productCardId)
+    })
+    const primary = ordered[0]
+    console.assert(ordered.every(card => card.ibanNum === primary.ibanNum && card.contractNumber === primary.contractNumber &&
+      Number.isFinite(Number(card.amount)) && Number(card.amount) === Number(primary.amount)), 'Zepter card account representations disagree')
+    const account = convertCardAccount(primary)
+    const cardIds = [...new Set(ordered.map(card => card.productCardId))].sort()
+    if (cardIds.length > 1) {
+      account.syncIds = [...new Set(ordered.flatMap(card => convertCardAccount(card).syncIds))]
+      account._meta.cardTransactionsFetchIds = cardIds
+    }
+    return account
+  })
+  return [...converted, ...accounts.map(convertCurrentAccount)]
 }
 
 export const convertCardAccount = (fetchAccount: FetchCardAccount): Account & FetchCardAccountMeta => {
