@@ -37,7 +37,11 @@ async function fetchApi (url: string, token: string, options?: FetchOptions): Pr
 
 // Loads the login page first to establish the server session cookie.
 export async function fetchLoginPage (): Promise<void> {
-  await fetch(loginPageUrl, { method: 'GET' })
+  await fetch(loginPageUrl, {
+    method: 'GET',
+    sanitizeRequestLog: { headers: { Cookie: true, Authorization: true } },
+    sanitizeResponseLog: { headers: { 'Set-Cookie': true, Authorization: true } }
+  })
 }
 
 export async function fetchEnvironment (token: string): Promise<Environment> {
