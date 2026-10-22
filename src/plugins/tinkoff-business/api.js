@@ -209,5 +209,10 @@ export async function fetchTransactions ({ accessToken }, { inn }, { id }, fromD
       Authorization: `Bearer ${accessToken}`
     }
   })
+  console.assert(response.ok && Array.isArray(response.body?.operation), 'Unexpected bank statement response', {
+    status: response.status,
+    errorCode: response.body?.errorCode,
+    errorId: response.body?.errorId
+  })
   return response.body.operation
 }
