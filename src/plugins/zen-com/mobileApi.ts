@@ -98,20 +98,15 @@ export async function fetchMobileIdentityRequirements (deviceId: string, session
   // Never return provider data: it can contain KYC tokens, URLs and personal data.
   const method = stringAt(body, 'method')
   const status = stringAt(body, 'status')
-  const knownProviders = ['IVP_IDENFY', 'IVP_VERIFF', 'IVP_SUMSUB', 'AVP_SUMSUB', 'IVP_AUTHOLOGIC']
   const sourceAttempts = arrayAt(body, 'attempts')
-  const providers = sourceAttempts.map(attempt => {
-    const provider = stringAt(attempt, 'provider').toUpperCase()
-    return knownProviders.includes(provider) ? provider : 'UNKNOWN'
-  })
-  const knownStatuses = ['SUCCESS', 'FAILED', 'WAITING_FOR_RESULT', 'IN_PROGRESS', 'EXPIRED', 'USER_CONFIRMATION', 'REVIEW']
+  const providers = sourceAttempts.map(attempt => stringAt(attempt, 'provider'))
   const attempts = sourceAttempts.map(attempt => {
     const status = stringAt(attempt, 'status')
-    return { id: stringAt(attempt, 'id'), status: knownStatuses.includes(status) ? status : 'UNKNOWN' }
+    return { id: stringAt(attempt, 'id'), status }
   })
   return {
-    method: ['FACE_REAUTH', 'FULL_AUTH'].includes(method) ? method : 'UNKNOWN',
-    status: ['ACTIVE', 'SUCCESS', 'FAILED'].includes(status) ? status : 'UNKNOWN',
+    method,
+    status,
     providers: [...new Set(providers)],
     attempts
   }
@@ -120,7 +115,8 @@ export async function fetchMobileIdentityRequirements (deviceId: string, session
 export async function createMobileFaceAttempt (deviceId: string, session: MobileIdentitySession): Promise<MobileFaceAttempt> {
   const body = await request(deviceId, 'reauth/' + encodeURIComponent(session.verificationId) + '/init-attempt/v2',
     { country: null }, { 'Access-Token': session.accessToken, 'Full-Reauth-Process-Flow': 'V2_USER_DATA_CONFIRMATION' })
-  assert(get(body, 'provider') === 'IVP_IDENFY', 'Unsupported ZEN.COM face verification provider')
+  const provider = stringAt(body, 'provider')
+  assert(provider === 'IVP_IDENFY', 'Unsupported ZEN.COM face verification provider', { provider })
   return { id: stringAt(body, 'attemptId'), token: stringAt(body, 'data.authToken') }
 }
 

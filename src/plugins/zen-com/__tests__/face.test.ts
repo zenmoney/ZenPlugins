@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events'
+import { headerMask } from '../request'
 import { UserInteractionError } from '../../../errors'
 import type { WebViewNavigationPolicy, WebViewRequestLogOptions } from '../../../common/webView'
 
@@ -42,7 +43,7 @@ describe('ZEN.COM iDenfy browser lifecycle [model]', () => {
     await expect(Promise.resolve(policy({ url: 'https://face.authentication.idenfy.com/?token=model-face-token', method: 'GET', headers: {}, source: 'webView' }))).resolves.toBe(2)
     expect(policy({ url: 'https://example.test/?token=model-face-token', method: 'GET', headers: {}, source: 'webView' })).toBe(true)
     expect(policy({ url: 'https://face.authentication.idenfy.com/?token=another-token', method: 'GET', headers: {}, source: 'webView' })).toBe(true)
-    expect(mockPolicy).toHaveBeenCalledWith(expect.any(Function), { sanitizeRequestLog: { url: { query: true }, headers: true } })
+    expect(mockPolicy).toHaveBeenCalledWith(expect.any(Function), { sanitizeRequestLog: { url: { query: { token: true } }, headers: headerMask } })
     expect(mockView.off).toHaveBeenCalledWith('close', expect.any(Function))
     expect(mockView.close).not.toHaveBeenCalled()
   })
@@ -55,19 +56,23 @@ describe('ZEN.COM iDenfy browser lifecycle [model]', () => {
     await expect(presentFaceVerification('model-face-token', false)).rejects.toBe(error)
     expect(mockView.close).toHaveBeenCalledTimes(1)
   })
-  it('masks the token and headers in actual navigation logs while preserving the host', async () => {
+  it('masks navigation credentials while preserving diagnostic headers and query fields', async () => {
     const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
     const { createNavigationPolicy } = jest.requireActual<typeof import('../../../common/webView')>('../../../common/webView')
     mockPolicy.mockImplementation((handler: unknown, options?: unknown) => createNavigationPolicy(handler as WebViewNavigationPolicy, options as WebViewRequestLogOptions))
     mockView.setContent.mockImplementation(async () => {
       const policy = mockView.navigationPolicy as unknown as WebViewNavigationPolicy
-      await policy({ url: 'https://face.authentication.idenfy.com/?token=model-face-token', method: 'GET', headers: { Cookie: 'model-provider-cookie' }, source: 'webView' })
+      await policy({ url: 'https://face.authentication.idenfy.com/?token=model-face-token&locale=en', method: 'GET', headers: { Cookie: 'model-provider-cookie', Authorization: 'model-provider-authorization', 'Request-Id': 'model-navigation-id' }, source: 'webView' })
+      await policy({ url: 'https://face.authentication.idenfy.com/?token=model-face-token', method: 'GET', headers: {}, source: 'webView' })
       events.emit('close')
     })
     await presentFaceVerification('model-face-token', false)
     const logs = JSON.stringify(debug.mock.calls)
     expect(logs).not.toContain('model-face-token')
     expect(logs).not.toContain('model-provider-cookie')
+    expect(logs).not.toContain('model-provider-authorization')
+    expect(logs).toContain('model-navigation-id')
+    expect(logs).toContain('locale=en')
     expect(logs).toContain('face.authentication.idenfy.com')
   })
   it('does not progress when the launcher is dismissed before opening verification', async () => {

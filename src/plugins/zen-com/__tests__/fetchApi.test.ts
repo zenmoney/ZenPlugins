@@ -6,7 +6,7 @@ import validationError from '../__fixtures__/mobile-device-validation-error.json
 import { arrayAt, stringAt } from '../validation'
 import { ZPAPIError } from '../../../errors'
 
-const session = { deviceId: 'model-device-secret', accessToken: 'model-access-secret' }
+const session = { deviceId: 'model-device-id', accessToken: 'model-access-secret' }
 const base = 'https://api.zen.com/mobile'
 beforeEach(() => {
   global.ZenMoney = { device: { os: { name: 'android', version: '9' }, model: 'Sync' } } as unknown as typeof ZenMoney
@@ -48,8 +48,8 @@ describe('ZEN.COM direct mobile transport', () => {
     })
     expect(await fetchHistoryPage(session)).toEqual(page1)
     const logs = JSON.stringify(debug.mock.calls)
-    for (const secret of ['model-device-secret', 'model-access-secret', 'secret-cookie', 'Alex Example', 'Taylor Example', 'Example Street', '10000 Example City']) expect(logs).not.toContain(secret)
-    for (const diagnostic of ['HTP_PURCHASE', 'MP101 OAZA', '1309.65', 'mcc', 'model-request-id']) expect(logs).toContain(diagnostic)
+    for (const secret of ['model-access-secret', 'secret-cookie', 'Alex Example', 'Taylor Example', 'Example Street', '10000 Example City']) expect(logs).not.toContain(secret)
+    for (const diagnostic of ['model-device-id', 'HTP_PURCHASE', 'MP101 OAZA', '1309.65', 'mcc', 'model-request-id']) expect(logs).toContain(diagnostic)
     expect(debug.mock.calls.some(call => call[0] === 'request')).toBe(true)
     expect(debug.mock.calls.some(call => call[0] === 'response')).toBe(true)
   })

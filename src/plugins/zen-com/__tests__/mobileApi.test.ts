@@ -1,4 +1,5 @@
 import fetchMock from 'fetch-mock'
+import get from '../../../types/get'
 import { createMobileFaceAttempt, fastMobileLogin, fetchMobileIdentityRequirements, initializeMobileIdentity, notifyMobileFaceAttempt, startMobileAuthentication, verifyMobileFactor, verifyMobileIdentityFactor } from '../mobileApi'
 import validationError from '../__fixtures__/mobile-validation-error.json'
 import deviceValidationError from '../__fixtures__/mobile-device-validation-error.json'
@@ -33,15 +34,15 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
     fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications', {
       status: 400, body: JSON.stringify(validationError), headers: { 'App-Check-Token': 'model-attestation-secret' }
     })
-    await expect(startMobileAuthentication('model-device-secret', '+12345678901')).rejects.toThrow()
+    await expect(startMobileAuthentication('model-device-id', '+12345678901')).rejects.toThrow()
     const request = fetchMock.lastOptions()
     expect(JSON.parse(String(request?.body))).toEqual({
       userIdentification: { phoneNumber: '+12345678901' }, operationType: 'LOGIN_INDIVIDUAL_CONTEXT', fingerPrintId: expectedFallback
     })
     expect(request?.headers).toEqual(expect.objectContaining({
       'Instance-Id': '',
-      'Mobile-Device-Id': 'model-device-secret',
-      'Installation-Id': 'model-device-secret',
+      'Mobile-Device-Id': 'model-device-id',
+      'Installation-Id': 'model-device-id',
       'Device-Os-Name': 'Android',
       'Device-Os-Subtype': 'HUAWEI',
       'Device-Os-Version': '9',
@@ -53,28 +54,29 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
     }))
     const logs = JSON.stringify(debug.mock.calls)
     expect(logs).not.toContain('+12345678901')
-    expect(logs).not.toContain(expectedFallback)
-    expect(logs).not.toContain('model-device-secret')
+    expect(logs).toContain(expectedFallback)
+    expect(logs).toContain('model-device-id')
     expect(logs).not.toContain('model-attestation-secret')
-    expect(logs).not.toContain('AuthenticationController')
+    expect(logs).toContain('AuthenticationController')
     expect(logs).toContain('validation_error')
     expect(logs).toContain('HUAWEI')
     expect(logs).toContain('Etc/UTC')
   })
 
-  it('retains the observed device validation field without raw messages or rejected values', async () => {
+  it('retains the observed validation details while masking the login phone', async () => {
     const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
     fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications', {
       status: 400, body: JSON.stringify(deviceValidationError)
     })
-    await expect(startMobileAuthentication('model-device-secret', '+12345678901')).rejects.toThrow()
+    await expect(startMobileAuthentication('model-device-id', '+12345678901')).rejects.toThrow()
     const responseLog = debug.mock.calls.find(call => call[0] === 'response')?.[1]
     expect(responseLog).toEqual(expect.objectContaining({
       status: 400,
-      body: expect.objectContaining({ code: 'validation_error', validationFields: ['deviceId'] })
+      body: expect.objectContaining({ error: expect.objectContaining({ code: 'validation_error', errors: get(deviceValidationError, 'error.errors') }) })
     }))
     const logs = JSON.stringify(debug.mock.calls)
-    for (const value of ['AuthenticationControllerV2', 'rejected value', '+12345678901', 'model-device-secret']) expect(logs).not.toContain(value)
+    expect(logs).not.toContain('+12345678901')
+    for (const value of ['AuthenticationControllerV2', 'size must be between', 'model-device-id']) expect(logs).toContain(value)
   })
 
   it('accepts the observed 201 OTP step with its timer and masks the access token', async () => {
@@ -84,7 +86,7 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
     fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications', {
       status: 201, body: JSON.stringify(otpResponse)
     })
-    await expect(startMobileAuthentication('model-device-secret', '+12345678901')).resolves.toEqual({
+    await expect(startMobileAuthentication('model-device-id', '+12345678901')).resolves.toEqual({
       authenticationId: '00000000-0000-4000-8000-000000000001',
       accessToken: 'fixture-mobile-otp-access-token',
       refreshToken: null,
@@ -105,7 +107,7 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
     try {
       const error = new Error('Model network failure')
       fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications', { throws: error })
-      await expect(startMobileAuthentication('model-device-secret', '+12345678901')).rejects.toBe(error)
+      await expect(startMobileAuthentication('model-device-id', '+12345678901')).rejects.toBe(error)
       expect(fetchMock.lastOptions()?.headers).toEqual(expect.objectContaining({ 'Device-Timezone': 'GMT+02:00' }))
     } finally {
       Object.defineProperty(global, 'Intl', { value: originalIntl, configurable: true, writable: true })
@@ -115,10 +117,10 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
   it('parses the observed passcode and identity steps without treating them as completed authorization', async () => {
     const step = { accessToken: 'model-otp-token', refreshToken: null, authenticationId: '00000000-0000-4000-8000-000000000001', nextFactor: 'OTP' as const }
     fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications/' + step.authenticationId + '/factors/otp/verify', { status: 200, body: JSON.stringify(passcodeResponse) })
-    const passcode = await verifyMobileFactor('model-device-secret', step, 'model-sms')
+    const passcode = await verifyMobileFactor('model-device-id', step, 'model-sms')
     expect(passcode).toEqual({ ...step, accessToken: 'fixture-mobile-passcode-access-token', nextFactor: 'PASSCODE' })
     fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications/' + step.authenticationId + '/factors/passcode/verify', { status: 200, body: JSON.stringify(identityResponse) })
-    await expect(verifyMobileFactor('model-device-secret', passcode, 'model-passcode')).resolves.toEqual({
+    await expect(verifyMobileFactor('model-device-id', passcode, 'model-passcode')).resolves.toEqual({
       ...step, accessToken: 'fixture-mobile-identity-access-token', nextFactor: 'IDENTITY'
     })
   })
@@ -127,7 +129,7 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
     const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
     const error = new Error('Model identity initialization network failure')
     fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications/model-id/factors/identity/initialize', { throws: error })
-    await expect(initializeMobileIdentity('model-device-secret', {
+    await expect(initializeMobileIdentity('model-device-id', {
       accessToken: 'model-identity-token', refreshToken: null, authenticationId: 'model-id', nextFactor: 'IDENTITY'
     })).rejects.toBe(error)
     expect(fetchMock.lastOptions()?.body).toBeUndefined()
@@ -141,16 +143,16 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
     fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications/model-id/factors/identity/initialize', {
       status: 200, body: JSON.stringify(identityInitializationResponse)
     })
-    const initialized = await initializeMobileIdentity('model-device-secret', {
+    const initialized = await initializeMobileIdentity('model-device-id', {
       accessToken: 'model-identity-token', refreshToken: null, authenticationId: 'model-id', nextFactor: 'IDENTITY'
     })
     expect(initialized).toEqual({
       verificationId: '00000000-0000-4000-8000-000000000002', accessToken: 'fixture-mobile-initialized-identity-token'
     })
-    // No successful requirements response has been captured. Model a network failure.
+    // Model a network failure after the observed initialization response.
     const error = new Error('Model requirements network failure after observed initialization')
     fetchMock.get('https://api.zen.com/mobile/reauth/00000000-0000-4000-8000-000000000002/v2', { throws: error })
-    await expect(fetchMobileIdentityRequirements('model-device-secret', initialized)).rejects.toBe(error)
+    await expect(fetchMobileIdentityRequirements('model-device-id', initialized)).rejects.toBe(error)
     expect(fetchMock.lastOptions()?.headers).toEqual(expect.objectContaining({ 'Access-Token': 'fixture-mobile-initialized-identity-token' }))
     const logs = JSON.stringify(debug.mock.calls)
     expect(logs).not.toContain('fixture-mobile-initialized-identity-token')
@@ -162,7 +164,7 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
     const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
     const error = new Error('Model identity requirements network failure')
     fetchMock.get('https://api.zen.com/mobile/reauth/model-verification/v2', { throws: error })
-    await expect(fetchMobileIdentityRequirements('model-device-secret', { verificationId: 'model-verification', accessToken: 'model-identity-token' })).rejects.toBe(error)
+    await expect(fetchMobileIdentityRequirements('model-device-id', { verificationId: 'model-verification', accessToken: 'model-identity-token' })).rejects.toBe(error)
     expect(fetchMock.lastOptions()?.method).toBe('GET')
     expect(fetchMock.lastOptions()?.body).toBeUndefined()
     expect(fetchMock.lastOptions()?.headers).toEqual(expect.objectContaining({ 'Access-Token': 'model-identity-token' }))
@@ -175,7 +177,7 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
     fetchMock.get('https://api.zen.com/mobile/reauth/00000000-0000-4000-8000-000000000002/v2', {
       status: 200, body: JSON.stringify(identityRequirementsResponse)
     })
-    const requirements = await fetchMobileIdentityRequirements('model-device-secret', {
+    const requirements = await fetchMobileIdentityRequirements('model-device-id', {
       verificationId: '00000000-0000-4000-8000-000000000002', accessToken: 'model-identity-token'
     })
     expect(requirements).toEqual({ method: 'FACE_REAUTH', status: 'ACTIVE', providers: [], attempts: [] })
@@ -207,6 +209,41 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
     const logs = JSON.stringify(debug.mock.calls)
     expect(logs).not.toContain('fixture-idenfy-face-token')
     expect(logs).not.toContain('model-access-token')
+    expect(logs).toContain('IVP_IDENFY')
+  })
+
+  it('[model] preserves an unknown face provider in logs and the reportable error', async () => {
+    // Model diagnostic preservation, not support for a new bank provider.
+    const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
+    fetchMock.post('https://api.zen.com/mobile/reauth/model-verification/init-attempt/v2', {
+      status: 200, body: JSON.stringify({ provider: 'ivp_model_new_provider', data: { token: 'model-provider-secret' } })
+    })
+    await expect(createMobileFaceAttempt('model-device', { verificationId: 'model-verification', accessToken: 'model-access-token' }))
+      .rejects.toThrow("provider: 'ivp_model_new_provider'")
+    const logs = JSON.stringify(debug.mock.calls)
+    expect(logs).toContain('ivp_model_new_provider')
+    expect(logs).not.toContain('model-provider-secret')
+    expect(logs).not.toContain('UNKNOWN')
+  })
+
+  it('[model] preserves new identity method, provider and status labels verbatim', async () => {
+    // Unknown protocol labels must remain diagnosable, not become successful auth.
+    const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
+    fetchMock.get('https://api.zen.com/mobile/reauth/model-verification/v2', JSON.stringify({
+      method: 'MODEL_NEW_METHOD',
+      status: 'MODEL_NEW_STATUS',
+      firstName: 'model-person-name',
+      attempts: [{ id: 'model-attempt', provider: 'ivp_model_new_provider', status: 'MODEL_NEW_ATTEMPT_STATUS', data: { authToken: 'model-provider-secret' } }]
+    }))
+    await expect(fetchMobileIdentityRequirements('model-device', { verificationId: 'model-verification', accessToken: 'model-access-token' })).resolves.toEqual({
+      method: 'MODEL_NEW_METHOD',
+      status: 'MODEL_NEW_STATUS',
+      providers: ['ivp_model_new_provider'],
+      attempts: [{ id: 'model-attempt', status: 'MODEL_NEW_ATTEMPT_STATUS' }]
+    })
+    const logs = JSON.stringify(debug.mock.calls)
+    for (const value of ['MODEL_NEW_METHOD', 'MODEL_NEW_STATUS', 'ivp_model_new_provider', 'MODEL_NEW_ATTEMPT_STATUS', 'model-attempt']) expect(logs).toContain(value)
+    for (const value of ['model-provider-secret', 'model-person-name', 'model-access-token']) expect(logs).not.toContain(value)
   })
 
   it('[model] notifies and verifies through separate routes without inventing successful responses', async () => {
@@ -225,15 +262,15 @@ describe('ZEN.COM mobile transport [model requests, observed responses]', () => 
   it('masks fast-login credentials and factor access tokens', async () => {
     const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
     fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications/fast-login', { status: 400, body: JSON.stringify(validationError) })
-    await expect(fastMobileLogin('model-device-secret', 'model-login-secret', 'model-passcode-secret')).rejects.toThrow()
+    await expect(fastMobileLogin('model-device-id', 'model-login-secret', 'model-passcode-secret')).rejects.toThrow()
     expect(JSON.parse(String(fetchMock.lastOptions()?.body))).toEqual({
       accessToken: 'model-login-secret', secret: 'model-passcode-secret', factorType: 'PASSCODE', operationType: 'LOGIN_INDIVIDUAL_CONTEXT', fingerPrintId: expectedFallback
     })
     fetchMock.post('https://api.zen.com/mobile/mobile-authentication/authentications/model-id/factors/passcode/verify', { status: 400, body: JSON.stringify(validationError) })
-    await expect(verifyMobileFactor('model-device-secret', {
+    await expect(verifyMobileFactor('model-device-id', {
       authenticationId: 'model-id', accessToken: 'model-factor-secret', refreshToken: null, nextFactor: 'PASSCODE'
     }, 'model-passcode-secret')).rejects.toThrow()
     const logs = JSON.stringify(debug.mock.calls)
-    for (const secret of ['model-device-secret', 'model-login-secret', 'model-passcode-secret', 'model-factor-secret', expectedFallback]) expect(logs).not.toContain(secret)
+    for (const secret of ['model-login-secret', 'model-passcode-secret', 'model-factor-secret']) expect(logs).not.toContain(secret)
   })
 })

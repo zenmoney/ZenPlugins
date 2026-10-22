@@ -1,16 +1,12 @@
 import { fetchJson } from '../../common/network'
+import { sanitizeUrl } from '../../common/sanitize'
 import { generateUUID } from '../../common/utils'
-import get, { getOptString } from '../../types/get'
+import { getOptString } from '../../types/get'
 
 export const headerMask = {
   'authentication-access-token': true,
   'app-integrity-token': true,
   'app-check-token': true,
-  'device-id': true,
-  'mobile-device-id': true,
-  'installation-id': true,
-  'instance-id': true,
-  'metadata-id': true,
   authorization: true,
   cookie: true,
   'set-cookie': true,
@@ -21,38 +17,40 @@ export const headerMask = {
   'x-csrf-token': true
 }
 
-export function sanitizeBody (source: unknown, parent = '', transactionType = ''): unknown {
-  if (Array.isArray(source)) return source.map(value => sanitizeBody(value, parent, transactionType))
-  if (source === null || typeof source !== 'object') return source
-  const type = getOptString(source, 'transactionType') ?? transactionType
-  return Object.fromEntries(Object.entries(source).map(([key, value]: [string, unknown]) => {
-    const personalParty = parent === 'party' && (['HTP_EXCHANGE', 'HTP_TRANSFER_OUT', 'HTP_TRANSFER_IN'].includes(type) ||
-      (type === 'HTP_TOP_UP' && !['UAB ZEN.COM', 'ZEN.COM UAB'].includes(getOptString(source, 'name') ?? '')))
-    const secret = /^(?:access[_-]?token|refresh[_-]?token|login[_-]?token|cloning[_-]?token|fingerPrintId|login|session[_-]?token|session[_-]?id|password|passcode|pin|otp|secret|jwt|captcha[_-]?token|authorization|cookie|set-cookie|firstName|lastName|phoneNumber|email)$/i.test(key)
-    const personal = (parent === 'owner' || personalParty) && ['name', 'addressLine1', 'addressLine2'].includes(key)
-    const redacted = secret && value !== null && typeof value === 'object'
-      ? Object.fromEntries(Object.entries(value).map(([name, field]: [string, unknown]) => [name, name === 'validUntil' ? field : '<redacted>']))
-      : value == null ? value : '<redacted>'
-    return [key, secret || personal ? redacted : sanitizeBody(value, key, type)]
-  }))
-}
-
-// Authentication errors can echo account identifiers in free-form messages.
-// Keep only explicit diagnostic fields, never an arbitrary response object.
-function safeResponse (body: unknown): unknown {
-  const errors = get(body, 'error.errors')
-  // Only retain field names confirmed in observed validation responses.
-  const validationFields = Array.isArray(errors)
-    ? errors.map(error => getOptString(error, 'field')).filter(field => field === 'deviceId' || field === 'UserIdentificationDataMustBeValidConstraint')
-    : []
-  return {
-    code: getOptString(body, 'error.code'),
-    validationFields,
-    nextFactor: getOptString(body, 'nextFactor'),
-    blockadeExpirationTime: getOptString(body, 'blockadeExpirationTime'),
-    accessValidUntil: getOptString(body, 'accessToken.validUntil'),
-    refreshValidUntil: getOptString(body, 'refreshToken.validUntil')
+export function sanitizeBody (source: unknown, privateValues = new Set<string>()): unknown {
+  const redact = (value: unknown): unknown => {
+    if (typeof value === 'string' && value !== '') privateValues.add(value)
+    if (value !== null && typeof value === 'object') Object.values(value).forEach(redact)
+    return value == null ? value : '<redacted>'
   }
+  const fields = (source: unknown, parent = '', transactionType = ''): unknown => {
+    if (Array.isArray(source)) return source.map(value => fields(value, parent, transactionType))
+    if (source === null || typeof source !== 'object') return source
+    const type = getOptString(source, 'transactionType') ?? transactionType
+    return Object.fromEntries(Object.entries(source).map(([key, value]: [string, unknown]) => {
+      const personalParty = parent === 'party' && (['HTP_EXCHANGE', 'HTP_TRANSFER_OUT', 'HTP_TRANSFER_IN'].includes(type) ||
+        (type === 'HTP_TOP_UP' && !['UAB ZEN.COM', 'ZEN.COM UAB'].includes(getOptString(source, 'name') ?? '')))
+      const secret = /^(?:token|auth[_-]?token|access[_-]?token|refresh[_-]?token|login[_-]?token|cloning[_-]?token|login|session[_-]?token|session[_-]?id|password|passcode|pin|otp|secret|jwt|captcha[_-]?token|authorization|cookie|set-cookie|firstName|lastName|phoneNumber|email)$/i.test(key)
+      const personal = (parent === 'owner' || personalParty) && ['name', 'addressLine1', 'addressLine2'].includes(key)
+      // Token envelopes contain useful expiry/scope metadata; only their token is secret.
+      const tokenEnvelope = /^(?:access|refresh)[_-]?token$/i.test(key) && value !== null && typeof value === 'object' && !Array.isArray(value)
+      return [key, (secret || personal) && !tokenEnvelope ? redact(value) : fields(value, key, type)]
+    }))
+  }
+  const messages = (value: unknown, key = ''): unknown => {
+    if (Array.isArray(value)) return value.map(item => messages(item, key))
+    if (value !== null && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, messages(item, key)]))
+    if (typeof value !== 'string') return value
+    const url = /^https?:\/\//.test(value)
+    let text = url ? sanitizeUrl(value, { query: (query: unknown) => sanitizeBody(query, privateValues) }) : value
+    if (url || key === 'message' || key === 'privateDebug') {
+      // Preserve technical errors, removing only known request/response secrets and personal values.
+      for (const secret of [...privateValues].sort((a, b) => b.length - a.length)) text = text.split(secret).join('<redacted>')
+      return text
+    }
+    return text
+  }
+  return messages(fields(source))
 }
 
 function deviceTimeZone (now: Date): string {
@@ -66,8 +64,10 @@ function deviceTimeZone (now: Date): string {
   return 'GMT' + (offset >= 0 ? '+' : '-') + hours + ':' + minutes
 }
 
-export async function requestMobile (deviceId: string, path: string, body: object | undefined, authHeaders: Record<string, string> = {}, method: 'POST' | 'GET' = 'POST', responseSanitizer: (body: unknown) => unknown = safeResponse): Promise<unknown> {
+export async function requestMobile (deviceId: string, path: string, body: object | undefined, authHeaders: Record<string, string> = {}, method: 'POST' | 'GET' = 'POST'): Promise<unknown> {
   const requestId = '|' + generateUUID() + '.'
+  const privateValues = new Set(Object.entries(authHeaders).filter(([key]) => key.toLowerCase() in headerMask).map(([, value]) => value).filter(value => value !== ''))
+  const sanitize = (value: unknown): unknown => sanitizeBody(value, privateValues)
   const osName = getOptString(ZenMoney.device, 'os.name') ?? ''
   const platform = osName.toLowerCase() === 'android' ? 'Android' : osName
   const now = new Date(Date.now())
@@ -96,8 +96,8 @@ export async function requestMobile (deviceId: string, path: string, body: objec
       ...authHeaders
     },
     body,
-    sanitizeRequestLog: { headers: headerMask, body: sanitizeBody },
-    sanitizeResponseLog: { headers: headerMask, body: responseSanitizer }
+    sanitizeRequestLog: { url: { query: sanitize }, headers: headerMask, body: sanitize },
+    sanitizeResponseLog: { url: { query: sanitize }, headers: headerMask, body: sanitize }
   })
   assert(response.ok, 'ZEN.COM mobile request failed', { path, requestId, status: response.status, code: getOptString(response.body, 'error.code') })
   return response.body

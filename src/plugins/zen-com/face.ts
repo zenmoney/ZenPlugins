@@ -1,5 +1,6 @@
 import { WebView } from '../../common/webView'
 import { UserInteractionError } from '../../errors'
+import { headerMask } from './request'
 
 // Closing this UI only ends presentation. ZEN must independently confirm success.
 export async function presentFaceVerification (token: string, isInBackground: boolean): Promise<void> {
@@ -16,7 +17,7 @@ export async function presentFaceVerification (token: string, isInBackground: bo
   void dismissed.catch(() => {})
   const onClose = (): void => { closed = true; resolveClose() }
   const timeout = setTimeout(() => rejectClose(new Error('ZEN.COM face verification window timed out')), 300000)
-  const logging = { sanitizeRequestLog: { url: { query: true }, headers: true } }
+  const logging = { sanitizeRequestLog: { url: { query: { token: true } }, headers: headerMask } }
   try {
     view.on('close', onClose)
     view.navigationPolicy = WebView.createNavigationPolicy(navigation => {
