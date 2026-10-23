@@ -100,7 +100,7 @@ export const fetchTransaction: TransactionFetcher = rateLimit(RPC_MAX_RPS, async
     signature,
     {
       encoding: 'jsonParsed',
-      maxSupportedTransactionVersion: 0
+      maxSupportedTransactionVersion: 1
     }
   ])
   return response
