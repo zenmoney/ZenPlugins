@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html class="no_menu" lang="en">
+<head>
+	
+		
+			
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="utf-8">
+	<title>Banka Poštanska štedionica</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="generator" content="Webflow"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="stylesheet" type="text/css" href='/sbpo_mbank/static/components/normalize.css/normalize.css'/>
+
+		    <link rel="stylesheet" type="text/css" href='/sbpo_mbank/static/css/redesign_login.css' rel="stylesheet" type="text/css"/>
+    
+    <link rel="shortcut icon" type="image/x-icon"  sizes="128x128" href='/sbpo_mbank/static/images/android_128.png'/>
+    <link rel="shortcut icon" type="image/x-icon" sizes="192x192" href='/sbpo_mbank/static/images/android_192.png'/>
+    <link rel='shortcut icon' type='image/x-icon' href='/sbpo_mbank/static/images/favicon.ico' />
+
+    <link rel="apple-touch-icon" href='/sbpo_mbank/static/images/touch-icon-iphone.png'/>
+    <link rel="apple-touch-icon" sizes="76x76" href='/sbpo_mbank/static/images/touch-icon-ipad.png'/>
+    <link rel="apple-touch-icon" sizes="120x120" href='/sbpo_mbank/static/images/touch-icon-iphone-retina.png'/>
+    <link rel="apple-touch-icon" sizes="152x152" href='/sbpo_mbank/static/images/touch-icon-ipad-retina.png'/>
+
+		<script src='/sbpo_mbank/static/components/jquery/dist/jquery.js'></script> 	<script src='/sbpo_mbank/static/components/modernizr/modernizr.js'></script>
+		<script type="application/javascript" src='/sbpo_mbank/static/components/moment/moment.js'></script>
+	<script>
+		// TODO - :Deprecation warning: use moment.updateLocale(localeName, config) to change an existing locale. moment.defineLocale(localeName, config) should only be used for creating a new locale See http://momentjs.com/guides/#/warnings/define-locale/ for more info.
+	    moment.locale('en', {
+	        months : ["January","February","March","April","May","June","July","August","September","October","November","December"],
+	        monthsShort: ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sep","Oct","Nov","Dec"],
+	        weekdays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+	        weekdaysShort: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+	        weekdaysMin: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
+	    });
+	</script>
+	    <script src='/sbpo_mbank/static/components/webfontloader/webfontloader.js'></script>
+    <script>
+        WebFont.load({
+            google: {
+                families: ["Open Sans:300,300italic,400,400italic,600,600italic,700,700italic,800,800italic", "Economica:regular,italic,700,700italic:latin-ext,latin"]
+            }
+        });
+        WebFontConfig = {
+            google: {
+                families: [ "Open Sans:300,300italic,400,400italic,600,600italic,700,700italic,800,800italic", "Economica:regular,italic,700,700italic:latin-ext,latin" ]
+            },
+            timeout: 20000
+        };        
+    </script>
+	
+	    
+    
+    
+	
+            <link rel="stylesheet" href="/sbpo_mbank/static/components/bxslider/jquery.bxslider.css">
+    </head>
+	<body class="login">
+		
+<div class="clearfix container-fluid login">
+    <div class=" col-lg-8 col-xs-12  left clearfix">
+
+        			<div id="allert-message-container" class="messages messages_container_new hidden-print" data-testid="allert-message-container" data-role="message_container">
+				</div>
+	
+	
+        <div class="form clearfix">
+            <div class="login_form clearfix">
+            		<span class="inline-block logo en" 	href="/sbpo_mbank/%23"
+ id="logo-login-page"></span>
+	 <h1  id="welcome-message">Welcome</h1>
+
+                                <div>
+                    <div class="login_container">
+
+				
+
+             <div class="tabbable tabs-left loginbox clearfix hidden-print" role="tabpanel">
+                <ul class="nav  nav-tabs clearfix login-menu-wrapper" role="tablist">
+                    
+                                                                                    <li data-testid="certificate-tab" role="presentation" class="tab nav-item  hidden-xs hidden-sm">
+    
+    <a class="nav-link " aria-selected="false" role="tab" data-bs-toggle="tab" data-bs-target="#certificate" aria-controls="#certificate" href="#certificate"  >
+                            <div class="fa certificate overrideable" data-testid="login-btn-type-certificate"></div>
+        <div class="upper">Certificate</div>
+    
+            </a>
+</li>
+                
+                                                                <li data-testid="MPUSH-tab" role="presentation" class="tab nav-item  backbutton ">
+    
+    <a class="nav-link active" aria-selected="true" role="tab" data-bs-toggle="tab" data-bs-target="#mpush" aria-controls="#mpush" href="#mpush"  >
+                            <div class="fa mpush overrideable" data-testid="login-btn-type-mpush"></div>
+        <div class="upper">Mobile token</div>
+    
+            </a>
+</li>
+                            
+</ul>
+        
+</div>
+    
+    <div class="tab-content">
+                            <div id="certificate" class="tab-pane ">
+                                        		<div class="login_body_msg" id="user_messages_plain_container" data-role="message_container">
+		  <div id="" class="login_body_msg alert alert-danger alert-dismissible fade in" role="alert">
+                                The digital certificate could not be found. To login with your digital certificate, please connect your certificate and close all browser windows before navigating to the login page again.              		  </div>
+	</div>
+                        
+</div>
+                        <div id="mpush" class="tab-pane active ">
+                        	
+                        <input type="text"
+       name="fake_username"
+       autocomplete="username"
+       tabindex="-1"
+       style="display:none">
+
+    <input type="password"
+       name="fake_password"
+       autocomplete="current-password"
+       tabindex="-1"
+       style="display:none">
+
+            		                                <label class="caption " for="visibleauthentication_type"></label>
+                                                
+    							                                            	<input  class="w-input " id="visibleauthentication_type" type="hidden" placeholder="" autocomplete="off" name="authentication_type" data-name="authentication_type" required="required"                       
+                       autofocus="autofocus" value="MPUSH"                       onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','');"
+                       data-testid="login-input-mpush-authentication_type"
+                        readonly                                               >
+                        		                                <label class="caption " for="visibleauthentication_type"></label>
+                                                
+    							                                            	<input  class="w-input " id="visibleauthentication_type" type="hidden" placeholder="" autocomplete="off" name="authentication_type" data-name="authentication_type" required="required"                       
+                       autofocus="autofocus" value="MPUSH"                       onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','');"
+                       data-testid="login-input-mpush-authentication_type"
+                        readonly                                               >
+                        		                                <label class="caption passwordfield" for="visiblej_username"></label>
+                                                
+    							                                            	<input  class="w-input passwordfield" id="visiblej_username" type="text" placeholder="Enter your username" autocomplete="off" name="j_username" data-name="j_username" required="required"                       
+                       autofocus="autofocus"                        onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','Enter your username');"
+                       data-testid="login-input-mpush-j_username"
+                                                                     >
+                        		                                <label class="caption passwordfield mpush_otp_fallback hidden" for="visiblej_password"></label>
+                                                
+    							                                            	<input  class="w-input passwordfield mpush_otp_fallback hidden" id="visiblej_password" type="password" placeholder="Enter your OTP number" autocomplete="off" name="j_password" data-name="j_password" required="required"                       
+                       autofocus="autofocus"                        onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','Enter your OTP number');"
+                       data-testid="login-input-mpush-j_password"
+                        readonly                                               >
+                        		                                <label class="caption " for="visiblempush_otp_fallback"></label>
+                                                
+    							                                            	<input  class="w-input " id="visiblempush_otp_fallback" type="hidden" placeholder="login.login.placeholder.mpush_otp_fallback" autocomplete="off" name="mpush_otp_fallback" data-name="mpush_otp_fallback" required="required"                       
+                       autofocus="autofocus" value="false"                       onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','login.login.placeholder.mpush_otp_fallback');"
+                       data-testid="login-input-mpush-mpush_otp_fallback"
+                        readonly                                               >
+                        		                                <label class="caption mpush_poll_start_timestamp" for="visible$id"></label>
+                                                
+    							                                            	<input  class="w-input mpush_poll_start_timestamp" id="visible$id" type="hidden" placeholder="login.login.placeholder.mpush_poll_start_timestamp" autocomplete="off" name="$id" data-name="$id" required="required"                       
+                       autofocus="autofocus" value="1792703856966"                       onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','login.login.placeholder.mpush_poll_start_timestamp');"
+                       data-testid="login-input-mpush-"
+                        readonly                                               >
+                        		                                <label class="caption mpush_poll_current_timestamp" for="visible$id"></label>
+                                                
+    							                                            	<input  class="w-input mpush_poll_current_timestamp" id="visible$id" type="hidden" placeholder="login.login.placeholder.mpush_poll_current_timestamp" autocomplete="off" name="$id" data-name="$id" required="required"                       
+                       autofocus="autofocus" value="1792703857032"                       onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','login.login.placeholder.mpush_poll_current_timestamp');"
+                       data-testid="login-input-mpush-"
+                        readonly                                               >
+                        		                                <label class="caption mpush_poll_login login_body_msg alert alert-info" for="visible$id"></label>
+                                                
+    							                                            	<input  class="w-input mpush_poll_login login_body_msg alert alert-info" id="visible$id" type="hidden" placeholder="login.login.placeholder.mpush_poll_login" autocomplete="off" name="$id" data-name="$id" required="required"                       
+                       autofocus="autofocus" value=""                       onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','login.login.placeholder.mpush_poll_login');"
+                       data-testid="login-input-mpush-"
+                        readonly                                               >
+                        		                                <label class="caption mpush_confirmation_code" for="visible$id"></label>
+                                                
+    							                                            	<input  class="w-input mpush_confirmation_code" id="visible$id" type="hidden" placeholder="login.login.placeholder.mpush_confirmation_code" autocomplete="off" name="$id" data-name="$id" required="required"                       
+                       autofocus="autofocus" value="1234"                       onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','login.login.placeholder.mpush_confirmation_code');"
+                       data-testid="login-input-mpush-"
+                        readonly                                               >
+                        		                                <label class="caption mpush_poll" for="visible$id"></label>
+                                                
+    							                                            	<input  class="w-input mpush_poll" id="visible$id" type="hidden" placeholder="login.login.placeholder.mpush_poll" autocomplete="off" name="$id" data-name="$id" required="required"                       
+                       autofocus="autofocus" value="true"                       onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  onblur="this.setAttribute('placeholder','login.login.placeholder.mpush_poll');"
+                       data-testid="login-input-mpush-"
+                        readonly                                               >
+                                    	    
+ 	<form action='/sbpo_mbank/j_spring_security_check' method="post" name="loginform" class="loginform" autocomplete="off">
+									<input type="hidden" name="mpushPollInterval" value="5000" disabled />
+			    	                                <label class="caption " for="authentication_type"></label>
+                    		<input  class="w-input " id="authentication_type" type="hidden" placeholder="" autocomplete="off" name="authentication_type" data-name="authentication_type" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  value="MPUSH" data-testid="login-input-mpush-authentication_type">
+	                                <label class="caption " for="authentication_type"></label>
+                    		<input  class="w-input " id="authentication_type" type="hidden" placeholder="" autocomplete="off" name="authentication_type" data-name="authentication_type" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  value="MPUSH" data-testid="login-input-mpush-authentication_type">
+	                                <label class="caption passwordfield" for="j_username">Username</label>
+                    		<input  class="w-input passwordfield" id="j_username" type="hidden" placeholder="Enter your username" autocomplete="off" name="j_username" data-name="j_username" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"   data-testid="login-input-mpush-j_username">
+	                                <label class="caption passwordfield mpush_otp_fallback hidden" for="j_password">OTP number</label>
+                    		<input  class="w-input passwordfield mpush_otp_fallback hidden" id="j_password" type="hidden" placeholder="Enter your OTP number" autocomplete="off" name="j_password" data-name="j_password" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"   data-testid="login-input-mpush-j_password">
+	                                <label class="caption " for="mpush_otp_fallback">login.login.label.mpush_otp_fallback</label>
+                    		<input  class="w-input " id="mpush_otp_fallback" type="hidden" placeholder="login.login.placeholder.mpush_otp_fallback" autocomplete="off" name="mpush_otp_fallback" data-name="mpush_otp_fallback" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  value="false" data-testid="login-input-mpush-mpush_otp_fallback">
+	                                <label class="caption mpush_poll_start_timestamp" for="$id">login.login.label.mpush_poll_start_timestamp</label>
+                    		<input  class="w-input mpush_poll_start_timestamp" id="" type="hidden" placeholder="login.login.placeholder.mpush_poll_start_timestamp" autocomplete="off" name="$id" data-name="$id" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  value="1792703856966" data-testid="login-input-mpush-">
+	                                <label class="caption mpush_poll_current_timestamp" for="$id">login.login.label.mpush_poll_current_timestamp</label>
+                    		<input  class="w-input mpush_poll_current_timestamp" id="" type="hidden" placeholder="login.login.placeholder.mpush_poll_current_timestamp" autocomplete="off" name="$id" data-name="$id" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  value="1792703857032" data-testid="login-input-mpush-">
+	                                <label class="caption mpush_poll_login login_body_msg alert alert-info" for="$id">login.login.label.mpush_title</label>
+                    		<input  class="w-input mpush_poll_login login_body_msg alert alert-info" id="" type="hidden" placeholder="login.login.placeholder.mpush_poll_login" autocomplete="off" name="$id" data-name="$id" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  value="" data-testid="login-input-mpush-">
+	                                <label class="caption mpush_confirmation_code" for="$id">login.login.label.mpush_confirmation_code</label>
+                    		<input  class="w-input mpush_confirmation_code" id="" type="hidden" placeholder="login.login.placeholder.mpush_confirmation_code" autocomplete="off" name="$id" data-name="$id" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  value="1234" data-testid="login-input-mpush-">
+	                                <label class="caption mpush_poll" for="$id">login.login.label.mpush_poll</label>
+                    		<input  class="w-input mpush_poll" id="" type="hidden" placeholder="login.login.placeholder.mpush_poll" autocomplete="off" name="$id" data-name="$id" required="required"
+                                   autofocus="autofocus" onfocus="this.removeAttribute('readonly');this.removeAttribute('placeholder');"  value="true" data-testid="login-input-mpush-">
+	        	    	    		<button  class="w-inline-block button_submit full btn loginbtn " type="button" data-testid="mpush-">
+	        	            <div>Login</div>
+	        	    </button>
+	    			<input type="hidden" name='_csrf_token' value='fixture-csrf'>
+    </form>
+    
+        			<a href="#" title='Manually enter OTP' class="mpush_otp_fallback_link">Manually enter OTP</a>
+	    
+    	
+			            
+</div>
+            
+</div>
+
+	<div id="modal_container">
+        	        
+        
+		<div class="modal" id="forgot_password_modal" tabindex="-1" aria-hidden="true" data-form-submit-type="ajax" data-bs-backdrop="true">
+	  <div class="modal-dialog  modal-sm text-left ">
+	    <div class="modal-content " >
+	    	 <button type="button" class="modal-btn closeModal" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>	    	
+	    	 		
+	 
+	
+    <form autocomplete="off" id="forgot_password_form" name="forgot_password_form" data-name=""             onsubmit="return false"  novalidate="novalidate">
+        
+                			<div class=" input_element_wrapper  hidden">
+		<div class="" >
+			<input
+				autocomplete="off"
+					id="tableId"	type="hidden" 	name="tableId" 	class="input field form-control " 					
+		
+										autocomplete="off" 								>
+					</div>
+				</div>
+        <script>
+			if(typeof $ != 'undefined'){
+				$(document).ready(function () {
+                    $("#tableId").val( $("[name='tableId']").first().val() );
+                })
+			}
+        </script>
+        				<div class="modal-header">
+	    <h4 data-testid="modalWindowTitle_common.forgot_password_modal.title" class="modal-title">Forgot your password?</h4>
+	</div>
+	
+			<div class="modal-messages">
+	    <div id="modal_messages_container" class="alert alert-danger alert-dismissible fade in " role="alert">
+	        <div id="modal_messages">
+									        </div>
+	    </div>	
+	</div>
+				<div class="modal-body ">
+							<div class="modal-body-content">
+	    	                1. Follow this link                <a href='http:&#x2F;&#x2F;www.abanka.si&#x2F;eng&#x2F;sys&#x2F;cmsres.aspx?FileId=448415' onclick='window.onbeforeunload = null;'
+                   title='Forgot your password'>Forgot your password</a>
+                <br>
+
+                2. Fill out the form<br>
+                3. Personally hand the form to your bank administrator<br>
+			
+	    	</div>
+	    	</div>
+			<div class="modal-footer ">
+    				<div class="col-lg-12">
+												    	    		<button 	id="modalButtonCancel"	type="button" 		class="btn small secondary pull-right closeModal hidden-print" 					
+						data-dismiss="modal"
+					data-testid="modal-button-cancel"
+				
+	 		>
+    			    			<span>Cancel</span>
+    		</button>
+							</div>
+			
+</div>
+		
+    </form>
+	
+	    </div>
+	  </div>
+	</div>
+			        
+        
+		<div class="modal" id="forgot_username_modal" tabindex="-1" aria-hidden="true" data-form-submit-type="ajax" data-bs-backdrop="true">
+	  <div class="modal-dialog  modal-sm text-left ">
+	    <div class="modal-content " >
+	    	 <button type="button" class="modal-btn closeModal" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>	    	
+	    	 		
+	 
+	
+    <form autocomplete="off" id="forgot_username_form" name="forgot_username_form" data-name=""             onsubmit="return false"  novalidate="novalidate">
+        
+                			<div class=" input_element_wrapper  hidden">
+		<div class="" >
+			<input
+				autocomplete="off"
+					id="tableId"	type="hidden" 	name="tableId" 	class="input field form-control " 					
+		
+										autocomplete="off" 								>
+					</div>
+				</div>
+        <script>
+			if(typeof $ != 'undefined'){
+				$(document).ready(function () {
+                    $("#tableId").val( $("[name='tableId']").first().val() );
+                })
+			}
+        </script>
+        				<div class="modal-header">
+	    <h4 data-testid="modalWindowTitle_common.forgot_username_modal.title" class="modal-title">Forgot your username?</h4>
+	</div>
+	
+			<div class="modal-messages">
+	    <div id="modal_messages_container" class="alert alert-danger alert-dismissible fade in " role="alert">
+	        <div id="modal_messages">
+									        </div>
+	    </div>	
+	</div>
+				<div class="modal-body ">
+							<div class="modal-body-content">
+	    				
+	    	</div>
+	    	</div>
+			<div class="modal-footer ">
+    				<div class="col-lg-12">
+												    	    		<button 	id="modalButtonCancel"	type="button" 		class="btn small secondary pull-right closeModal hidden-print" 					
+						data-dismiss="modal"
+					data-testid="modal-button-cancel"
+				
+	 		>
+    			    			<span>Cancel</span>
+    		</button>
+							</div>
+			
+</div>
+		
+    </form>
+	
+	    </div>
+	  </div>
+	</div>
+                    
+        
+		<div class="modal" id="expired_password_modal" tabindex="-1" aria-hidden="true" data-form-submit-type="ajax" data-bs-backdrop="true">
+	  <div class="modal-dialog  modal-sm text-left ">
+	    <div class="modal-content " >
+	    	 <button type="button" class="modal-btn closeModal" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>	    	
+	    	         
+	 
+	
+    <form autocomplete="off" id="expired_password_form" name="expired_password_form" data-name=""             onsubmit="return false"  novalidate="novalidate">
+        
+                			<div class=" input_element_wrapper  hidden">
+		<div class="" >
+			<input
+				autocomplete="off"
+					id="tableId"	type="hidden" 	name="tableId" 	class="input field form-control " 					
+		
+										autocomplete="off" 								>
+					</div>
+				</div>
+        <script>
+			if(typeof $ != 'undefined'){
+				$(document).ready(function () {
+                    $("#tableId").val( $("[name='tableId']").first().val() );
+                })
+			}
+        </script>
+                    	<div class="modal-header">
+	    <h4 data-testid="modalWindowTitle_common.password_expired_modal.title" class="modal-title">Password expired</h4>
+	</div>
+	
+			<div class="modal-messages">
+	    <div id="modal_messages_container" class="alert alert-danger alert-dismissible fade in " role="alert">
+	        <div id="modal_messages">
+									        </div>
+	    </div>	
+	</div>
+            	<div class="modal-body ">
+							<div class="modal-body-content">
+	    	                Password has expired. You must change your password in order to use this product.            
+	    	</div>
+	    	</div>
+            <div class="modal-footer ">
+                    <div class="col-lg-12">
+                                        		    	    		<button 	id="changePasswordButton"	type="button" 		class="btn small primary pull-right hidden-print" 					
+		
+	 		>
+    			    			<span>Change now</span>
+    		</button>
+			
+                                        		    	    		<button 	id="modalButtonCancel"	type="button" 		class="btn small secondary pull-right closeModal hidden-print" 					
+						data-dismiss="modal"
+					data-testid="modal-button-cancel"
+				
+	 		>
+    			    			<span>Later</span>
+    		</button>
+			                	                </div>
+            
+</div>
+        
+    </form>
+    
+	    </div>
+	  </div>
+	</div>
+                
+                            	        
+        
+		<div class="modal" id="mpush_login_confirmation_modal" tabindex="-1" aria-hidden="true" data-form-submit-type="ajax" data-bs-backdrop="true">
+	  <div class="modal-dialog  modal-md text-left ">
+	    <div class="modal-content " >
+	    	 <button type="button" class="modal-btn closeModal" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>	    	
+	    	 		
+	 
+	
+    <form autocomplete="off" id="mpush_login_confirmation_form" name="mpush_login_confirmation_form" data-name=""             onsubmit="return false"  novalidate="novalidate">
+        
+                			<div class=" input_element_wrapper  hidden">
+		<div class="" >
+			<input
+				autocomplete="off"
+					id="tableId"	type="hidden" 	name="tableId" 	class="input field form-control " 					
+		
+										autocomplete="off" 								>
+					</div>
+				</div>
+        <script>
+			if(typeof $ != 'undefined'){
+				$(document).ready(function () {
+                    $("#tableId").val( $("[name='tableId']").first().val() );
+                })
+			}
+        </script>
+        				<div class="modal-header">
+	    <h4 data-testid="modalWindowTitle_login.mpush_confirmation_modal.title" class="modal-title">Login confirmation</h4>
+	</div>
+	
+			<div class="modal-messages">
+	    <div id="modal_messages_container" class="alert alert-danger alert-dismissible fade in  hidden " role="alert">
+	        <div id="modal_messages">
+									        </div>
+	    </div>	
+	</div>
+				<div class="modal-body ">
+							<div class="modal-body-content">
+	    		            <div class="mpush-content confirmation">Open the mobile application and confirm the login request.</div>
+	            <div class="mpush-content rejected hidden">Login was rejected by the user.</div>
+	            <div class="mpush-content expired hidden">The authorization request has expired. Please try again.</div>
+	            
+	            <div class="mpush_confirmation_code_label margin_top_20">Confirmation code: <span class="mpush-confirmation-code bold_span"></span></div>
+			
+	    	</div>
+	    	</div>
+			<div class="modal-footer ">
+    				<div class="mpush-button confirmation">
+												    	    		<button 	id="mpushModalButtonCancel"	type="button" 		class="btn small secondary pull-right hidden-print" 					
+		
+	 		>
+    			    			<span>Cancel</span>
+    		</button>
+							</div>
+				<div class="mpush-button ok hidden">
+												    	    		<button 		type="button" 		class="btn small secondary pull-right closeModal hidden-print" 					
+						data-dismiss="modal"
+				
+	 		>
+    			    			<span>Ok</span>
+    		</button>
+							</div>				
+			
+</div>
+			
+			<div class="expires">60s</div>
+		
+    </form>
+	
+	    </div>
+	  </div>
+	</div>
+        	</div>
+
+	
+    </div>
+                </div>
+                <p class="bottom_margin"></p>
+                <div class="language_links">
+                    			    		                 
+                		<a class="login_language" href="&#x2F;sbpo_mbank&#x2F;auth&#x2F;login?lang=sr" data-testid="language-btn-Srpski">Srpski</a>
+    	    		                 
+                		<a class="login_language" href="&#x2F;sbpo_mbank&#x2F;auth&#x2F;login?lang=en" data-testid="language-btn-English">English</a>
+    		                </div>
+            </div>
+        </div>
+    </div>
+            <div class="right col-xs-12 col-lg-4 clearfix">
+                                <div id="login_banner-list">
+        <div class="bxslider slides" style="height:100%;">
+                                        	<div class=" banner clearfix" style="background-image: url(/sbpo_mbank/ngcms/image/banners/999599A8E49F867A54ECB452F5564D4B?module=);">
+		<div class="overlay">
+			<h1>BANKING ADVICES</h1>
+			<p>Check these simple steps to take control over your finances. Personal finance manager is available in your e-banking free of charge!</p>
+			<a class="btn highlight" target="_blank" href=http:&#x2F;&#x2F;www.halcom.com>Read more</a>
+		</div>
+	</div>
+                
+                                        	<div class=" banner clearfix" style="background-image: url(/sbpo_mbank/ngcms/image/banners/24F31EC7B4F8E290DEAFA420199B92F4?module=);">
+		<div class="overlay">
+			<h1>BANKING FIT TO YOUR NEEDS</h1>
+			<p>It has never been easier to track, manage or improve your finances with banking solutions, tailored to your needs.</p>
+			<a class="btn highlight" target="_blank" href=http:&#x2F;&#x2F;www.halcom.com>Read more</a>
+		</div>
+	</div>
+                
+                </div>
+    </div>
+    	            
+    
+                                        <div id="messages-container" style="height:50%">
+    <p class="title">NOTE: For safe use of services it is necessary to comply with the following basic safety rules:</p>
+    <ul>
+        <li>Take care of the confidentiality of your user ID and password. Never give it away in an e-mail.</li>
+        <li>Configure the browser according to  the instructions provided by Halcom Bank inc.</li>
+        <li>Always check the correctness of the certificate for the login page.</li>
+    </ul>
+</div>
+
+        </div>
+    </div>
+
+
+					
+		<script src='/sbpo_mbank/static/components/bootstrap/dist/js/bootstrap.bundle.min.js'></script>
+	<script src='/sbpo_mbank/static/components/bootstrap-select/dist/js/bootstrap-select.min.js'></script>
+	<script src='/sbpo_mbank/static/components/bootstrap-validator/dist/validator.min.js'></script>
+		
+		<script src='/sbpo_mbank/static/components/eonasdan-bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js'></script>
+	
+  	  	<script src='/sbpo_mbank/static/components/bootstrap-less/js/button.js'></script>
+  	<script src='/sbpo_mbank/static/components/bootstrap-less/js/affix.js'></script>
+      	
+        <script type="application/javascript">
+            $(document).ready(function () {
+                var app_url = 'https://webebank.ebb-bg.com:443/sbpo_mbank';
+                var options = {
+                    aSep: '.',
+                    aDec: ',',
+                    gridFloatBreakPoint: '0',
+                    isRtl: false
+                };
+
+                utils.localized_msgs = $.parseJSON("{\"common.error.msg.future_date\":\"Date is in the future!\",\"aggregatedview.graph.label.booked_balance\":\"aggregatedview.graph.label.booked_balance\",\"alerts.save_alerts.error.percentage\":\"alerts.save_alerts.error.percentage\",\"payments.validator.error_msg\":\"Please correct all marked fields.\",\"hybrid.requestcenter.gdpr.request.leave.button.leave\":\"Leave\",\"datepicker.monthname.august\":\"August\",\"datepicker.tooltip.decrement_second\":\"Decrement second\",\"alerts.save_alerts.error.positive_numbers\":\"alerts.save_alerts.error.positive_numbers\",\"forex.forexhistory.chart.weekdays\":\"forex.forexhistory.chart.weekdays\",\"payments.payment_wizzard_modal.bic_format_invalid\":\"Bic format is invalid\",\"edocuments.import.document_type.not_alowed.edocument\":\"edocuments.import.document_type.not_alowed.edocument\",\"hybrid.cards.details.modal.apple_wallet.body\":\"hybrid.cards.details.modal.apple_wallet.body\",\"datepicker.tooltip.prev_decade\":\"Previous decade\",\"nexus_error.label.request_expired\":\"nexus_error.label.request_expired\",\"hybrid.common.modal.delete_djp_journey_disabled.body2\":\"hybrid.common.modal.delete_djp_journey_disabled.body2\",\"hybrid.common.button.cancel\":\"Cancel\",\"hybrid.common.modal.delete_djp_journey_disabled.body1\":\"hybrid.common.modal.delete_djp_journey_disabled.body1\",\"hybrid.wai.homepage.tab_change_message.accounts\":\"Opened homepage tab Accounts\",\"payments.step_1.error_3\":\"Own-account payment is not possible - only one account is available for client\",\"accounts.details.graph.no_permissions\":\"accounts.details.graph.no_permissions\",\"payments.form.label.commercial_transfer.after_input\":\"and is not a transfer of capital. I/We declare that the justifying documents are used for the first time and are not used to justify other transfers. I/We are committed to present in ABI Bank Albania within 3 (three) the original document together with the original of the certified copy of the custom office document.\",\"hybrid.payments.popup.lable.nothingfound\":\"hybrid.payments.popup.lable.nothingfound\",\"offers.request.success_response\":\"Thanks for submit. We will contact you soon.\",\"hybrid.wai.homepage.tab_change_message.offers\":\"Opened homepage tab Offers\",\"payments.ownacc.form.no_credit_account_macth.error.msg\":\"Debit and credit accounts must be in the same currency. Please select debit and credit accounts in the same currency.\",\"datepicker.tooltip.select_time\":\"Select time\",\"hybrid.cards.card_account_statements.common.label.date\":\"Date\",\"cdm.payments.template.edit.error.message.name_already_exists\":\"cdm.payments.template.edit.error.message.name_already_exists\",\"datepicker.dayname.saturday.short\":\"Sat\",\"forex.forexhistory.chart.title_appendix\":\"forex.forexhistory.chart.title_appendix\",\"hybrid.requestcenter.gdpr.request.common.button.ok\":\"OK\",\"payments.check_account_message.account_not_found\":\"Credit account not found in the registry. Manually enter creditor data to proceed with specified account. \\r\\n\",\"forex.forexhistory.chart.label.transfer_sell\":\"forex.forexhistory.chart.label.transfer_sell\",\"common.filter.daterange.apply\":\"Apply\",\"payments.sdd.sent.cancelaction.refusal_reason_mandatory\":\"Reason is mandatory. Please select it before proceeding.\",\"common.msgs.infinite_scroll\":\"Table data has changed. Please refresh the page.\",\"login.login.label.cloud_certificate_error_general\":\"Log in via cloud certificate is currently not possible, please try later.\",\"hybrid.wai.homepage.notification_menu_icon\":\"Unread message or request\",\"login.login.label.cloud_certificate_error_timeout\":\"The Halcom Cloud Signer has reported a timeout\",\"hybrid.payments.verify_waiting.modal.view\":\"hybrid.payments.verify_waiting.modal.view\",\"export.pdf.account.transaction.confirmation\":\"Transaction\",\"common.button.close\":\"Close\",\"payments.authentication_status.signature_not_required\":\"Batch already signed, signature not required.\",\"export.pdf.account.statement.statement\":\"Statement\",\"filter.date_from_to.error.msg\":\"Date \\\"From\\\" should be earlier than date \\\"To\\\".\",\"forex.converter.label.no_data.message\":\"forex.converter.label.no_data.message\",\"generic_action.save\":\"Save\",\"datepicker.tooltip.next_month\":\"Next month\",\"login_form.error.ie_version\":\"You are using a browser version the application no longer supports. Some features may not work correctly. To avoid inconveniences, upgrade to a later browser version.\",\"hybrid.wai.homepage.tab_change_message.cards\":\"Opened homepage tab Cards\",\"datepicker.dayname.saturday\":\"Saturday\",\"session.error.invalid\":\"Invalid or expired session!\",\"datepicker.monthname.june.short\":\"June\",\"datepicker.tooltip.next_year\":\"Next year\",\"payments.pooredo.enter_clients_qatari_id\":\"Please enter Qatari ID first.\",\"alerts.save_alerts.error.general_error_msg\":\"alerts.save_alerts.error.general_error_msg\",\"payments.authorization_cloud_modal.message.wait_for_signature\":\"Please open the cloud certificate mobile application and confirm the signature to continue.\",\"alerts.save_contact_info.error_mobile\":\"alerts.save_contact_info.error_mobile\",\"forex.currency_converter_modal.convert_not_possible\":\"You do not have accounts in selected currencies! Please choose different currency and try again.\",\"datepicker.today.button\":\"Today\",\"hybrid.payments.popup.title.select_country\":\"hybrid.payments.popup.title.select_country\",\"forex.forexhistory.chart.months\":\"forex.forexhistory.chart.months\",\"datepicker.tooltip.prev_century\":\"Previous century\",\"hybrid.common.button.read\":\"Read\",\"forex.forexhistory.chart.label.cash_sell\":\"forex.forexhistory.chart.label.cash_sell\",\"login.login.label.nexus_certificate\":\"Confirm login request with Nexus Personal - Plugout application.\",\"accounts.details.graph.title\":\"Balance history for account\",\"self_admin.limits.error\":\"self_admin.limits.error\",\"hybrid.requestcenter.gdpr.request.modal.channels.not_mandatory\":\"Izbira kanalov za obveščanje ni mogoča, ker so bila vsa soglasja označena z NE.\",\"hybrid.common.title.warning\":\"hybrid.common.title.warning\",\"datepicker.monthname.march\":\"March\",\"hybrid.wai.popup.open.partners\":\"Select partner opened\",\"common.button.continue\":\"Continue\",\"proxsign.error_5\":\"Certificate problem or unknown error\",\"alerts.list.option.receiving_alerts_edit\":\"alerts.list.option.receiving_alerts_edit\",\"hybrid.forex.currency_converter_modal.message.same_currencies\":\"Same currencies\",\"invalid.format.einvoice.debtor.bic\":\"invalid.format.einvoice.debtor.bic\",\"edocuments.import.document_type.not_alowed.einvoice\":\"edocuments.import.document_type.not_alowed.einvoice\",\"proxsign.error_4\":\"There was an error during signing.\",\"hybrid.wai.homepage.slide_change_message.prefix\":\"Changed to account\",\"common.table.header.total\":\"Total\",\"datepicker.monthname.august.short\":\"Aug\",\"cards.card_account_statements.alert.date_out_of_range\":\"Date out of range!\",\"payments.authorization_cloud_modal.error.expired\":\"OneID signing request has expired.\",\"offers.request.invalid_email_value\":\"Invalid e-mail value\",\"datepicker.monthname.june\":\"June\",\"datepicker.monthname.november\":\"November\",\"error.sending.packet\":\"An error occurred during sending a packet\",\"payments.bill_payment.creditor_acc_select_label.008\":\"Car fines account\",\"payments.form.instant_payment.value_date_changed_to_current_date\":\"Payment execution date was updated to the current date.\",\"payments.bill_payment.creditor_acc_select_label.006\":\"UK account\",\"payments.modal.general_confirmation_modal.common.button.confirm\":\"Apply\",\"datepicker.monthname.november.short\":\"Nov\",\"login.login.message.username_required_error\":\"Username is required\",\"accounts.details.graph.no_data\":\"No balance history data.\",\"forex.forexlist.table.head.transfer_central_sell\":\"forex.forexlist.table.head.transfer_central_sell\",\"datepicker.monthname.july\":\"July\",\"common.messages.system.more.one\":\"common.messages.system.more.one\",\"bonds.bonddetails.label.chart.no_available\":\"bonds.bonddetails.label.chart.no_available\",\"alerts.save_contact_info.error\":\"alerts.save_contact_info.error\",\"payments.credit_account_changed.error.msg\":\"Credit account was automatically changed because it was different currency as selected debit account.\",\"payments.authorization_cloud_modal.message.cancel_signature\":\"Cancel request\",\"datepicker.tooltip.select_year\":\"Select year\",\"payments.error.check_content.errors_found\":\"Please review errors by hovering over the marked fields. Correct all the marked fields and click Save to continue.\",\"hybrid.requestcenter.gdpr.request.modal.missing_channels\":\"You agreed to one of the GDPR settings, so you have to select at least one of the communication channels.\",\"hybrid.common.djp.system.error.title\":\"Something went wrong\",\"forex.forexhistory.chart.label.middle_rate\":\"forex.forexhistory.chart.label.middle_rate\",\"alerts.save_contact_info.email.wrong_format\":\"alerts.save_contact_info.email.wrong_format\",\"common.autocomplete.empty\":\"No results found!\",\"VM120\":\"Service for instant payments limits is currently unavailable.\",\"hybrid.requestcenter.gdpr.request.leave.button.continue\":\"Continue\",\"datepicker.tooltip.increment_hour\":\"Increment hour\",\"datepicker.dayname.thursday\":\"Thursday\",\"datepicker.monthname.july.short\":\"July\",\"offers.request.empty_mandatory_field\":\"Empty mandatory field\",\"alerts.save_contact_info.success\":\"alerts.save_contact_info.success\",\"mpush_error_general\":\"Mobile confirmation is temporarily unavailable. Please try again later or use manual OTP.\",\"forex.forexhistory.chart.label.no_data\":\"forex.forexhistory.chart.label.no_data\",\"hybrid.common.button.ok\":\"Ok\",\"eforms.validation.mandatory.error\":\"Please complete this mandatory field.\",\"payments.modal.general_confirmation_modal.common.button.cancel\":\"Cancel\",\"login.login.label.cloud_certificate_title\":\"Please open the cloud certificate mobile application and confirm the login to continue.\",\"accounts.details.manage_account.rename.error\":\"Something went wrong while renaming the account.\",\"forex.forexhistory.chart.label.transfer_buy\":\"forex.forexhistory.chart.label.transfer_buy\",\"filter.date_wrong_format.error.msg\":\"Wrong date format.\",\"profile.change.settings.success.msg\":\"Successfully changed urgent payment settings\",\"hybrid.common.title.alert\":\"Alert\",\"login.login.message.password_required_error\":\"Password is required\",\"requestcenter.profile.change.request.success.msg\":\"Info was successully updated\",\"opcvm.opcvmdetails.label.chart.no_available\":\"opcvm.opcvmdetails.label.chart.no_available\",\"forex.forexhistory.chart.shortMonths\":\"forex.forexhistory.chart.shortMonths\",\"hybrid.wai.popup.open.actionsheet\":\"Bottom sheet opened\",\"stocks.stockdetails.label.chart.no_available\":\"stocks.stockdetails.label.chart.no_available\",\"payments.form.label.personal_transfer.before_input\":\"I declare that this money transfer has a personal destination and the source of income is\",\"common.messages.system.more.prefix\":\"common.messages.system.more.prefix\",\"datepicker.monthname.october.short\":\"Oct\",\"hybrid.common.message.system\":\"Number of unread important messages:\",\"forex.forexlist.table.head.transfer_central_buy\":\"forex.forexlist.table.head.transfer_central_buy\",\"filter.amount_wrong_format.error.msg\":\"Wrong amount parameters.\",\"common.msgs.please_wait\":\"Please wait\",\"payments.payment_wizzard_modal.iban_format_invalid\":\"IBAN format is invalid\",\"hybrid.wai.homepage.tab_change_message.card_accounts\":\"Opened homepage tab Card accounts\",\"datepicker.dayname.friday\":\"Friday\",\"hybrid.common.djp.system.error.body\":\"An error occurred while calling the server. Please try again.\",\"common.filter.daterange.clear\":\"Clear\",\"datepicker.tooltip.decrement_hour\":\"Decrement hour\",\"datepicker.monthname.may\":\"May\",\"hybrid.accounts.transactions_list.link.confirmation\":\"Confirmation\",\"accounts.statements_download_modal.alert.dateOutOfRange\":\"Date period must be up to 31 days.\",\"hybrid.wai.popup.open\":\"Opened dialog\",\"datepicker.tooltip.next_century\":\"Next century\",\"help.enter_keyword_or_phrase\":\"For search enter a keyword or a phrase.\",\"hybrid.cards.card_account_statements.label.instructions\":\"Choose a date to download statement. You can only download one statement at a time.\",\"payments.authorization_cloud_modal.cancelation_error\":\"There was an error while canceling OneSign request.\",\"eforms.validation.max_value.error\":\"Please enter a value no larger than $1.\",\"datepicker.tooltip.select_decade\":\"Select decade\",\"field.required.order_id_client_id\":\"Order not found. Please check if order ID and client ID are correctly entered.\",\"payments.check_account_message.private_person\":\"Entered account is valid account of a private person. Please manually enter creditor data in the payment form.\",\"hybrid.requestcenter.gdpr.request.modal.cant_leave\":\"You can not leave this page. To use mobile bank first finish setting GDPR.\",\"payments.form.msg.error.non_working_execution_date\":\"Date is not a workday!\",\"payments.form.field.ooredoo_service_number\":\"Ooredoo service number\",\"payments.authorization_cloud_modal.error.timeout\":\"The Halcom Cloud Signer has reported a timeout (TODO - provide a correct message)\",\"payments.form.message.attachment_toolarge\":\"Attachment size is limited to {0} MB!\",\"datepicker.tooltip.pick_hour\":\"Pick hour\",\"forex.forexlist.table.head.effective_sell_rate\":\"forex.forexlist.table.head.effective_sell_rate\",\"hybrid.wai.homepage.account_data_icon.hide\":\"Hide balance\",\"common.button.ok\":\"Ok\",\"datepicker.tooltip.prev_year\":\"Previous year\",\"common.message.date_less_than\":\"Date cannot be less than\",\"import.import_controller.msg.error.system_error\":\"System error while importing data from file, please try later.\",\"hybrid.common.label.optional_field\":\"\",\"datepicker.dayname.friday.short\":\"Fri\",\"hybrid.wai.additional_data_icon.open\":\"Open additional data\",\"datepicker.dayname.tuesday.short\":\"Tue\",\"alerts.save_contact_info.no_delivery_channel\":\"alerts.save_contact_info.no_delivery_channel\",\"datepicker.dayname.monday.short\":\"Mon\",\"com.halcom.ng.dictionary.DicMessageContentType.PLAIN_TEXT\":\"Message\",\"misys_trade_portal.redirect.fail\":\"misys_trade_portal.redirect.fail\",\"payments.form.instant_payment.date_changed\":\"Instant payments cannot be placed in the payment queue because they are executed in a few seconds. Today’s date was automatically entered in the \\u0027Value date\\u0027 field.\",\"hybrid.wai.additional_data_icon.close\":\"Close additional data\",\"datepicker.monthname.january\":\"January\",\"common.filter.quick.custom_range\":\"Custom range\",\"datepicker.dayname.sunday\":\"Sunday\",\"common.button.cancel\":\"Cancel\",\"login.login.label.cloud_certificate_cancel\":\"Cancel request\",\"accounts.list.table.header.main_account.success\":\"The Set as main account operation did not complete successfully. Please try again.\",\"export.pdf.generic\":\"Document\",\"hybrid.requestcenter.gdpr.request.leave.message\":\"Če zapustite zahtevek za GDPR privolitev, ne boste mogli uporabljati mobilne banke MOJ@SKB\",\"datepicker.monthname.april.short\":\"Apr\",\"proxsign.license_error\":\"SETCCE proXSign license problem or unknown error\",\"common.button.no\":\"No\",\"packets.for_authorization.move_to_og.failed\":\"Move packet to OG failed\",\"einvoices.sign_einvoice.message.unable_to_sign\":\"einvoices.sign_einvoice.message.unable_to_sign\",\"bills.validation.mandatory.error\":\"bills.validation.mandatory.error\",\"hybrid.payments.verify_waiting.modal.body\":\"hybrid.payments.verify_waiting.modal.body\",\"common.filter.quick.0d\":\"1 day\",\"payments.payment_form.tax_authority_error.service_error\":\"Error retrieving tax authority data.\",\"datepicker.dayname.thursday.short\":\"Thu\",\"common.messages.system\":\"Number of unread important messages:\",\"login.error.password.compare_new_and_confirm\":\"Passwords do not match\",\"eforms.validation.min_value.error\":\"Please enter a value of at least $1.\",\"hybrid.payments.verify_waiting.modal.cancel\":\"hybrid.payments.verify_waiting.modal.cancel\",\"common.button.yes\":\"Yes\",\"datepicker.tooltip.pick_minute\":\"Pick minute\",\"common.message.value_date_changed_working_day\":\"Payment value date was updated to next working date.\",\"datepicker.dayname.tuesday\":\"Tuesday\",\"hybrid.payments.popup.placeholder.searchbar\":\"hybrid.payments.popup.placeholder.searchbar\",\"payments.form.msg.error.utility_number_exists\":\"Utility number already exists!\",\"accounts.details.graph.account_balance\":\"ACCOUNT BALANCE\",\"payments.form.label.empty_value_label\":\"- Select -\",\"datepicker.monthname.october\":\"October\",\"datepicker.monthname.december\":\"December\",\"forex.forexhistory.chart.subtitle_prependix\":\"forex.forexhistory.chart.subtitle_prependix\",\"datepicker.tooltip.increment_second\":\"Increment second\",\"common.button.confirm\":\"Apply\",\"alerts.list.option.receiving_alerts.mobile_phone\":\"alerts.list.option.receiving_alerts.mobile_phone\",\"datepicker.dayname.monday\":\"Monday\",\"field.payment.not_supported_by_bank\":\"This type of payment is not supported by the bank.\",\"forex.forexhistory.chart.y_axis.title.part1\":\"forex.forexhistory.chart.y_axis.title.part1\",\"datepicker.tooltip.select_month\":\"Select month\",\"forex.forexhistory.chart.y_axis.title.part2\":\"forex.forexhistory.chart.y_axis.title.part2\",\"hybrid.cards.details.modal.apple_wallet.title\":\"hybrid.cards.details.modal.apple_wallet.title\",\"login.login.label.nexus_certificate_cancel\":\"Cancel\",\"payments.authorization_cloud_modal.error.rejected\":\"The Halcom Cloud Signer has reported that the user rejected the signature process (TODO - provide a correct message)\",\"common.conversion.not_possible\":\"Conversion not possible\",\"datepicker.dayname.wednesday\":\"Wednesday\",\"accounts.details.graph.series_name\":\"Balance\",\"communicationcenter.requests.auth_status.error\":\"communicationcenter.requests.auth_status.error\",\"login.login.label.cloud_certificate_error_rejected\":\"The Halcom Cloud Signer has reported that the user rejected the signature process\",\"common.ajax.fetch_error\":\"Connection failed.\",\"alerts.save_contact_info.error_email\":\"alerts.save_contact_info.error_email\",\"hybrid.payments.verify_waiting.modal.title\":\"hybrid.payments.verify_waiting.modal.title\",\"payments.form.msg.error.utility_number_nickname_required\":\"Utility number and nickname fields are required!\",\"datepicker.tooltip.next_decade\":\"Next decade\",\"hybrid.wai.homepage.tab_change_message.prefix\":\"hybrid.wai.homepage.tab_change_message.prefix\",\"alerts.list.option.receiving_alerts.email_edit\":\"alerts.list.option.receiving_alerts.email_edit\",\"alerts.save_alerts.success\":\"alerts.save_alerts.success\",\"packets.step1.mp.debtor_reference_mandatory\":\"User reference is mandatory.\",\"alerts.save_contact_info.phone.wrong_format\":\"alerts.save_contact_info.phone.wrong_format\",\"bills.validation.min_length.error\":\"bills.validation.min_length.error\",\"login.login.label.cloud_certificate_cancelation_error\":\"There was an error while canceling OneSign request.\",\"hybrid.flik.request.description\":\"hybrid.flik.request.description\",\"common.message.invalid_date\":\"Invalid date\",\"hybrid.payments.details.default\":\"hybrid.payments.details.default\",\"common.button.delete\":\"Delete\",\"alerts.save_alerts.error\":\"alerts.save_alerts.error\",\"payments.form.msg.error.invalid_execution_date\":\"Invalid date format!\",\"common.message.execution_date_is_les_than_expected\":\"Execution date is less than expected\",\"datepicker.tooltip.today\":\"Today\",\"payments.ownacc.form.no_account_macth.error.msg\":\"You are missing appropriate debit account for chosen credit account. Please select another credit account.\",\"offers.request.invalid_phone_value\":\"Invalid phone value\",\"com.halcom.ng.dictionary.DicMessageContentType.FORM\":\"Request\",\"datepicker.tooltip.clear\":\"Clear\",\"hybrid.wai.popup.open.dropdown\":\"Dropdown opened\",\"datepicker.tooltip.decrement_minute\":\"Decrement minute\",\"alerts.list.option.receiving_alerts_readonly\":\"alerts.list.option.receiving_alerts_readonly\",\"hybrid.wai.popup.open.account_selector\":\"Account dropdown opened\",\"datepicker.tooltip.toggle_period\":\"Toggle period\",\"forex.forexlist.table.head.effective_buy_rate\":\"forex.forexlist.table.head.effective_buy_rate\",\"payments.template.edit.error.message.name_already_exists\":\"payments.template.edit.error.message.name_already_exists\",\"datepicker.monthname.may.short\":\"May\",\"alerts.list.option.receiving_alerts.email\":\"alerts.list.option.receiving_alerts.email\",\"forex.forexhistory.chart.label.cash_buy\":\"forex.forexhistory.chart.label.cash_buy\",\"common.message.date_more_than\":\"Date cannot be more than\",\"alerts.save_alerts.error.negative_numbers\":\"alerts.save_alerts.error.negative_numbers\",\"datepicker.dayname.wednesday.short\":\"Wed\",\"datepicker.tooltip.pick_second\":\"Pick second\",\"common.filter.daterange.from\":\"From\",\"payments.check_account_message.invalid_iban\":\"Invalid credit account IBAN.\",\"forex.forexhistory.chart.subtitle_appendix\":\"forex.forexhistory.chart.subtitle_appendix\",\"alerts.list.option.receiving_alerts.mobile_phone_edit\":\"alerts.list.option.receiving_alerts.mobile_phone_edit\",\"datepicker.monthname.february.short\":\"Feb\",\"datepicker.monthname.march.short\":\"Mar\",\"login.login.message.username_onetime_password_required_error\":\"login.login.message.username_onetime_password_required_error\",\"datepicker.monthname.april\":\"April\",\"hybrid.requestcenter.gdpr.request.modal.channels.not_selectable\":\"Komunikacijski kanal je izbran, čeprav so vsa soglasja označena z NE. Izbrišite izbrani kanal ali popravite vsaj 1 izjavo v DA.\",\"other.otherdetails.label.chart.no_available\":\"No data available for the selected period of time\",\"datepicker.tooltip.increment_minute\":\"Increment minute\",\"payments.form.message.max_attachments_size_exceeded\":\"Size of all attachments must not exceed the maximum size of {0} MB.\",\"hybrid.common.modal.delete_djp_journey.body1\":\"hybrid.common.modal.delete_djp_journey.body1\",\"hybrid.common.modal.delete_djp_journey.body2\":\"hybrid.common.modal.delete_djp_journey.body2\",\"generic_action.edit\":\"Edit\",\"datepicker.tooltip.close\":\"Close\",\"payments.form.label.serial_number\":\"Serial number\",\"hybrid.common.title.info\":\"Info\",\"forex.forexhistory.chart.reset_zoom.title\":\"forex.forexhistory.chart.reset_zoom.title\",\"common.msgs.loading_data\":\"Loading data\",\"common.filter.no_results_found\":\"No results found\",\"hybrid.common.message.system.title\":\"Unread messages\",\"payments.step3.save_template.success.msg\":\"Template saved successfully\",\"datepicker.monthname.february\":\"February\",\"payments.form.label.commercial_transfer.before_input\":\"I/We declare that this money transfer is required for\",\"datepicker.monthname.september\":\"September\",\"payments.form.message.account_restrictions_error\":\"For selected debit account you don\\u0027t have any credit accounts according to the account restrictions matrix.\",\"datepicker.monthname.december.short\":\"Dec\",\"payments.form.label.personal_transfer.after_input\":\"and I am committed to present in ABI Bank Albania the justifying document for the purpose of transferring the funds if the amount is higher than 6.000.000,00 ALL.\",\"forex.forexhistory.chart.reset_zoom.tooltip\":\"forex.forexhistory.chart.reset_zoom.tooltip\",\"common.filter.daterange.to\":\"To\",\"login.login.message.username_password_required_error\":\"Username and password are required\",\"payments.info.auth_data_fetch_failed\":\"Error while retrieving authentication data.\",\"payments.form.field.ooredoo_account_number\":\"Ooredoo account number\",\"accounts.controller.account_rename.msg.successfully_renamed\":\"The account was successfully renamed!\",\"forex.forexhistory.chart.no_data\":\"forex.forexhistory.chart.no_data\",\"datepicker.monthname.january.short\":\"Jan\",\"payments.form.label.invoice_number\":\"Invoice number\",\"common.messages.system.more\":\"common.messages.system.more\",\"datepicker.monthname.september.short\":\"Sep\",\"hybrid.common.title.error\":\"Error\",\"payments.authorization_cloud_modal.error.general\":\"The Halcom Cloud Signer has reported an unknown error (TODO - provide a correct message)\",\"datepicker.tooltip.prev_month\":\"Previous month\",\"hybrid.wai.homepage.account_data_icon.show\":\"Reveal balance\",\"hybrid.wai.homepage.tab_change_message.menu\":\"Opened homepage tab Menu\",\"datepicker.dayname.sunday.short\":\"Sun\",\"payments.form.msg.error.past_execution_date\":\"Date is in the past!\"}");
+                utils.init(app_url, options);
+				
+				
+				if($("body").hasClass('login')){
+					if(!$(".login-menu-wrapper .tab.active").is(":visible")){
+						$(".login-menu-wrapper .tab:visible:first a").trigger('click');
+					}
+				}
+				
+				$(window).on('resize', function(){
+                  if($("body").hasClass('login')){
+    					if(!$(".login-menu-wrapper .tab.active").is(":visible")){
+    						$(".login-menu-wrapper .tab:visible:first a").trigger('click');
+    					}
+    				}
+                });
+
+				if ("false" === "true") {
+					window.gib.init({
+						cid: '$_output.raw(${_antiFraudIbCib})',
+						backUrl: '$_output.raw(${_antiFraudIbBackUrl})',
+						gafUrl: "//eu.id.group-ib.com/id.html",
+					});
+					window.gib.setIdentity("");
+					window.gib.setSessionID("");
+					window.gib.setAuthStatus(window.gib.IS_GUEST);
+				}
+            });
+        </script>
+    		  		  	   		   				
+                                
+        	        
+		        <script type="application/javascript" src="/sbpo_mbank/static/components/bxslider/jquery.bxslider.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/components/bxslider/ng.bxslider.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/messages.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/jquery.blockUI.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/base.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/login.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/logout.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/autoNumeric.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/modalManipulationHelper.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/elementManipulationHelper.js"></script>
+    		                    <script type="text/javascript">
+			$(document).ready(function() {
+	    		setTimeout( function(){
+	    			$("[data-autofade='true']").alert("close");
+	    		}, 5000);
+	    			
+	    		$("[data-role=message_container]" ).change(function() {
+	            	alert("Handler for .change() called.");
+	            });
+				$("[data-role=message_container] .alert").size();
+			});	
+    	</script>
+	
+                                <script>
+                        $(document).ready(function () {
+                            $('#changePasswordButton').click(function(e) {
+                                modalHelper.hide();
+                                var modalId = "changePwdModal";
+                                $("#" + modalId).modal('show');
+                            });
+                        });
+                    </script>
+                    
+            	<script type="text/javascript">
+        $(document).ready(function() {
+        	$(".forgotten_link").click(function(e) {
+           		e.preventDefault();
+                var modalId = $(this).data("modal");
+                $("#" + modalId).modal('show');
+            });
+
+                    });
+    </script>
+    
+                <script type="text/javascript">
+        $(document).ready(function() {
+            var slider = $('#'+'login_banner-list'+' .bxslider').bxSlider({
+            speed:  1000 ,
+                           pause: 12000,
+               auto: true,
+               autoStart: true,
+                                        controls: false,
+                                    infiniteLoop: true,
+            animation:  'horizontal' ,
+            adaptiveHeight: false,
+            minSlides: 1,
+            maxSlides: 1,
+            moveSlides: 1,
+                        slideMargin: 0,
+            ignoreCalculateChildren: true,
+                            maxHeight: 600,
+                        elHeightSelector: '#'+'login_banner-list',
+
+            onSliderLoad: function(){
+                $("#"+"login_banner-list").css("visibility", "visible");
+            }
+        });
+
+        var controlRightClassName = 'fa fa-angle-right';
+        var controlLeftClassName = 'fa fa-angle-left';
+
+        
+        Slider.controlsChange(slider, controlLeftClassName, controlRightClassName);
+    });
+    </script>
+    
+    	</body>
+</html>
