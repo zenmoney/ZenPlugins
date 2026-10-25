@@ -1,4 +1,4 @@
-import { parseXml } from '../../common/network'
+import { parseXml } from '../../common/xmlUtils'
 import { convertAccount, convertCards, convertDeposit, convertLoan, convertTransaction, convertTarget, getId } from './converters'
 
 describe('convertLoan', () => {
