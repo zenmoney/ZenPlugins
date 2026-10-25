@@ -2,6 +2,7 @@ import { MD5 } from 'jshashes'
 import _ from 'lodash'
 import * as qs from 'querystring'
 import * as network from '../../common/network'
+import { parseXml } from '../../common/xmlUtils'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { formatDateSql, parseDate } from './converters'
@@ -31,7 +32,7 @@ export async function renewSession (session) {
       Host: `${session.host}:4477`,
       Cookie: `${session.cookie}`
     },
-    parse: body => body ? network.parseXml(body) : { response: {} }
+    parse: body => body ? parseXml(body) : { response: {} }
   }, null)
   return response.body && response.body.status === '0' ? session : null
 }
