@@ -1,4 +1,4 @@
-import type { Receipt, ReceiptItem, ReceiptMerchant, ReceiptDateTime, ReceiptPayment } from '../../types/receiptFetcher'
+import type { Receipt, ReceiptItem, ReceiptMerchant, ReceiptDateTime, ReceiptPayment, ReceiptAdjustment } from '../../types/receiptFetcher'
 import _ from 'lodash'
 import cheerio from 'cheerio'
 import { decimal } from '../../common/decimal'
@@ -29,25 +29,32 @@ export function convertReceipt (receiptHtml: unknown, code: string): Receipt {
     const total = $.root().text().match(/ИТОГО:?\s*([\d\s.,]+)/)
     sum = (total != null) ? total[1] : null
   }
-  const payee = $('body > div.container.mt-2 > div > div > main > div.ready_ticket.tickets_data_for_print > div.ticket_header > div:nth-child(1) > span').text().trim()
+  const ticket = $('.ready_ticket.tickets_data_for_print')
+  assert(ticket.length === 1, 'Expected one receipt')
+  const payee = ticket.find('.ticket_header > div:first-child > span').text().trim()
   const binMatch = receiptHtml.match(/БИН\D+(\d+)/)
   const bin = (binMatch != null) && (binMatch.length !== 0) ? binMatch[1] : ''
   const issuedAt: Partial<ReceiptDateTime> = fiscalDate(code)
   const merchant: ReceiptMerchant = { ...optional('name', text(payee)) }
   const items: ReceiptItem[] = []
+  const adjustments: ReceiptAdjustment[] = []
   const totalAmount: string | undefined = (sum != null) ? parseReceiptFloat(sum) : undefined
   let payments: ReceiptPayment[] | undefined
-  const itemsHtml = $('body > div.container.mt-2 > div > div > main > div.ready_ticket.tickets_data_for_print > div.ticket_body > ol').children()
+  const itemsHtml = ticket.find('.ticket_body > ol').children()
   _.times(itemsHtml.length, (i) => {
+    const rounding = $(itemsHtml[i]).children('div').contents().first().text().trim().match(/^(Коррекция округления \(наценка\))\s+([\d\s.]+)$/)
+    if (rounding !== null) {
+      adjustments.push({ kind: 'rounding', name: rounding[1], amount: parseReceiptFloat(rounding[2]) })
+      return
+    }
     const name = $(itemsHtml[i]).children().first().text().trim()
     const infoNode = $(itemsHtml[i]).children('div').children('b')[0]?.next
     const info = infoNode != null
       ? $(infoNode).text().trim()
       : ''
     const infoMatch = info.match(/^([\s\d.]+)\s*x\s*([\d.]+)[^=]*=\s*([\s\d.]+)/)
-    if (infoMatch !== null) {
-      items.push({ name, totalAmount: parseReceiptFloat(infoMatch[3]), unitPrice: parseReceiptFloat(infoMatch[1]), quantity: parseReceiptFloat(infoMatch[2]) })
-    }
+    assert(infoMatch !== null, 'Invalid receipt item amounts', { itemIndex: i })
+    items.push({ name, totalAmount: parseReceiptFloat(infoMatch[3]), unitPrice: parseReceiptFloat(infoMatch[1]), quantity: parseReceiptFloat(infoMatch[2]) })
   })
   if (cardSum != null) payments = [{ method: 'card', amount: cardSum }]
   if ((bin.length > 0)) {
@@ -61,7 +68,8 @@ export function convertReceipt (receiptHtml: unknown, code: string): Receipt {
     items,
     totalAmount,
     ...(Object.keys(merchant).length > 0 ? { merchant } : {}),
-    ...(payments !== undefined ? { payments } : {})
+    ...(payments !== undefined ? { payments } : {}),
+    ...(adjustments.length > 0 ? { adjustments } : {})
   }
   assertReceipt(receipt)
   return receipt
