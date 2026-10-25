@@ -1,0 +1,15 @@
+{
+  "application": "ru.sberbankmobile",
+  "version": "17.13.0",
+  "apkSha256": "d978be8cbe8fbaefd19776f6963aa4d851541845df75bd7d69066ab6ea08cc54",
+  "captureDate": "2026-10-25",
+  "accountsSource": "MAIN_SCREEN part of /sm-uko/v3/mobile/aggregate/session/create",
+  "historySource": "/uoh-bh/v1/operations/list; from 18.10.2026T00:00:00, size 100, offset 0; 87 records, offset 100 returned empty",
+  "sanitization": "Account/PAN identifiers replaced consistently; personal/free text replaced preserving whitespace and punctuation; secrets redacted. Complete selected account groups and operation records retained.",
+  "nativeValidation": {
+    "platform": "Android 16, Zenmoney 26.8 build 1105",
+    "firstRun": "2540af59-45a3-4aea-b50d-bb4fb762df57",
+    "repeatedRun": "b0230602-4f5b-4ba9-a1ee-034c4acfc396",
+    "result": "Both successful: 14 accounts and 64 transactions; identical full transaction results and movement identities; repeated run used native saved auth, override disabled."
+  }
+}

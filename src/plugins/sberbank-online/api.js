@@ -6,6 +6,8 @@ import { parseXml } from '../../common/xmlUtils'
 import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
 import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
 import { formatDateSql, parseDate } from './converters'
+import { russianTrustedRootCa } from './certificates'
+import { UserInteractionError } from '../../errors'
 
 const md5 = new MD5()
 
@@ -37,11 +39,11 @@ export async function renewSession (session) {
   return response.body && response.body.status === '0' ? session : null
 }
 
-export async function login (login, pin, auth, device) {
+export async function loginPrimary (login, pin, auth, device, appVersion = APP_VERSION, isInBackground = false) {
   const commonBody = {
     version: API_VERSION,
     appType: 'android',
-    appVersion: APP_VERSION,
+    appVersion,
     deviceName: device.model
   }
 
@@ -60,7 +62,7 @@ export async function login (login, pin, auth, device) {
         mobileSdkData: JSON.stringify(createSdkData(login, device))
       },
       sanitizeRequestLog: { body: { mGUID: true, password: true, devID: true, mobileSdkData: true } },
-      sanitizeResponseLog: { body: { loginData: { token: true } } }
+      sanitizeResponseLog: { body: { loginData: { token: true, externalToken: true } } }
     }, null)
     if (response.body.status === '7') {
       guid = null
@@ -68,6 +70,7 @@ export async function login (login, pin, auth, device) {
   }
 
   if (!guid) {
+    if (isInBackground) throw new UserInteractionError()
     response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
       body: {
         ...commonBody,
@@ -124,7 +127,7 @@ export async function login (login, pin, auth, device) {
         mobileSdkData: JSON.stringify(createSdkData(login, device))
       },
       sanitizeRequestLog: { body: { mGUID: true, password: true, devID: true, devIDOld: true, mobileSdkData: true } },
-      sanitizeResponseLog: { body: { loginData: { token: true } } }
+      sanitizeResponseLog: { body: { loginData: { token: true, externalToken: true } } }
     }, null)
   }
 
@@ -138,7 +141,13 @@ export async function login (login, pin, auth, device) {
   const token = response.body.loginData.token
   const host = response.body.loginData.host
 
-  response = await fetchXml(`https://${host}:4477/mobile9/postCSALogin.do`, {
+  return { guid, token, host }
+}
+
+export async function login (login, pin, auth, device) {
+  const { guid, token, host } = await loginPrimary(login, pin, auth, device)
+
+  const response = await fetchXml(`https://${host}:4477/mobile9/postCSALogin.do`, {
     headers: {
       ...defaultHeaders,
       Host: `${host}:4477`
@@ -344,7 +353,8 @@ async function fetchXml (url, options = {}, predicate = () => true) {
     headers: defaultHeaders,
     stringify: qs.stringify,
     parse: parseXml,
-    ...options
+    ...options,
+    tls: { ca: [russianTrustedRootCa] }
   }
 
   _.set(options, 'sanitizeRequestLog.headers.cookie', true)

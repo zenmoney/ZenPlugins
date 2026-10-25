@@ -1,0 +1,13 @@
+<response> 
+    <status> 
+        <code>0</code> 
+    </status> 
+        <loginCompleted>false</loginCompleted> 
+                <loginData> 
+                    <host>mobile-node3.online.sberbank.ru:8543</host> 
+                        <mode>UFS</mode> 
+                    <token>model-token-secret</token> 
+                       <externalToken>model-externalToken-secret</externalToken> 
+                </loginData> 
+            <isVerified>false</isVerified> 
+</response>

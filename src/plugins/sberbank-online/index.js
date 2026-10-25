@@ -1,8 +1,9 @@
 import { MD5 } from 'jshashes'
-import { ensureSyncIDsAreUniqueButSanitized, sanitizeSyncId } from '../../common/accounts'
+import { saveCookies } from '../../common/network'
+import { authenticate, fetchHistory } from './modernApi'
+import { convertModernAccounts, convertModernTransactions } from './modernConverters'
 import { generateRandomString } from '../../common/utils'
-import { fetchAccounts, fetchTransactions, login, makeTransfer as _makeTransfer, renewSession } from './api'
-import { convertAccounts, convertLoanTransaction, convertTransaction } from './converters'
+import { login, makeTransfer as _makeTransfer } from './api'
 
 const md5 = new MD5()
 
@@ -61,75 +62,21 @@ function saveAuth (auth) {
 }
 
 export async function scrape ({ preferences, fromDate, toDate, isInBackground }) {
-  if (preferences.pin.length !== 5) {
-    throw new InvalidPreferencesError('Пин-код должен быть из 5 цифр')
+  ZenMoney.locale = 'ru'
+  if (typeof preferences.login !== 'string' || preferences.login.trim() === '') {
+    throw new InvalidPreferencesError('Укажите логин Сбербанк Онлайн')
   }
-  if (!ZenMoney.getData('scrape/lastSuccessDate') && ZenMoney.getData('devid')) {
-    fromDate = new Date(new Date().getTime() - 7 * 24 * 3600 * 1000)
-  }
-  if (!toDate) {
-    toDate = new Date()
-  }
-
-  let auth = getAuth()
-  if (auth && auth.api) {
-    if (!(await renewSession(auth.api))) {
-      delete auth.api
-    }
-  }
-  if (!auth || !auth.api) {
-    auth = await login(preferences.login, preferences.pin, auth, getDevice(preferences))
-  }
-
-  const { accountData, accountsById } = convertAccounts(await fetchAccounts(auth))
-
-  const accounts = []
-  const transactions = []
-  const transactionIds = {}
-
-  await Promise.all(accountData.map(async ({ zenAccount: account, products }) => {
-    accounts.push(account)
-    return ZenMoney.isAccountSkipped(account.id)
-      ? null
-      : Promise.all(products.map(async product => {
-        try {
-          for (const apiTransaction of await fetchTransactions(auth, product, fromDate, toDate)) {
-            let transaction
-            if (product.type === 'loan') {
-              transaction = convertLoanTransaction(apiTransaction, account, accountsById)
-            } else {
-              transaction = convertTransaction(apiTransaction, account, accountsById)
-              if (transaction) {
-                const id1 = transaction.movements[0].id
-                const id2 = transaction.movements[1] && transaction.movements[1].id
-                  ? transaction.movements[1].id
-                  : id1
-                if (transactionIds[id1] || transactionIds[id2]) {
-                  continue
-                } else {
-                  transactionIds[id1] = true
-                  transactionIds[id2] = true
-                }
-              }
-            }
-            if (transaction) {
-              transactions.push(transaction)
-            }
-          }
-        } catch (e) {
-          if (e.toString().indexOf('временно недоступна') < 0) {
-            throw e
-          }
-        }
-      }))
-  }))
-
-  saveAuth(auth)
-
-  return {
-    accounts: ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId }),
-    transactions
-  }
+  const session = await authenticate(preferences, getAuth(), getDevice(preferences), async auth => {
+    saveAuth(auth)
+    ZenMoney.saveData()
+  }, isInBackground)
+  await saveCookies()
+  const graph = convertModernAccounts(session.dataModel)
+  const records = graph.accounts.every(account => ZenMoney.isAccountSkipped(account.id))
+    ? []
+    : await fetchHistory(session, fromDate, toDate)
+  const transactions = convertModernTransactions(records, graph, fromDate, toDate, id => ZenMoney.isAccountSkipped(id))
+  return { accounts: graph.accounts, transactions }
 }
 
 export async function makeTransfer (fromAccount, toAccount, sum) {
