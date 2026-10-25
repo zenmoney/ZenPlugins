@@ -71,7 +71,7 @@ export async function login (login, pin, auth, device) {
       body: {
         ...commonBody,
         operation: 'register',
-        login: login,
+        login,
         devID: device.id,
         devIDOld: device.idOld
       },
@@ -143,7 +143,7 @@ export async function login (login, pin, auth, device) {
       Host: `${host}:4477`
     },
     body: {
-      token: token,
+      token,
       appName: '????????',
       appBuildOSType: 'android',
       appBuildType: 'RELEASE',
@@ -187,7 +187,7 @@ export async function fetchAccounts (auth) {
           ? null
           : { id: account.id, type }
       return {
-        account: account,
+        account,
         details: params ? await fetchAccountDetails(auth, params) : null
       }
     }))
@@ -205,7 +205,7 @@ async function fetchAccountDetails (auth, { id, type }) {
       'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
       Cookie: auth.api.cookie
     },
-    body: { id: id }
+    body: { id }
   }, null)
   validateResponse(response, response => _.get(response, 'body.detail'))
   return response.body
@@ -330,9 +330,9 @@ export async function makeTransfer (login, auth, device, { fromAccount, toAccoun
     body: {
       mobileSdkData: JSON.stringify(createSdkData(login, device)),
       operation: 'confirm',
-      id: id,
+      id,
       form: 'InternalPayment',
-      transactionToken: transactionToken
+      transactionToken
     }
   }, response => _.get(response, 'body.document.status') === 'EXECUTED')
 }
