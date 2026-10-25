@@ -89,7 +89,9 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
 
   await Promise.all(accountData.map(async ({ zenAccount: account, products }) => {
     accounts.push(account)
-    return ZenMoney.isAccountSkipped(account.id) ? null : Promise.all(products.map(async product => {
+    return ZenMoney.isAccountSkipped(account.id)
+      ? null
+      : Promise.all(products.map(async product => {
       try {
         for (const apiTransaction of await fetchTransactions(auth, product, fromDate, toDate)) {
           let transaction
