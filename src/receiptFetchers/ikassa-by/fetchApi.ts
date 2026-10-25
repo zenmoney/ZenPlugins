@@ -1,7 +1,7 @@
-import { fetchJson } from '../../common/network'
+import { fetch } from '../../common/network'
+import type { FetchResponse } from '../../common/network'
 
-export async function fetchReceipt (documentId: string): Promise<unknown> {
-  const response = await fetchJson(`https://api.ikassa.by/api/public/document/${encodeURIComponent(documentId)}`, { log: false, headers: { Accept: '*/*', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36' } })
-  assert(response.status >= 200 && response.status < 300, 'Unexpected receipt HTTP status', { status: response.status })
-  return response.body
+export async function fetchReceipt (documentId: string): Promise<FetchResponse> {
+  // Printed HTML may include unstructured card/customer slips; keep raw body logging disabled.
+  return await fetch(`https://receipts.ikassa.by/render/${encodeURIComponent(documentId)}`, { log: false, headers: { Accept: 'text/html' } })
 }
