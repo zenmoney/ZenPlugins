@@ -14,8 +14,8 @@ const APP_VERSION = '8.6.1'
 const defaultHeaders = {
   'User-Agent': 'Mobile Device',
   'Content-Type': 'application/x-www-form-urlencoded',
-  'Host': 'online.sberbank.ru:4477',
-  'Connection': 'Keep-Alive',
+  Host: 'online.sberbank.ru:4477',
+  Connection: 'Keep-Alive',
   'Accept-Encoding': 'gzip'
 }
 
@@ -26,10 +26,10 @@ export async function renewSession (session) {
   const response = await fetchXml(`https://${session.host}:4477/mobile9/private/renewSession.do`, {
     headers: {
       ...defaultHeaders,
-      'Accept': 'application/x-www-form-urlencoded',
+      Accept: 'application/x-www-form-urlencoded',
       'Accept-Charset': 'windows-1251',
-      'Host': `${session.host}:4477`,
-      'Cookie': `${session.cookie}`
+      Host: `${session.host}:4477`,
+      Cookie: `${session.cookie}`
     },
     parse: body => body ? network.parseXml(body) : { response: {} }
   }, null)
@@ -38,10 +38,10 @@ export async function renewSession (session) {
 
 export async function login (login, pin, auth, device) {
   const commonBody = {
-    'version': API_VERSION,
-    'appType': 'android',
-    'appVersion': APP_VERSION,
-    'deviceName': device.model
+    version: API_VERSION,
+    appType: 'android',
+    appVersion: APP_VERSION,
+    deviceName: device.model
   }
 
   let response
@@ -51,12 +51,12 @@ export async function login (login, pin, auth, device) {
     response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/login.do', {
       body: {
         ...commonBody,
-        'operation': 'button.login',
-        'mGUID': guid,
-        'password': pin,
-        'isLightScheme': false,
-        'devID': device.id,
-        'mobileSdkData': JSON.stringify(createSdkData(login, device))
+        operation: 'button.login',
+        mGUID: guid,
+        password: pin,
+        isLightScheme: false,
+        devID: device.id,
+        mobileSdkData: JSON.stringify(createSdkData(login, device))
       },
       sanitizeRequestLog: { body: { mGUID: true, password: true, devID: true, mobileSdkData: true } },
       sanitizeResponseLog: { body: { loginData: { token: true } } }
@@ -70,10 +70,10 @@ export async function login (login, pin, auth, device) {
     response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
       body: {
         ...commonBody,
-        'operation': 'register',
-        'login': login,
-        'devID': device.id,
-        'devIDOld': device.idOld
+        operation: 'register',
+        login: login,
+        devID: device.id,
+        devIDOld: device.idOld
       },
       sanitizeRequestLog: { body: { login: true, devID: true, devIDOld: true } },
       sanitizeResponseLog: { body: { confirmRegistrationStage: { mGUID: true } } }
@@ -96,11 +96,11 @@ export async function login (login, pin, auth, device) {
       }
       response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
         body: {
-          'operation': 'confirm',
-          'mGUID': guid,
-          'smsPassword': code,
-          'version': API_VERSION,
-          'appType': 'android'
+          operation: 'confirm',
+          mGUID: guid,
+          smsPassword: code,
+          version: API_VERSION,
+          appType: 'android'
         },
         sanitizeRequestLog: { body: { mGUID: true, smsPassword: true } }
       }, null)
@@ -114,13 +114,13 @@ export async function login (login, pin, auth, device) {
     response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
       body: {
         ...commonBody,
-        'operation': 'createPIN',
-        'mGUID': guid,
-        'password': pin,
-        'isLightScheme': false,
-        'devID': device.id,
-        'devIDOld': device.idOld,
-        'mobileSdkData': JSON.stringify(createSdkData(login, device))
+        operation: 'createPIN',
+        mGUID: guid,
+        password: pin,
+        isLightScheme: false,
+        devID: device.id,
+        devIDOld: device.idOld,
+        mobileSdkData: JSON.stringify(createSdkData(login, device))
       },
       sanitizeRequestLog: { body: { mGUID: true, password: true, devID: true, devIDOld: true, mobileSdkData: true } },
       sanitizeResponseLog: { body: { loginData: { token: true } } }
@@ -140,19 +140,19 @@ export async function login (login, pin, auth, device) {
   response = await fetchXml(`https://${host}:4477/mobile9/postCSALogin.do`, {
     headers: {
       ...defaultHeaders,
-      'Host': `${host}:4477`
+      Host: `${host}:4477`
     },
     body: {
-      'token': token,
-      'appName': '????????',
-      'appBuildOSType': 'android',
-      'appBuildType': 'RELEASE',
-      'appFormat': 'STANDALONE',
-      'deviceType': 'Android SDK built for x86_64',
-      'deviceOSType': 'android',
-      'deviceOSVersion': '6.0',
-      'appVersion': APP_VERSION,
-      'deviceName': device.model
+      token: token,
+      appName: '????????',
+      appBuildOSType: 'android',
+      appBuildType: 'RELEASE',
+      appFormat: 'STANDALONE',
+      deviceType: 'Android SDK built for x86_64',
+      deviceOSType: 'android',
+      deviceOSVersion: '6.0',
+      appVersion: APP_VERSION,
+      deviceName: device.model
     },
     sanitizeRequestLog: { body: { token: true } },
     sanitizeResponseLog: { body: { person: true } }
@@ -170,9 +170,9 @@ export async function fetchAccounts (auth) {
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/products/list.do`, {
     headers: {
       ...defaultHeaders,
-      'Host': `${auth.api.host}:4477`,
+      Host: `${auth.api.host}:4477`,
       'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
-      'Cookie': auth.api.cookie
+      Cookie: auth.api.cookie
     },
     body: { showProductType: 'cards,accounts,imaccounts,loans' }
   })
@@ -201,9 +201,9 @@ async function fetchAccountDetails (auth, { id, type }) {
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/info.do`, {
     headers: {
       ...defaultHeaders,
-      'Host': `${auth.api.host}:4477`,
+      Host: `${auth.api.host}:4477`,
       'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
-      'Cookie': auth.api.cookie
+      Cookie: auth.api.cookie
     },
     body: { id: id }
   }, null)
@@ -220,9 +220,9 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
     const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/list.do`, {
       headers: {
         ...defaultHeaders,
-        'Host': `${auth.api.host}:4477`,
+        Host: `${auth.api.host}:4477`,
         'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
-        'Cookie': auth.api.cookie
+        Cookie: auth.api.cookie
       },
       body: {
         paginationSize: limit,
@@ -259,8 +259,8 @@ async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) 
         const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
           headers: {
             ...defaultHeaders,
-            'Host': `${auth.api.host}:4477`,
-            'Cookie': auth.api.cookie
+            Host: `${auth.api.host}:4477`,
+            Cookie: auth.api.cookie
           },
           body: {
             id: transaction.id
@@ -285,9 +285,9 @@ export async function fetchTransactions (auth, { id, type, instrument }, fromDat
     const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/abstract.do`, {
       headers: {
         ...defaultHeaders,
-        'Host': `${auth.api.host}:4477`,
-        'Referer': `Android/6.0/${APP_VERSION}`,
-        'Cookie': auth.api.cookie
+        Host: `${auth.api.host}:4477`,
+        Referer: `Android/6.0/${APP_VERSION}`,
+        Cookie: auth.api.cookie
       },
       body: { id, from: formatDate(fromDate), to: formatDate(toDate) }
     })
@@ -305,7 +305,7 @@ export async function makeTransfer (login, auth, device, { fromAccount, toAccoun
   const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/payment.do`, {
     headers: {
       ...defaultHeaders,
-      'Host': `${auth.api.host}:4477`
+      Host: `${auth.api.host}:4477`
     },
     body: {
       fromResource: fromAccount,
@@ -325,7 +325,7 @@ export async function makeTransfer (login, auth, device, { fromAccount, toAccoun
   await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/confirm.do`, {
     headers: {
       ...defaultHeaders,
-      'Host': `${auth.api.host}:4477`
+      Host: `${auth.api.host}:4477`
     },
     body: {
       mobileSdkData: JSON.stringify(createSdkData(login, device)),
@@ -403,7 +403,7 @@ export function getErrorMessage (xmlObject, maxDepth = 3) {
   }
   if (maxDepth > 1) {
     for (const key in xmlObject) {
-      if (xmlObject.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(xmlObject, key)) {
         const error = getErrorMessage(xmlObject[key], maxDepth - 1)
         if (error) {
           return error
@@ -467,49 +467,49 @@ function createSdkData (login, device) {
   const rsaAppKey = md5.hex(login + 'rsa app key').toUpperCase()
 
   const obj = {
-    'TIMESTAMP': dt.getUTCFullYear() + '-' +
+    TIMESTAMP: dt.getUTCFullYear() + '-' +
       toAtLeastTwoDigitsString(dt.getUTCMonth() + 1) + '-' +
       toAtLeastTwoDigitsString(dt.getUTCDate()) + 'T' +
       dt.getUTCHours() + ':' + dt.getUTCMinutes() + ':' + dt.getUTCSeconds() + 'Z',
-    'HardwareID': generateImei(login, '35472406******L'),
-    'SIM_ID': generateSimSN(login, '2500266********L'),
-    'PhoneNumber': '',
-    'GeoLocationInfo': [
+    HardwareID: generateImei(login, '35472406******L'),
+    SIM_ID: generateSimSN(login, '2500266********L'),
+    PhoneNumber: '',
+    GeoLocationInfo: [
       {
-        'Longitude': (37.0 + Math.random()).toString(10),
-        'Latitude': (55.0 + Math.random()).toString(10),
-        'HorizontalAccuracy': '5',
-        'Altitude': (150 + Math.floor(Math.random() * 20)).toString(10),
-        'AltitudeAccuracy': '5',
-        'Timestamp': (dt.getTime() - Math.floor(Math.random() * 1000000)).toString(10),
-        'Heading': (Math.random() * 90).toString(10),
-        'Speed': '3',
-        'Status': '3'
+        Longitude: (37.0 + Math.random()).toString(10),
+        Latitude: (55.0 + Math.random()).toString(10),
+        HorizontalAccuracy: '5',
+        Altitude: (150 + Math.floor(Math.random() * 20)).toString(10),
+        AltitudeAccuracy: '5',
+        Timestamp: (dt.getTime() - Math.floor(Math.random() * 1000000)).toString(10),
+        Heading: (Math.random() * 90).toString(10),
+        Speed: '3',
+        Status: '3'
       }
     ],
-    'DeviceModel': device.model,
-    'MultitaskingSupported': true,
-    'deviceName': device.model,
-    'DeviceSystemName': 'Android',
-    'DeviceSystemVersion': '22',
-    'Languages': 'ru',
-    'WiFiMacAddress': generateHex('44:d4:e0:xx:xx:xx', hex.substr(0, 6)),
-    'WiFiNetworksData': {
-      'BBSID': generateHex('5c:f4:ab:xx:xx:xx', hex.substr(6, 12)),
-      'SignalStrength': Math.floor(-30 - Math.random() * 20).toString(10),
-      'Channel': 'null',
-      'SSID': 'TPLink'
+    DeviceModel: device.model,
+    MultitaskingSupported: true,
+    deviceName: device.model,
+    DeviceSystemName: 'Android',
+    DeviceSystemVersion: '22',
+    Languages: 'ru',
+    WiFiMacAddress: generateHex('44:d4:e0:xx:xx:xx', hex.substr(0, 6)),
+    WiFiNetworksData: {
+      BBSID: generateHex('5c:f4:ab:xx:xx:xx', hex.substr(6, 12)),
+      SignalStrength: Math.floor(-30 - Math.random() * 20).toString(10),
+      Channel: 'null',
+      SSID: 'TPLink'
     },
-    'CellTowerId': (12875 + Math.floor(Math.random() * 10000)).toString(10),
-    'LocationAreaCode': '9722',
-    'ScreenSize': '1080x1776',
-    'RSA_ApplicationKey': rsaAppKey,
-    'MCC': '250',
-    'MNC': '02',
-    'OS_ID': hex.substring(12, 16),
-    'SDK_VERSION': '2.0.1',
-    'Compromised': 0,
-    'Emulator': 0
+    CellTowerId: (12875 + Math.floor(Math.random() * 10000)).toString(10),
+    LocationAreaCode: '9722',
+    ScreenSize: '1080x1776',
+    RSA_ApplicationKey: rsaAppKey,
+    MCC: '250',
+    MNC: '02',
+    OS_ID: hex.substring(12, 16),
+    SDK_VERSION: '2.0.1',
+    Compromised: 0,
+    Emulator: 0
   }
 
   return obj
