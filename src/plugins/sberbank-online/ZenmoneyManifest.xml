@@ -2,7 +2,7 @@
 <provider>
     <id>sberbank-online</id>
     <company>4624</company>
-    <modular>true</modular>
+
     <codeRequired>false</codeRequired>
     <notifiesOnLogin>true</notifiesOnLogin>
 	<description>Синхронизация работает через API мобильного приложения Сбербанк Онлайн для Android.
