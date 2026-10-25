@@ -343,7 +343,7 @@ async function fetchXml (url, options = {}, predicate = () => true) {
     method: 'POST',
     headers: defaultHeaders,
     stringify: qs.stringify,
-    parse: network.parseXml,
+    parse: parseXml,
     ...options
   }
 
