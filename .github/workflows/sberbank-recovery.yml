@@ -1,6 +1,9 @@
 name: Sberbank recovery build
 
 on:
+  pull_request:
+    branches:
+      - master
   push:
     branches:
       - recovery/sberbank-online
