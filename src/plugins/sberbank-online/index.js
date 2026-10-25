@@ -92,36 +92,36 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     return ZenMoney.isAccountSkipped(account.id)
       ? null
       : Promise.all(products.map(async product => {
-      try {
-        for (const apiTransaction of await fetchTransactions(auth, product, fromDate, toDate)) {
-          let transaction
-          if (product.type === 'loan') {
-            transaction = convertLoanTransaction(apiTransaction, account, accountsById)
-          } else {
-            transaction = convertTransaction(apiTransaction, account, accountsById)
-            if (transaction) {
-              const id1 = transaction.movements[0].id
-              const id2 = transaction.movements[1] && transaction.movements[1].id
-                ? transaction.movements[1].id
-                : id1
-              if (transactionIds[id1] || transactionIds[id2]) {
-                continue
-              } else {
-                transactionIds[id1] = true
-                transactionIds[id2] = true
+        try {
+          for (const apiTransaction of await fetchTransactions(auth, product, fromDate, toDate)) {
+            let transaction
+            if (product.type === 'loan') {
+              transaction = convertLoanTransaction(apiTransaction, account, accountsById)
+            } else {
+              transaction = convertTransaction(apiTransaction, account, accountsById)
+              if (transaction) {
+                const id1 = transaction.movements[0].id
+                const id2 = transaction.movements[1] && transaction.movements[1].id
+                  ? transaction.movements[1].id
+                  : id1
+                if (transactionIds[id1] || transactionIds[id2]) {
+                  continue
+                } else {
+                  transactionIds[id1] = true
+                  transactionIds[id2] = true
+                }
               }
             }
+            if (transaction) {
+              transactions.push(transaction)
+            }
           }
-          if (transaction) {
-            transactions.push(transaction)
+        } catch (e) {
+          if (e.toString().indexOf('временно недоступна') < 0) {
+            throw e
           }
         }
-      } catch (e) {
-        if (e.toString().indexOf('временно недоступна') < 0) {
-          throw e
-        }
-      }
-    }))
+      }))
   }))
 
   saveAuth(auth)
