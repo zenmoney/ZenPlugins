@@ -7,7 +7,7 @@ import { convertAccounts, convertLoanTransaction, convertTransaction } from './c
 const md5 = new MD5()
 
 function getAuth () {
-  let guid = ZenMoney.getData('mGUID') || ZenMoney.getData('guid')
+  const guid = ZenMoney.getData('mGUID') || ZenMoney.getData('guid')
   if (guid) {
     ZenMoney.setData('mGUID', undefined)
     ZenMoney.setData('guid', undefined)
@@ -99,7 +99,9 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
             transaction = convertTransaction(apiTransaction, account, accountsById)
             if (transaction) {
               const id1 = transaction.movements[0].id
-              const id2 = transaction.movements[1] && transaction.movements[1].id ? transaction.movements[1].id : id1
+              const id2 = transaction.movements[1] && transaction.movements[1].id
+                ? transaction.movements[1].id
+                : id1
               if (transactionIds[id1] || transactionIds[id2]) {
                 continue
               } else {
