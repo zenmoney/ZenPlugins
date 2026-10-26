@@ -1,0 +1,218 @@
+{
+  "provenance": {
+    "capturedAt": "2026-10-25",
+    "source": "Chrome Network, account-level pfmTape, 25.10.2025–25.10.2026, first page; complete selected operation objects, identifiers and personal data anonymized; purchase from second page"
+  },
+  "operations": [
+    {
+      "id": 900000,
+      "amount": -3500,
+      "categoryCode": "TRANSFER",
+      "pfmCategoryTO": {
+        "code": "TRANSFER",
+        "kind": "-",
+        "name": "Переводы",
+        "enName": "Transfers",
+        "icon": "pfm-finance",
+        "color": "4DBE74"
+      },
+      "currency": {
+        "shortName": "р.",
+        "code": "RUB",
+        "name": "Российский рубль",
+        "roundDecimals": -2
+      },
+      "details": "Перевод средств по номеру телефона +7 (900) 000-00-00.\nБез налога (НДС)",
+      "payeeName": "Иван Иванович Тестов",
+      "payerAccount": "40817810000000000001",
+      "state": {
+        "name": "Исполнен",
+        "color": "009900",
+        "date": 1789893712000,
+        "dateS": "20.09.2026 15:41",
+        "code": "successes",
+        "comment": "Документ проведён"
+      },
+      "operDate": "20.09.2026",
+      "pfmIcon": "pfm-finance",
+      "pfmIconObject": {
+        "icon": "pfm-finance",
+        "iconColor": "FFFFFF",
+        "backgroundColor": "4DBE74"
+      },
+      "pfmOperationId": 900000,
+      "payeeAccountNumber": "**** 0001",
+      "payeeBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+      "payeeBankBic": "045004850",
+      "payerName": "Иван Иванович Тестов",
+      "payerBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+      "payerBankBic": "045004850",
+      "canSendPrintedForm": true,
+      "printedFormInfo": {
+        "paymentAvailable": true,
+        "chequeAvailable": true
+      },
+      "canChangeCategory": true,
+      "orderId": 900001,
+      "orderFormType": "TRANSFER_OTHER_PHONE_INSIDE_BANK",
+      "hold": false,
+      "operDateTime": "20.09.2026 11:41 мск",
+      "accountId": 900002,
+      "mccCodeAndCategory": "",
+      "canSaveTemplate": true,
+      "sbpOperDateTime": "20.09.2026 15:41",
+      "showUpCommission": false,
+      "dpTransferChina": false
+    },
+    {
+      "id": 900003,
+      "amount": 3439.51,
+      "categoryCode": "OTHER.INCOME",
+      "pfmCategoryTO": {
+        "code": "OTHER.INCOME",
+        "kind": "+",
+        "name": "Прочие поступления",
+        "enName": "Other income",
+        "icon": "pfm-income",
+        "color": "F89494"
+      },
+      "currency": {
+        "shortName": "р.",
+        "code": "RUB",
+        "name": "Российский рубль",
+        "roundDecimals": -2
+      },
+      "details": "Иван Иванович Т",
+      "payeeName": "Иван Иванович Тестов",
+      "purpose": "С Днем рождения",
+      "state": {
+        "name": "Исполнен",
+        "color": "009900",
+        "date": 1789861872000,
+        "dateS": "20.09.2026 06:51 мск",
+        "code": "successes"
+      },
+      "operDate": "20.09.2026",
+      "pfmIcon": "trn_vtb",
+      "pfmIconObject": {
+        "icon": "trn_vtb",
+        "iconColor": null,
+        "backgroundColor": null
+      },
+      "pfmOperationId": 900003,
+      "payeeAccountNumber": "40817810000000000001",
+      "payeeBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+      "payeeBankBic": "045004850",
+      "payerName": "Иван Иванович Тестов",
+      "payerBankName": "Банк ВТБ (ПАО)",
+      "payerBankBic": "044525187",
+      "canSendPrintedForm": false,
+      "printedFormInfo": {
+        "paymentAvailable": false,
+        "chequeAvailable": false,
+        "payDocumentAvailable": true
+      },
+      "canChangeCategory": false,
+      "hold": false,
+      "operDateTime": "20.09.2026 06:51 мск",
+      "accountId": 900002,
+      "mccCodeAndCategory": "",
+      "canSaveTemplate": false,
+      "sbpID": "X0000000000000000X00000000000000",
+      "sbpOperDateTime": "20.09.2026 06:51 мск",
+      "dpTransferChina": false
+    },
+    {
+      "id": 900004,
+      "amount": -99,
+      "categoryCode": "OTHERS",
+      "pfmCategoryTO": {
+        "code": "OTHERS",
+        "kind": "-",
+        "name": "Не распределено",
+        "enName": "Others",
+        "icon": "pfm-other",
+        "color": "B5BCD1"
+      },
+      "currency": {
+        "shortName": "р.",
+        "code": "RUB",
+        "name": "Российский рубль",
+        "roundDecimals": -2
+      },
+      "details": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)//Ежемесячная плата за пакет услуг \"Основа\" по счету *0001 за сентябрь",
+      "payerAccount": "40817810000000000001",
+      "operDate": "10.10.2026",
+      "pfmIcon": "pfm-other",
+      "pfmIconObject": {
+        "icon": "pfm-other",
+        "iconColor": "FFFFFF",
+        "backgroundColor": "B5BCD1"
+      },
+      "pfmOperationId": 900004,
+      "payerName": "Иван Иванович Тестов",
+      "payerBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+      "payerBankBic": "045004850",
+      "canSendPrintedForm": false,
+      "printedFormInfo": {
+        "paymentAvailable": false,
+        "chequeAvailable": false,
+        "payDocumentAvailable": true
+      },
+      "canChangeCategory": true,
+      "hold": false,
+      "operDateTime": "10.10.2026 05:05 мск",
+      "accountId": 900002,
+      "mccCodeAndCategory": "",
+      "canSaveTemplate": false,
+      "dpTransferChina": false
+    },
+    {
+      "id": 900005,
+      "amount": -300,
+      "categoryCode": "CAR",
+      "pfmCategoryTO": {
+        "code": "CAR",
+        "kind": "-",
+        "name": "Авто",
+        "enName": "Car",
+        "icon": "pfm-auto",
+        "color": "FD7F4A"
+      },
+      "currency": {
+        "shortName": "р.",
+        "code": "RUB",
+        "name": "Российский рубль",
+        "roundDecimals": -2
+      },
+      "details": "PMP TRC AURA\\Novosibirsk\\RU",
+      "payerAccount": "*0001",
+      "operDate": "23.02.2026",
+      "pfmIcon": "pfm-auto",
+      "pfmIconObject": {
+        "icon": "pfm-auto",
+        "iconColor": "FFFFFF",
+        "backgroundColor": "FD7F4A"
+      },
+      "pfmOperationId": 900005,
+      "payerName": "Иван Иванович Тестов",
+      "payerBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+      "payerBankBic": "045004850",
+      "canSendPrintedForm": false,
+      "printedFormInfo": {
+        "paymentAvailable": false,
+        "chequeAvailable": false,
+        "payDocumentAvailable": true
+      },
+      "canChangeCategory": true,
+      "hold": false,
+      "operDateTime": "23.02.2026 16:23",
+      "authId": "000000",
+      "accountId": 900002,
+      "mccCodeAndCategory": "MCC 7523",
+      "canSaveTemplate": false,
+      "dpTransferChina": false,
+      "merchantDescription": "PMP TRC AURA\\NOVOSIBIRSK\\RU"
+    }
+  ]
+}

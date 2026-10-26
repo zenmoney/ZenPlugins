@@ -1,0 +1,16 @@
+{
+  "provenance": {
+    "capturedAt": "2026-10-25",
+    "source": "Bootloader console event: Levoberezhny additional login form schema, Android 26.8 build 1105; only structural metadata was captured, no HTML or field values"
+  },
+  "schema": {
+    "method": "POST",
+    "actionPath": "/auth-clustered/realms/mdse_multi/login-actions/authenticate",
+    "inputs": [
+      { "name": "fingerprint", "type": "hidden", "autocomplete": "" },
+      { "name": "fsitecode", "type": "hidden", "autocomplete": "" },
+      { "name": "otp", "type": "text", "autocomplete": "one-time-code" },
+      { "name": "login", "type": "submit", "autocomplete": "" }
+    ]
+  }
+}

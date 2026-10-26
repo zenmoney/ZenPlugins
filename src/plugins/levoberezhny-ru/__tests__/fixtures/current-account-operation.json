@@ -1,0 +1,117 @@
+{
+  "provenance": {
+    "capturedAt": "2026-10-26",
+    "source": "Chrome DevTools Network: complete pfmTape operations array for a current account without cards, year filter 26.10.2025–26.10.2026; customer names, phone/account identifiers, operation/document IDs and payment reference substituted consistently; current-account contract confirmed in bank UI"
+  },
+  "operations": [
+    {
+      "id": 900100,
+      "amount": -31000.0,
+      "categoryCode": "TRANSFER",
+      "pfmCategoryTO": {
+        "code": "TRANSFER",
+        "kind": "-",
+        "name": "Переводы",
+        "enName": "Transfers",
+        "icon": "pfm-finance",
+        "color": "4DBE74"
+      },
+      "currency": {
+        "shortName": "р.",
+        "code": "RUB",
+        "name": "Российский рубль",
+        "roundDecimals": -2
+      },
+      "details": "Перевод средств по номеру телефона +7 (900) 000-00-00.\nБез налога (НДС)",
+      "payeeName": "Пётр Петрович Примеров",
+      "payerAccount": "40817810000000000002",
+      "state": {
+        "name": "Исполнен",
+        "color": "009900",
+        "date": 1765089536000,
+        "dateS": "07.12.2025 13:38",
+        "code": "successes",
+        "comment": "Документ проведён"
+      },
+      "operDate": "07.12.2025",
+      "pfmIcon": "pfm-finance",
+      "pfmIconObject": {
+        "icon": "pfm-finance",
+        "iconColor": "FFFFFF",
+        "backgroundColor": "4DBE74"
+      },
+      "pfmOperationId": 900100,
+      "payeeAccountNumber": "**** 0003",
+      "payeeBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+      "payeeBankBic": "045004850",
+      "payerName": "Иван Иванович Тестов",
+      "payerBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+      "payerBankBic": "045004850",
+      "canSendPrintedForm": true,
+      "printedFormInfo": {
+        "paymentAvailable": true,
+        "chequeAvailable": true
+      },
+      "canChangeCategory": true,
+      "orderId": 900100,
+      "orderFormType": "TRANSFER_OTHER_PHONE_INSIDE_BANK",
+      "hold": false,
+      "operDateTime": "07.12.2025 09:38 мск",
+      "accountId": 900006,
+      "mccCodeAndCategory": "",
+      "canSaveTemplate": true,
+      "sbpOperDateTime": "07.12.2025 13:38",
+      "showUpCommission": false,
+      "dpTransferChina": false
+    },
+    {
+      "id": 900101,
+      "amount": 31000.0,
+      "categoryCode": "OTHER.INCOME",
+      "pfmCategoryTO": {
+        "code": "OTHER.INCOME",
+        "kind": "+",
+        "name": "Прочие поступления",
+        "enName": "Other income",
+        "icon": "pfm-income",
+        "color": "F89494"
+      },
+      "currency": {
+        "shortName": "р.",
+        "code": "RUB",
+        "name": "Российский рубль",
+        "roundDecimals": -2
+      },
+      "details": "Перевод собственных средств.\nБез налога (НДС). \n",
+      "payeeName": "Иван Иванович Тестов",
+      "payerAccount": "40817810000000000003",
+      "operDate": "03.12.2025",
+      "pfmIcon": "pfm-income",
+      "pfmIconObject": {
+        "icon": "pfm-income",
+        "iconColor": "FFFFFF",
+        "backgroundColor": "F89494"
+      },
+      "pfmOperationId": 900101,
+      "payeeAccountNumber": "40817810000000000002",
+      "payeeBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+      "payeeBankBic": "045004850",
+      "payerName": "Иван Иванович Тестов",
+      "payerBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+      "payerBankBic": "045004850",
+      "canSendPrintedForm": false,
+      "printedFormInfo": {
+        "paymentAvailable": false,
+        "chequeAvailable": false,
+        "payDocumentAvailable": true
+      },
+      "canChangeCategory": false,
+      "hold": false,
+      "operDateTime": "03.12.2025 14:25",
+      "accountId": 900006,
+      "mccCodeAndCategory": "",
+      "canSaveTemplate": false,
+      "dpTransferChina": false
+    }
+  ]
+}
