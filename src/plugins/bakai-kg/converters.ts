@@ -93,8 +93,9 @@ export function convertTransaction (record: unknown, account: AccountOrCard, fee
   const date = operationDate(getOptString(record, 'date'))
   const sourceId = getOptString(record, 'utrnno')
   const movement: Movement = {
-    // A real purchase and refund share utrnno. Type codes change on settlement.
-    id: sourceId == null || sourceId === '' ? null : `${sourceId}:${amount < 0 ? 'debit' : 'credit'}`,
+    // Purchase/refund share utrnno; a separately booked Visa Direct fee shares it with the debit.
+    // Keep principal IDs stable across settlement type-code changes.
+    id: sourceId == null || sourceId === '' ? null : `${sourceId}:${amount < 0 ? 'debit' : 'credit'}${code === 'BPC0001' ? ':fee' : ''}`,
     account: { id: account.id },
     invoice: originalCurrency === account.instrument ? null : { sum: original, instrument: originalCurrency },
     sum: amount - fee,

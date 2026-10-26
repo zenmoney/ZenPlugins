@@ -1,0 +1,45 @@
+{
+  "provenance": {
+    "report": 178204,
+    "plugin": "bakai-kg",
+    "build": 5,
+    "event": "card.online_statement response 2; complete transfer and fee records",
+    "cleanup": "Public-safe operation and retrieval reference identifiers; all source fields and monetary values preserved. No personal data or credentials in selected records."
+  },
+  "operations": [
+    {
+      "amount": -80,
+      "currency": "USD",
+      "date": "2026-10-24T13:33:06+06:00",
+      "date2": "2026-10-24T13:33:06+06:00",
+      "location": "MB Visa Direct",
+      "operation_amount": -80,
+      "operation_currency": "USD",
+      "type": "Перевод с карты на карту (списание)",
+      "type_code": "781",
+      "utrnno": "100000001",
+      "merchant_id": "MB100073",
+      "balance": 43998,
+      "rrn": "000100000001",
+      "terminal_id": "MB100073",
+      "mcc": 6012,
+      "comment": null
+    },
+    {
+      "amount": -2,
+      "currency": "USD",
+      "date": "2026-10-24T13:33:06+06:00",
+      "date2": "2026-10-24T13:33:06+06:00",
+      "location": "MB Visa Direct",
+      "operation_amount": -2,
+      "operation_currency": "USD",
+      "type": "Комиссия за перевод Visa Direct/Visa+",
+      "type_code": "BPC0001",
+      "utrnno": "100000001",
+      "merchant_id": "MB100073",
+      "balance": 43998,
+      "rrn": "000100000001",
+      "terminal_id": "MB100073"
+    }
+  ]
+}
