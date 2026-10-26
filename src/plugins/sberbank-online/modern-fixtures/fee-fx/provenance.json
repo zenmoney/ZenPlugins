@@ -1,0 +1,42 @@
+{
+  "captureDate": "2026-10-26",
+  "application": "ru.sberbankmobile 17.13.0",
+  "historySource": "POST /uoh-bh/v1/operations/list, from 01.01.2000T00:00:00, 100 records per page, offsets 0..7940; final empty page",
+  "coverage": {
+    "records": 7940,
+    "uniqueOperationIds": 7940,
+    "firstDate": "2023-10-27",
+    "lastDate": "2026-10-26",
+    "nonzeroCommissionRecords": 154,
+    "nonzeroFeeForms": 6,
+    "oldFeeBalanceReconciliations": 8,
+    "otherFeeBalanceReconciliations": 14,
+    "postedCommissionRecords": 147,
+    "canceledCommissionRecords": 7
+  },
+  "detailSource": "POST /uoh-bh/v1/operation/details {uohId}; protocol from installed APK ohf.a; complete actual currency transfer response retained",
+  "feeSemantics": "operationAmount is principal; commission is an additional account-currency debit. nationalAmount includes the fee in newer records but repeats principal in 30 old UfsOutTransfer records. Adjacent balances independently verify 8 of those old records. TakingMeans is a separate booked charge with no commission field and stays a standalone movement. No incoming nonzero fee or combined FX/fee example was observed.",
+  "currencyTransfer": "28.04.2025: bank confirms USD debit and RUB credit. Historical USD source is absent from the complete current graph, so it is a reference by data, not a fabricated current account. Credit comes from detail field Сумма в валюте зачисления; billingAmount is a balance, not credit. Two currently fetched different-currency accounts were not observed together.",
+  "sanitization": "Complete selected source objects; consistent IDs across graph, history and details; personal/free text and account/card suffixes replaced preserving structure, dates, currencies and amounts. Protocol field labels retained.",
+  "nativeValidation": {
+    "sessions": [
+      "5e9c2bd4-fc5b-4dd9-9b6f-80c10da380af",
+      "83cee03a-2dab-45b4-8aee-17169962f95c"
+    ],
+    "success": true,
+    "accounts": [
+      14,
+      14
+    ],
+    "transactions": [
+      65,
+      65
+    ],
+    "identicalTransactions": true,
+    "duplicateMovementIds": [
+      0,
+      0
+    ],
+    "scope": "Current native synchronization window; historical fee and FX cases separately validated against complete bank history/detail responses and the mobile adapter. The current phone window contains neither a nonzero fee nor this historical FX transfer."
+  }
+}

@@ -1,7 +1,8 @@
 import { MD5 } from 'jshashes'
 import { saveCookies } from '../../common/network'
-import { authenticate, fetchHistory } from './modernApi'
-import { convertModernAccounts, convertModernTransactions } from './modernConverters'
+import { authenticate, fetchHistory, fetchOperationDetails, fetchArchiveProducts, fetchRequisites } from './modernApi'
+import { convertModernAccounts, convertModernTransactions, getRequiredOperationDetails } from './modernConverters'
+import { convertArchiveAccounts, getRequiredRequisites, saveAccountGraph } from './archiveAccounts'
 import { generateRandomString } from '../../common/utils'
 import { login, makeTransfer as _makeTransfer } from './api'
 
@@ -71,11 +72,20 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground })
     ZenMoney.saveData()
   }, isInBackground)
   await saveCookies()
-  const graph = convertModernAccounts(session.dataModel)
-  const records = graph.accounts.every(account => ZenMoney.isAccountSkipped(account.id))
+  const current = convertModernAccounts(session.dataModel)
+  const archive = await fetchArchiveProducts(session)
+  const savedAccounts = ZenMoney.getData('modernAccounts')
+  const initial = convertArchiveAccounts(current, archive, [], new Map(), savedAccounts)
+  const records = initial.accounts.every(account => ZenMoney.isAccountSkipped(account.id))
     ? []
     : await fetchHistory(session, fromDate, toDate)
-  const transactions = convertModernTransactions(records, graph, fromDate, toDate, id => ZenMoney.isAccountSkipped(id))
+  const requisites = await fetchRequisites(session, getRequiredRequisites(records, initial))
+  const graph = convertArchiveAccounts(current, archive, records, requisites, savedAccounts)
+  const isSkipped = id => ZenMoney.isAccountSkipped(id)
+  const details = await fetchOperationDetails(session, getRequiredOperationDetails(records, graph, fromDate, toDate, isSkipped))
+  const transactions = convertModernTransactions(records, graph, fromDate, toDate, isSkipped, details)
+  ZenMoney.setData('modernAccounts', saveAccountGraph(graph))
+  ZenMoney.saveData()
   return { accounts: graph.accounts, transactions }
 }
 

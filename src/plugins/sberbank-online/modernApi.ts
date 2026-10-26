@@ -86,6 +86,70 @@ export function formatBankDate (date: Date): string {
   return `${pad(moscow.getUTCDate())}.${pad(moscow.getUTCMonth() + 1)}.${moscow.getUTCFullYear()}T${pad(moscow.getUTCHours())}:${pad(moscow.getUTCMinutes())}:${pad(moscow.getUTCSeconds())}`
 }
 
+export async function fetchArchiveProducts (session: ModernSession, now = new Date()): Promise<JsonObject> {
+  // Installed app ywm.q + rwm.a + uym.a: complete PFM product snapshots,
+  // including closed products. Dates here are ISO, unlike unified history.
+  const response = await fetch(`${hostUrl(session.host)}/personal-finance/pfmassets/v2/mobile/product/history/details`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8', 'User-Agent': 'Mobile Device', UCS_SESSION_ID: session.sessionId },
+    body: { dateFrom: '2000-01-01', dateTo: new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10) },
+    stringify: JSON.stringify,
+    parse: JSON.parse,
+    tls: { ca: [russianTrustedRootCa] },
+    sanitizeRequestLog: { headers: secretHeaders },
+    sanitizeResponseLog: { headers: secretHeaders, body: () => '<historical product snapshots>' }
+  })
+  const payload = object(response.body, 'historical products response')
+  if (payload.success !== true) throw new Error('Bank historical products request failed')
+  return object(payload.body, 'historical products')
+}
+
+export async function fetchRequisites (session: ModernSession, ids: string[]): Promise<Map<string, JsonObject>> {
+  const result = new Map<string, JsonObject>()
+  for (const id of new Set(ids)) {
+    const numericId = Number(id)
+    if (!Number.isSafeInteger(numericId)) throw new Error('Unsafe card identifier')
+    // j17.c + s6e.b: read-only requisites; supports old/closed cards.
+    const response = await fetch(`${hostUrl(session.host)}/ufs-product-requisites/rest/v1/getProductRequisites`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=UTF-8', 'User-Agent': 'Mobile Device', UCS_SESSION_ID: session.sessionId },
+      body: { id: numericId, type: 'card' },
+      stringify: JSON.stringify,
+      parse: JSON.parse,
+      tls: { ca: [russianTrustedRootCa] },
+      sanitizeRequestLog: { headers: secretHeaders },
+      sanitizeResponseLog: { headers: secretHeaders, body: () => '<account requisites>' }
+    })
+    const payload = object(response.body, 'card requisites response')
+    if (payload.success !== true) throw new Error('Bank card requisites request failed')
+    result.set(id, object(payload.body, 'card requisites'))
+  }
+  return result
+}
+
+export async function fetchOperationDetails (session: ModernSession, ids: string[]): Promise<Map<string, JsonObject>> {
+  const details = new Map<string, JsonObject>()
+  for (const id of new Set(ids)) {
+    // Installed application's ohf.a: read-only operation details, POST { uohId }.
+    const response = await fetch(`${hostUrl(session.host)}/uoh-bh/v1/operation/details`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=UTF-8', 'User-Agent': 'Mobile Device', UCS_SESSION_ID: session.sessionId },
+      body: { uohId: id },
+      stringify: JSON.stringify,
+      parse: JSON.parse,
+      tls: { ca: [russianTrustedRootCa] },
+      sanitizeRequestLog: { headers: secretHeaders },
+      sanitizeResponseLog: { headers: secretHeaders }
+    })
+    const payload = object(response.body, 'operation details response')
+    if (payload.success !== true) throw new Error('Bank operation details request failed')
+    const detail = object(payload.body, 'operation details')
+    if (detail.uohId !== id) throw new Error('Bank returned different operation details')
+    details.set(id, detail)
+  }
+  return details
+}
+
 export async function fetchHistory (session: ModernSession, fromDate: Date, toDate?: Date | null): Promise<unknown[]> {
   const result: unknown[] = []
   const seen = new Set<string>()

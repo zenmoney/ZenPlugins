@@ -1,0 +1,55 @@
+{
+  "captureDate": "2026-10-26",
+  "application": "ru.sberbankmobile 17.13.0",
+  "apkSha256": "d978be8cbe8fbaefd19776f6963aa4d851541845df75bd7d69066ab6ea08cc54",
+  "sources": {
+    "current": "MAIN_SCREEN.body.dataModel from aggregate session; complete relevant account groups",
+    "products": "POST /personal-finance/pfmassets/v2/mobile/product/history/details; full observed 70 snapshots retained; protocol ywm.q/rwm.a/uym.a",
+    "requisites": "POST /ufs-product-requisites/rest/v1/getProductRequisites {id,type:card}; j17.c/s6e.b/n6e.a; both complete responses and request contexts retained",
+    "operations": "Selected complete records from 7940-row /uoh-bh/v1/operations/list response set, 2023-10-27 through 2026-10-26",
+    "details": "Complete real operation details for USD to RUB, RUB to USD funding, and two openings without a source account ID",
+    "second-session-operations": "The same 148 complete operations matched by uohId in a later native Android capture. Closed-account transport IDs changed and some authorizations settled; source state fields are retained without modification."
+  },
+  "interpretation": [
+    "Current account/card relationships are explicit in CTACCOUNTS.cards. Old closed cards are linked to accounts by full account numbers from requisites, not equal amounts or nicknames.",
+    "Historical PFM account numbers/currencies distinguish 33 regular products. A unique masked account suffix plus confirmed currency/type links own history references; conflicting candidates fail. External counterpart resources are not matched this way.",
+    "Three historical account references are absent from PFM month-end snapshots. Their bank transport IDs rotate between sessions. Preserve stable account kind, currency and masked suffix identity, unknown current balance, and existing local IDs from saved identity metadata. Two have confirmed closure records; the remaining payment-account closure state is unknown.",
+    "All observed accumulations are regular savings/current-account balances. No contractual term-deposit/loan DTO was observed; no maturity, opening principal or rate is invented.",
+    "Two successful funded openings identify the debit account only by a masked bank label. Preserve that side as a reference by data, not a fabricated fetched account.",
+    "Currency funding details provide 998 RUB debit for 10 USD credit. The history nationalAmount of 10 RUB is not a posted debit.",
+    "Refunds and charges sharing an authorizationDocId remain separate operations; their distinct uohId values and opposite effects are preserved.",
+    "Cached transport aliases are not reused to resolve new records. Refresh old-card requisites from the current bank session; match physical account numbers or unique own-account mask, currency and kind.",
+    "Expected transaction ledgers for both captures were independently calculated from the complete sanitized records. Holds can settle between captures; dates, movement IDs, account IDs, amounts, fees and invoices stay identical."
+  ],
+  "sanitization": "Complete records; account/PAN/bank identifiers and masked suffixes replaced consistently. Personal/free text pseudonymized preserving case, whitespace, punctuation and equality. Protocol labels, currencies, dates and monetary values preserved.",
+  "nativeValidation": {
+    "date": "2026-10-26",
+    "platform": "Android 16 / Zenmoney 26.8",
+    "historyRecords": 7941,
+    "pagesIncludingFinalEmpty": 81,
+    "executedFinancialRecords": 5832,
+    "returnedTransactions": 5832,
+    "accounts": 38,
+    "duplicateNonNullMovementIds": 0,
+    "errors": 0,
+    "previousRunMovementsChanged": 0,
+    "previousAccountIdentitiesPreserved": true,
+    "scope": "Complete Bootloader native result and bank statement comparison; does not inspect Zenmoney internal database for pre-existing duplicates.",
+    "missingFinancialRecords": 0,
+    "unexpectedNativeOperations": 0,
+    "commissionMismatches": 0,
+    "principalMismatches": 0,
+    "executedNonzeroFeesVerified": 147,
+    "subsequentIncrementalRefresh": {
+      "status": "success",
+      "accounts": 38,
+      "transactions": 106,
+      "transactionsExactlyEqualToFullImport": 106,
+      "changedMovements": 0,
+      "duplicateNonNullMovementIds": 0,
+      "accountIdentitiesPreserved": true,
+      "savedLastSuccessDateReused": true,
+      "phoneScreen": "Bank connection shows successful refresh time without an error indicator; internal database not exported or inspected."
+    }
+  }
+}
