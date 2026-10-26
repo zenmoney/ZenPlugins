@@ -108,6 +108,26 @@ function resourceAccount (value: unknown, graph: AccountGraph): AccountOrCard | 
   return id == null ? undefined : graph.byBankId.get(id.replace(/^[^:]+:/, ''))
 }
 
+function externalTransferMovement (raw: JsonObject, graph: AccountGraph, local: Movement, instrument: string): Movement | undefined {
+  // Observed transfer forms with a bank-supplied masked counterparty resource.
+  // A missing resource or an account already in this graph must not become an
+  // invented external side. Keep unknown bank/type fields nullable.
+  if (!['ExtCardTransferIn', 'RurPayment', 'P2PSBPInTransfer', 'UfsOutTransfer', 'UfsTransferBankPartnerPhone', 'UfsTransferAccount', 'UfsTransferRusCard'].includes(String(raw.form))) return undefined
+  const principal = local.invoice?.sum ?? local.sum
+  if (principal == null || principal === 0) return undefined
+  const resource = raw[principal > 0 ? 'fromResource' : 'toResource']
+  if (resourceAccount(resource, graph) != null) return undefined
+  const suffix = getOptString(resource, 'displayedValue')?.match(/[•*]{2,}\s*(\d{4})\s*$/)?.[1]
+  if (suffix == null) return undefined
+  return {
+    id: null,
+    account: { type: null, instrument: local.invoice?.instrument ?? instrument, company: null, syncIds: [suffix] },
+    sum: -principal,
+    invoice: null,
+    fee: 0
+  }
+}
+
 export function convertOperationAmounts (raw: JsonObject, instrument: string): Pick<Movement, 'sum' | 'invoice' | 'fee'> {
   const signed = amount(get(raw, 'operationAmount.amount'))
   const operationCurrency = currency(get(raw, 'operationAmount.currencyCode'))
@@ -270,7 +290,10 @@ export function convertModernTransactions (
       if (['ExtCardCashIn', 'ExtCardCashOut'].includes(String(raw.form)) && signed !== 0) {
         if (sum == null) throw new Error('Cash operation needs a confirmed account amount')
         movements = [movement, { id: null, account: { type: AccountType.cash, instrument: account.instrument, company: null, syncIds: null }, sum: -sum, invoice: null, fee: 0 }]
-      } else movements = [movement]
+      } else {
+        const external = externalTransferMovement(raw, graph, movement, account.instrument)
+        movements = external != null ? [movement, external] : [movement]
+      }
     }
     const title = getOptString(raw, 'correspondent')?.replace(/\s+/g, ' ').trim()
     const description = getOptString(raw, 'description')?.replace(/\s+/g, ' ').trim()

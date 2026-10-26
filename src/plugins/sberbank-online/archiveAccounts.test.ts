@@ -1,6 +1,7 @@
 import { convertArchiveAccounts, getRequiredRequisites, saveAccountGraph } from './archiveAccounts'
-import { convertModernAccounts, convertModernTransactions, getRequiredOperationDetails } from './modernConverters'
+import { convertModernAccounts, convertModernTransactions, getRequiredOperationDetails, parseBankDate } from './modernConverters'
 import { JsonObject } from './modernValidation'
+import { AccountOrCard } from '../../types/zenmoney'
 import get from '../../types/get'
 
 const current: JsonObject = jest.requireActual('./modern-fixtures/archive/current.json')
@@ -9,7 +10,7 @@ const operations: JsonObject[] = jest.requireActual('./modern-fixtures/archive/o
 const secondOperations: JsonObject[] = jest.requireActual('./modern-fixtures/archive/second-session-operations.json')
 const requisitesResponses: Array<{ request: { id: number }, response: { body: JsonObject } }> = jest.requireActual('./modern-fixtures/archive/requisites.json')
 const detailResponses: Array<{ body: JsonObject & { uohId: string } }> = jest.requireActual('./modern-fixtures/archive/details.json')
-const expectedAccounts: unknown[] = jest.requireActual('./modern-fixtures/archive/expected-accounts.json')
+const expectedAccounts: AccountOrCard[] = jest.requireActual('./modern-fixtures/archive/expected-accounts.json')
 const expectedAliases: Record<string, string> = jest.requireActual('./modern-fixtures/archive/expected-aliases.json')
 const expectedTransactions: unknown[] = jest.requireActual('./modern-fixtures/archive/expected-transactions.json')
 const secondExpectedTransactions: unknown[] = jest.requireActual('./modern-fixtures/archive/second-expected-transactions.json')
@@ -48,6 +49,30 @@ describe('complete historical Sberbank graph and financial records', () => {
     expect(repeat.accounts).toEqual(expectedAccounts)
     const next = convertArchiveAccounts(convertModernAccounts(current), products.body, [], new Map(), saved)
     expect(getRequiredRequisites(operations, next).sort()).toEqual([...requisites.keys()].sort())
+  })
+
+  it.each(['sber:history:account:RUB:4049', 'sber:history:account:RUB:4050'])('archives cached account %s when a later real statement confirms its closure', id => {
+    // ACCOUNT-002/003: replay the complete observed records before the closure,
+    // then the second capture with rotated transport IDs and the actual closure.
+    const full = graph()
+    const closure = operations.find(row => row.form === 'UfsDepositClose' && get(row, 'state.category') === 'executed' && full.byBankId.get(String(get(row, 'fromResource.id')).replace(/^[^:]+:/, ''))?.id === id)
+    if (closure == null) throw new Error('Missing observed closure')
+    const earlier = operations.filter(row => parseBankDate(row.date) < parseBankDate(closure.date))
+    const before = convertArchiveAccounts(convertModernAccounts(current), products.body, earlier, requisites)
+    const previous = before.accounts.find(account => account.id === id)
+    expect(previous).toBeDefined()
+    expect(previous?.archived).toBeUndefined()
+    const saved = saveAccountGraph(before)
+    const unchanged = JSON.stringify(saved)
+    const after = convertArchiveAccounts(convertModernAccounts(current), products.body, secondOperations, requisites, saved)
+    const sort = (items: unknown[]): unknown[] => [...items].sort((a, b) => String(get(a, 'id')).localeCompare(String(get(b, 'id'))))
+    // An older record can supply the masked resource label rather than the
+    // later billing title. Closing the account must retain its saved title.
+    const expectedAfter = expectedAccounts.map(account => account.id === id ? { ...account, title: previous?.title } : account)
+    expect(sort(after.accounts)).toEqual(sort(expectedAfter))
+    expect(JSON.stringify(saved)).toBe(unchanged)
+    const repeat = convertArchiveAccounts(convertModernAccounts(current), products.body, secondOperations, requisites, saveAccountGraph(after))
+    expect(repeat.accounts).toEqual(after.accounts)
   })
 
   it('converts the complete selected statement including cash withdrawals, closures, zero events and both FX directions', () => {

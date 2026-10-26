@@ -50,6 +50,33 @@
       "accountIdentitiesPreserved": true,
       "savedLastSuccessDateReused": true,
       "phoneScreen": "Bank connection shows successful refresh time without an error indicator; internal database not exported or inspected."
-    }
+    },
+    "revisionScope": "Native validation predates the external-counterparty repair; the repaired outputs are verified offline against these complete bank records and the mobile adapter."
+  },
+  "externalTransferRegression": {
+    "externalTransferForms": [
+      "ExtCardTransferIn",
+      "RurPayment",
+      "P2PSBPInTransfer",
+      "UfsOutTransfer",
+      "UfsTransferBankPartnerPhone",
+      "UfsTransferAccount",
+      "UfsTransferRusCard"
+    ],
+    "source": "Existing complete sanitized operations retained unchanged; real incoming transfers, outgoing transfers with/without fees, and absent counterparty resources are selected by observed form and state.",
+    "expectedResults": "The previous independent principal/fee/date/merchant ledger is retained. Add the counterparty movement from its actual masked resource: opposite principal, zero fee, null movement ID, unknown type/company, observed suffix. Resource currency is absent in these records; use invoice currency if present, otherwise local account currency. No exchange rate or external account balance is inferred.",
+    "scope": "Only observed transfer forms with a known masked resource outside the represented graph gain an external side. Current captures contain RUB external transfers; a distinct confirmed external currency is not present. Operations without such a resource, internal transfers, cash, and local movement identities are preserved."
+  },
+  "closureRegression": "For each of the two real short-lived savings accounts, replay all selected complete records before its actual UfsDepositClose, persist the resulting graph, then process the later capture with rotated bank transport IDs and both closures. Full account results must update archived while retaining prior local IDs, titles and unknown balances; saved input remains unchanged and a further repeat is identical.",
+  "offlineRegressionReplay": {
+    "sourceRecords": 7941,
+    "transactions": 5832,
+    "accounts": 38,
+    "localFinancialOrIdentityChanges": 0,
+    "addedExternalCounterparties": 434,
+    "duplicateNonNullMovementIds": 0,
+    "details": 4,
+    "source": "Complete native Android capture already retained locally; replayed with the repaired converters without new bank requests.",
+    "scope": "Existing local movement IDs, sums, invoices, fees, dates, holds, merchants and comments compare exactly with the successful native result; 434 existing operations gain their known external reference. This is offline verification, not a new phone synchronization."
   }
 }

@@ -34,6 +34,20 @@
         "sum": -800.0,
         "invoice": null,
         "fee": -12.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1007"
+          ]
+        },
+        "sum": 800.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -57,6 +71,20 @@
         "sum": -300.0,
         "invoice": null,
         "fee": -30.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1009"
+          ]
+        },
+        "sum": 300.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -172,6 +200,20 @@
         "sum": -300.0,
         "invoice": null,
         "fee": -4.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1014"
+          ]
+        },
+        "sum": 300.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -195,6 +237,20 @@
         "sum": -333.0,
         "invoice": null,
         "fee": -5.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1014"
+          ]
+        },
+        "sum": 333.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -218,6 +274,20 @@
         "sum": -50.0,
         "invoice": null,
         "fee": -0.75
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1010"
+          ]
+        },
+        "sum": 50.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -264,6 +334,20 @@
         "sum": -100.0,
         "invoice": null,
         "fee": -30.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1015"
+          ]
+        },
+        "sum": 100.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -287,6 +371,20 @@
         "sum": -1100.0,
         "invoice": null,
         "fee": -16.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1016"
+          ]
+        },
+        "sum": 1100.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -310,6 +408,20 @@
         "sum": -4000.0,
         "invoice": null,
         "fee": -60.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1017"
+          ]
+        },
+        "sum": 4000.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -333,6 +445,20 @@
         "sum": -100.0,
         "invoice": null,
         "fee": -1.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1010"
+          ]
+        },
+        "sum": 100.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -356,6 +482,20 @@
         "sum": -30000.0,
         "invoice": null,
         "fee": -1.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1011"
+          ]
+        },
+        "sum": 30000.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -402,6 +542,20 @@
         "sum": -500.0,
         "invoice": null,
         "fee": -7.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1018"
+          ]
+        },
+        "sum": 500.0,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {

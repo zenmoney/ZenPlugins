@@ -154,13 +154,14 @@ export function convertArchiveAccounts (
         const fingerprint = `${reference.split(':')[0]}:${instrument}:${suffix}`
         const priorId = maskedAccounts.get(fingerprint)
         const prior = priorId != null ? byId.get(priorId) : undefined
+        const closed = records.some(value => get(value, 'isFinancial') === true && get(value, 'form') === 'UfsDepositClose' && get(value, 'state.category') === 'executed' && getOptString(value, 'fromResource.id')?.replace(/^[^:]+:/, '') === id)
         if (prior != null) {
           if (prior.type !== type || prior.instrument !== instrument) throw new Error('Historical account identity changed type or currency')
           known = prior
+          if (closed) known.archived = true
           byBankId.set(id, known)
           continue
         }
-        const closed = records.some(value => get(value, 'form') === 'UfsDepositClose' && get(value, 'state.category') === 'executed' && getOptString(value, 'fromResource.id')?.replace(/^[^:]+:/, '') === id)
         const title = billingMatches ? getOptString(raw, 'billingAmount.name') : null
         known = {
           id: `sber:history:${fingerprint}`,

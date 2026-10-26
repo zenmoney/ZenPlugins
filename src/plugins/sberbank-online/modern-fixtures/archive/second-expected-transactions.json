@@ -340,6 +340,20 @@
         "sum": -1420,
         "invoice": null,
         "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "4039"
+          ]
+        },
+        "sum": 1420,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -363,6 +377,20 @@
         "sum": 83,
         "invoice": null,
         "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "4040"
+          ]
+        },
+        "sum": -83,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -384,6 +412,20 @@
           "id": "sber:9000000000000047"
         },
         "sum": 100,
+        "invoice": null,
+        "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "4041"
+          ]
+        },
+        "sum": -100,
         "invoice": null,
         "fee": 0
       }
@@ -530,6 +572,20 @@
         "sum": -10000,
         "invoice": null,
         "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "4043"
+          ]
+        },
+        "sum": 10000,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -551,6 +607,20 @@
           "id": "sber:9000000000000039"
         },
         "sum": -51900,
+        "invoice": null,
+        "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "4044"
+          ]
+        },
+        "sum": 51900,
         "invoice": null,
         "fee": 0
       }
@@ -936,6 +1006,20 @@
         "sum": -300,
         "invoice": null,
         "fee": -30
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "4046"
+          ]
+        },
+        "sum": 300,
+        "invoice": null,
+        "fee": 0
       }
     ],
     "merchant": {
@@ -1830,6 +1914,20 @@
           "id": "sber:9000000000000048"
         },
         "sum": -4450,
+        "invoice": null,
+        "fee": 0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "4044"
+          ]
+        },
+        "sum": 4450,
         "invoice": null,
         "fee": 0
       }

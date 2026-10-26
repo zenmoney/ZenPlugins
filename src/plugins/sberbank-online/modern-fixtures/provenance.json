@@ -10,6 +10,21 @@
     "platform": "Android 16, Zenmoney 26.8 build 1105",
     "firstRun": "2540af59-45a3-4aea-b50d-bb4fb762df57",
     "repeatedRun": "b0230602-4f5b-4ba9-a1ee-034c4acfc396",
-    "result": "Both successful: 14 accounts and 64 transactions; identical full transaction results and movement identities; repeated run used native saved auth, override disabled."
+    "result": "Both successful: 14 accounts and 64 transactions; identical full transaction results and movement identities; repeated run used native saved auth, override disabled.",
+    "revisionScope": "Native validation predates the external-counterparty repair; the repaired outputs are verified offline against these complete bank records and the mobile adapter."
+  },
+  "externalTransferRegression": {
+    "externalTransferForms": [
+      "ExtCardTransferIn",
+      "RurPayment",
+      "P2PSBPInTransfer",
+      "UfsOutTransfer",
+      "UfsTransferBankPartnerPhone",
+      "UfsTransferAccount",
+      "UfsTransferRusCard"
+    ],
+    "source": "Existing complete sanitized operations retained unchanged; real incoming transfers, outgoing transfers with/without fees, and absent counterparty resources are selected by observed form and state.",
+    "expectedResults": "The previous independent principal/fee/date/merchant ledger is retained. Add the counterparty movement from its actual masked resource: opposite principal, zero fee, null movement ID, unknown type/company, observed suffix. Resource currency is absent in these records; use invoice currency if present, otherwise local account currency. No exchange rate or external account balance is inferred.",
+    "scope": "Only observed transfer forms with a known masked resource outside the represented graph gain an external side. Current captures contain RUB external transfers; a distinct confirmed external currency is not present. Operations without such a resource, internal transfers, cash, and local movement identities are preserved."
   }
 }
