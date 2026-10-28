@@ -29,14 +29,15 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     }
   ]
   const merchantTitle = merchantFromDescription(rawTransaction.description)
+  const isLoanPayment = rawTransaction.description?.endsWith(' — Платежи по кредиту') === true
   return {
     statementUid: rawTransaction.statementUid,
     transaction: {
-      comment: null,
+      comment: isLoanPayment ? merchantTitle : null,
       movements,
       hold: rawTransaction.hold,
       date: new Date(rawTransaction.date),
-      merchant: merchantTitle === null
+      merchant: merchantTitle === null || isLoanPayment
         ? null
         : {
             fullTitle: merchantTitle,

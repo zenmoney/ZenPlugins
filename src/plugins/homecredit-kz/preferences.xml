@@ -4,6 +4,7 @@
         key="startDate"
         title="С какой даты загружать операции"
         dialogTitle="С какой даты загружать операции"
+        dialogMessage="Из выбранных выписок будут загружены все операции. Эта дата не ограничивает период выписки."
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         inputType="date"
