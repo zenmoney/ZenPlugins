@@ -1,6 +1,7 @@
 import { BankMessageError } from '../../../errors'
 import { AccountType } from '../../../types/zenmoney'
 import type { AuthState, ProductAccount } from '../models'
+import { convertCard, convertPaymentHistoryTransaction } from '../converters'
 
 // Test records are synthetic and must not be copied from real bank data.
 const mockAuthenticate = jest.fn()
@@ -59,6 +60,46 @@ describe('Belarusbank scrape', () => {
     expect(ZenMoney.locale).toBe('ru')
   })
 
+  it.each([false, true])('filters the inclusive interval before grouping (unbounded: %s) [model]', async (unbounded) => {
+    // Model interval semantics independently of the unavailable raw PDF from logs 173622/182369.
+    const card = convertCard({ productId: 'card', currencyIso: 'BYN' })
+    const start = new Date('2026-10-01T00:00:00Z')
+    const rows = [-1, 0, 1, 2].map(offset => ({
+      hold: false,
+      date: new Date(start.getTime() + offset),
+      comment: null,
+      merchant: null,
+      movements: [{ id: String(offset), account: { id: card.id }, fee: 0, invoice: null, sum: offset < 1 ? -1 : 1 }]
+    }))
+    mockAuthenticate.mockResolvedValue({})
+    mockGetProducts.mockResolvedValue([card])
+    mockGetStatementTransactions.mockResolvedValue(rows)
+    const expected = (unbounded ? rows.slice(1) : rows.slice(1, 3)).map(row => ({ ...row, movements: [{ ...row.movements[0], id: expect.any(String) }] }))
+    await expect(scrape({ preferences: {}, fromDate: start, toDate: unbounded ? undefined : new Date(start.getTime() + 1), isFirstRun: false, isInBackground: true }))
+      .resolves.toEqual({ accounts: [card], transactions: expected })
+  })
+
+  it('enriches a matched statement payment without importing another debit', async () => {
+    // Log 173622/build 162: payment source + logged statement context; raw PDF was masked.
+    const card = convertCard({ productId: 'card', currencyIso: 'BYN' })
+    const payment = convertPaymentHistoryTransaction({
+      id: '20261018120304299149000000',
+      amount: '40.00',
+      currency: 'BYN',
+      time: '2026-10-18T12:03:04Z',
+      paymentName: 'Пакет,byfly,ZALA,Видеоконтроль',
+      payeeLegalName: 'Могилевский филиал РУП "Белтелеком"'
+    }, card)
+    if (payment == null) throw new Error('Expected recorded payment')
+    mockAuthenticate.mockResolvedValue({})
+    mockGetProducts.mockResolvedValue([card])
+    mockGetGeneralPaymentHistory.mockResolvedValue([payment])
+    mockGetStatementTransactions.mockResolvedValue([{ ...payment, merchant: null, comment: 'Оплата товаров и услуг ERIP-2 БЕЛАРУСЬ MINSK/4900' }])
+    await expect(scrape({ preferences: {}, fromDate: new Date('2026-10-01'), isFirstRun: false, isInBackground: true }))
+      .resolves.toEqual({ accounts: [card], transactions: [{ ...payment, movements: [{ ...payment.movements[0], id: expect.any(String) }] }] })
+    expect(mockGetStatementTransactions).toHaveBeenCalledTimes(1)
+  })
+
   it('persists confirmed authorization before a later financial fetch failure [model]', async () => {
     // Token rotation must survive unrelated data-loading failures; old preferences must not invalidate hot auth.
     const stored = { sessionToken: 'model-old-session', refreshToken: 'model-old-refresh', tokenType: 'Bearer' }
@@ -78,7 +119,7 @@ describe('Belarusbank scrape', () => {
       isFirstRun: false,
       isInBackground: true
     })).rejects.toBe(error)
-    expect(mockAuthenticate).toHaveBeenCalledWith(stored, true)
+    expect(mockAuthenticate).toHaveBeenCalledWith(stored, true, expect.any(Function))
     expect(pluginData.get('belarusbankAuth')).toEqual(renewed)
   })
 
@@ -205,7 +246,7 @@ describe('Belarusbank scrape', () => {
 
     expect(result.transactions).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        comment: 'Statement operation',
+        comment: 'Statement operation\nPayment history duplicate',
         movements: [expect.objectContaining({ id: expect.stringMatching(/^[a-f0-9]{32}$/), sum: -20.5 })]
       }),
       expect.objectContaining({ comment: 'Payment history only' })
@@ -250,7 +291,7 @@ describe('Belarusbank scrape', () => {
 
     const firstResult = await scrape({
       preferences: { login: 'test-login', password: 'test-password' },
-      fromDate: new Date('2026-08-01T00:00:00Z'),
+      fromDate: new Date('2026-02-01T00:00:00Z'),
       toDate: new Date('2026-08-04T00:00:00Z'),
       isFirstRun: false,
       isInBackground: true
@@ -273,7 +314,7 @@ describe('Belarusbank scrape', () => {
     }])
     const secondResult = await scrape({
       preferences: { login: 'test-login', password: 'test-password' },
-      fromDate: new Date('2026-08-01T00:00:00Z'),
+      fromDate: new Date('2026-02-01T00:00:00Z'),
       toDate: new Date('2026-08-04T00:00:00Z'),
       isFirstRun: false,
       isInBackground: true
@@ -282,7 +323,7 @@ describe('Belarusbank scrape', () => {
     expect(secondResult.transactions).toHaveLength(2)
     expect(secondResult.transactions).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        comment: 'USLUGI BANKA БЕЛАРУСЬ',
+        comment: 'USLUGI BANKA БЕЛАРУСЬ\nТестовая составная операция',
         movements: [expect.objectContaining({ id: compositeId, sum: -2.8 })]
       }),
       expect.objectContaining({ comment: 'Другая операция' })
@@ -298,7 +339,7 @@ describe('Belarusbank scrape', () => {
     }])
     const thirdResult = await scrape({
       preferences: { login: 'test-login', password: 'test-password' },
-      fromDate: new Date('2026-08-01T00:00:00Z'),
+      fromDate: new Date('2026-02-01T00:00:00Z'),
       toDate: new Date('2026-08-04T00:00:00Z'),
       isFirstRun: false,
       isInBackground: true
@@ -360,7 +401,7 @@ describe('Belarusbank scrape', () => {
     expect(stableId).not.toBe('statement-first')
     expect(secondResult.transactions).toHaveLength(1)
     expect(secondResult.transactions[0]).toMatchObject({
-      comment: 'Выписка',
+      comment: 'Выписка\nИстория приложения',
       movements: [{ id: stableId, sum: -20.5 }]
     })
 

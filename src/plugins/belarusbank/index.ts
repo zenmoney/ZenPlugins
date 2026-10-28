@@ -2,7 +2,7 @@ import md5 from 'crypto-js/md5'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import type { ExtendedTransaction, ScrapeFunc } from '../../types/zenmoney'
 import { authenticate, getGeneralPaymentHistory, getProducts, getStatementTransactions } from './api'
-import { AUTH_DATA_KEY, type PreferenceInput } from './models'
+import { AUTH_DATA_KEY, type AuthState, type PreferenceInput } from './models'
 
 const PAYMENT_DUPLICATE_WINDOW_MS = 0
 const LEGACY_TRANSACTION_ID_STATE_KEY = 'belarusbankTransactionIds'
@@ -120,6 +120,14 @@ const mergeStatementAndPaymentHistory = (
     }
 
     matchedStatementMovements.add(`${match.statementIndex}:${match.movementIndex}`)
+    const statement = statementTransactions[match.statementIndex]
+    statement.merchant ??= payment.merchant
+    // These statement labels describe the payment channel, not its purpose.
+    const statementComment = /^Оплата товаров и услуг (?:ERIP(?:-2)?|OPLATA USLUG) БЕЛАРУСЬ MINSK\/4900$/.test(statement.comment ?? '')
+      ? null
+      : statement.comment
+    const comment = Array.from(new Set([statementComment, payment.comment].filter((text): text is string => text != null))).join('\n')
+    statement.comment = comment.length > 0 ? comment : null
   }
 
   return [...statementTransactions, ...unmatchedPayments]
@@ -129,9 +137,14 @@ export const scrape: ScrapeFunc<PreferenceInput> = async ({ fromDate, toDate, is
   ZenMoney.locale = 'ru'
   clearLegacyTransactionIdState()
 
-  const auth = await authenticate(ZenMoney.getData(AUTH_DATA_KEY, null), isInBackground)
-  ZenMoney.setData(AUTH_DATA_KEY, auth)
-  ZenMoney.saveData()
+  let persistedAuth: AuthState | undefined
+  const persistAuth = (auth: AuthState): void => {
+    ZenMoney.setData(AUTH_DATA_KEY, auth)
+    ZenMoney.saveData()
+    persistedAuth = auth
+  }
+  const auth = await authenticate(ZenMoney.getData(AUTH_DATA_KEY, null), isInBackground, persistAuth)
+  if (auth !== persistedAuth) persistAuth(auth)
 
   const products = await getProducts(auth)
   const transactions: ExtendedTransaction[] = []
@@ -150,7 +163,9 @@ export const scrape: ScrapeFunc<PreferenceInput> = async ({ fromDate, toDate, is
   assignCanonicalTransactionIds(paymentHistory, accountInstruments)
   transactions.push(...mergeStatementAndPaymentHistory(statementTransactions, paymentHistory))
 
-  const adjustedTransactions = adjustTransactions({ transactions })
+  const adjustedTransactions = adjustTransactions({
+    transactions: transactions.filter(transaction => transaction.date >= fromDate && (toDate == null || transaction.date <= toDate))
+  })
   for (const transaction of adjustedTransactions) {
     if (transaction.movements.length !== 2) continue
     transaction.movements[0].invoice = null

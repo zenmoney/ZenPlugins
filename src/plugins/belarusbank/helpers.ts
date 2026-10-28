@@ -77,3 +77,9 @@ export const getLastCardDigits = (value: unknown): string | null => {
   const digits = cardPan.replace(/\D/g, '')
   return digits.length >= 4 ? digits.slice(-4) : null
 }
+
+export const normalizeProductIdentifier = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null
+  const normalized = value.replace(/\s/g, '').toUpperCase()
+  return normalized.length > 0 ? normalized : null
+}

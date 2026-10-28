@@ -30,6 +30,7 @@ export interface Card {
   blocked?: boolean
   temporarilyBlocked?: boolean
   isOrdered?: boolean
+  isMain?: boolean
   markBalance?: boolean
   viewRights?: string
   serviceRights?: string
@@ -118,6 +119,7 @@ export interface CardTransactionsResponse extends ErrorResponse {
 export interface PaymentHistoryItem {
   id: string | number
   paymentName?: string
+  payeeLegalName?: string
   amount: ApiMoney
   feeAmount?: ApiMoney
   currency?: string | number

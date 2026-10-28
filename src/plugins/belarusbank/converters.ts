@@ -1,7 +1,7 @@
 import md5 from 'crypto-js/md5'
 import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import { AccountType, type ExtendedTransaction, type Transaction } from '../../types/zenmoney'
-import { asNonEmptyString, getLastCardDigits, isArchived, normalizeCurrency, parseDate, parseMinskDate, parseRequiredDate, toNumber, toOptionalNumber, uniqueStrings } from './helpers'
+import { asNonEmptyString, getLastCardDigits, isArchived, normalizeCurrency, normalizeProductIdentifier, parseDate, parseMinskDate, parseRequiredDate, toNumber, toOptionalNumber, uniqueStrings } from './helpers'
 import type { ProductAccount } from './models'
 import type { BankAccount, Card, CardTransaction, Credit, PaymentHistoryItem } from './types/fetch'
 
@@ -21,6 +21,34 @@ const getCreditArchivedStatus = (credit: Credit): boolean | undefined => {
   const numericStatus = Number(credit.status)
   if (Number.isFinite(numericStatus)) return [-1, 8, 9, 11].includes(numericStatus)
   return isArchived(credit.status ?? credit.statusName)
+}
+
+/** Returns whether a card belongs to a current account returned by Belarusbank. */
+export const isCardLinkedToAccount = (card: Card, account: BankAccount): boolean => {
+  const accountContractNumber = normalizeProductIdentifier(account.contractNumber)
+  const accountIban = normalizeProductIdentifier(account.ibanNum)
+  const cardContractNumbers = [card.cardAccountNumber, card.contractNumber]
+    .map(normalizeProductIdentifier)
+    .filter((value): value is string => value != null)
+  const cardIban = normalizeProductIdentifier(card.ibanNum)
+
+  if (accountContractNumber != null && cardContractNumbers.length > 0) {
+    return cardContractNumbers.includes(accountContractNumber)
+  }
+
+  return accountIban != null && cardIban === accountIban
+}
+
+const findLinkedAccount = (
+  card: Card,
+  accounts: BankAccount[],
+  authoritativeLinks: Map<string, BankAccount[]>
+): BankAccount | undefined => {
+  const authoritativeMatches = authoritativeLinks.get(String(card.productId))
+  if (authoritativeMatches != null) return authoritativeMatches.length === 1 ? authoritativeMatches[0] : undefined
+
+  const matches = accounts.filter((account) => isCardLinkedToAccount(card, account))
+  return matches.length === 1 ? matches[0] : undefined
 }
 
 export const convertCard = (card: Card, linkedAccount?: BankAccount): ProductAccount => {
@@ -59,6 +87,47 @@ export const convertCard = (card: Card, linkedAccount?: BankAccount): ProductAcc
       productKind: 'card' as const
     }
   }, card.isArchived ?? (Number(card.status) === -1 ? true : isArchived(card.status)))
+}
+
+/** Keeps one balance and one statement source for every confirmed card account. */
+export const convertAccounts = (graph: {
+  cards: Card[]
+  accounts: BankAccount[]
+  deposits: BankAccount[]
+  credits: Credit[]
+  authoritativeLinks: Map<string, BankAccount[]>
+}): ProductAccount[] => {
+  const groups = new Map<string, { cards: Card[], account?: BankAccount }>()
+  const orderedCards = [...graph.cards].sort((left, right) => {
+    const priority = Number(right.isMain === true) - Number(left.isMain === true)
+    return priority !== 0 ? priority : String(left.productId).localeCompare(String(right.productId))
+  })
+  for (const card of orderedCards) {
+    const account = findLinkedAccount(card, graph.accounts, graph.authoritativeLinks)
+    const key = account != null ? `account:${String(account.productId)}` : `card:${String(card.productId)}`
+    const group = groups.get(key) ?? { cards: [], account }
+    group.cards.push(card)
+    groups.set(key, group)
+  }
+
+  const cards = Array.from(groups.values()).map(group => {
+    const converted = group.cards.map(card => convertCard(card, group.account))
+    const primary = converted[0]
+    const statement = converted.find(card => card._meta.cardStatementAllowed) ?? primary
+    console.assert(converted.every(card => card.instrument === primary.instrument), 'Linked cards have conflicting currencies')
+    return {
+      ...primary,
+      // Retain legacy matching identifiers when consolidating existing connections.
+      syncIds: uniqueStrings(converted.flatMap(card => card.syncIds)),
+      _meta: {
+        ...primary._meta,
+        statementProductId: statement._meta.statementProductId,
+        cardStatementAllowed: converted.some(card => card._meta.cardStatementAllowed)
+      }
+    }
+  }).sort((left, right) => left.id.localeCompare(right.id))
+
+  return [...cards, ...graph.deposits.map(convertDeposit), ...graph.credits.map(convertCredit)]
 }
 
 export const convertAccount = (account: BankAccount): ProductAccount => {
@@ -228,13 +297,15 @@ export const convertPaymentHistoryTransaction = (payment: PaymentHistoryItem, ac
   const feeAmount = Math.abs(toNumber(payment.feeAmount, 0))
   const totalAmount = amount + feeAmount
   if (totalAmount < 0.005) return null
+  const payee = asNonEmptyString(payment.payeeLegalName)
+  const paymentName = asNonEmptyString(payment.paymentName)
 
   return {
     hold: false,
     // The processing timestamp is the one printed in the official statement.
     // The generic app timestamp may lag it by a second for otherwise identical operations.
     date: parseRequiredDate(payment.timeBpc ?? payment.time, payment.timeBpc == null ? 'time' : 'timeBpc'),
-    comment: asNonEmptyString(payment.paymentName),
+    comment: paymentName === 'ЕРИП (м-банкинг)' || paymentName === payee ? null : paymentName,
     movements: [{
       id: md5(`${account.id}:${String(payment.id)}`).toString(),
       account: { id: account.id },
@@ -242,6 +313,6 @@ export const convertPaymentHistoryTransaction = (payment: PaymentHistoryItem, ac
       invoice: null,
       sum: -totalAmount
     }],
-    merchant: null
+    merchant: payee != null ? { title: payee, city: null, country: null, mcc: null, location: null } : null
   }
 }

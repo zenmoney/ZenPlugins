@@ -73,16 +73,16 @@ interface BrowserXhr {
   responseType: string
   responseText: string
   response: unknown
-  send: () => void
+  send: (body?: string) => void
 }
-const xhr = (view: NativeView, url: string, status: number, response: unknown, json = false): void => {
+const xhr = (view: NativeView, url: string, status: number, response: unknown, json = false, body?: unknown): void => {
   const Xhr = view.browser.XMLHttpRequest as new () => BrowserXhr
   const request = new Xhr()
   Object.assign(request, { responseURL: url, status, response, responseType: json ? 'json' : '', responseText: JSON.stringify(response) })
-  request.send()
+  request.send(body != null ? JSON.stringify(body) : undefined)
 }
 
-const tokenResult = { sessionToken: 'model-session', refreshToken: 'model-refresh', tokenType: 'Bearer' }
+const tokenResult = { sessionToken: 'model-session', refreshToken: 'model-refresh', tokenType: 'Bearer', platformType: 'pwa' }
 
 describe('interactive authorization [model]', () => {
   beforeEach(() => {
@@ -176,6 +176,39 @@ describe('interactive authorization [model]', () => {
     expect(NativeView.instance.close).toHaveBeenCalledTimes(1)
   })
 
+  it('pairs saved credentials with their successful preparation and confirmation without capturing OTP data', async () => {
+    // Model capture association; endpoint/body fields come from PWA build 666 getLoginRequest.
+    const loginRequest = { login: 'model-login', password: 'model-password', deviceUid: 'model-device-id' }
+    NativeView.onGoto = async (view) => {
+      xhr(view, 'https://mb.asb.by/ibanking/users/auth/login/preparation?loginMode=CREDENTIALS', 200, { requestId: 'model-request' }, false, loginRequest)
+      xhr(view, 'https://mb.asb.by/ibanking/users/auth/login/model-request?code=model-otp', 200, tokenResult, false, { requestId: 'model-request', code: 'model-otp' })
+    }
+    await expect(authorizeInWebView(false)).resolves.toEqual({ ...tokenResult, loginRequest })
+  })
+
+  it('does not attach credentials from a different preparation to successful authorization', async () => {
+    NativeView.onGoto = async (view) => {
+      xhr(view, 'https://mb.asb.by/ibanking/users/auth/login/preparation', 200, { requestId: 'model-other-request' }, false, { password: 'model-other-password' })
+      xhr(view, 'https://mb.asb.by/ibanking/users/auth/login/model-request', 200, tokenResult)
+    }
+    await expect(authorizeInWebView(false)).resolves.toEqual(tokenResult)
+  })
+
+  it('captures the request body used by a successful fetch login without logging it', async () => {
+    const loginRequest = { login: 'model-login', password: 'model-password', deviceUid: 'model-device-id' }
+    const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
+    NativeView.onGoto = async (view) => {
+      const window = view.browser.window as { fetch: (url: string, options: { body: string }) => Promise<unknown> }
+      const nativeFetch = view.browser.nativeFetch as jest.Mock
+      nativeFetch.mockResolvedValue({ url: 'https://mb.asb.by/ibanking/users/auth/login', status: 200, ok: true, clone: () => ({ json: async () => tokenResult }) })
+      await window.fetch('https://mb.asb.by/ibanking/users/auth/login', { body: JSON.stringify(loginRequest) })
+    }
+    try {
+      await expect(authorizeInWebView(false)).resolves.toEqual({ ...tokenResult, loginRequest })
+      expect(JSON.stringify(debug.mock.calls)).not.toContain(loginRequest.password)
+    } finally { debug.mockRestore() }
+  })
+
   it('ignores preparation, rejected login, unrelated responses and another origin before accepting confirmation', async () => {
     NativeView.onGoto = async (view) => {
       xhr(view, 'https://mb.asb.by/ibanking/users/auth/login/preparation', 200, { requestId: 'model-request' })
@@ -253,6 +286,19 @@ describe('interactive authorization [model]', () => {
     }
     await expect(authorizeInWebView(false)).rejects.toBe(error)
     expect(NativeView.instance.close).toHaveBeenCalledTimes(1)
+  })
+
+  it('reports confirmed authorization to the entrypoint before cleanup can fail', async () => {
+    const onAuthorized = jest.fn()
+    const error = new Error('Model close failure after authorization')
+    NativeView.onGoto = async view => {
+      view.close.mockImplementation(async () => {
+        expect(onAuthorized).toHaveBeenCalledWith(tokenResult)
+        throw error
+      })
+      xhr(view, 'https://mb.asb.by/ibanking/users/auth/login', 200, tokenResult)
+    }
+    await expect(authorizeInWebView(false, onAuthorized)).rejects.toBe(error)
   })
 
   it('makes early dismissal reportable and avoids navigating a closed window', async () => {

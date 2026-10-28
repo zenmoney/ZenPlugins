@@ -1,5 +1,5 @@
 import { AccountType } from '../../../types/zenmoney'
-import { convertAccount, convertCard, convertCardTransaction, convertCredit, convertDeposit, convertPaymentHistoryTransaction } from '../converters'
+import { convertAccount, convertAccounts, convertCard, convertCardTransaction, convertCredit, convertDeposit, convertPaymentHistoryTransaction } from '../converters'
 
 // Test records are synthetic and must not be copied from real bank data.
 describe('Belarusbank converters', () => {
@@ -315,5 +315,91 @@ describe('Belarusbank converters', () => {
       date: new Date('2026-02-05T12:10:21+03:00'),
       movements: [{ account: { id: 'card-1' }, sum: -20.5 }]
     })
+  })
+})
+
+describe('recorded converter regressions', () => {
+  it('consolidates two cards of one bank account regardless of response order (ACCOUNT-001/004)', () => {
+    // Log 178321, build 163. Public identifiers; only bug-relevant fields retained at the user's request.
+    const linked = { productId: 'account', contractNumber: '795300000000001', ibanNum: 'BY00AKBB00000000000000000001' }
+    const cards = [{
+      productId: 'main-card',
+      isMain: true,
+      cardPAN: '5536********1001',
+      contractNumber: linked.contractNumber,
+      ibanNum: linked.ibanNum,
+      cardAccountNumber: '511914000001',
+      currencyIso: 'BYN',
+      amount: '420.21',
+      status: '0',
+      serviceRights: '010011110011110011100'
+    }, {
+      productId: 'extra-card',
+      isMain: false,
+      cardPAN: '9112********1002',
+      contractNumber: linked.contractNumber,
+      ibanNum: linked.ibanNum,
+      cardAccountNumber: '511914000001',
+      currencyIso: 'BYN',
+      amount: '420.21',
+      status: '0',
+      serviceRights: '110011111011110011100'
+    }]
+    const expected = [{
+      id: 'main-card',
+      type: AccountType.ccard,
+      title: 'Карта Беларусбанка *1001',
+      instrument: 'BYN',
+      syncIds: ['main-card', linked.ibanNum, '511914000001', linked.contractNumber, 'account', '1001', 'extra-card', '1002'],
+      balance: 420.21,
+      available: 420.21,
+      archived: false,
+      _meta: { productId: 'main-card', transactionCardId: 'main-card', statementProductId: 'main-card', cardTransactionsAllowed: true, cardStatementAllowed: true, productKind: 'card' }
+    }]
+    for (const order of [cards, [...cards].reverse()]) {
+      expect(convertAccounts({ cards: order, accounts: [linked], authoritativeLinks: new Map([['main-card', [linked]], ['extra-card', [linked]]]), deposits: [], credits: [] })).toEqual(expected)
+    }
+  })
+
+  it('retains payment recipient and purpose (MERCHANT-001/COMMENT-001)', () => {
+    // Log 173622, build 162: selected payment fields, no inferred merchant spelling.
+    const account = convertCard({ productId: 'card', currencyIso: 'BYN' })
+    expect(convertPaymentHistoryTransaction({
+      id: '20261018120304299149000000',
+      amount: '40.00',
+      currency: 'BYN',
+      time: '2026-10-18T12:03:04.288Z',
+      timeBpc: '2026-10-18T12:03:04Z',
+      paymentName: 'Пакет,byfly,ZALA,Видеоконтроль',
+      payeeLegalName: 'Могилевский филиал РУП "Белтелеком"'
+    }, account)).toEqual({
+      hold: false,
+      date: new Date('2026-10-18T12:03:04Z'),
+      comment: 'Пакет,byfly,ZALA,Видеоконтроль',
+      movements: [{ id: expect.any(String), account: { id: 'card' }, fee: 0, invoice: null, sum: -40 }],
+      merchant: { title: 'Могилевский филиал РУП "Белтелеком"', city: null, country: null, mcc: null, location: null }
+    })
+  })
+
+  it('keeps the separate BYN and EUR balances from log 173622 (ACCOUNT-001)', () => {
+    const accounts = [
+      { productId: 'byn-account', ibanNum: 'BY00AKBB00000000000000000001' },
+      { productId: 'eur-account', ibanNum: 'BY00AKBB00000000000000000002' }
+    ]
+    const cards = [
+      { productId: 'byn-card', ibanNum: accounts[0].ibanNum, currencyIso: 'BYN', amount: '557.48' },
+      { productId: 'eur-card', ibanNum: accounts[1].ibanNum, currencyIso: 'EUR', amount: '371.07' }
+    ]
+    const expected = ['BYN', 'EUR'].map((instrument, index) => ({
+      id: cards[index].productId,
+      type: AccountType.ccard,
+      title: 'Карта Беларусбанка',
+      instrument,
+      syncIds: [cards[index].productId, accounts[index].ibanNum, accounts[index].productId],
+      balance: [557.48, 371.07][index],
+      available: [557.48, 371.07][index],
+      _meta: { productId: cards[index].productId, transactionCardId: cards[index].productId, statementProductId: cards[index].productId, cardTransactionsAllowed: true, cardStatementAllowed: true, productKind: 'card' }
+    }))
+    expect(convertAccounts({ cards, accounts, authoritativeLinks: new Map(), deposits: [], credits: [] })).toEqual(expected)
   })
 })

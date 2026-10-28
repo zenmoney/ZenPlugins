@@ -14,6 +14,7 @@ export interface RequestOptions {
   body?: unknown
   sessionToken?: string
   tokenType?: string
+  platformType?: 'pwa' | 'mobile'
   rawStringBody?: boolean
   binaryResponse?: boolean
   accept?: string
@@ -28,7 +29,7 @@ const PRIVATE_FIELDS = new Set([
   'authorization', 'cookie', 'setcookie',
   'firstname', 'lastname', 'middlename', 'fullname', 'latfirstname', 'latlastname', 'datebirth',
   'certnumber', 'seriesnumber', 'personalnumber', 'addressregistration', 'addressliving',
-  'avatar', 'photo', 'holdername', 'cardholdername', 'embossingname', 'cvv'
+  'avatar', 'photo', 'holdername', 'cardholdername', 'nameoncard', 'embossingname', 'cvv'
 ])
 const PRIVATE_HEADERS = new Set([
   'authorization', 'cookie', 'setcookie', 'token', 'sessiontoken', 'refreshtoken', 'accesstoken', 'idtoken'
@@ -78,7 +79,7 @@ export const fetchApi = async <T>(path: string, options: RequestOptions = {}): P
   const headers: Record<string, string> = {
     Accept: options.accept ?? 'application/json, text/plain, */*',
     'Content-Type': 'application/json;',
-    'Platform-Type': 'MOBILE',
+    'Platform-Type': options.platformType ?? 'mobile',
     'X-Timezone': 'Europe/Minsk'
   }
 

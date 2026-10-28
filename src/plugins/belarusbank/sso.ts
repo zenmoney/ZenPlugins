@@ -16,7 +16,7 @@ const BRIDGE_NAME = '__zenmoneyAuthCompleted'
 // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 const installCapture = new Function('config', `${authCaptureScript}\nreturn WebViewScript.default(config)`) as (config: { origin: string, bridgeName: string }) => void
 
-export const authorizeInWebView = async (isInBackground: boolean): Promise<unknown> => {
+export const authorizeInWebView = async (isInBackground: boolean, onAuthorized?: (value: unknown) => void): Promise<unknown> => {
   if (isInBackground) throw new UserInteractionError()
 
   const webView = new WebView()
@@ -71,7 +71,14 @@ export const authorizeInWebView = async (isInBackground: boolean): Promise<unkno
       arg: { dialog: res.installationDialog, store },
       onError: rejectAuth
     })
-    await webView.exposeFunction(BRIDGE_NAME, resolveAuth)
+    await webView.exposeFunction(BRIDGE_NAME, (value: unknown) => {
+      try {
+        onAuthorized?.(value)
+        resolveAuth(value)
+      } catch (error) {
+        rejectAuth(error)
+      }
+    })
 
     await webView.addInitScript(installCapture, { origin: AUTH_ORIGIN, bridgeName: BRIDGE_NAME })
     if (!closed) {

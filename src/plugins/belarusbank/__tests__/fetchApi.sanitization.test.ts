@@ -31,6 +31,7 @@ describe('[model] Belarusbank network log sanitization', () => {
     }
     const response = {
       requestId: 'diagnostic-response-id',
+      cards: [{ productId: 'diagnostic-card-id', amount: '420.21', nameOnCard: 'Private Cardholder Name' }],
       errorInfo: { code: 'MODEL_DIAGNOSTIC_CODE', errorText: 'Diagnostic bank error detail' },
       sessionToken: 'secret-session-token',
       token: 'secret-token',
@@ -80,13 +81,13 @@ describe('[model] Belarusbank network log sanitization', () => {
       'Private First Name', 'Private Last Name', 'private-model-email@example.invalid',
       'secret-personal-number', 'Private Home Address', 'secret-challenge-phone',
       'secret-nested-access-token', 'secret-id-token', 'secret-response-authorization',
-      'secret-response-cookie', 'secret-cookie-header', 'secret-header-refresh-token'
+      'secret-response-cookie', 'secret-cookie-header', 'secret-header-refresh-token', 'Private Cardholder Name'
     ]) {
       expect(logs).not.toContain(secret)
     }
     for (const diagnostic of [
       path, 'diagnostic-request-id', 'diagnostic-response-id', 'diagnostic-challenge-id',
-      'diagnostic-header-id', 'MODEL_DIAGNOSTIC_CODE', 'Diagnostic bank error detail'
+      'diagnostic-header-id', 'diagnostic-card-id', '420.21', 'MODEL_DIAGNOSTIC_CODE', 'Diagnostic bank error detail'
     ]) {
       expect(logs).toContain(diagnostic)
     }

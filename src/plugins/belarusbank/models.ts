@@ -13,6 +13,20 @@ export interface AuthState {
   sessionToken: string
   refreshToken: string
   tokenType: string
+  loginRequest?: LoginRequest
+  platformType?: 'pwa'
+}
+
+export interface LoginRequest {
+  appVersion: string
+  deviceModel: string
+  deviceUid: string
+  login?: string
+  mobilePhone?: string
+  osType: string
+  osVersion: string
+  password: string
+  token?: string
 }
 
 export type ProductKind = 'card' | 'account' | 'deposit' | 'credit'

@@ -4,12 +4,12 @@ import Utf8 from 'crypto-js/enc-utf8'
 import { getOptNumber, getOptString } from '../../types/get'
 import { authorizeInWebView } from './sso'
 import { parsePdf } from '../../common/pdfUtils'
-import { convertCard, convertCardTransaction, convertCredit, convertDeposit, convertPaymentHistoryTransaction } from './converters'
+import { convertAccounts, convertCardTransaction, convertPaymentHistoryTransaction } from './converters'
 import { fetchApi, type ApiResponse } from './fetchApi'
-import { asNonEmptyString, getLastCardDigits, toNumber } from './helpers'
-import type { AuthState, ProductAccount } from './models'
+import { asNonEmptyString, getLastCardDigits, normalizeProductIdentifier, toNumber } from './helpers'
+import type { AuthState, LoginRequest, ProductAccount } from './models'
 import { parseStatementTransactions } from './statement'
-import type { AccountsResponse, BankAccount, Card, CardTransactionsResponse, CardsResponse, Credit, CreditsResponse, ErrorInfo, ErrorResponse, PaymentHistoryItem, PaymentHistoryResponse } from './types/fetch'
+import type { AccountsResponse, BankAccount, CardTransactionsResponse, CardsResponse, Credit, CreditsResponse, ErrorInfo, ErrorResponse, PaymentHistoryItem, PaymentHistoryResponse } from './types/fetch'
 
 const PAGE_SIZE = 100
 const PAYMENT_HISTORY_PAGE_SIZE = 300
@@ -20,40 +20,6 @@ const DAY_MS = 24 * 60 * 60 * 1000
 const MINSK_TIMEZONE_OFFSET_MS = 3 * 60 * 60 * 1000
 const TOKEN_REFRESH_SAFE_GAP_MS = 10000
 const formatApiDate = (date: Date): string => new Date(date.getTime() + MINSK_TIMEZONE_OFFSET_MS).toISOString().slice(0, 10)
-
-const normalizeProductIdentifier = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null
-  const normalized = value.replace(/\s/g, '').toUpperCase()
-  return normalized.length > 0 ? normalized : null
-}
-
-/** Returns whether a card belongs to a current account returned by Belarusbank. */
-export const isCardLinkedToAccount = (card: Card, account: BankAccount): boolean => {
-  const accountContractNumber = normalizeProductIdentifier(account.contractNumber)
-  const accountIban = normalizeProductIdentifier(account.ibanNum)
-  const cardContractNumbers = [card.cardAccountNumber, card.contractNumber]
-    .map(normalizeProductIdentifier)
-    .filter((value): value is string => value != null)
-  const cardIban = normalizeProductIdentifier(card.ibanNum)
-
-  if (accountContractNumber != null && cardContractNumbers.length > 0) {
-    return cardContractNumbers.includes(accountContractNumber)
-  }
-
-  return accountIban != null && cardIban === accountIban
-}
-
-const findLinkedAccount = (
-  card: Card,
-  accounts: BankAccount[],
-  authoritativeLinks: Map<string, BankAccount[]>
-): BankAccount | undefined => {
-  const authoritativeMatches = authoritativeLinks.get(String(card.productId))
-  if (authoritativeMatches != null) return authoritativeMatches.length === 1 ? authoritativeMatches[0] : undefined
-
-  const matches = accounts.filter((account) => isCardLinkedToAccount(card, account))
-  return matches.length === 1 ? matches[0] : undefined
-}
 
 const loadAuthoritativeCardAccountLinks = async (
   auth: AuthState,
@@ -69,8 +35,7 @@ const loadAuthoritativeCardAccountLinks = async (
       ...authOptions(auth)
     })
     if (!(response.status >= 200 && response.status < 300)) {
-      console.warn(`[BELARUSBANK:CARD_ACCOUNT_LINK] HTTP ${response.status}`)
-      return
+      console.assert(false, 'Card/account linking request failed', { status: response.status, errorCode: getErrorInfo(response.body)?.code })
     }
 
     for (const card of response.body.cards ?? []) {
@@ -143,7 +108,35 @@ const assertSuccess = <T extends ErrorResponse>(response: ApiResponse<T>, contex
   throw new BankMessageError(getErrorMessage(response.body, `Ошибка Беларусбанка (HTTP ${response.status})`))
 }
 
-const parseAuth = (value: unknown, stage: 'hot' | 'cold'): AuthState => {
+const parseLoginRequest = (value: unknown): LoginRequest | undefined => {
+  const deviceUid = getOptString(value, 'deviceUid')
+  const login = getOptString(value, 'login')
+  const mobilePhone = getOptString(value, 'mobilePhone')
+  const password = getOptString(value, 'password')
+  if (deviceUid == null || deviceUid.length === 0 || password == null || password.length === 0 ||
+      ((login == null || login.length === 0) && (mobilePhone == null || mobilePhone.length === 0))) return undefined
+
+  const appVersion = getOptString(value, 'appVersion')
+  const deviceModel = getOptString(value, 'deviceModel')
+  const osType = getOptString(value, 'osType')
+  const osVersion = getOptString(value, 'osVersion')
+  const token = getOptString(value, 'token')
+  if (appVersion == null || deviceModel == null || osType == null || osVersion == null) return undefined
+
+  return {
+    appVersion,
+    deviceModel,
+    deviceUid,
+    ...(login != null ? { login } : {}),
+    ...(mobilePhone != null ? { mobilePhone } : {}),
+    osType,
+    osVersion,
+    password,
+    ...(token != null ? { token } : {})
+  }
+}
+
+const parseAuth = (value: unknown, stage: 'hot' | 'cold', previous?: Pick<AuthState, 'loginRequest' | 'platformType'>): AuthState => {
   const sessionToken = getOptString(value, 'sessionToken') ?? getOptString(value, 'token')
   const refreshToken = getOptString(value, 'refreshToken')
   const tokenType = getOptString(value, 'tokenType')
@@ -152,53 +145,138 @@ const parseAuth = (value: unknown, stage: 'hot' | 'cold'): AuthState => {
     `[auth/${stage}] Missing required authorization tokens`,
     { hasSessionToken: Boolean(sessionToken), hasRefreshToken: Boolean(refreshToken), hasTokenType: Boolean(tokenType) }
   )
-  return { sessionToken: sessionToken as string, refreshToken: refreshToken as string, tokenType: tokenType as string }
+  const accessClaims = getTokenClaims(sessionToken as string)
+  const refreshClaims = getTokenClaims(refreshToken as string)
+  const lifetime = (claims: unknown): number | null => {
+    const exp = getOptNumber(claims, 'exp')
+    const iat = getOptNumber(claims, 'iat')
+    return exp != null && iat != null && Number.isFinite(exp - iat) ? exp - iat : null
+  }
+  console.log(`[auth/${stage}] Token lifetime in seconds`, {
+    access: lifetime(accessClaims), refresh: lifetime(refreshClaims)
+  })
+  return {
+    sessionToken: sessionToken as string,
+    refreshToken: refreshToken as string,
+    tokenType: tokenType as string,
+    ...previous
+  }
 }
 
-const getTokenExpiry = (token: string): number | null => {
+const getTokenClaims = (token: string): unknown => {
   const parts = token.split('.')
   if (parts.length !== 3) return null
   try {
-    const payload: unknown = JSON.parse(Utf8.stringify(Base64.parse(parts[1].replace(/-/g, '+').replace(/_/g, '/'))))
-    const exp = getOptNumber(payload, 'exp')
-    return exp != null && Number.isFinite(exp) ? exp * 1000 : null
+    return JSON.parse(Utf8.stringify(Base64.parse(parts[1].replace(/-/g, '+').replace(/_/g, '/')))) as unknown
   } catch {
     return null
   }
 }
 
-export const authenticate = async (storedAuth: unknown, isInBackground: boolean): Promise<AuthState> => {
+const getTokenExpiry = (token: string): number | null => {
+  const exp = getOptNumber(getTokenClaims(token), 'exp')
+  return exp != null && Number.isFinite(exp * 1000) ? exp * 1000 : null
+}
+
+const getAuthErrorCode = (body: unknown): string | undefined => {
+  const code = getOptNumber(body, 'errorInfo.code') ?? getOptString(body, 'errorInfo.code')
+  return code != null ? String(code) : undefined
+}
+
+// Android 2026.7.0 loginConfirmation: PIN is checked locally, then saved credentials
+// and the same deviceUid are used for preparation/confirmation without an OTP.
+const authenticateSavedDevice = async (auth: AuthState, loginRequest: LoginRequest): Promise<AuthState | null> => {
+  const preparation = await fetchApi<unknown>('users/auth/login/preparation', {
+    method: 'POST', query: { loginMode: 'PIN' }, body: loginRequest, ...authOptions(auth), platformType: 'mobile', retry: false
+  })
+  const confirmedRejection = (response: ApiResponse<unknown>): boolean => {
+    if (response.status >= 200 && response.status < 300) return false
+    // The official application resets saved credentials only for these AUTH_ERRORS.
+    return ['1011', '1042'].includes(getAuthErrorCode(response.body) ?? '')
+  }
+  if (confirmedRejection(preparation)) return null
+  console.assert(preparation.status >= 200 && preparation.status < 300, '[auth/hot] Saved-device preparation failed', {
+    status: preparation.status, errorCode: getAuthErrorCode(preparation.body)
+  })
+  const requestId = getOptString(preparation.body, 'requestId')
+  console.assert(requestId != null && requestId.length > 0, '[auth/hot] Missing saved-device request ID')
+  const confirmation = await fetchApi<unknown>(`users/auth/login/${encodeURIComponent(requestId as string)}`, {
+    method: 'POST', body: { requestId }, ...authOptions(auth), platformType: 'mobile', retry: false
+  })
+  if (confirmedRejection(confirmation)) return null
+  console.assert(confirmation.status >= 200 && confirmation.status < 300, '[auth/hot] Saved-device confirmation failed', {
+    status: confirmation.status, errorCode: getAuthErrorCode(confirmation.body)
+  })
+  return parseAuth(confirmation.body, 'hot', { loginRequest })
+}
+
+export const authenticate = async (
+  storedAuth: unknown,
+  isInBackground: boolean,
+  onAuthUpdate?: (auth: AuthState) => void
+): Promise<AuthState> => {
   const sessionToken = getOptString(storedAuth, 'sessionToken')
   const refreshToken = getOptString(storedAuth, 'refreshToken')
   const tokenType = getOptString(storedAuth, 'tokenType')
+  const platformType = getOptString(storedAuth, 'platformType') === 'pwa' ? 'pwa' as const : undefined
+  const savedLoginRequest = storedAuth != null && typeof storedAuth === 'object'
+    ? parseLoginRequest((storedAuth as Record<string, unknown>).loginRequest)
+    : undefined
   if (sessionToken != null && sessionToken.length > 0 && refreshToken != null && refreshToken.length > 0 && tokenType != null && tokenType.length > 0) {
-    const sessionExpiry = getTokenExpiry(sessionToken)
-    if (sessionExpiry != null && sessionExpiry >= Date.now() + TOKEN_REFRESH_SAFE_GAP_MS) {
-      return { sessionToken, refreshToken, tokenType }
+    const savedDevice = {
+      ...(savedLoginRequest != null ? { loginRequest: savedLoginRequest } : {}),
+      ...(platformType != null ? { platformType } : {})
     }
+    const auth = { sessionToken, refreshToken, tokenType, ...savedDevice }
+    const accessExpiry = getTokenExpiry(sessionToken)
+    if (accessExpiry != null && accessExpiry >= Date.now() + TOKEN_REFRESH_SAFE_GAP_MS) return auth
     const refreshExpiry = getTokenExpiry(refreshToken)
     if (refreshExpiry == null || refreshExpiry > Date.now()) {
       const response = await fetchApi<unknown>('users/auth/refresh-token', {
-        method: 'POST', body: refreshToken, rawStringBody: true, sessionToken, tokenType, retry: false
+        method: 'POST', body: refreshToken, rawStringBody: true, ...authOptions(auth), retry: false
       })
       console.assert(response.status >= 200 && response.status < 300, '[auth/hot] Refresh request failed', {
         status: response.status, errorCode: getOptNumber(response.body, 'errorInfo.code') ?? getOptString(response.body, 'errorInfo.code')
       })
-      return parseAuth(response.body, 'hot')
+      return parseAuth(response.body, 'hot', savedDevice)
     }
-    console.log('[auth/hot] Saved refresh token expired; starting cold authentication')
+    if (savedLoginRequest != null) {
+      const renewed = await authenticateSavedDevice(auth, savedLoginRequest)
+      if (renewed != null) return renewed
+      // Avoid spending another password attempt on the next sync if cold auth is canceled.
+      onAuthUpdate?.({ sessionToken, refreshToken, tokenType, ...(platformType != null ? { platformType } : {}) })
+      console.log('[auth/hot] Saved-device credentials rejected; starting cold authentication')
+    } else {
+      console.log('[auth/hot] Saved refresh token expired and saved-device credentials are unavailable; starting cold authentication')
+    }
   }
-  return parseAuth(await authorizeInWebView(isInBackground), 'cold')
+  let confirmedAuth: AuthState | undefined
+  const acceptColdAuth = (result: unknown): AuthState => {
+    const loginRequest = result != null && typeof result === 'object'
+      ? parseLoginRequest((result as Record<string, unknown>).loginRequest)
+      : undefined
+    const auth = parseAuth(result, 'cold', {
+      ...(loginRequest != null ? { loginRequest } : {}),
+      ...(getOptString(result, 'platformType') === 'pwa' ? { platformType: 'pwa' as const } : {})
+    })
+    onAuthUpdate?.(auth)
+    confirmedAuth = auth
+    return auth
+  }
+  const result = await authorizeInWebView(isInBackground, acceptColdAuth)
+  return confirmedAuth ?? acceptColdAuth(result)
 }
 
 interface SessionInput {
   sessionToken: string
   tokenType: string
+  platformType?: 'pwa'
 }
 
 const authOptions = (auth: AuthState): SessionInput => ({
   sessionToken: auth.sessionToken,
-  tokenType: auth.tokenType
+  tokenType: auth.tokenType,
+  ...(auth.platformType != null ? { platformType: auth.platformType } : {})
 })
 
 const enrichDeposit = async (auth: AuthState, deposit: BankAccount): Promise<BankAccount> => {
@@ -234,11 +312,7 @@ export const getProducts = async (auth: AuthState): Promise<ProductAccount[]> =>
   const deposits = await Promise.all((assertSuccess(depositsResponse, 'DEPOSITS').accounts ?? []).map(async (deposit) => await enrichDeposit(auth, deposit)))
   const credits = await Promise.all((assertSuccess(creditsResponse, 'CREDITS').credits ?? []).map(async (credit) => await enrichCredit(auth, credit)))
 
-  return [
-    ...cards.map((card) => convertCard(card, findLinkedAccount(card, accounts, authoritativeLinks))),
-    ...deposits.map(convertDeposit),
-    ...credits.map(convertCredit)
-  ]
+  return convertAccounts({ cards, accounts, authoritativeLinks, deposits, credits })
 }
 
 /** Loads and parses the official posted-operation statement for a linked card account. */
