@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference key="login" obligatory="true" title="Korisničko ime" dialogTitle="Korisničko ime" dialogMessage="Unesite korisničko ime za poslovno elektronsko bankarstvo. Prijavu potvrdite u mobilnoj aplikaciji banke." positiveButtonText="U redu" negativeButtonText="Odustani" summary="|Poslovno elektronsko bankarstvo|{@s}" />
+    <EditTextPreference key="startDate" obligatory="true" inputType="date" title="Učitaj knjižene transakcije od" defaultValue="2026-01-01T00:00:00.000Z" dialogTitle="Početni datum" positiveButtonText="U redu" negativeButtonText="Odustani" summary="|startDate|{@s}" />
+</PreferenceScreen>

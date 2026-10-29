@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>postal-savings-business-rs</id>
+    <company>16052</company>
+    <description>Poslovni računi Banke Poštanska štedionica na webebank.ebb-bg.com. Prijava uz potvrdu u mobilnoj aplikaciji. Sinhronizuju se tekući računi RSD/EUR i knjižene transakcije.</description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <codeRequired>false</codeRequired>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>

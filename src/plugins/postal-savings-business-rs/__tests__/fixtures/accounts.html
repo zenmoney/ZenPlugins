@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html class="base_layout" xmlns="http://www.w3.org/1999/html"  lang="sr">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Banka Poštanska štedionica</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="format-detection" content="telephone=no" />
+
+    
+    <link rel="stylesheet" type="text/css" href='/sbpo_mbank/static/css/redesign_multiuser.css'>
+
+    
+	<link rel="shortcut icon" type="image/x-icon"  sizes="128x128" href='/sbpo_mbank/static/images/android_128.png'>
+    <link rel="shortcut icon" type="image/x-icon" sizes="192x192" href='/sbpo_mbank/static/images/android_192.png'>
+    <link rel='shortcut icon' type='image/x-icon' href='/sbpo_mbank/static/images/favicon.ico' />
+
+    <link rel="apple-touch-icon" href='/sbpo_mbank/static/images/touch-icon-iphone.png'>
+    <link rel="apple-touch-icon" sizes="76x76" href='/sbpo_mbank/static/images/touch-icon-ipad.png'>
+    <link rel="apple-touch-icon" sizes="120x120" href='/sbpo_mbank/static/images/touch-icon-iphone-retina.png'>
+    <link rel="apple-touch-icon" sizes="152x152" href='/sbpo_mbank/static/images/touch-icon-ipad-retina.png'>
+
+    	<script src='/sbpo_mbank/static/components/jquery/dist/jquery.js'></script> 	<script src='/sbpo_mbank/static/components/modernizr/modernizr.js'></script>
+		<script type="application/javascript" src='/sbpo_mbank/static/components/moment/moment.js'></script>
+	<script>
+		// TODO - :Deprecation warning: use moment.updateLocale(localeName, config) to change an existing locale. moment.defineLocale(localeName, config) should only be used for creating a new locale See http://momentjs.com/guides/#/warnings/define-locale/ for more info.
+	    moment.locale('en', {
+	        months : ["Januar","Februar","Mart","April","Maj","Jun","Jul","Avgust","Septembar","Oktobar","Novembar","Decembar"],
+	        monthsShort: ["Jan","Feb","Mar","Apr","Maj","Jun","Jul","Avg","Sep","Okt","Nov","Dec"],
+	        weekdays: ["Nedelja","Ponedeljak","Utorak","Sreda","Četvrtak","Petak","Subota"],
+	        weekdaysShort: ["Ned","Pon","Uto","Sre","Čet","Pet","Sub"],
+	        weekdaysMin: ["Ned","Pon","Uto","Sre","Čet","Pet","Sub"]
+	    });
+	</script>
+	    <script src='/sbpo_mbank/static/components/webfontloader/webfontloader.js'></script>
+    <script>
+        WebFont.load({
+            google: {
+                families: ["Open Sans:300,300italic,400,400italic,600,600italic,700,700italic,800,800italic", "Economica:regular,italic,700,700italic:latin-ext,latin"]
+            }
+        });
+        WebFontConfig = {
+            google: {
+                families: [ "Open Sans:300,300italic,400,400italic,600,600italic,700,700italic,800,800italic", "Economica:regular,italic,700,700italic:latin-ext,latin" ]
+            },
+            timeout: 20000
+        };        
+    </script>
+	
+		<script src='/sbpo_mbank/static/components/scrollLock/jquery-scrollLock.js'></script>
+	<script src='/sbpo_mbank/static/components/typeahead/dist/typeahead.bundle.min.js'></script>
+	<script src='/sbpo_mbank/static/components/d3/d3.min.js'></script>
+	<script src='/sbpo_mbank/static/components/select2/dist/js/select2.min.js'></script>
+	<script src='/sbpo_mbank/static/components/jquery/dist/jquery.validate.min.js'></script>
+	<script src='/sbpo_mbank/static/components/jquery-scrollTo/jquery.scrollTo.min.js'></script>
+  	
+    <script src='/sbpo_mbank/static/script/ebank/headerHelper.js'></script>  		
+	<script src='/sbpo_mbank/static/script/ebank/autoNumeric.js'></script>
+	<script src='/sbpo_mbank/static/script/ebank/jquery.form.js'></script>
+	<script src='/sbpo_mbank/static/script/ebank/jquery.fileDownload.js'></script>
+  	<script src='/sbpo_mbank/static/script/ebank/base.js'></script>
+  	<script src='/sbpo_mbank/static/script/ebank/jquery.amount.js'></script>
+    <script src='/sbpo_mbank/static/script/ebank/iscroll.js'></script>
+    <script src='/sbpo_mbank/static/script/ebank/mobileScroller.js'></script>
+        
+    
+        </head>
+
+<body class="base_layout redesign_multiuser ">
+<div class="header_printable container visible-print-block">
+	<div class="row small">
+		<div class="col-xs-6">
+			<div class="brand-image">
+				<img src="/sbpo_mbank/static/images/print_logo.png">
+			</div>
+		</div>
+		<div class="col-xs-6 text-right">22.10.2026, 23:18:26</div>
+	</div>
+		<div class="row small">
+		<h2 class="col-xs-12"><span class="small">Podaci korisnika</span></h2>
+	</div>
+	<div class="row small">
+		<div class="col-xs-12">Ime: ALEKSANDRA PETROVIC PR</div>
+		<div class="col-xs-12">Adresa: PRIMER ULICA 10</div>
+		<div class="col-xs-12">Grad: BEOGRAD</div>
+	</div>
+		<div class="row"><hr class="divider"/></div>
+	<div class="row">&nbsp;</div>
+	    	<div class="row">
+    		<h2 class="col-xs-12">Računi</h2>
+    	</div>
+		<div class="row">&nbsp;</div>		
+	</div>
+    	<div class="chat_wrapper hidden-xs hidden-sm hidden-print">
+	<div class="chat_navigation">
+					<a class="chat_icon first second clearfix inline-block" href="&#x2F;sbpo_mbank/ngcms/help?id=ACCOUNTS_LIST" target="_blank">
+				<span class="chat_img first fc-navarrow-02"></span>
+				<div class="chat_text" id="help-button">Pomoć?</div>
+			</a>
+		        	</div>
+</div>
+    
+
+<div class="header_printable container visible-print-block"></div>
+
+<nav id="header_navbar" class="navbar navbar-default navbar-fixed-top scrollspy">
+    <div class="top-part">
+        <div class="container">
+            <div id="header-row-desktop" class="message_box">
+                <ul>
+                    							        <div class="system_messages hidden-print hidden">
+                <div class="alert alert-halcom_dope alert-dismissible fade in" role="alert">
+        <div onclick="location='/sbpo_mbank/communicationcenter/inbox/'">Broj nepročitanih važnih poruka: <span class="number"></span></div>
+        <button name="hide_message_box" type="button" class="close" data-bs-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+          	<script type="text/javascript">
+	    		$('[name="hide_message_box"]').on('click', function(){
+	    			$.ajax({
+	            		url: "/sbpo_mbank/communicationcenter/setMessageBox/",
+	        			type: "GET",
+	            		success: function(data) {}
+	        		});
+	    		});	    		
+	    		var moveMessagesBox = function(){
+	    			var messagesBox = $('.system_messages');
+	    			var containerLarge = $('\#header-row-desktop > ul').first();
+	    			var containerSmall = $('.navbar-header');
+	    			
+	    			var shouldBeInLarge = containerLarge.is(':visible');
+	    			var currentlyInLarge = $.contains(containerLarge[0], messagesBox[0]);
+	    			
+	    			if(shouldBeInLarge && !currentlyInLarge){
+	    				messagesBox.appendTo(containerLarge);
+	    			} else if(!shouldBeInLarge && currentlyInLarge) {
+	    				messagesBox.appendTo(containerSmall);
+	    			}
+	    		};
+	    			
+	    		$(document).ready(moveMessagesBox);
+	    		$(window).resize(moveMessagesBox);
+    		</script>
+        </div>
+						                </ul>
+                <ul class="nav navbar-nav">
+                    <li>    <span class="header-last-login" id="last-login-time" data-testid="last-login-time">
+                    Poslednja prijava: 22.10.2026, 23:13:21
+            </span>
+</li>
+                </ul>
+
+                <ul id="header-row-right-menu" class="nav navbar-nav navbar-right">
+                                            <li>    <div class="clientIdSelector_wrapper" data-testid="select2-clientSelector-wrapper">
+		            				
+		
+		<div class="form-control-select2 select_element_wrapper dropdownselect2 " >
+        		<select
+						name="clientSelector" 	class="dropdownselect2 " 					
+		
+										    	            data-min-results-for-search="10"
+    	    				style="display:none; width: 100%;">
+
+			            					    			        		        														<option  value="900000001"  selected="selected"  >ALEKSANDRA PETROVIC PR</option>
+								            		        					</select>
+							
+				
+	</div>
+    </div>
+</li>
+                                                                <li>    <div id="async_queue" class="async_queue_upload_list async_queue_w_clearfix" style="display: none;">
+        <div class="async_queue_title">Uvoz naloga</div>
+        <img class="async_queue_arror" src="&#x2F;sbpo_mbank/static/images/async_queue_triangle.svg">
+        <i id="async_queue_spinner" class="fa fa-refresh fa-spin fa-fw margin-top"></i>
+        <a id="async_queue_clear_all">obriši sve</a>
+        <div id="async_queue_tasks" data-testid="async-queue-tasks">
+        </div>
+        <a class="async_queue_button async_queue_w_inline_block" href="/payments/batch_details"></a>
+        <div id="async_queue_error" class="async_queue_next_row queue_w_clearfix" style="display: none">
+            <div id="async_queue_error_info" class="async_queue_modal_info">
+				<span class="fa fa-exclamation-circle async_queue_error_info async_queue_loaded_error"></span>
+				Konekcija je neuspešna ili je sesija istekla.			</div>
+            <button id="async_queue_retry_button" class="btn small primary async_queue_w_inline_block" data-ix="mw-add-budget-pfm-open" >
+                <div>Pokušaj ponovo</div>
+            </button>
+        </div>
+    </div>
+    <a id="async_queue_button" class="nav_action w-inline-block" data-ix="async_queue-list-open">
+        <div id="async_queue_button_image" data-testid="async-queue-button-image">&nbsp;</div>
+        <span id="async_queue_badge" class="badge badge-message" style="display: none">!</span>
+    </a>
+</li>
+                                                                <li>    <a href="/sbpo_mbank/communicationcenter/inbox/" class="nav_action" id="envelope-button-image" data-testid="envelope-button-image">
+        <i class="fa fa-envelope overrideable"></i>
+		<span class="badge badge-message comm-center"></span>
+    </a>
+</li>
+                                        <li>    <a href="#" data-bs-toggle="dropdown" aria-expanded="false" id="profileSelector" class="nav_action" data-testid="profile-selector">
+        <i class="fa fa-user overrideable"></i>
+    </a>
+
+    <ul class="dropdown-menu profile" role="menu" aria-labelledby="profileSelector">
+        <li><a href='/sbpo_mbank/profile/profile' id="user-data-button">Podaci korisnika</a></li>
+        <li>
+            <a href="#" class="logoutLink" id="logout-button" data-testid="logout-button">Odjava</a>
+        </li>
+    </ul>
+</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-part">
+        <div class="container">
+            <div class="header-menu-border"></div>
+            <div class="header-white-row">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed clearfix" data-bs-toggle="collapse" data-bs-target="#collapsable-header-navbar" aria-expanded="false">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand sr" 	href="/sbpo_mbank/home"
+></a>
+            </div>
+            <div class="collapse navbar-collapse leftNavWrapper" id="collapsable-header-navbar">
+                <div id="navbar">
+                    <div id="header-row-mobile">
+                                                        <div class="clientIdSelector_wrapper" data-testid="select2-clientSelector-wrapper">
+		            				
+		
+		<div class="form-control-select2 select_element_wrapper dropdownselect2 " >
+        		<select
+						name="clientSelector" 	class="dropdownselect2 " 					
+		
+										    	            data-min-results-for-search="10"
+    	    				style="display:none; width: 100%;">
+
+			            					    			        		        														<option  value="900000001"  selected="selected"  >ALEKSANDRA PETROVIC PR</option>
+								            		        					</select>
+							
+				
+	</div>
+    </div>
+                        
+                            <span class="header-last-login" id="last-login-time" data-testid="last-login-time">
+                    Poslednja prijava: 22.10.2026, 23:13:21
+            </span>
+
+                        <ul class="list-inline pull-left">
+                                                                                                                                                                                                                                                        <li>
+                                        <a href="&#x2F;sbpo_mbank&#x2F;profile&#x2F;profile" class="">Podaci korisnika</a>
+                                    </li>
+                                                                                                                                                                                                                                                                                        <li>
+                                        <a href="&#x2F;sbpo_mbank&#x2F;ngcms&#x2F;help&#x2F;" class="">Pomoć</a>
+                                    </li>
+                                                                                                                                                                    <li>
+                                        <a href="#" class="logoutLink">Odjava</a>
+                                    </li>
+                                                                                    </ul>
+
+                        <ul class="list-inline pull-right">
+                            <li class="dropdown dropdown-menu-right">		    <a href="#" id="languageSelector" data-bs-toggle="dropdown" aria-expanded="false">
+	        	        <i class="fa fa-flag"></i>
+	    </a>
+	    <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="languageSelector">
+				            	                	                	
+	                	                <li role="presentation"><a href="&#x2F;sbpo_mbank&#x2F;accounts?lang=sr">Srpski</a></li>
+					                	                	
+	                	                <li role="presentation"><a href="&#x2F;sbpo_mbank&#x2F;accounts?lang=en">English</a></li>
+								    </ul>
+	</li>
+                        </ul>
+
+                        <div class="clearfix"></div>
+                    </div>
+
+                    
+    
+     <ul id="header-menu" class="nav navbar-nav navbar-default navbar-right">
+                                    <li class="   ">
+                                            
+        
+            <a id="common_label_home" data-testid="common-label-home" href="/sbpo_mbank/home"  class="menu_tab_home">
+            <i class="main_nav_ico fa fa-home hidden-xs hidden-sm"></i>                                <span>Početna stranica</span>
+                    </a>
+    
+                                                        
+                                        
+    </li>
+
+                                                                <li class=" dropdown inline    ">
+            <a data-testid="main-menu-button-payments.menu.label.payments" href="#" class="dropdown-toggle disabled" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        	        	<span>Plaćanja</span>
+        </a>
+
+    
+                                                        
+        <ul class="dropdown-menu inline-menu">
+        			                <li class="   ">
+                            	                                            	       		       		        
+	        	        
+	<a id="payments_menu_label_new_payment" data-testid="payments-menu-label-new-payment" href="/sbpo_mbank/payments/prepare"  class=""
+                    >
+        
+        <span>                            Novi nalog    
+                                                    </span></a>
+    
+                                    </li>
+			        			                <li class="   ">
+                            	                                            	       		       		        
+	        	        
+	<a id="payments_menu_label_from_template" data-testid="payments-menu-label-from-template" href="/sbpo_mbank/payments/templates/"  class=""
+                    >
+        
+        <span>                            Pripremi iz šablona    
+                                                    </span></a>
+    
+                                    </li>
+			        			                <li class="   ">
+                            	                                            	       		       		        
+	        	        
+	<a id="payments_menu_label_payment_process" data-testid="payments-menu-label-payment-process" href="/sbpo_mbank/payments/saved/payorders"  class=""
+                    >
+        
+        <span>                            Plaćanja    
+                                                    </span></a>
+    
+                                    </li>
+			        			                <li class="   ">
+                            	                                            	       		       		        
+	        	        
+	<a id="payments_trusted_creditors_menu_label_verified_creditors" data-testid="payments-trusted-creditors-menu-label-verified-creditors" href="/sbpo_mbank/directorybook/list/"  class=""
+                    >
+        
+        <span>                            Partneri    
+                                                    </span></a>
+    
+                                    </li>
+			            </ul>
+                                        
+    </li>
+
+                                                                <li class=" dropdown inline  openWithJavaS    selected  ">
+            <a data-testid="main-menu-button-common.title.products_title" href="#" class="dropdown-toggle disabled" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        	        	<span>Proizvodi</span>
+        </a>
+
+    
+                                                        
+        <ul class="dropdown-menu inline-menu">
+        			                <li class="   open ">
+                            	                                            	       		       		        
+	        	        
+	<a id="accounts_menu_label_accounts" data-testid="accounts-menu-label-accounts" href="/sbpo_mbank/accounts"  class=""
+                    >
+        
+        <span>                            Računi    
+                                                    </span></a>
+    
+                                    </li>
+			            </ul>
+                                        
+    </li>
+
+                                                                <li class=" dropdown inline    ">
+            <a data-testid="main-menu-button-common.title.tools_title" href="#" class="dropdown-toggle disabled" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        	        	<span>Alati</span>
+        </a>
+
+    
+                                                        
+        <ul class="dropdown-menu inline-menu">
+        			                <li class="   ">
+                            	                                            	       		       		        
+	        	        
+	<a id="emenice_menu_label_title" data-testid="emenice-menu-label-title" href="/sbpo_mbank/emenice"  class=""
+                    >
+        
+        <span>                            eMENICE    
+                                                    </span></a>
+    
+                                    </li>
+			            </ul>
+                                        
+    </li>
+
+                                                                <li class="   ">
+                                        
+        
+            <a id="communicationcenter_list_tab_my_cases" data-testid="communicationcenter-list-tab-my-cases" href="/sbpo_mbank/communicationcenter/requestsList"  class="">
+                                            <span>Zahtevi</span>
+                    </a>
+    
+                                                        
+                                        
+    </li>
+
+                                                                <li class="   ">
+                                            
+        
+            <a id="communicationcenter_menu_label_communication_center" data-testid="communicationcenter-menu-label-communication-center" href="/sbpo_mbank/communicationcenter/inbox"  class=" hidden-md hidden-lg ">
+                                            <span>Komunikacioni centar</span>
+                    </a>
+    
+                                                        
+                                        
+    </li>
+
+                                                                <li class="   ">
+                                        
+        
+            <a id="forex_menu_label_foreign_exchange" data-testid="forex-menu-label-foreign-exchange" href="/sbpo_mbank/forex/"  class="">
+                                            <span>Kursna lista</span>
+                    </a>
+    
+                                                        
+                                        
+    </li>
+
+                                                                                                                    
+     </ul>
+
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</nav>
+
+<!-- Logout form -->
+<form id="logout_form" action="&#x2F;sbpo_mbank/auth/logout" method="post" class="hidden">
+    	<input type="hidden" name='_csrf_token' value='fixture-csrf'>
+</form>
+
+<!-- Form for changing client id -->
+<form id="changeClientIdForm" method="post" action="/sbpo_mbank/changeClientId">
+
+    <input id="clientId" type="hidden" name="clientId" />
+
+    	<input type="hidden" name='_csrf_token' value='fixture-csrf'>
+</form>
+
+    
+
+<div class="section_title bckg hidden-print class java.lang.Object">
+	<div class="container container_breadcrumbs">
+					    	<ul class="breadcrumb hidden-print" data-testid="breadcrumb-list">
+							<li><a href="/sbpo_mbank/home">Početna stranica</a></li>
+			    						    				    					    					    
+    					    					    
+    					<li class="">
+    						    							Proizvodi    						    					</li>
+																    				    					    					    
+    					    					    
+    					<li class="active ">
+    						    							Računi    						    					</li>
+												    	</ul>
+	<h1>Računi</h1>
+
+	</div>
+</div>
+
+<div class="section_content container" data-iframe-height>
+
+		<div class="content  short_table_container   unhide-print">
+				<div id="user_messages_container" class="fixed_messages messages_container_new hidden-print" data-testid="user-messages-container" data-role="message_container">
+				</div>
+	
+			
+	<div class="table_filter_container $clazz" role="tablist" aria-multiselectable="false">
+    		<div class="clearfix filter_actions_row">
+    
+    
+	    
+			<a class="filters_action fc-print hidden-xs hidden-sm hidden-print" href="#" onClick="javascript:self.print(); return false;" data-testid="accounts.overview.common.button.print"> <span>Štampaj</span></a>
+
+					
+</div>
+	
+</div>
+
+	    <div class="data_container_bg short_table ">
+        					
+				
+				
+						<div class="short_table_group_container clearfix ">
+		<div class="short_table_group_title_container upper">Tekući računi</div>
+				
+						
+								<div class="short_table_section_container clearfix " data-id="200111111111111117">
+        <div class="short_table_section_title_container clearfix">
+	        	    	<span class="image_or_icon_wrapper pull-right  group_icon fc-currentAccount   "></span>
+								<div class="short_table_section_title">ALEKSANDRA PETROVIC PR (RSD)</div>
+					</div>
+		 									<div class="table_section short_table_left_group row  g1 ">
+		 										<div class="short_table_element_container row ">
+		 											<div class="short_table_element " data-testid="account-number-200-1111111111111-17">
+		200-1111111111111-17
+	</div>
+																			
+	</div>
+								
+	</div>
+
+									<div class="table_section short_table_right_section pull-right  g3 ">
+		 
+																				<div class="short_table_element_container row ">
+		 										<div class="short_table_element short_table_info">Tekuće stanje</div>
+																								<div class="short_table_element big_value amount_balances_second amount_positive" data-testid="account-number-69.204,71 RSD">
+		69.204,71 RSD
+	</div>
+																					
+	</div>
+									
+																				<div class="short_table_element_container row ">
+		 										<div class="short_table_element short_table_info">Raspoloživo stanje</div>
+												<div class="short_table_element big_value amount_positive" data-testid="account-number-69.204,71 RSD">
+		69.204,71 RSD
+	</div>
+										
+	</div>
+									
+								
+	</div>
+                                	<div class="short_table_link_container row col-xs-12 hidden-print">
+											<div class="visible-lg">
+												<a class="  link text-nowrap " href="/sbpo_mbank/accounts/0/details/" data-testid="accounts.common.link.details-200111111111111117">Detalji</a>
+													<a class="  link text-nowrap " href="/sbpo_mbank/accounts/0/transactions/" data-testid="accounts.common.link.transactions-200111111111111117">Promet</a>
+													<a class="  link text-nowrap " href="/sbpo_mbank/accounts/0/statements/" data-testid="accounts.common.link.statements-200111111111111117">Izvodi</a>
+								</div>
+			<div class="hidden-lg">
+												<a class="  btn " href="/sbpo_mbank/accounts/0/details/" data-testid="accounts.common.link.details-200111111111111117">Detalji</a>
+													<a class="  btn " href="/sbpo_mbank/accounts/0/transactions/" data-testid="accounts.common.link.transactions-200111111111111117">Promet</a>
+													<a class="  btn " href="/sbpo_mbank/accounts/0/statements/" data-testid="accounts.common.link.statements-200111111111111117">Izvodi</a>
+								</div>
+		
+		
+	</div>
+							
+	</div>
+						
+								<div class="short_table_section_container clearfix " data-id="200222222222222262">
+        <div class="short_table_section_title_container clearfix">
+	        	    	<span class="image_or_icon_wrapper pull-right  group_icon fc-currentAccount   "></span>
+								<div class="short_table_section_title">ALEKSANDRA PETROVIC PR (EUR)</div>
+					</div>
+		 									<div class="table_section short_table_left_group row  g1 ">
+		 										<div class="short_table_element_container row ">
+		 											<div class="short_table_element " data-testid="account-number-200-2222222222222-62">
+		200-2222222222222-62
+	</div>
+																			
+	</div>
+								
+	</div>
+
+									<div class="table_section short_table_right_section pull-right  g3 ">
+		 
+																				<div class="short_table_element_container row ">
+		 										<div class="short_table_element short_table_info">Tekuće stanje</div>
+																								<div class="short_table_element big_value amount_balances_second amount_positive" data-testid="account-number-10.448,75 EUR">
+		10.448,75 EUR
+	</div>
+																					
+	</div>
+									
+																				<div class="short_table_element_container row ">
+		 										<div class="short_table_element short_table_info">Raspoloživo stanje</div>
+												<div class="short_table_element big_value amount_positive" data-testid="account-number-10.448,75 EUR">
+		10.448,75 EUR
+	</div>
+										
+	</div>
+									
+								
+	</div>
+                                	<div class="short_table_link_container row col-xs-12 hidden-print">
+								<div class="visible-lg">
+												<a class="  link text-nowrap " href="/sbpo_mbank/accounts/1/details/" data-testid="accounts.common.link.details-200222222222222262">Detalji</a>
+													<a class="  link text-nowrap " href="/sbpo_mbank/accounts/1/transactions/" data-testid="accounts.common.link.transactions-200222222222222262">Promet</a>
+													<a class="  link text-nowrap " href="/sbpo_mbank/accounts/1/statements/" data-testid="accounts.common.link.statements-200222222222222262">Izvodi</a>
+													<a class="  link text-nowrap " href="/sbpo_mbank/accounts/1/inflows" data-testid="accounts.common.link.inflows-200222222222222262">Prilivi</a>
+													<a class="  link text-nowrap " href="/sbpo_mbank/accounts/1/inflowStatistic" data-testid="accounts.common.link.inflow_statistics-200222222222222262">Statistike priliva</a>
+													<a class="  link text-nowrap " href="/sbpo_mbank/accounts/1/outflows" data-testid="accounts.common.link.outflows-200222222222222262">SWIFT potvrde</a>
+								</div>
+			<div class="hidden-lg">
+												<a class="  btn " href="/sbpo_mbank/accounts/1/details/" data-testid="accounts.common.link.details-200222222222222262">Detalji</a>
+													<a class="  btn " href="/sbpo_mbank/accounts/1/transactions/" data-testid="accounts.common.link.transactions-200222222222222262">Promet</a>
+													<a class="  btn " href="/sbpo_mbank/accounts/1/statements/" data-testid="accounts.common.link.statements-200222222222222262">Izvodi</a>
+													<a class="  btn " href="/sbpo_mbank/accounts/1/inflows" data-testid="accounts.common.link.inflows-200222222222222262">Prilivi</a>
+													<a class="  btn " href="/sbpo_mbank/accounts/1/inflowStatistic" data-testid="accounts.common.link.inflow_statistics-200222222222222262">Statistike priliva</a>
+													<a class="  btn " href="/sbpo_mbank/accounts/1/outflows" data-testid="accounts.common.link.outflows-200222222222222262">SWIFT potvrde</a>
+								</div>
+		
+		
+	</div>
+							
+	</div>
+											
+	</div>
+							
+				
+							
+				<div class="short_table_group_container clearfix ">
+		<div class="empty_title_holder"></div>							<div class="short_table_section_container clearfix " data-id="total">
+        <div class="short_table_section_title_container clearfix">
+	        								<div class="short_table_section_title"></div>
+					</div>
+		 
+						<div class="table_section short_table_right_section pull-right  g2 ">
+		 							<div class="short_table_element_container row ">
+		 						<div class="short_table_element short_table_info">Ukupno</div>
+																																	<div class="short_table_element amount_balances_second big_value">69.204,71 RSD</div>
+																																			<div class="short_table_element amount_balances_second big_value">10.448,75 EUR</div>
+																														
+	</div>
+					
+	</div>
+				
+	</div>
+			
+	</div>
+			
+    </div>
+<div id="data" data-list="[{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;AUD&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:75.4864,&quot;buyRate&quot;:71.0892,&quot;otherRates&quot;:[{&quot;rate&quot;:73.2878,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;AUD&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:75.4864,&quot;buyRate&quot;:71.0892,&quot;otherRates&quot;:[{&quot;rate&quot;:73.2878,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Australijski dolar&quot;,&quot;countryName&quot;:&quot;Australija&quot;,&quot;countryCode&quot;:&quot;AUS&quot;,&quot;units&quot;:&quot;1 AUD&quot;,&quot;middleRate&quot;:73.2878,&quot;originalMiddleRate&quot;:73.2878},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;BAM&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:61.8533,&quot;buyRate&quot;:58.2501,&quot;otherRates&quot;:[{&quot;rate&quot;:60.0517,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;BAM&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:61.8533,&quot;buyRate&quot;:58.2501,&quot;otherRates&quot;:[{&quot;rate&quot;:60.0517,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Bosna i Hercegovina konvertibilna marka&quot;,&quot;countryName&quot;:&quot;Bosna i Hercegovina&quot;,&quot;countryCode&quot;:&quot;BIH&quot;,&quot;units&quot;:&quot;1 BAM&quot;,&quot;middleRate&quot;:60.0517,&quot;originalMiddleRate&quot;:60.0517},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;BYN&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:38.5959,&quot;buyRate&quot;:31.5785,&quot;otherRates&quot;:[{&quot;rate&quot;:35.0872,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;BYN&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:38.5959,&quot;buyRate&quot;:31.5785,&quot;otherRates&quot;:[{&quot;rate&quot;:35.0872,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Beloruska rublja&quot;,&quot;countryName&quot;:&quot;Belorusija&quot;,&quot;countryCode&quot;:&quot;BLR&quot;,&quot;units&quot;:&quot;1 BYN&quot;,&quot;middleRate&quot;:35.0872,&quot;originalMiddleRate&quot;:35.0872},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;CAD&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:76.6777,&quot;buyRate&quot;:72.2111,&quot;otherRates&quot;:[{&quot;rate&quot;:74.4444,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;CAD&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:76.6777,&quot;buyRate&quot;:72.2111,&quot;otherRates&quot;:[{&quot;rate&quot;:74.4444,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Kanadski dolar&quot;,&quot;countryName&quot;:&quot;Kanada&quot;,&quot;countryCode&quot;:&quot;CAN&quot;,&quot;units&quot;:&quot;1 CAD&quot;,&quot;middleRate&quot;:74.4444,&quot;originalMiddleRate&quot;:74.4444},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;CHF&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:130.755,&quot;buyRate&quot;:123.1382,&quot;otherRates&quot;:[{&quot;rate&quot;:126.9466,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;CHF&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:130.755,&quot;buyRate&quot;:123.1382,&quot;otherRates&quot;:[{&quot;rate&quot;:126.9466,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Švajcarski franak&quot;,&quot;countryName&quot;:&quot;Švajcarska&quot;,&quot;countryCode&quot;:&quot;CHE&quot;,&quot;units&quot;:&quot;1 CHF&quot;,&quot;middleRate&quot;:126.9466,&quot;originalMiddleRate&quot;:126.9466},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;CNY&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:17.217,&quot;buyRate&quot;:14.0866,&quot;otherRates&quot;:[{&quot;rate&quot;:15.6518,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;CNY&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:17.217,&quot;buyRate&quot;:14.0866,&quot;otherRates&quot;:[{&quot;rate&quot;:15.6518,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Kineski juan&quot;,&quot;countryName&quot;:&quot;Kina&quot;,&quot;countryCode&quot;:&quot;CHN&quot;,&quot;units&quot;:&quot;1 CNY&quot;,&quot;middleRate&quot;:15.6518,&quot;originalMiddleRate&quot;:15.6518},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;DKK&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:16.1817,&quot;buyRate&quot;:15.2391,&quot;otherRates&quot;:[{&quot;rate&quot;:15.7104,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;DKK&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:16.1817,&quot;buyRate&quot;:15.2391,&quot;otherRates&quot;:[{&quot;rate&quot;:15.7104,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Danska kruna&quot;,&quot;countryName&quot;:&quot;Danska&quot;,&quot;countryCode&quot;:&quot;DNK&quot;,&quot;units&quot;:&quot;1 DKK&quot;,&quot;middleRate&quot;:15.7104,&quot;originalMiddleRate&quot;:15.7104},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;EUR&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:119.8,&quot;buyRate&quot;:115.102,&quot;otherRates&quot;:[{&quot;rate&quot;:117.451,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;EUR&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:119.8,&quot;buyRate&quot;:115.102,&quot;otherRates&quot;:[{&quot;rate&quot;:117.451,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Evro&quot;,&quot;countryName&quot;:&quot;Evropska unija&quot;,&quot;countryCode&quot;:&quot;EU&quot;,&quot;units&quot;:&quot;1 EUR&quot;,&quot;middleRate&quot;:117.451,&quot;originalMiddleRate&quot;:117.451},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;GBP&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:144.1374,&quot;buyRate&quot;:135.741,&quot;otherRates&quot;:[{&quot;rate&quot;:139.9392,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;GBP&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:144.1374,&quot;buyRate&quot;:135.741,&quot;otherRates&quot;:[{&quot;rate&quot;:139.9392,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Britanska funta&quot;,&quot;countryName&quot;:&quot;Velika Britanija&quot;,&quot;countryCode&quot;:&quot;GBR&quot;,&quot;units&quot;:&quot;1 GBP&quot;,&quot;middleRate&quot;:139.9392,&quot;originalMiddleRate&quot;:139.9392},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;JPY&quot;,&quot;unit&quot;:100},&quot;sellRate&quot;:68.2393,&quot;buyRate&quot;:64.2641,&quot;otherRates&quot;:[{&quot;rate&quot;:66.2517,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;JPY&quot;,&quot;unit&quot;:100},&quot;sellRate&quot;:68.2393,&quot;buyRate&quot;:64.2641,&quot;otherRates&quot;:[{&quot;rate&quot;:66.2517,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Japanski jen&quot;,&quot;countryName&quot;:&quot;Japan&quot;,&quot;countryCode&quot;:&quot;JPN&quot;,&quot;units&quot;:&quot;100 JPY&quot;,&quot;middleRate&quot;:66.2517,&quot;originalMiddleRate&quot;:66.2517},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;MKD&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:1.9519,&quot;buyRate&quot;:1.8382,&quot;otherRates&quot;:[{&quot;rate&quot;:1.895,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;MKD&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:1.9519,&quot;buyRate&quot;:1.8382,&quot;otherRates&quot;:[{&quot;rate&quot;:1.895,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Makedonski denar&quot;,&quot;countryName&quot;:&quot;Makedonija&quot;,&quot;countryCode&quot;:&quot;MKD&quot;,&quot;units&quot;:&quot;1 MKD&quot;,&quot;middleRate&quot;:1.895,&quot;originalMiddleRate&quot;:1.895},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;NOK&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:11.4902,&quot;buyRate&quot;:10.8208,&quot;otherRates&quot;:[{&quot;rate&quot;:11.1555,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;NOK&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:11.4902,&quot;buyRate&quot;:10.8208,&quot;otherRates&quot;:[{&quot;rate&quot;:11.1555,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Norveška kruna&quot;,&quot;countryName&quot;:&quot;Norveška&quot;,&quot;countryCode&quot;:&quot;NOR&quot;,&quot;units&quot;:&quot;1 NOK&quot;,&quot;middleRate&quot;:11.1555,&quot;originalMiddleRate&quot;:11.1555},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;RUB&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:1.41,&quot;buyRate&quot;:1.1536,&quot;otherRates&quot;:[{&quot;rate&quot;:1.2818,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;RUB&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:1.41,&quot;buyRate&quot;:1.1536,&quot;otherRates&quot;:[{&quot;rate&quot;:1.2818,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Ruska rublja&quot;,&quot;countryName&quot;:&quot;Rusija&quot;,&quot;countryCode&quot;:&quot;RUS&quot;,&quot;units&quot;:&quot;1 RUB&quot;,&quot;middleRate&quot;:1.2818,&quot;originalMiddleRate&quot;:1.2818},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;SEK&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:10.8768,&quot;buyRate&quot;:10.2432,&quot;otherRates&quot;:[{&quot;rate&quot;:10.56,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;SEK&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:10.8768,&quot;buyRate&quot;:10.2432,&quot;otherRates&quot;:[{&quot;rate&quot;:10.56,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Švedska&quot;,&quot;countryName&quot;:&quot;Švedska&quot;,&quot;countryCode&quot;:&quot;SWE&quot;,&quot;units&quot;:&quot;1 SEK&quot;,&quot;middleRate&quot;:10.56,&quot;originalMiddleRate&quot;:10.56},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;TRY&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:2.3157,&quot;buyRate&quot;:1.8947,&quot;otherRates&quot;:[{&quot;rate&quot;:2.1052,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;TRY&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:2.3157,&quot;buyRate&quot;:1.8947,&quot;otherRates&quot;:[{&quot;rate&quot;:2.1052,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Turska lira&quot;,&quot;countryName&quot;:&quot;Turska&quot;,&quot;countryCode&quot;:&quot;TUR&quot;,&quot;units&quot;:&quot;1 TRY&quot;,&quot;middleRate&quot;:2.1052,&quot;originalMiddleRate&quot;:2.1052},{&quot;groupData&quot;:{&quot;senderId&quot;:&quot;SBPORSBG&quot;,&quot;servicerId&quot;:&quot;SBPORSBG&quot;,&quot;servicerName&quot;:&quot;BANKA POŠTANSKA ŠTEDIONICA AD BEOGRAD&quot;,&quot;servicerType&quot;:&quot;BANK&quot;,&quot;listType&quot;:&quot;ALL&quot;,&quot;sourceCurrency&quot;:{&quot;value&quot;:&quot;RSD&quot;,&quot;unit&quot;:1},&quot;inverseRate&quot;:false},&quot;rate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;USD&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:107.5903,&quot;buyRate&quot;:101.3229,&quot;otherRates&quot;:[{&quot;rate&quot;:104.4566,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;originalRate&quot;:{&quot;targetCurrency&quot;:{&quot;value&quot;:&quot;USD&quot;,&quot;unit&quot;:1},&quot;sellRate&quot;:107.5903,&quot;buyRate&quot;:101.3229,&quot;otherRates&quot;:[{&quot;rate&quot;:104.4566,&quot;type&quot;:&quot;MIDDLE&quot;}]},&quot;date&quot;:1792620000000,&quot;name&quot;:&quot;Američki dolar&quot;,&quot;countryName&quot;:&quot;Sjedinjene Američke Države&quot;,&quot;countryCode&quot;:&quot;USA&quot;,&quot;units&quot;:&quot;1 USD&quot;,&quot;middleRate&quot;:104.4566,&quot;originalMiddleRate&quot;:104.4566}]" data-homecurrency="RSD"></div>
+<div id="avaAccountBalancesByCurrencyJson" data-json="{&quot;total&quot;:{&quot;RSD&quot;:69204.71,&quot;EUR&quot;:10448.75},&quot;200111111111111117&quot;:{&quot;RSD&quot;:69204.71},&quot;200222222222222262&quot;:{&quot;EUR&quot;:10448.75}}"></div>
+<div id="currentAccountBalancesByCurrency" data-json="{&quot;total&quot;:{&quot;RSD&quot;:69204.71,&quot;EUR&quot;:10448.75},&quot;200111111111111117&quot;:{&quot;RSD&quot;:69204.71},&quot;200222222222222262&quot;:{&quot;EUR&quot;:10448.75}}"></div>
+					
+
+	</div>
+	
+	    </div>
+
+</div>
+
+		<div id="modal_container">
+        	        
+        
+		<div class="modal" id="modalContainer" tabindex="-1" aria-hidden="true" data-form-submit-type="submit" data-bs-backdrop="true">
+	  <div class="modal-dialog  modal-md ">
+	    <div class="modal-content " >
+	    	 <button type="button" class="modal-btn closeModal" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>	    	
+	    	                 	<div class="modal-header">
+	    <h4 data-testid="modalWindowTitle_" class="modal-title"></h4>
+	</div>
+	
+			<div class="modal-messages">
+	    <div id="modal_messages_container" class="alert alert-danger alert-dismissible fade in " role="alert">
+	        <div id="modal_messages">
+									        </div>
+	    </div>	
+	</div>
+                	<div class="modal-body ">
+							<div class="modal-body-content">
+	    	                   
+                
+	    	</div>
+	    	</div>
+                <div class="modal-footer ">
+            		 <a type="button" id="authorizeButton" class="button pull-right">Submit</a>
+                
+</div>
+            
+	    </div>
+	  </div>
+	</div>
+	</div>
+	
+	<div id="modal_container_extend_session">
+        	        
+        
+		<div class="modal" id="modalContainerExtendSession" tabindex="-1" aria-hidden="true" data-form-submit-type="submit" data-bs-backdrop="true">
+	  <div class="modal-dialog  modal-md ">
+	    <div class="modal-content " >
+	    	 <button type="button" class="modal-btn closeModal" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>	    	
+	    	                 	<div class="modal-header">
+	    <h4 data-testid="modalWindowTitle_" class="modal-title"></h4>
+	</div>
+	
+			<div class="modal-messages">
+	    <div id="modal_messages_container" class="alert alert-danger alert-dismissible fade in " role="alert">
+	        <div id="modal_messages">
+									        </div>
+	    </div>	
+	</div>
+                	<div class="modal-body ">
+							<div class="modal-body-content">
+	    	                   
+                
+	    	</div>
+	    	</div>
+                <div class="modal-footer ">
+                    
+</div>
+            
+	    </div>
+	  </div>
+	</div>
+	</div>		
+	
+    <footer class="footer_section hidden-print">
+    	<div class="container">
+            <div class="clearfix footer_links_wrapper language_selector_links col-lg-12">
+        			    		                 
+                		<a class="footer_link" href="&#x2F;sbpo_mbank&#x2F;accounts?lang=sr" data-testid="language-btn-Srpski">Srpski</a>
+    	    		                 
+                		<a class="footer_link" href="&#x2F;sbpo_mbank&#x2F;accounts?lang=en" data-testid="language-btn-English">English</a>
+    		    </div>
+
+		            <div class="footer_col col-lg-2 col-sm-4 col-xs-12">
+            <h4 class="bottom_rule">Pratite nas na</h4>
+                               <a class="soc_link" href="https://www.youtube.com/user/poststed" target="_blank"                ><i class="fa fa-youtube"></i>YouTube</a>
+                               <a class="soc_link" href="https://www.facebook.com/post.sted" target="_blank"                ><i class="fa fa-facebook"></i>Facebook</a>
+                               <a class="soc_link" href="https://twitter.com/post_sted" target="_blank"                ><i class="fa fa-twitter"></i>Twitter</a>
+                    </div>
+    
+        	<div class="footer_col col-lg-3 col-sm-6 col-xs-12 ">	
+	        <h4 class="bottom_rule">Kontakt</h4>
+        			<div class="clearfix display-block">
+				<div class="row">
+                                    <div class="col-xs-12 text-left">
+                                        						                                									<a class="contact" href="tel:+381 11 3024-708" onclick="window.onbeforeunload = null;"><i class="fa fa-phone"></i>+381 11 3024-708</a>
+                                																		</div>
+				</div>
+			</div>
+	    			<div class="clearfix display-block">
+				<div class="row">
+                                    <div class="col-xs-12 text-left">
+                                        						    							    								<a class="contact" href="javascript:void(0);"
+    									onclick="window.onbeforeunload = null; document.location.href='mailto:ebank@posted.co.rs;'"><i class="fa fa-envelope"></i>ebank@posted.co.rs</a>
+    							    																	</div>
+				</div>
+			</div>
+	    			<div class="clearfix display-block">
+				<div class="row">
+                                    <div class="col-xs-12 text-left">
+                                        						    							    								    	                                        
+	<a id="www_posted_co_rs" data-testid="www-posted-co-rs" href="http://www.posted.co.rs" target="_blank" class=" contact"
+                    >
+        
+        <span><i class="fa fa-globe"></i>www.posted.co.rs</span></a>
+    							    																	</div>
+				</div>
+			</div>
+	        	</div>
+
+			
+			
+		    		<div class="footer_col col-lg-6 col-sm-6 col-xs-12">
+			<h4 class="bottom_rule">Lokacija</h4>
+			<div class="row">
+                                    <div class="col-xs-4">
+                        <a class="inline-block x_map_image" href="https:&#x2F;&#x2F;goo.gl&#x2F;maps&#x2F;19EMdYe6gVU2" target="_blank"></a>
+                    </div>
+                    <div class="col-xs-8">
+                					<div class="row">
+						<div class="col-xs-12">
+							<div class="contact bold clearfix">BANKA POŠTANSKA ŠTEDIONICA AD, Beograd</div>
+						</div>
+					</div>
+										<div class="row">
+						<div class="col-xs-12">
+							<div class="contact caption">Ulica kraljice Marije broj 3</div>
+						</div>
+					</div>
+										<div class="row">
+						<div class="col-xs-12">
+							<div class="contact caption">11120 BEOGRAD, Srbija</div>
+						</div>
+					</div>
+									</div>
+			</div>
+		</div>
+	
+				    <div class="footer_links_wrapper footer_bottom_links col-lg-12 col-sm-12 col-xs-12">
+	        	            <a class="footer_legal" href="http://www.posted.co.rs/"target="_blank">Uslovi korišćenja	</a>
+	        	    </div>
+	    </div>
+</footer>
+<footer class="footer_section_printable visible-print-block">
+<div class="container">
+    		<div class="row"><hr class="divider"/></div>
+		<div class="row">
+        <div class="col-xs-6 small">
+        	    			<div class="row col-xs-12">
+    				<h2><span class="small">Adresa</span></h2>
+    			</div>
+        		<div class="row col-xs-12">
+        				<div class="row">
+        					<div class="col-xs-12">BANKA POŠTANSKA ŠTEDIONICA AD, Beograd</div>
+        				</div>
+        				        				<div class="row">
+        					<div class="col-xs-12">Ulica kraljice Marije broj 3</div>
+        				</div>
+        				        				<div class="row">
+        					<div class="col-xs-12">11120 BEOGRAD, Srbija</div>
+        				</div>
+        				        		</div>
+        	        </div>
+    	        <div class="col-xs-6 small">
+			            	<div class="row col-xs-12">
+                    <h2><span class="small">Kontakt</span></h2>
+            	</div>
+                            		<div class="row">
+        				        					<div class="col-xs-12">T: +381 11 3024-708</div>
+        				            		</div>
+				            		<div class="row">
+        				        					<div class="col-xs-12">E: ebank@posted.co.rs</div>
+        				            		</div>
+				            		<div class="row">
+        				        					<div class="col-xs-12">W:         	http://www.posted.co.rs
+</div>
+        				            		</div>
+							        </div>
+	</div>
+</div>	
+</footer>
+
+    			
+		<script src='/sbpo_mbank/static/components/bootstrap/dist/js/bootstrap.bundle.min.js'></script>
+	<script src='/sbpo_mbank/static/components/bootstrap-select/dist/js/bootstrap-select.min.js'></script>
+	<script src='/sbpo_mbank/static/components/bootstrap-validator/dist/validator.min.js'></script>
+		
+		<script src='/sbpo_mbank/static/components/eonasdan-bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js'></script>
+	
+  	  	<script src='/sbpo_mbank/static/components/bootstrap-less/js/button.js'></script>
+  	<script src='/sbpo_mbank/static/components/bootstrap-less/js/affix.js'></script>
+
+    							        	                            <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/messages.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/modalManipulationHelper.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/tableManipulationHelper.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/elementManipulationHelper.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/signatureManipulationHelper.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/jquery.d3-halcom-chart.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/jquery.blockUI.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/partialMatchRegex.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/help.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/headerMessages.js"></script>
+        <script type="application/javascript" src="/sbpo_mbank/static/script/ebank/asyncTaskHelper.js"></script>
+    <script>
+	
+	window.onload = function(){
+		setTimeout(function(){
+			var headerHelperOptions = {
+		        gridFloatBreakPoint: '0',
+		        isRtl: false
+		    };
+		    headerHelper.initialize(headerHelperOptions);
+		    
+		    _elements.focusErrorField();
+		}, 500);
+	}
+
+    $(document).ready(function () {
+		var app_url = 'https://webebank.ebb-bg.com:443/sbpo_mbank';
+	    var options = {
+	        aSep: '.',
+	        aDec: ',',
+	        gridFloatBreakPoint: '0',
+			isRtl: false
+	    };
+	
+		utils.localized_msgs = $.parseJSON("{\"common.error.msg.future_date\":\"Datum je u budućnosti!\",\"aggregatedview.graph.label.booked_balance\":\"aggregatedview.graph.label.booked_balance\",\"alerts.save_alerts.error.percentage\":\"alerts.save_alerts.error.percentage\",\"payments.validator.error_msg\":\"Molimo, popravite označena polja.\",\"hybrid.requestcenter.gdpr.request.leave.button.leave\":\"Leave\",\"datepicker.monthname.august\":\"Avgust\",\"datepicker.tooltip.decrement_second\":\"Decrement second\",\"alerts.save_alerts.error.positive_numbers\":\"alerts.save_alerts.error.positive_numbers\",\"forex.forexhistory.chart.weekdays\":\"forex.forexhistory.chart.weekdays\",\"payments.payment_wizzard_modal.bic_format_invalid\":\"Bic format is invalid\",\"edocuments.import.document_type.not_alowed.edocument\":\"edocuments.import.document_type.not_alowed.edocument\",\"hybrid.cards.details.modal.apple_wallet.body\":\"hybrid.cards.details.modal.apple_wallet.body\",\"datepicker.tooltip.prev_decade\":\"Previous decade\",\"nexus_error.label.request_expired\":\"nexus_error.label.request_expired\",\"hybrid.common.modal.delete_djp_journey_disabled.body2\":\"hybrid.common.modal.delete_djp_journey_disabled.body2\",\"hybrid.common.button.cancel\":\"Odustani\",\"hybrid.common.modal.delete_djp_journey_disabled.body1\":\"hybrid.common.modal.delete_djp_journey_disabled.body1\",\"hybrid.wai.homepage.tab_change_message.accounts\":\"hybrid.wai.homepage.tab_change_message.accounts\",\"payments.step_1.error_3\":\"Nije moguće napraviti interni nalog - na raspolaganju je samo jedan račun\",\"accounts.details.graph.no_permissions\":\"accounts.details.graph.no_permissions\",\"payments.form.label.commercial_transfer.after_input\":\"and is not a transfer of capital. I/We declare that the justifying documents are used for the first time and are not used to justify other transfers. I/We are committed to present in ABI Bank Albania within 3 (three) the original document together with the original of the certified copy of the custom office document.\",\"hybrid.payments.popup.lable.nothingfound\":\"hybrid.payments.popup.lable.nothingfound\",\"offers.request.success_response\":\"Thanks for submit. We will contact you soon.\",\"hybrid.wai.homepage.tab_change_message.offers\":\"hybrid.wai.homepage.tab_change_message.offers\",\"payments.ownacc.form.no_credit_account_macth.error.msg\":\"Račun na teret i račun u korist moraju biti u istij valuti.\",\"datepicker.tooltip.select_time\":\"Select time\",\"hybrid.cards.card_account_statements.common.label.date\":\"\\n\",\"cdm.payments.template.edit.error.message.name_already_exists\":\"cdm.payments.template.edit.error.message.name_already_exists\",\"datepicker.dayname.saturday.short\":\"Sub\",\"forex.forexhistory.chart.title_appendix\":\"forex.forexhistory.chart.title_appendix\",\"hybrid.requestcenter.gdpr.request.common.button.ok\":\"OK\",\"payments.check_account_message.account_not_found\":\"Credit account not found in the registry. Please manually enter creditor data to proceed with specified account. \\r\\n\",\"forex.forexhistory.chart.label.transfer_sell\":\"Prodajni kurs\",\"common.filter.daterange.apply\":\"Primeni\",\"payments.sdd.sent.cancelaction.refusal_reason_mandatory\":\"Reason is mandatory. Please select it before proceeding.\",\"common.msgs.infinite_scroll\":\"Table data has changed. Please refresh the page.\",\"login.login.label.cloud_certificate_error_general\":\"Log in via cloud certificate is currently not possible, please try later.\",\"hybrid.wai.homepage.notification_menu_icon\":\"hybrid.wai.homepage.notification_menu_icon\",\"login.login.label.cloud_certificate_error_timeout\":\"The Halcom Cloud Signer has reported a timeout\",\"hybrid.payments.verify_waiting.modal.view\":\"hybrid.payments.verify_waiting.modal.view\",\"export.pdf.account.transaction.confirmation\":\"Transaction\",\"common.button.close\":\"Zatvori\",\"payments.authentication_status.signature_not_required\":\"Batch already signed, signature not required.\",\"export.pdf.account.statement.statement\":\"Statement\",\"filter.date_from_to.error.msg\":\"\\\"Datum-od\\\" mora biti raniji od \\\"datum-do\\\"\",\"forex.converter.label.no_data.message\":\"Ne postoje informacije za odabranu valutu i/ili datum.\",\"generic_action.save\":\"Sačuvaj\",\"datepicker.tooltip.next_month\":\"Next month\",\"login_form.error.ie_version\":\"Koristite pretraživač koji aplikacija više ne podržava. Neke funkcionalnosti možda neće raditi ispravno. Da biste izbegli neprijatnosti, nadogradite pretraživač na noviju verziju.\",\"hybrid.wai.homepage.tab_change_message.cards\":\"hybrid.wai.homepage.tab_change_message.cards\",\"datepicker.dayname.saturday\":\"Subota\",\"session.error.invalid\":\"Neispravna ili istekla sesija!\",\"datepicker.monthname.june.short\":\"Jun\",\"datepicker.tooltip.next_year\":\"Next year\",\"payments.pooredo.enter_clients_qatari_id\":\"Please enter Qatari ID first.\",\"alerts.save_alerts.error.general_error_msg\":\"alerts.save_alerts.error.general_error_msg\",\"payments.authorization_cloud_modal.message.wait_for_signature\":\"Please open the cloud certificate mobile application and confirm the signature to continue.\",\"alerts.save_contact_info.error_mobile\":\"alerts.save_contact_info.error_mobile\",\"forex.currency_converter_modal.convert_not_possible\":\"You do not have accounts in selected currencies! Please choose different currency and try again.\",\"datepicker.today.button\":\"Danas\",\"hybrid.payments.popup.title.select_country\":\"hybrid.payments.popup.title.select_country\",\"forex.forexhistory.chart.months\":\"forex.forexhistory.chart.months\",\"datepicker.tooltip.prev_century\":\"Previous century\",\"hybrid.common.button.read\":\"Pregled\",\"forex.forexhistory.chart.label.cash_sell\":\"Prodajni kurs za gotovinu\",\"login.login.label.nexus_certificate\":\"Confirm login request with Nexus Personal - Plugout application.\",\"accounts.details.graph.title\":\"Istorija stanja za račun\",\"self_admin.limits.error\":\"self_admin.limits.error\",\"hybrid.requestcenter.gdpr.request.modal.channels.not_mandatory\":\"Izbira kanalov za obveščanje ni mogoča, ker so bila vsa soglasja označena z NE.\",\"hybrid.common.title.warning\":\"hybrid.common.title.warning\",\"datepicker.monthname.march\":\"Mart\",\"hybrid.wai.popup.open.partners\":\"hybrid.wai.popup.open.partners\",\"common.button.continue\":\"Nastavi\",\"proxsign.error_5\":\"Problem sa sertifikatom ili nepoznata greška.\",\"alerts.list.option.receiving_alerts_edit\":\"alerts.list.option.receiving_alerts_edit\",\"hybrid.forex.currency_converter_modal.message.same_currencies\":\"Iste valute\",\"invalid.format.einvoice.debtor.bic\":\"invalid.format.einvoice.debtor.bic\",\"edocuments.import.document_type.not_alowed.einvoice\":\"edocuments.import.document_type.not_alowed.einvoice\",\"proxsign.error_4\":\"Došlo je do problema prilikom potpisivanja.\",\"hybrid.wai.homepage.slide_change_message.prefix\":\"hybrid.wai.homepage.slide_change_message.prefix\",\"common.table.header.total\":\"Ukupno\",\"datepicker.monthname.august.short\":\"Avg\",\"cards.card_account_statements.alert.date_out_of_range\":\"Date out of range!\",\"payments.authorization_cloud_modal.error.expired\":\"OneID signing request has expired.\",\"offers.request.invalid_email_value\":\"Invalid e-mail value\",\"datepicker.monthname.june\":\"Jun\",\"datepicker.monthname.november\":\"Novembar\",\"error.sending.packet\":\"Došlo je do greške prilikom slanja paketa naloga\",\"payments.bill_payment.creditor_acc_select_label.008\":\"Car fines account\",\"payments.form.instant_payment.value_date_changed_to_current_date\":\"Payment execution date was updated to the current date.\",\"payments.bill_payment.creditor_acc_select_label.006\":\"UK account\",\"payments.modal.general_confirmation_modal.common.button.confirm\":\"Potvrdi\",\"datepicker.monthname.november.short\":\"Nov\",\"login.login.message.username_required_error\":\"Korisničko ime je obavezno polje.\",\"accounts.details.graph.no_data\":\"Nema podataka o istoriji stanja.\",\"forex.forexlist.table.head.transfer_central_sell\":\"forex.forexlist.table.head.transfer_central_sell\",\"datepicker.monthname.july\":\"Jul\",\"common.messages.system.more.one\":\"common.messages.system.more.one\",\"bonds.bonddetails.label.chart.no_available\":\"bonds.bonddetails.label.chart.no_available\",\"alerts.save_contact_info.error\":\"alerts.save_contact_info.error\",\"payments.credit_account_changed.error.msg\":\"Credit account was automatically changed because it was different currency as selected debit account.\",\"payments.authorization_cloud_modal.message.cancel_signature\":\"Cancel request\",\"datepicker.tooltip.select_year\":\"Select year\",\"payments.error.check_content.errors_found\":\"Molimo pregledajte greške prelazeći iznad obeleženih polja. Popravite sve greške i kliknite Sačuvaj za nastavak.\",\"hybrid.requestcenter.gdpr.request.modal.missing_channels\":\"You agreed to one of the GDPR settings, so you have to select at least one of the communication channels.\",\"hybrid.common.djp.system.error.title\":\"Something went wrong\",\"forex.forexhistory.chart.label.middle_rate\":\"Srednji kurs\",\"alerts.save_contact_info.email.wrong_format\":\"alerts.save_contact_info.email.wrong_format\",\"common.autocomplete.empty\":\"No results found!\",\"VM120\":\"VM120\",\"hybrid.requestcenter.gdpr.request.leave.button.continue\":\"Continue\",\"datepicker.tooltip.increment_hour\":\"Increment hour\",\"datepicker.dayname.thursday\":\"Četvrtak\",\"datepicker.monthname.july.short\":\"Jul\",\"offers.request.empty_mandatory_field\":\"Empty mandatory field\",\"alerts.save_contact_info.success\":\"alerts.save_contact_info.success\",\"mpush_error_general\":\"Mobilna potvrda trenutno nije dostupna. Pokušajte ponovo kasnije ili koristite ručni unos OTP-a.\",\"forex.forexhistory.chart.label.no_data\":\"forex.forexhistory.chart.label.no_data\",\"hybrid.common.button.ok\":\"OK\",\"eforms.validation.mandatory.error\":\"Molimo, popunite obavezno polje.\",\"payments.modal.general_confirmation_modal.common.button.cancel\":\"Opozovi\",\"login.login.label.cloud_certificate_title\":\"Please open the cloud certificate mobile application and confirm the login to continue.\",\"accounts.details.manage_account.rename.error\":\"Greška prilikom preimenovanja računa.\",\"forex.forexhistory.chart.label.transfer_buy\":\"Kupovni kurs\",\"filter.date_wrong_format.error.msg\":\"Neispravan format datuma.\",\"profile.change.settings.success.msg\":\"Podešavanja hitnog plaćanja su uspešno promenjena!\",\"hybrid.common.title.alert\":\"Alarm\",\"login.login.message.password_required_error\":\"Lozinka je obavezno polje.\",\"requestcenter.profile.change.request.success.msg\":\"Info was successully updated\",\"opcvm.opcvmdetails.label.chart.no_available\":\"opcvm.opcvmdetails.label.chart.no_available\",\"forex.forexhistory.chart.shortMonths\":\"forex.forexhistory.chart.shortMonths\",\"hybrid.wai.popup.open.actionsheet\":\"hybrid.wai.popup.open.actionsheet\",\"stocks.stockdetails.label.chart.no_available\":\"stocks.stockdetails.label.chart.no_available\",\"payments.form.label.personal_transfer.before_input\":\"I declare that this money transfer has a personal destination and the source of income is\",\"common.messages.system.more.prefix\":\"common.messages.system.more.prefix\",\"datepicker.monthname.october.short\":\"Okt\",\"hybrid.common.message.system\":\"Broj nepročitanih važnih poruka:\",\"forex.forexlist.table.head.transfer_central_buy\":\"forex.forexlist.table.head.transfer_central_buy\",\"filter.amount_wrong_format.error.msg\":\"Neispravan iznos.\",\"common.msgs.please_wait\":\"Molimo, sačekajte\",\"payments.payment_wizzard_modal.iban_format_invalid\":\"IBAN format is invalid\",\"hybrid.wai.homepage.tab_change_message.card_accounts\":\"hybrid.wai.homepage.tab_change_message.card_accounts\",\"datepicker.dayname.friday\":\"Petak\",\"hybrid.common.djp.system.error.body\":\"An error occurred while calling the server. Please try again.\",\"common.filter.daterange.clear\":\"Izbriši\",\"datepicker.tooltip.decrement_hour\":\"Decrement hour\",\"datepicker.monthname.may\":\"Maj\",\"hybrid.accounts.transactions_list.link.confirmation\":\"Potvrda\",\"accounts.statements_download_modal.alert.dateOutOfRange\":\"Date period must be up to 31 days.\",\"hybrid.wai.popup.open\":\"hybrid.wai.popup.open\",\"datepicker.tooltip.next_century\":\"Next century\",\"help.enter_keyword_or_phrase\":\"Za pretragu unesite ključnu reč ili frazu.\",\"hybrid.cards.card_account_statements.label.instructions\":\"hybrid.cards.card_account_statements.label.instructions\",\"payments.authorization_cloud_modal.cancelation_error\":\"There was an error while canceling OneSign request.\",\"eforms.validation.max_value.error\":\"Molimo, unesite vrednost koja nije veća od $1.\",\"datepicker.tooltip.select_decade\":\"Select decade\",\"field.required.order_id_client_id\":\"Order not found. Please check if order ID and client ID are correctly entered.\",\"payments.check_account_message.private_person\":\"Entered account is valid account of a private person. Please manually enter creditor data in the payment form.\",\"hybrid.requestcenter.gdpr.request.modal.cant_leave\":\"You can not leave this page. To use mobile bank first finish setting GDPR.\",\"payments.form.msg.error.non_working_execution_date\":\"Uneti datum nije radni dan!\",\"payments.form.field.ooredoo_service_number\":\"Ooredoo broj servisa/usluge\",\"payments.authorization_cloud_modal.error.timeout\":\"The Halcom Cloud Signer has reported a timeout (TODO - provide a correct message)\",\"payments.form.message.attachment_toolarge\":\"Veličina priloga je ograničena na {0}MB!\",\"datepicker.tooltip.pick_hour\":\"Pick hour\",\"forex.forexlist.table.head.effective_sell_rate\":\"forex.forexlist.table.head.effective_sell_rate\",\"hybrid.wai.homepage.account_data_icon.hide\":\"hybrid.wai.homepage.account_data_icon.hide\",\"common.button.ok\":\"OK\",\"datepicker.tooltip.prev_year\":\"Previous year\",\"common.message.date_less_than\":\"Datum izvršenja je promenjen na prvi mogući datum izvršenja\",\"import.import_controller.msg.error.system_error\":\"System error while importing data from file, please try later.\",\"hybrid.common.label.optional_field\":\"(opciono)\",\"datepicker.dayname.friday.short\":\"Pet\",\"hybrid.wai.additional_data_icon.open\":\"hybrid.wai.additional_data_icon.open\",\"datepicker.dayname.tuesday.short\":\"Uto\",\"alerts.save_contact_info.no_delivery_channel\":\"alerts.save_contact_info.no_delivery_channel\",\"datepicker.dayname.monday.short\":\"Pon\",\"com.halcom.ng.dictionary.DicMessageContentType.PLAIN_TEXT\":\"Poruka\",\"misys_trade_portal.redirect.fail\":\"misys_trade_portal.redirect.fail\",\"payments.form.instant_payment.date_changed\":\"Instant payments cannot be placed in the payment queue because they are executed in a few seconds. Today’s date was automatically entered in the \\u0027Value date\\u0027 field.\",\"hybrid.wai.additional_data_icon.close\":\"hybrid.wai.additional_data_icon.close\",\"datepicker.monthname.january\":\"Januar\",\"common.filter.quick.custom_range\":\"Izaberi\",\"datepicker.dayname.sunday\":\"Nedelja\",\"common.button.cancel\":\"Odustani\",\"login.login.label.cloud_certificate_cancel\":\"Otkaži zahtev\",\"accounts.list.table.header.main_account.success\":\"Postavljanje glavnog računa nije završeno uspešno. Molimo, pokušajte ponovo.\",\"export.pdf.generic\":\"Document\",\"hybrid.requestcenter.gdpr.request.leave.message\":\"Če zapustite zahtevek za GDPR privolitev, ne boste mogli uporabljati mobilne banke MOJ@SKB\",\"datepicker.monthname.april.short\":\"Apr\",\"proxsign.license_error\":\"SETCCE proXSign: Došlo je do problema sa licencom ili nepoznata greška.\",\"common.button.no\":\"Ne\",\"packets.for_authorization.move_to_og.failed\":\"Move packet to OG failed\",\"einvoices.sign_einvoice.message.unable_to_sign\":\"einvoices.sign_einvoice.message.unable_to_sign\",\"bills.validation.mandatory.error\":\"bills.validation.mandatory.error\",\"hybrid.payments.verify_waiting.modal.body\":\"hybrid.payments.verify_waiting.modal.body\",\"common.filter.quick.0d\":\"1 dan\",\"payments.payment_form.tax_authority_error.service_error\":\"Error retrieving tax authority data.\",\"datepicker.dayname.thursday.short\":\"Čet\",\"common.messages.system\":\"Broj nepročitanih važnih poruka:\",\"login.error.password.compare_new_and_confirm\":\"Lozinka i Ponovljena lozinka se ne slažu.\",\"eforms.validation.min_value.error\":\"Molimo, unesite vrednost od najmanje $1.\",\"hybrid.payments.verify_waiting.modal.cancel\":\"hybrid.payments.verify_waiting.modal.cancel\",\"common.button.yes\":\"Da\",\"datepicker.tooltip.pick_minute\":\"Pick minute\",\"common.message.value_date_changed_working_day\":\"Payment value date was updated to next working date.\",\"datepicker.dayname.tuesday\":\"Utorak\",\"hybrid.payments.popup.placeholder.searchbar\":\"hybrid.payments.popup.placeholder.searchbar\",\"payments.form.msg.error.utility_number_exists\":\"Utility number already exists!\",\"accounts.details.graph.account_balance\":\"STANJE RAČUNA\",\"payments.form.label.empty_value_label\":\"- Izaberi -\",\"datepicker.monthname.october\":\"Oktobar\",\"datepicker.monthname.december\":\"Decembar\",\"forex.forexhistory.chart.subtitle_prependix\":\"forex.forexhistory.chart.subtitle_prependix\",\"datepicker.tooltip.increment_second\":\"Increment second\",\"common.button.confirm\":\"Potvrdi\",\"alerts.list.option.receiving_alerts.mobile_phone\":\"alerts.list.option.receiving_alerts.mobile_phone\",\"datepicker.dayname.monday\":\"Ponedeljak\",\"field.payment.not_supported_by_bank\":\"This type of payment is not supported by the bank.\",\"forex.forexhistory.chart.y_axis.title.part1\":\"forex.forexhistory.chart.y_axis.title.part1\",\"datepicker.tooltip.select_month\":\"Select month\",\"forex.forexhistory.chart.y_axis.title.part2\":\"forex.forexhistory.chart.y_axis.title.part2\",\"hybrid.cards.details.modal.apple_wallet.title\":\"hybrid.cards.details.modal.apple_wallet.title\",\"login.login.label.nexus_certificate_cancel\":\"Odustani\",\"payments.authorization_cloud_modal.error.rejected\":\"The Halcom Cloud Signer has reported that the user rejected the signature process (TODO - provide a correct message)\",\"common.conversion.not_possible\":\"Conversion not possible\",\"datepicker.dayname.wednesday\":\"Sreda\",\"accounts.details.graph.series_name\":\"Stanje\",\"communicationcenter.requests.auth_status.error\":\"communicationcenter.requests.auth_status.error\",\"login.login.label.cloud_certificate_error_rejected\":\"The Halcom Cloud Signer has reported that the user rejected the signature process\",\"common.ajax.fetch_error\":\"Konekcija je neuspešna ili je sesija istekla.\",\"alerts.save_contact_info.error_email\":\"alerts.save_contact_info.error_email\",\"hybrid.payments.verify_waiting.modal.title\":\"hybrid.payments.verify_waiting.modal.title\",\"payments.form.msg.error.utility_number_nickname_required\":\"Utility number and nickname fields are required!\",\"datepicker.tooltip.next_decade\":\"Next decade\",\"hybrid.wai.homepage.tab_change_message.prefix\":\"hybrid.wai.homepage.tab_change_message.prefix\",\"alerts.list.option.receiving_alerts.email_edit\":\"alerts.list.option.receiving_alerts.email_edit\",\"alerts.save_alerts.success\":\"alerts.save_alerts.success\",\"packets.step1.mp.debtor_reference_mandatory\":\"User reference is mandatory.\",\"alerts.save_contact_info.phone.wrong_format\":\"alerts.save_contact_info.phone.wrong_format\",\"bills.validation.min_length.error\":\"bills.validation.min_length.error\",\"login.login.label.cloud_certificate_cancelation_error\":\"There was an error while canceling OneSign request.\",\"hybrid.flik.request.description\":\"hybrid.flik.request.description\",\"common.message.invalid_date\":\"Neispravan datum\",\"hybrid.payments.details.default\":\"hybrid.payments.details.default\",\"common.button.delete\":\"Izbriši\",\"alerts.save_alerts.error\":\"alerts.save_alerts.error\",\"payments.form.msg.error.invalid_execution_date\":\"Neispravan format datuma\",\"common.message.execution_date_is_les_than_expected\":\"Execution date is less than expected\",\"datepicker.tooltip.today\":\"Today\",\"payments.ownacc.form.no_account_macth.error.msg\":\"Ne postoji odgovarajući račun u korist za izabrani račun na teret. Molimo, izaberite drugi račun na teret.\",\"offers.request.invalid_phone_value\":\"Invalid phone value\",\"com.halcom.ng.dictionary.DicMessageContentType.FORM\":\"Zahtev\",\"datepicker.tooltip.clear\":\"Clear\",\"hybrid.wai.popup.open.dropdown\":\"hybrid.wai.popup.open.dropdown\",\"datepicker.tooltip.decrement_minute\":\"Decrement minute\",\"alerts.list.option.receiving_alerts_readonly\":\"alerts.list.option.receiving_alerts_readonly\",\"hybrid.wai.popup.open.account_selector\":\"hybrid.wai.popup.open.account_selector\",\"datepicker.tooltip.toggle_period\":\"Toggle period\",\"forex.forexlist.table.head.effective_buy_rate\":\"forex.forexlist.table.head.effective_buy_rate\",\"payments.template.edit.error.message.name_already_exists\":\"payments.template.edit.error.message.name_already_exists\",\"datepicker.monthname.may.short\":\"Maj\",\"alerts.list.option.receiving_alerts.email\":\"alerts.list.option.receiving_alerts.email\",\"forex.forexhistory.chart.label.cash_buy\":\"Kupovni kurs za gotovinu\",\"common.message.date_more_than\":\"Ne možete izabrati datum veći od\",\"alerts.save_alerts.error.negative_numbers\":\"alerts.save_alerts.error.negative_numbers\",\"datepicker.dayname.wednesday.short\":\"Sre\",\"datepicker.tooltip.pick_second\":\"Pick second\",\"common.filter.daterange.from\":\"Od\",\"payments.check_account_message.invalid_iban\":\"Invalid credit account IBAN.\",\"forex.forexhistory.chart.subtitle_appendix\":\"forex.forexhistory.chart.subtitle_appendix\",\"alerts.list.option.receiving_alerts.mobile_phone_edit\":\"alerts.list.option.receiving_alerts.mobile_phone_edit\",\"datepicker.monthname.february.short\":\"Feb\",\"datepicker.monthname.march.short\":\"Mar\",\"login.login.message.username_onetime_password_required_error\":\"login.login.message.username_onetime_password_required_error\",\"datepicker.monthname.april\":\"April\",\"hybrid.requestcenter.gdpr.request.modal.channels.not_selectable\":\"Komunikacijski kanal je izbran, čeprav so vsa soglasja označena z NE. Izbrišite izbrani kanal ali popravite vsaj 1 izjavo v DA.\",\"other.otherdetails.label.chart.no_available\":\"Nema podataka za izabrani vremenski period\",\"datepicker.tooltip.increment_minute\":\"Increment minute\",\"payments.form.message.max_attachments_size_exceeded\":\"Skup svih priloga ne sme biti veci od {0} MB.\",\"hybrid.common.modal.delete_djp_journey.body1\":\"hybrid.common.modal.delete_djp_journey.body1\",\"hybrid.common.modal.delete_djp_journey.body2\":\"hybrid.common.modal.delete_djp_journey.body2\",\"generic_action.edit\":\"Izmeni\",\"datepicker.tooltip.close\":\"Close\",\"payments.form.label.serial_number\":\"Serial number\",\"hybrid.common.title.info\":\"Info\",\"forex.forexhistory.chart.reset_zoom.title\":\"forex.forexhistory.chart.reset_zoom.title\",\"common.msgs.loading_data\":\"Učitavanje podataka\",\"common.filter.no_results_found\":\"Ništa nije pronađeno\",\"hybrid.common.message.system.title\":\"Nepročitane poruke\",\"payments.step3.save_template.success.msg\":\"Šablon uspešno sačuvan\",\"datepicker.monthname.february\":\"Februar\",\"payments.form.label.commercial_transfer.before_input\":\"I/We declare that this money transfer is required for\",\"datepicker.monthname.september\":\"Septembar\",\"payments.form.message.account_restrictions_error\":\"For selected debit account you don\\u0027t have any credit accounts according to the account restrictions matrix.\",\"datepicker.monthname.december.short\":\"Dec\",\"payments.form.label.personal_transfer.after_input\":\"and I am committed to present in ABI Bank Albania the justifying document for the purpose of transferring the funds if the amount is higher than 6.000.000,00 ALL.\",\"forex.forexhistory.chart.reset_zoom.tooltip\":\"forex.forexhistory.chart.reset_zoom.tooltip\",\"common.filter.daterange.to\":\"Do\",\"login.login.message.username_password_required_error\":\"Korisničko ime i lozinka su obavezna polja.\",\"payments.info.auth_data_fetch_failed\":\"Greška prilikom dobijanja podataka o autentikaciji.\",\"payments.form.field.ooredoo_account_number\":\"Ooredoo broj računa\",\"accounts.controller.account_rename.msg.successfully_renamed\":\"Račun je uspešno preimenovan!\",\"forex.forexhistory.chart.no_data\":\"forex.forexhistory.chart.no_data\",\"datepicker.monthname.january.short\":\"Jan\",\"payments.form.label.invoice_number\":\"Invoice number\",\"common.messages.system.more\":\"common.messages.system.more\",\"datepicker.monthname.september.short\":\"Sep\",\"hybrid.common.title.error\":\"Greška\",\"payments.authorization_cloud_modal.error.general\":\"The Halcom Cloud Signer has reported an unknown error (TODO - provide a correct message)\",\"datepicker.tooltip.prev_month\":\"Previous month\",\"hybrid.wai.homepage.account_data_icon.show\":\"hybrid.wai.homepage.account_data_icon.show\",\"hybrid.wai.homepage.tab_change_message.menu\":\"hybrid.wai.homepage.tab_change_message.menu\",\"datepicker.dayname.sunday.short\":\"Ned\",\"payments.form.msg.error.past_execution_date\":\"Datum je u prošlosti!\"}");		
+		
+		utils.init(app_url, options);
+
+        
+        $(document).bind("ajaxSend", function(elm, xhr, s){
+            if (s.type == "POST") {
+                xhr.setRequestHeader('X-CSRF-Token', 'fixture-csrf');
+            }
+        });
+		
+		// load header messages
+        headerMessages.getHeaderMessages();	
+		
+    });
+</script>
+	<script>
+    $(document).ready(function () {
+        $(".logoutLink").click(function () {
+            if (sessionStorage) {
+                sessionStorage.clear();
+            }
+
+            $("#logout_form").submit();
+        });
+
+		utils.initOnResize();
+		utils.help.init("sr");
+
+                    asyncTasks.init('SBPORSBG');
+        
+        var optionsSessionExtend = {
+            enabled: 'true',
+            dialogTime: '600',
+            progressTime: '60',
+            coolOffTime: '0'
+        };
+
+        /*init process for extending session modal */
+        utils.SessionExtendDialog.init(optionsSessionExtend);
+	
+    });
+
+
+    // BS5 tooltips
+    var tooltipEl = $(".add_tooltip[title]")
+    tooltipEl.each(function() {
+        new bootstrap.Tooltip($(this), {
+            placement: 'bottom'
+        });
+    });
+	
+	
+</script>
+                        <script type="text/javascript">
+			$(document).ready(function() {
+	    		setTimeout( function(){
+	    			$("[data-autofade='true']").alert("close");
+	    		}, 5000);
+	    			
+	    		$("[data-role=message_container]" ).change(function() {
+	            	alert("Handler for .change() called.");
+	            });
+				$("[data-role=message_container] .alert").size();
+			});	
+    	</script>
+	
+    <script>
+
+
+</script>
+
+</body>
+</html>
