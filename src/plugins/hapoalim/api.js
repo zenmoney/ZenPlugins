@@ -1160,7 +1160,8 @@ async function fetchDeposits (auth, url, structType, accountId) {
   const response = await fetchOfficialJson(`${url}${separator}${qs.stringify({ accountId })}`, auth, {
     headers: { 'Accept-Encoding': 'identity' }
   })
-  if (structType === 'saving' && response.status === 204) return []
+  // Both inventory endpoints return no content when their product list is empty.
+  if (response.status === 204) return []
   ensure(Array.isArray(response.body?.list), 'unexpected deposits response', response)
   const accounts = []
   for (const group of response.body.list) {

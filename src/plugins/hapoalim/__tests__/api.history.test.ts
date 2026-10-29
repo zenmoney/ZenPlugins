@@ -19,6 +19,7 @@ const from = new Date('2026-10-01T00:00:00+02:00')
 const to = new Date('2026-10-02T00:00:00+02:00')
 const row = (id: string | number | undefined, amount = 1): object => ({ serialNumber: id, eventAmount: amount, activityDescription: 'model' })
 const response = (body: unknown): ModelResponse => ({ status: 200, headers: {}, body })
+const emptyDeposits = jest.requireActual<Omit<ModelResponse, 'body'> & { url: string }>('../__fixtures__/deposits-no-content.json')
 
 // [model] Synthetic HTTP envelopes exercise the real SDK parsing/log boundary,
 // completeness, lossless splitting and
@@ -174,10 +175,10 @@ describe('[model] Hapoalim history completeness', () => {
     ])
   })
 
-  // Live Android 26.8/build 1105, 2026-10-14: the savings GET returned actual
-  // empty 204 with Accept-Encoding: identity; gzip-marked empty 204 rejected
-  // in native fetch. The two-account graph below is a [model], not bank data.
-  it.each([[204, 204], [204, 200], [200, 204]].map(statuses => ({ endpoint: 'savingsDeposits', statuses }))
+  // Observed empty inventories: savings on 2026-10-14, deposits on 2026-10-29
+  // after payout. The two-parent/mixed active-product graph is a [model].
+  it.each(['deposits', 'savingsDeposits'].flatMap(endpoint =>
+    [[204, 204], [204, 200], [200, 204], [200, 200]].map(statuses => ({ endpoint, statuses })))
   )('preserves both account graphs for $endpoint statuses $statuses', async ({ endpoint, statuses }) => {
     respondJson.mockImplementation(async (url, options) => {
       const parsed = new URL(url)
@@ -303,7 +304,9 @@ describe('[model] Hapoalim history completeness', () => {
   })
 
   it.each(['deposits', 'savingsDeposits', 'loans', 'mortgages'].flatMap(endpoint =>
-    [1001, 1002].flatMap(number => ['transport', 'empty200', 'http500'].map(failure => ({ endpoint, number, failure })))
+    [1001, 1002].flatMap(number => ['transport', 'empty200', 'http500', ...['deposits', 'savingsDeposits'].includes(endpoint)
+      ? ['http401', 'http403', 'http404', 'http429', 'http503', 'malformedList']
+      : []].map(failure => ({ endpoint, number, failure })))
   ))('rejects $failure on $endpoint for account $number rather than returning partial accounts', async ({ endpoint, number, failure }) => {
     const transportError = new Error('model native transport failure')
     respondJson.mockImplementation(async url => {
@@ -314,7 +317,8 @@ describe('[model] Hapoalim history completeness', () => {
       if (path.includes('/foreign-currency/')) return response(null)
       if (path.endsWith('/' + endpoint) && parsed.searchParams.get('accountId') === `12-702-${number}`) {
         if (failure === 'transport') throw transportError
-        return { status: failure === 'http500' ? 500 : 200, headers: {}, body: undefined }
+        if (failure === 'malformedList') return response({ list: {} })
+        return { status: failure.startsWith('http') ? Number(failure.slice(4)) : 200, headers: {}, body: undefined }
       }
       return response(path.includes('/deposits-and-savings/') ? { list: [] } : { data: [] })
     })
@@ -391,20 +395,26 @@ describe('[model] Hapoalim history completeness', () => {
     await expect(fetchTransactions(auth(), { type: 'foreignCurrencyAccount', id: product.id, currencyCode: 19, detailedAccountTypeCode: 142 }, from, to)).rejects.toBe(failure)
   })
 
-  it.each([
-    { path: '/deposits-and-savings/deposits', message: 'unexpected deposits response' }
-  ])('does not infer no products from an unobserved 204 at $path', async ({ path: target, message }) => {
+  it('continues both complete account graphs after the observed empty deposit response', async () => {
     respondJson.mockImplementation(async url => {
       const path = new URL(url).pathname
-      if (path.endsWith('/general/accounts')) return response([{ bankNumber: 12, branchNumber: 702, accountNumber: 1001 }])
+      if (path.endsWith('/general/accounts')) return response([1001, 1002].map(accountNumber => ({ bankNumber: 12, branchNumber: 702, accountNumber })))
       if (path.includes('balanceAndCreditLimit')) return response({ currentBalance: 10, currentAccountCreditFrame: 0 })
-      if (path.endsWith(target)) return { status: 204, headers: {}, body: undefined }
+      if (path.endsWith('/deposits')) return { ...emptyDeposits, body: undefined }
       if (path.includes('/foreign-currency/')) return response(null)
       if (path.includes('/deposits-and-savings/')) return response({ list: [] })
       return response({ data: [] })
     })
-    await expect(fetchAccounts(auth())).rejects.toThrow(message)
-    expect(respondJson.mock.calls.some(([url]) => new URL(url).pathname.endsWith(target))).toBe(true)
+    expect(await fetchAccounts(auth())).toEqual([1001, 1002].map(accountNumber => ({
+      bankNumber: 12,
+      branchNumber: 702,
+      accountNumber,
+      details: { currentBalance: 10, currentAccountCreditFrame: 0 },
+      structType: 'checking'
+    })))
+    expect(respondJson.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/savingsDeposits'))).toHaveLength(2)
+    expect(respondJson.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/mortgages'))).toHaveLength(2)
+    expect(console.warn).not.toHaveBeenCalled()
   })
 
   it('preserves the existing checking-history 204 empty result', async () => {
