@@ -511,10 +511,10 @@ export function authenticationMethod (preferences) {
   return method
 }
 
-export async function loginDirect ({ previousIdentity, onAuthUpdate, onInteraction, isInBackground, verify, allowInteraction = true, interactionError } = {}) {
+export async function loginDirect ({ preferences, previousIdentity, onAuthUpdate, onInteraction, isInBackground, verify, allowInteraction = true, interactionError } = {}) {
   if (isInBackground) throw new UserInteractionError()
   if (!allowInteraction) throw interactionError || new Error('Bank Hapoalim session was rejected after interactive login')
-  const auth = await loginMobile({ previousIdentity, onAuthUpdate, onInteraction, isInBackground })
+  const auth = await loginMobile({ preferences, previousIdentity, onAuthUpdate, onInteraction, isInBackground })
   if (verify) await withAuthUpdates(auth, onAuthUpdate, verify)
   return auth
 }
@@ -591,6 +591,29 @@ export function isLikelyAuthGateError (error) {
   return (response?.status === 401 && code === 'STEPUPOTP') ||
     (response?.status >= 200 && response?.status < 500 &&
       (response?.isLoginPage === true || isOfficialLoginPageResponse(response)))
+}
+
+export function authGateSummary (error) {
+  const response = error?.responseSummary || error?.response
+  return {
+    reason: response?.status === 401 && getResponseErrorCode(response) === 'STEPUPOTP' ? 'step-up-otp' : 'login-redirect',
+    httpStatus: typeof response?.status === 'number' ? response.status : null
+  }
+}
+
+export function normalizeDirectAuthLifecycle (value) {
+  if (value == null) return null
+  const valid = value.version === 1 && ['verified', 'rejected'].includes(value.kind) &&
+    typeof value.updatedAt === 'number' && Number.isFinite(value.updatedAt) && value.updatedAt >= 0 &&
+    (value.kind === 'verified'
+      ? value.reason === null && value.httpStatus === null
+      : ['step-up-otp', 'login-redirect'].includes(value.reason) &&
+        (value.httpStatus === null || (Number.isInteger(value.httpStatus) && value.httpStatus >= 200 && value.httpStatus < 500)))
+  if (!valid) {
+    console.warn('Bank Hapoalim ignored invalid auth lifecycle metadata')
+    return null
+  }
+  return { version: 1, kind: value.kind, reason: value.reason, httpStatus: value.httpStatus, updatedAt: value.updatedAt }
 }
 
 export function isSessionDeadlineError (error) {

@@ -113,7 +113,11 @@ const expected = (parentCount = 2, depositStatuses = [200, 200]): { accounts: un
 })
 
 interface ModelResponse { status: number, url: string, headers: Headers, text: () => Promise<string | undefined> }
-type Scrape = (args: typeof options & { isInBackground?: boolean }) => Promise<ReturnType<typeof expected>>
+type ScrapeOptions = Omit<typeof options, 'preferences'> & {
+  preferences: typeof options.preferences & { login?: unknown, password?: unknown }
+  isInBackground?: boolean
+}
+type Scrape = (args: ScrapeOptions) => Promise<ReturnType<typeof expected>>
 interface Runtime {
   scrape: Scrape
   data: Record<string, unknown>
@@ -125,10 +129,17 @@ interface Runtime {
 }
 
 interface ContractHost {
+  getData: (key: string) => unknown
+  setData: (key: string, value: unknown) => void
+  saveData: () => void
   addAccount: (accounts: unknown[]) => void
   addTransaction: (transactions: unknown[]) => void
   setResult: (result: { success: boolean }) => void
-  setResultCalled: Promise<{ addedAccounts: unknown[], addedTransactions: unknown[], pluginDataChange: null }>
+  setResultCalled: Promise<{
+    addedAccounts: unknown[]
+    addedTransactions: unknown[]
+    pluginDataChange: { oldValue: Record<string, unknown>, newValue: Record<string, unknown> } | null
+  }>
 }
 
 function implementationOf (fetch: Runtime['nativeFetch']): (url: string, init: RequestInit) => Promise<ModelResponse> {
@@ -137,7 +148,7 @@ function implementationOf (fetch: Runtime['nativeFetch']): (url: string, init: R
   return implementation
 }
 
-function setup (initialAuth?: MobileAuth, initialIdentity?: string): Runtime {
+function setup (initialAuth?: MobileAuth, initialIdentity?: string, nativePreferences: Record<string, unknown> = {}): Runtime {
   jest.resetModules()
   const data: Record<string, unknown> = initialAuth === undefined ? {} : { auth: initialAuth }
   if (initialIdentity !== undefined) data.directIdentity = initialIdentity
@@ -189,7 +200,7 @@ function setup (initialAuth?: MobileAuth, initialIdentity?: string): Runtime {
     saveCookies: jest.fn(async () => {}),
     openWebView: jest.fn(),
     isAccountSkipped: () => false,
-    getPreferences: () => ({ startDate: '2026-09-01', authenticationMethod: 'direct' }),
+    getPreferences: () => ({ startDate: '2026-09-01', authenticationMethod: 'direct', ...nativePreferences }),
     manifest: { isSubscriptionRequired: false },
     features: { transactionDtoV2: true, dateProcessing: true },
     addAccount: jest.fn(),
@@ -199,7 +210,7 @@ function setup (initialAuth?: MobileAuth, initialIdentity?: string): Runtime {
   const native = { restoreCookies: host.restoreCookies, saveCookies: host.saveCookies, openWebView: host.openWebView }
   Object.assign(global, { ZenMoney: host })
   jest.requireActual('../../../polyfills/fetch')
-  const { scrape } = jest.requireActual<{ scrape: (args: typeof options & { isInBackground?: boolean }) => Promise<ReturnType<typeof expected>> }>('../index')
+  const { scrape } = jest.requireActual<{ scrape: Scrape }>('../index')
   const { createScrapeMain } = jest.requireActual<{ createScrapeMain: (fn: typeof scrape) => (args: { isInBackground: boolean }) => Promise<void> }>('../../../common/adapters')
   return { scrape, data, host, native, nativeFetch, reply, main: createScrapeMain(scrape) }
 }
@@ -215,6 +226,208 @@ afterEach(() => {
 })
 
 describe('[model] production direct session and complete statement', () => {
+  const savedCredentials = { login: 'CANARY_STORED_USER', password: 'CANARY_STORED_PASSWORD' }
+  const configuredOptions = { ...options, preferences: { ...options.preferences, ...savedCredentials } }
+
+  function withoutOtp (runtime: Runtime): void {
+    const implementation = implementationOf(runtime.nativeFetch)
+    runtime.nativeFetch.mockImplementation(async (url, init) => {
+      const response = await implementation(url, init)
+      return new OriginalURL(url).pathname === '/authenticate/verify'
+        ? { ...response, text: async () => JSON.stringify(land) }
+        : response
+    })
+  }
+
+  it('loads both parents, deposits and every history page with saved preferences and no input', async () => {
+    const runtime = setup(undefined, undefined, savedCredentials)
+    withoutOtp(runtime)
+    mockDate.set('2026-09-20T12:00:00Z')
+
+    await runtime.main({ isInBackground: false })
+
+    expect(runtime.host.setResult).toHaveBeenCalledWith({ success: true })
+    expect(runtime.host.readLine).not.toHaveBeenCalled()
+    expect(runtime.host.addAccount).toHaveBeenCalledTimes(1)
+    expect(runtime.host.addTransaction).toHaveBeenCalledTimes(1)
+    expect(runtime.data.directAuthLifecycleV1).toEqual({
+      version: 1, kind: 'verified', reason: null, httpStatus: null, updatedAt: Date.now()
+    })
+    for (const secret of Object.values(savedCredentials)) {
+      expect(JSON.stringify(runtime.data)).not.toContain(secret)
+      expect(JSON.stringify(['debug', 'log', 'warn', 'error'].map(method => jest.mocked(console[method as 'log']).mock.calls))).not.toContain(secret)
+    }
+    expect(runtime.nativeFetch.mock.calls.filter(([url]) => url.includes('/authenticate/'))).toHaveLength(1)
+  })
+
+  it.each([false, true])('keeps valid hot auth despite changed/invalid credential preferences (background: %s)', async background => {
+    const first = setup()
+    await first.scrape(options)
+    const next = setup(first.data.auth as MobileAuth)
+    next.data.directAuthLifecycleV1 = { version: 99, secret: 'CANARY_PRIVATE_METADATA' }
+    const result = await next.scrape({
+      ...options,
+      preferences: { ...options.preferences, login: 123, password: null },
+      isInBackground: background
+    })
+    expect(result).toEqual(expected())
+    expect(next.host.readLine).not.toHaveBeenCalled()
+    expect(next.nativeFetch.mock.calls.every(([url]) => !url.includes('/authenticate/'))).toBe(true)
+    expect(next.data.auth).toMatchObject({ transport: 'mobile' })
+  })
+
+  it('retains the rejection cause across runtimes and restores missing auth from native preferences', async () => {
+    const first = setup()
+    await first.scrape(options)
+    const expired = setup(first.data.auth as MobileAuth)
+    expired.nativeFetch.mockImplementationOnce(async url => expired.reply(url, stepUp, {}, 401))
+    const { UserInteractionError } = jest.requireActual('../../../errors')
+    await expect(expired.scrape({ ...configuredOptions, isInBackground: true })).rejects.toBeInstanceOf(UserInteractionError)
+    expect(expired.nativeFetch).toHaveBeenCalledTimes(1)
+    expect(expired.data.auth).toBeNull()
+    expect(expired.data.directAuthLifecycleV1).toMatchObject({
+      version: 1, kind: 'rejected', reason: 'step-up-otp', httpStatus: 401
+    })
+
+    const next = setup(undefined, expired.data.directIdentity as string)
+    next.data.directAuthLifecycleV1 = JSON.parse(JSON.stringify(expired.data.directAuthLifecycleV1))
+    withoutOtp(next)
+    expect(await next.scrape(configuredOptions)).toEqual(expected())
+    expect(next.host.readLine).not.toHaveBeenCalled()
+    expect(next.nativeFetch.mock.calls.filter(([url]) => url.includes('/authenticate/'))).toHaveLength(1)
+    expect(next.data.directAuthLifecycleV1).toMatchObject({ kind: 'verified', reason: null })
+    expect(console.log).toHaveBeenCalledWith('Bank Hapoalim direct auth state', {
+      authKind: 'missing', checkpoint: 'rejected', reason: 'step-up-otp', hasIdentityBinding: true
+    })
+  })
+
+  it('does not retry saved credentials when a later history rejects the freshly created session', async () => {
+    const runtime = setup()
+    withoutOtp(runtime)
+    const implementation = implementationOf(runtime.nativeFetch)
+    runtime.nativeFetch.mockImplementation(async (url, init) => new OriginalURL(url).pathname.includes('/current-account/transactions')
+      ? runtime.reply(url, { error: { errCode: 'STEPUPOTP' } }, {}, 401)
+      : await implementation(url, init))
+
+    await expect(runtime.scrape(configuredOptions)).rejects.toThrow('unexpected direct HTTP response')
+
+    expect(runtime.host.readLine).not.toHaveBeenCalled()
+    expect(runtime.nativeFetch.mock.calls.filter(([url]) => url.includes('/authenticate/'))).toHaveLength(1)
+    expect(runtime.data.auth).toBeNull()
+    expect(runtime.data.directAuthLifecycleV1).toMatchObject({ kind: 'rejected', reason: 'step-up-otp' })
+  })
+
+  it('preserves hot auth on an unknown HTTP failure without attempting saved credentials', async () => {
+    mockDate.set('2026-09-20T12:00:00Z')
+    const first = setup()
+    await first.scrape(options)
+    const verifiedAt = (first.data.auth as MobileAuth).acquiredAt
+    mockDate.set('2026-09-20T13:00:00Z')
+    const next = setup(first.data.auth as MobileAuth)
+    next.nativeFetch.mockImplementationOnce(async url => next.reply(url, null, {}, 503))
+    await expect(next.scrape(configuredOptions)).rejects.toThrow('unexpected direct HTTP response')
+    expect(next.nativeFetch).toHaveBeenCalledTimes(1)
+    expect(next.host.readLine).not.toHaveBeenCalled()
+    expect(next.data.auth).toMatchObject({ transport: 'mobile' })
+    expect(next.data.directAuthLifecycleV1).toMatchObject({ kind: 'verified', reason: null, updatedAt: verifiedAt })
+  })
+
+  it('does not bind saved preferences to a different customer or publish that customer\'s data', async () => {
+    const first = setup()
+    await first.scrape(options)
+    const identity = first.data.directIdentity as string
+    const next = setup(undefined, identity)
+    withoutOtp(next)
+    const implementation = implementationOf(next.nativeFetch)
+    next.nativeFetch.mockImplementation(async (url, init) => new OriginalURL(url).pathname.endsWith('/general/accounts')
+      ? next.reply(url, parents.map(parent => ({ ...parent, accountNumber: parent.accountNumber + 9000 })))
+      : await implementation(url, init))
+
+    await expect(next.scrape(configuredOptions)).rejects.toThrow('account set differs')
+
+    expect(next.data.auth).toBeNull()
+    expect(next.data.directIdentity).toBe(identity)
+    expect(next.host.readLine).not.toHaveBeenCalled()
+    expect(next.nativeFetch.mock.calls.some(([url]) => /\/(balanceAndCreditLimit|deposits|transactions)(\/|\?|$)/.test(url))).toBe(false)
+    expect(next.host.addAccount).not.toHaveBeenCalled()
+    expect(next.host.addTransaction).not.toHaveBeenCalled()
+    for (const secret of Object.values(savedCredentials)) expect(JSON.stringify(next.data)).not.toContain(secret)
+  })
+
+  it('restores auth through the actual SDK plugin-data result and JSON roundtrip, not an in-memory auth copy', async () => {
+    let persisted: Record<string, unknown> = {}
+    for (const isInBackground of [false, true]) {
+      const runtime = setup()
+      withoutOtp(runtime)
+      const { ZPAPI } = jest.requireActual<{
+        ZPAPI: new (options: { manifest: Record<string, unknown>, preferences: Record<string, unknown>, data: Record<string, unknown> }) => ContractHost
+      }>('../../../ZPAPI')
+      const storage = new ZPAPI({ manifest: {}, preferences: {}, data: persisted })
+      Object.assign(global.ZenMoney, {
+        getData: storage.getData.bind(storage),
+        setData: storage.setData.bind(storage),
+        saveData: storage.saveData.bind(storage)
+      })
+
+      expect(await runtime.scrape({ ...configuredOptions, isInBackground })).toEqual(expected())
+
+      storage.setResult({ success: true })
+      const change = (await storage.setResultCalled).pluginDataChange
+      if (change === null) throw new Error('Missing plugin data checkpoint')
+      persisted = JSON.parse(JSON.stringify(change.newValue))
+      expect(persisted.auth).toMatchObject({ transport: 'mobile' })
+      expect(persisted.directAuthLifecycleV1).toMatchObject({ kind: 'verified' })
+      expect(runtime.host.readLine).not.toHaveBeenCalled()
+      expect(runtime.nativeFetch.mock.calls.filter(([url]) => url.includes('/authenticate/'))).toHaveLength(isInBackground ? 0 : 1)
+      for (const secret of Object.values(savedCredentials)) expect(JSON.stringify(persisted)).not.toContain(secret)
+    }
+  })
+
+  it.each([false, true])('invalidates fresh auth when the original challenged endpoint rejects it (preferences: %s)', async configured => {
+    const first = setup()
+    await first.scrape(options)
+    const runtime = setup(first.data.auth as MobileAuth)
+    if (configured) withoutOtp(runtime)
+    const implementation = implementationOf(runtime.nativeFetch)
+    runtime.nativeFetch.mockImplementation(async (url, init) => new OriginalURL(url).pathname.endsWith('/balanceAndCreditLimit')
+      ? runtime.reply(url, { error: { errCode: 'STEPUPOTP' } }, {}, 401)
+      : await implementation(url, init))
+
+    await expect(runtime.scrape(configured ? configuredOptions : options)).rejects.toMatchObject({
+      responseSummary: { status: 401, errCode: 'STEPUPOTP' }
+    })
+
+    expect(runtime.nativeFetch.mock.calls.filter(([url]) => url.includes('/authenticate/verify'))).toHaveLength(1)
+    expect(runtime.host.readLine).toHaveBeenCalledTimes(configured ? 0 : 3)
+    expect(runtime.data.auth).toBeNull()
+    expect(runtime.data.directAuthLifecycleV1).toMatchObject({ kind: 'rejected', reason: 'step-up-otp' })
+    expect(runtime.data.directIdentity).toBe(first.data.directIdentity)
+  })
+
+  it('retains the fresh confirmed checkpoint when rechecking a challenged endpoint has a transport failure', async () => {
+    const first = setup()
+    await first.scrape(options)
+    const runtime = setup(first.data.auth as MobileAuth)
+    withoutOtp(runtime)
+    const implementation = implementationOf(runtime.nativeFetch)
+    const failure = new Error('MODEL_RECHECK_TRANSPORT_FAILURE')
+    let checks = 0
+    runtime.nativeFetch.mockImplementation(async (url, init) => {
+      if (new OriginalURL(url).pathname.endsWith('/balanceAndCreditLimit')) {
+        if (++checks === 1) return runtime.reply(url, { error: { errCode: 'STEPUPOTP' } }, {}, 401)
+        throw failure
+      }
+      return await implementation(url, init)
+    })
+
+    await expect(runtime.scrape(configuredOptions)).rejects.toBe(failure)
+
+    expect(runtime.nativeFetch.mock.calls.filter(([url]) => url.includes('/authenticate/verify'))).toHaveLength(1)
+    expect(runtime.host.readLine).not.toHaveBeenCalled()
+    expect(runtime.data.auth).toMatchObject({ transport: 'mobile' })
+    expect(runtime.data.directAuthLifecycleV1).toMatchObject({ kind: 'verified', reason: null })
+  })
+
   // ACCOUNT-001/003: an observed empty inventory is not a synthetic zero-balance
   // deposit. Model active -> empty transitions without touching native history.
   it.each([[204, 204], [204, 200], [200, 204], [200, 200]].map(statuses => ({ statuses })))('retains both parents and every history row after deposit inventory changes to $statuses', async ({ statuses }) => {

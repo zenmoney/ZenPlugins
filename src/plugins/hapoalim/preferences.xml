@@ -12,6 +12,26 @@
         summary="||{@s}"
     />
     <EditTextPreference
+        key="login"
+        obligatory="false"
+        inputType="text"
+        title="Логин Bank Hapoalim"
+        dialogTitle="Логин Bank Hapoalim"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||{@s}"
+    />
+    <EditTextPreference
+        key="password"
+        obligatory="false"
+        inputType="textPassword"
+        title="Пароль Bank Hapoalim"
+        dialogTitle="Пароль Bank Hapoalim"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
+        summary="||***********"
+    />
+    <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"

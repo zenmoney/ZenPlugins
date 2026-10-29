@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer'
 import { SHA256 } from 'crypto-js'
-import { UserInteractionError } from '../../errors'
+import { InvalidPreferencesError, UserInteractionError } from '../../errors'
 import { beforeDeadline } from './deadline'
 import { getResponseErrorCode } from './authResponse'
 import { attachMobileSession, MOBILE_APP_ID, MOBILE_ORIGIN, WEB_ORIGIN, MobileAuth, MobileSession } from './mobileSession'
@@ -58,21 +58,39 @@ async function proveSession (session: MobileSession, previousIdentity?: string):
 }
 
 interface LoginOptions {
+  preferences?: unknown
   isInBackground?: boolean
   previousIdentity?: string
   onAuthUpdate: (auth: MobileAuth) => Promise<void>
   onInteraction?: () => void
 }
 
-export async function loginMobile ({ isInBackground = false, previousIdentity, onAuthUpdate, onInteraction = () => {} }: LoginOptions): Promise<MobileAuth> {
+function configuredCredentials (preferences: unknown): { identifier: string, password: string } | null {
+  if (preferences == null) return null
+  const invalid = (): InvalidPreferencesError => new InvalidPreferencesError('Укажите логин и пароль Bank Hapoalim в настройках или очистите оба поля.')
+  if (!record(preferences)) throw invalid()
+  const { login, password } = preferences
+  if ((login == null || login === '') && (password == null || password === '')) return null
+  if (typeof login !== 'string' || login.trim() === '' || login.length > 500 ||
+    typeof password !== 'string' || password === '' || password.length > 500) throw invalid()
+  return { identifier: login.trim(), password }
+}
+
+export async function loginMobile ({ preferences, isInBackground = false, previousIdentity, onAuthUpdate, onInteraction = () => {} }: LoginOptions): Promise<MobileAuth> {
   if (isInBackground) throw new UserInteractionError()
+  const credentials = configuredCredentials(preferences)
   const session = new MobileSession()
   const mfp = devicePayload()
   let complete = false
   const end = Date.now() + 10 * 60 * 1000
   const step = async <T>(operation: () => Promise<T>): Promise<T> => await beforeDeadline(operation, end,
     () => new Error('Bank Hapoalim direct login timed out'), () => { session.close() })
+  let interacted = false
   const input = async (prompt: string, inputType: 'text' | 'textPassword' | 'numberPassword'): Promise<string> => {
+    if (!interacted) {
+      onInteraction()
+      interacted = true
+    }
     const value = await beforeDeadline(async () => await ZenMoney.readLine(prompt, { inputType, time: 180000 }), Math.min(end, Date.now() + 180000),
       () => new Error('Bank Hapoalim direct login timed out'), () => { session.close() })
     if (typeof value !== 'string' || value.length === 0 || value.length > 500) throw new Error('Bank Hapoalim required input was not provided')
@@ -88,9 +106,9 @@ export async function loginMobile ({ isInBackground = false, previousIdentity, o
     return response.body
   }
   try {
-    onInteraction()
-    let identifier: string | null = await input('Логин Bank Hapoalim', 'text')
-    let password: string | null = await input('Пароль Bank Hapoalim', 'textPassword')
+    console.log('Bank Hapoalim direct login', { credentialSource: credentials !== null ? 'preferences' : 'input' })
+    let identifier: string | null = credentials?.identifier ?? await input('Логин Bank Hapoalim', 'text')
+    let password: string | null = credentials?.password ?? await input('Пароль Bank Hapoalim', 'textPassword')
     let body: unknown
     try {
       // Public APK44.2.0 La/a.F appends loop indices, not MD5 bytes. This
