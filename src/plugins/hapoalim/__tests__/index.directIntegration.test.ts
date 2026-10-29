@@ -73,8 +73,8 @@ const deposit = (parent: string): Record<string, unknown> => ({
   interestCreditingMethodDescription: '\u05dc\u05e2\u05d5"\u05e9',
   interestPaymentDescription: '\u05e1\u05d5\u05e3 \u05e4\u05d9\u05e7\u05d3\u05d5\u05df'
 })
-const expected = (parentCount = 2): { accounts: unknown[], transactions: unknown[] } => ({
-  accounts: parents.slice(0, parentCount).flatMap(({ accountNumber }) => {
+const expected = (parentCount = 2, depositStatuses = [200, 200]): { accounts: unknown[], transactions: unknown[] } => ({
+  accounts: parents.slice(0, parentCount).flatMap(({ accountNumber }, index) => {
     const parent = `12-702-${accountNumber}`
     return [{
       id: parent,
@@ -84,22 +84,24 @@ const expected = (parentCount = 2): { accounts: unknown[], transactions: unknown
       syncID: [parent],
       balance: 100,
       creditLimit: 0
-    }, {
-      id: scope(parent),
-      type: 'deposit',
-      title: `deposit ${parent}`,
-      instrument: 'ILS',
-      syncID: ['1530001', scope(parent), ...parentCount === 1 ? ['0001'] : []],
-      balance: 5100,
-      startBalance: 5000,
-      startDate: new Date('2026-06-01T00:00:00+02:00'),
-      percent: 0.5,
-      capitalization: false,
-      endDateOffsetInterval: 'day',
-      endDateOffset: 90,
-      payoffInterval: null,
-      payoffStep: 0
-    }]
+    }, ...depositStatuses[index] === 200
+      ? [{
+          id: scope(parent),
+          type: 'deposit',
+          title: `deposit ${parent}`,
+          instrument: 'ILS',
+          syncID: ['1530001', scope(parent), ...depositStatuses.slice(0, parentCount).filter(status => status === 200).length === 1 ? ['0001'] : []],
+          balance: 5100,
+          startBalance: 5000,
+          startDate: new Date('2026-06-01T00:00:00+02:00'),
+          percent: 0.5,
+          capitalization: false,
+          endDateOffsetInterval: 'day',
+          endDateOffset: 90,
+          payoffInterval: null,
+          payoffStep: 0
+        }]
+      : []]
   }),
   transactions: parents.slice(0, parentCount).flatMap(({ accountNumber }) => Array.from({ length: 61 }, (_, index) => ({
     hold: index === 0 ? null : false,
@@ -213,6 +215,110 @@ afterEach(() => {
 })
 
 describe('[model] production direct session and complete statement', () => {
+  // ACCOUNT-001/003: an observed empty inventory is not a synthetic zero-balance
+  // deposit. Model active -> empty transitions without touching native history.
+  it.each([[204, 204], [204, 200], [200, 204], [200, 200]].map(statuses => ({ statuses })))('retains both parents and every history row after deposit inventory changes to $statuses', async ({ statuses }) => {
+    const { scrape, main, host, data, nativeFetch, reply } = setup()
+    mockDate.set('2026-09-20T12:00:00Z')
+    const before = expected()
+    expect(await scrape({ ...options, isInBackground: false })).toEqual(before)
+    const identity = data.directIdentity
+    const implementation = implementationOf(nativeFetch)
+    nativeFetch.mockImplementation(async (url, init) => {
+      const parsed: URL = new OriginalURL(url)
+      if (parsed.pathname.endsWith('/deposits') && statuses[parsed.searchParams.get('accountId')?.endsWith('1001') === true ? 0 : 1] === 204) {
+        return reply(url, undefined, { 'content-type': 'application/json; charset=UTF-8' }, 204)
+      }
+      return await implementation(url, init)
+    })
+    const after = expected(2, statuses)
+    const { patchAccounts, patchTransactions } = jest.requireActual<{
+      patchAccounts: (accounts: unknown[]) => unknown[]
+      patchTransactions: (transactions: unknown[], accounts: unknown[]) => unknown[]
+    }>('../../../common/adapters')
+    for (const isInBackground of [false, true]) {
+      expect(await scrape({ ...options, isInBackground })).toEqual(after)
+      await main({ isInBackground })
+      expect(host.addAccount).toHaveBeenLastCalledWith(patchAccounts(after.accounts))
+      expect(host.addTransaction).toHaveBeenLastCalledWith(patchTransactions(after.transactions, after.accounts))
+    }
+    expect(host.setResult.mock.calls).toEqual([[{ success: true }], [{ success: true }]])
+    expect(data.directIdentity).toBe(identity)
+    expect(host.readLine).toHaveBeenCalledTimes(3)
+    expect(nativeFetch.mock.calls.filter(([url]) => new OriginalURL(url).pathname === '/authenticate/verify')).toHaveLength(1)
+  })
+
+  // AMOUNT-001/TRANSFER-004: preserve supplied credits, interest and expenses;
+  // these model rows do not establish bank-specific maturity/transfer matching.
+  it('retains both parents, supplied payout rows and ordinary expenses without invented deposit movements', async () => {
+    const { scrape, host, nativeFetch, reply } = setup()
+    const implementation = implementationOf(nativeFetch)
+    const amounts = [5000, 100, -20]
+    const titles = ['model principal credit', 'model interest', 'model purchase']
+    nativeFetch.mockImplementation(async (url, init) => {
+      const parsed: URL = new OriginalURL(url)
+      if (parsed.pathname.endsWith('/deposits')) return reply(url, undefined, {}, 204)
+      if (parsed.pathname.startsWith('/ServerServices/current-account/transactions')) {
+        const parent = parsed.searchParams.get('accountId') ?? ''
+        return reply(url, {
+          transactions: amounts.map((amount, index) => ({
+            ...row(parent, index),
+            eventAmount: Math.abs(amount),
+            eventActivityTypeCode: amount < 0 ? 2 : 1,
+            activityDescription: titles[index],
+            transactionType: 'REGULAR',
+            rejectedDataEventPertainingIndication: 'N'
+          }))
+        })
+      }
+      return await implementation(url, init)
+    })
+    const statement = {
+      accounts: expected(2, [204, 204]).accounts,
+      transactions: parents.flatMap(({ accountNumber }) => amounts.map((sum, index) => ({
+        hold: false,
+        date: new Date('2026-09-10T00:00:00+02:00'),
+        movements: [{ id: null, account: { id: `12-702-${accountNumber}` }, invoice: null, sum, fee: 0 }],
+        merchant: { country: null, city: null, title: titles[index], mcc: null, location: null },
+        comment: null
+      })))
+    }
+    expect(await scrape({ ...options, isInBackground: false })).toEqual(statement)
+    expect(await scrape({ ...options, isInBackground: true })).toEqual(statement)
+    expect(host.readLine).toHaveBeenCalledTimes(3)
+    expect(nativeFetch.mock.calls.filter(([url]) => new OriginalURL(url).pathname === '/authenticate/verify')).toHaveLength(1)
+  })
+
+  it.each(['transport', 'empty200', 'http500', 'invalidJson200'])('does not publish partial results when the second parent fails with %s after an empty first deposit inventory', async failure => {
+    const { scrape, main, host, data, nativeFetch, reply } = setup()
+    mockDate.set('2026-09-20T12:00:00Z')
+    expect(await scrape({ ...options, isInBackground: false })).toEqual(expected())
+    const identity = data.directIdentity
+    const implementation = implementationOf(nativeFetch)
+    const inventories: string[] = []
+    nativeFetch.mockImplementation(async (url, init) => {
+      const parsed: URL = new OriginalURL(url)
+      if (parsed.pathname.endsWith('/deposits')) {
+        const parent = parsed.searchParams.get('accountId') ?? ''
+        inventories.push(parent)
+        if (parent.endsWith('1001')) return reply(url, undefined, {}, 204)
+        if (failure === 'transport') throw new Error('MODEL_SECOND_DEPOSIT_TRANSPORT_FAILURE')
+        if (failure === 'invalidJson200') return { ...reply(url, {}), text: async () => '{invalid model JSON' }
+        return reply(url, undefined, {}, failure === 'http500' ? 500 : 200)
+      }
+      return await implementation(url, init)
+    })
+    await main({ isInBackground: true })
+    expect(inventories).toEqual(['12-702-1001', '12-702-1002'])
+    expect(host.setResult).toHaveBeenCalledTimes(1)
+    expect(host.setResult).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringMatching(/^\[RUE\]/) }))
+    expect(host.addAccount).not.toHaveBeenCalled()
+    expect(host.addTransaction).not.toHaveBeenCalled()
+    expect(data.directIdentity).toBe(identity)
+    expect(data.auth).toMatchObject({ transport: 'mobile' })
+    expect(host.readLine).toHaveBeenCalledTimes(3)
+  })
+
   it('publishes both parents, maturity deposits and all history through the real SDK validator in foreground and background', async () => {
     const { host, main, nativeFetch } = setup()
     mockDate.set('2026-09-20T12:00:00Z')

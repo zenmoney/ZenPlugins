@@ -1,0 +1,7 @@
+{
+  "url": "https://login.bankhapoalim.co.il/ServerServices/deposits-and-savings/deposits?view=details&lang=%3Cstring%5B2%5D%3E&accountId=%3Cstring%5B13%5D%3E",
+  "status": 204,
+  "headers": {
+    "content-type": "application/json; charset=UTF-8"
+  }
+}

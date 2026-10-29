@@ -177,7 +177,7 @@ describe('hapoalim real session orchestration', () => {
 
   // [model] Full result after observed collection 204; synthetic history verifies
   // that both checking sources, movement signs and ownership survive the fix.
-  it.each([['savingsDeposits'], ['savingsDeposits', 'loans', 'mortgages'], ['savingsDeposits', 'loans', 'mortgages', 'fxInventory']].map(endpoints => ({ endpoints })))('[model] returns both checking accounts and their full history after 204 at $endpoints', async ({ endpoints }) => {
+  it.each([['deposits'], ['savingsDeposits'], ['deposits', 'savingsDeposits'], ['savingsDeposits', 'loans', 'mortgages'], ['deposits', 'savingsDeposits', 'loans', 'mortgages', 'fxInventory']].map(endpoints => ({ endpoints })))('[model] returns both checking accounts and their full history after 204 at $endpoints', async ({ endpoints }) => {
     loadRuntime(null)
     const implementation = global.ZenMoney.fetch.getMockImplementation()
     const historyIds = []
