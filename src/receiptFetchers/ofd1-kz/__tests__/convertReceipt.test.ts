@@ -2,7 +2,9 @@ import fixture1 from './convertReceipt-01.html'
 import fixture2 from './convertReceipt-02.html'
 import fixture3 from './convertReceipt-03.html'
 import fixture4 from './convertReceipt-04.html'
+import fixture5 from './convertReceipt-05.html'
 import { convertReceipt } from '../converters'
+import cheerio from 'cheerio'
 
 test('converts source case 01', () => {
   expect(convertReceipt(fixture1, 'https://ofd1.kz/t/?i=1009359893420&f=010101710160&s=6579.0&t=20230509T153806')).toEqual({
@@ -155,7 +157,8 @@ test('converts source case 02', () => {
   })
 })
 
-// Source item totals sum to 8164.76 while the receipt total is 8165; do not invent a balancing adjustment.
+// Source item totals sum to 8164.76 while the receipt total is 8165.
+// Keep the two explicit rounding rows without inventing a balancing adjustment.
 test('converts source case 03', () => {
   expect(convertReceipt(fixture3, 'https://ofd1.kz/t/?i=645905994217&f=010101909368&s=8165.0&t=20230602T194550')).toEqual({
     completeness: 'full',
@@ -165,6 +168,10 @@ test('converts source case 03', () => {
     },
     currency: 'KZT',
     totalAmount: '8165',
+    adjustments: [
+      { kind: 'rounding', name: 'Коррекция округления (наценка)', amount: '0.16' },
+      { kind: 'rounding', name: 'Коррекция округления (наценка)', amount: '0.4' }
+    ],
     merchant: {
       name: 'ТОВАРИЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "СКИФ ТРЕЙД"',
       identifiers: [
@@ -320,4 +327,35 @@ test('converts source case 04', () => {
 
 test('malformed source remains a conversion failure', () => {
   expect(() => convertReceipt(null, 'https://ofd1.kz/t/?i=1009359893420&f=010101710160&s=6579.0&t=20230509T153806')).toThrow()
+})
+
+// Captured 2026-10-25 from the site's documented fragment fallback:
+// GET https://ofd1.kz/t?i=3193862841&f=600404766365&s=1081.0&t=20260911T172200&fragment=1&captcha_skip=1
+// Header: X-Requested-With: XMLHttpRequest. Only the two CSRF values are redacted.
+test('converts the current Ozon receipt fragment without the legacy page wrapper', () => {
+  expect(convertReceipt(fixture5, 'https://ofd1.kz/t?i=3193862841&f=600404766365&s=1081.0&t=20260911T172200')).toEqual({
+    completeness: 'full',
+    issuedAt: { date: '2026-09-11', time: '17:22:00' },
+    currency: 'KZT',
+    totalAmount: '1081',
+    operation: 'unknown',
+    merchant: {
+      name: 'Товарищество с ограниченной ответственностью "ОЗОН Маркетплейс Казахстан"',
+      identifiers: [{ value: '211040009534', countryCode: 'KZ' }]
+    },
+    items: [{
+      name: 'Ароматизатор для автомобиля Новая машина, вонючка пахучка в машину, освежитель воздуха для автомобиля, автопарфюм',
+      quantity: '1',
+      unitPrice: '1081',
+      totalAmount: '1081'
+    }],
+    payments: [{ method: 'card', amount: '1081' }]
+  })
+})
+
+// A malformed goods row must fail the entire receipt rather than silently drop that product.
+test('[model] rejects a malformed goods row after valid items', () => {
+  const $ = cheerio.load(fixture1)
+  $('.ticket_body > ol > li').last().find('.ready_ticket__item').empty()
+  expect(() => convertReceipt($.html(), 'https://ofd1.kz/t/?i=1009359893420&f=010101710160&s=6579.0&t=20230509T153806')).toThrow('Invalid receipt item amounts')
 })

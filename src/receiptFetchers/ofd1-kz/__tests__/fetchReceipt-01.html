@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>ОФД </title>
+    <link rel="stylesheet" href="/css/green.css?3335517">
+<link rel='shortcut icon' href='/images/faviconttc.ico' type='image/x-icon'>
+
+    <link rel="stylesheet" href="/css/datepicker.min.css"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/inputmask.min.js"></script>
+
+  </head>
+  <body id="green_body">
+    <div class="green_content">
+      <div>
+        <p class="alert alert-info" role="alert"></p>
+        <p class="alert alert-danger" role="alert"></p>
+      </div>
+      <div class="demo_notification d-none">
+        <p>"ВНИМАНИЕ!!! Вы попали на демоверсию портала ОФД ТТК. Портал для клиентов доступен по адресу <a href="https://ofd1.kz/login">https://ofd1.kz/login</a>. Нажмите для перехода на основной сайт"</p>
+      </div>
+      <div>
+        <main role="main" id="green_main" style="margin-top: 40px;">
+          <div class="logo_container">
+            <a href="https://ofd.ttc.kz/"><img src="../images/design/logo-ttc.svg" class="logo" alt="Транстелеком"></a>
+          </div>
+<style>
+  .ticket-captcha {
+    max-width: 720px;
+    margin: 48px auto 32px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .ticket-captcha__title {
+    text-align: center;
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #222;
+  }
+
+  .ticket-captcha__subtitle {
+    text-align: center;
+    margin: 0 0 24px;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .ticket-captcha__recaptcha {
+    margin: 0 auto;
+    max-width: 304px;
+  }
+
+  .ticket-captcha__error {
+    margin-top: 16px;
+  }
+
+  @media (max-width: 576px) {
+    .ticket-captcha {
+      margin: 24px 12px;
+      padding: 20px;
+    }
+
+    .ticket-captcha__title {
+      font-size: 20px;
+    }
+  }
+</style>
+
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<div class="ready_ticket ticket-captcha" id="ticket_captcha_container">
+  <h1 class="ticket-captcha__title">
+Подтвердите, что вы не робот
+  </h1>
+  <p class="ticket-captcha__subtitle">
+Пройдите проверку, чтобы увидеть чек.
+  </p>
+
+    <div class="form-group mt-4 ticket-captcha__recaptcha">
+      <div class="g-recaptcha" data-sitekey="6Ld5CAMsAAAAAIG4rd8crKpSsOcpfeUS5xy4iUoA" data-callback="ticketCaptchaVerified"
+        data-error-callback="ticketCaptchaError" data-action="submit"></div>
+    </div>
+
+        <div class="form-group mt-4" style="display: none;">
+          <button class="btn btn-primary" id="show_ticket_btn" type="button">
+Показать чек
+          </button>
+        </div>
+
+        <div class="alert alert-danger ticket-captcha__error" id="ticket_captcha_error" style="display: none;"></div>
+</div>
+
+<div id="ticket_container" style="width: 100%;"></div>
+
+<script>
+  (function () {
+    var request = {
+      path: "/t",
+      method: "GET",
+      params: {"t":"20260911T172200","s":"1081.0","i":"3193862841","f":"600404766365"}
+    };
+    var button = document.getElementById("show_ticket_btn");
+    var errorEl = document.getElementById("ticket_captcha_error");
+    var container = document.getElementById("ticket_container");
+    var captchaContainer = document.getElementById("ticket_captcha_container");
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.style.display = "block";
+    }
+
+    function resetCaptcha() {
+      if (window.grecaptcha && typeof grecaptcha.reset === "function") {
+        grecaptcha.reset();
+      }
+    }
+
+    var fallbackUsed = false;
+
+    function fetchTicket(params) {
+      var method = (request.method || "GET").toUpperCase();
+      var options = { headers: { "X-Requested-With": "XMLHttpRequest" } };
+
+      if (method === "POST") {
+        options.method = "POST";
+        options.headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8";
+        options.body = new URLSearchParams(params).toString();
+        return fetch(request.path, options);
+      }
+
+      var query = new URLSearchParams(params).toString();
+      var url = request.path + (query ? "?" + query : "");
+      return fetch(url, options);
+    }
+
+    function requestTicket(token, skipCaptcha) {
+      if (fallbackUsed) {
+        return;
+      }
+
+      if (skipCaptcha) {
+        fallbackUsed = true;
+      }
+
+      var params = Object.assign({}, request.params, { fragment: "1" });
+
+      if (skipCaptcha) {
+        params.captcha_skip = "1";
+      } else {
+        params.captcha_token = token;
+      }
+
+      fetchTicket(params)
+        .then(function (resp) {
+          if (!resp.ok) {
+            return resp
+              .json()
+              .then(function (data) {
+                throw new Error(data.error || "Ошибка при получении чека");
+              })
+              .catch(function () {
+                throw new Error("Ошибка при получении чека");
+              });
+          }
+          return resp.text();
+        })
+        .then(function (html) {
+          container.innerHTML = html;
+          captchaContainer.style.display = "none";
+          errorEl.style.display = "none";
+        })
+        .catch(function (err) {
+          showError(err.message || "Ошибка при получении чека");
+          resetCaptcha();
+        });
+    }
+
+    window.ticketCaptchaVerified = function (token) {
+      if (!token) {
+        showError("Подтвердите капчу");
+        return;
+      }
+
+      requestTicket(token, false);
+    };
+
+    window.ticketCaptchaError = function () {
+      requestTicket(null, true);
+    };
+
+    if (button) {
+      button.addEventListener("click", function () {
+        if (!window.grecaptcha || typeof grecaptcha.getResponse !== "function") {
+          requestTicket(null, true);
+          return;
+        }
+
+        var token = grecaptcha.getResponse();
+        if (!token) {
+          showError("Подтвердите капчу");
+          return;
+        }
+
+        requestTicket(token, false);
+      });
+    }
+  })();
+</script>
+
+        </main>
+      </div>
+      <div>
+        <div class="copyright">
+          ©2018 — 2026, Pulsar. Все права защищены.
+        </div>
+      </body>
+      <script src="/js/app.js?rand"></script>
+      <script src="/js/green.js?rand"></script>
+      <script src="/js/ncalayer.js?rand"></script>
+      <script src="/js/process-ncalayer-calls.js?rand"></script>
+    </html>
