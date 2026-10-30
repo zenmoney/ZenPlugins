@@ -1,0 +1,602 @@
+import { MD5 } from 'jshashes'
+import _ from 'lodash'
+import * as qs from 'querystring'
+import * as network from '../../common/network'
+import { parseXml } from '../../common/xmlUtils'
+import { retry, RetryError, toNodeCallbackArguments } from '../../common/retry'
+import { toAtLeastTwoDigitsString } from '../../common/stringUtils'
+import { formatDateSql, parseDate } from './converters'
+import { russianTrustedRootCa } from './certificates'
+import { UserInteractionError } from '../../errors'
+
+const md5 = new MD5()
+
+const API_VERSION = '9.20'
+const APP_VERSION = '8.6.1'
+
+const defaultHeaders = {
+  'User-Agent': 'Mobile Device',
+  'Content-Type': 'application/x-www-form-urlencoded',
+  Host: 'online.sberbank.ru:4477',
+  Connection: 'Keep-Alive',
+  'Accept-Encoding': 'gzip'
+}
+
+export async function renewSession (session) {
+  if (!session || !session.host || !session.cookie) {
+    return null
+  }
+  const response = await fetchXml(`https://${session.host}:4477/mobile9/private/renewSession.do`, {
+    headers: {
+      ...defaultHeaders,
+      Accept: 'application/x-www-form-urlencoded',
+      'Accept-Charset': 'windows-1251',
+      Host: `${session.host}:4477`,
+      Cookie: `${session.cookie}`
+    },
+    parse: body => body ? parseXml(body) : { response: {} }
+  }, null)
+  return response.body && response.body.status === '0' ? session : null
+}
+
+export async function loginPrimary (login, pin, auth, device, appVersion = APP_VERSION, isInBackground = false) {
+  const commonBody = {
+    version: API_VERSION,
+    appType: 'android',
+    appVersion,
+    deviceName: device.model
+  }
+
+  let response
+  let guid = auth && auth.guid
+
+  if (guid) {
+    response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/login.do', {
+      body: {
+        ...commonBody,
+        operation: 'button.login',
+        mGUID: guid,
+        password: pin,
+        isLightScheme: false,
+        devID: device.id,
+        mobileSdkData: JSON.stringify(createSdkData(login, device))
+      },
+      sanitizeRequestLog: { body: { mGUID: true, password: true, devID: true, mobileSdkData: true } },
+      sanitizeResponseLog: { body: { loginData: { token: true, externalToken: true } } }
+    }, null)
+    if (response.body.status === '7') {
+      guid = null
+    }
+  }
+
+  if (!guid) {
+    if (isInBackground) throw new UserInteractionError()
+    response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
+      body: {
+        ...commonBody,
+        operation: 'register',
+        login,
+        devID: device.id,
+        devIDOld: device.idOld
+      },
+      sanitizeRequestLog: { body: { login: true, devID: true, devIDOld: true } },
+      sanitizeResponseLog: { body: { confirmRegistrationStage: { mGUID: true } } }
+    }, null)
+    if (response.body.status === '1' && response.body.error) {
+      throw new TemporaryError(response.body.error)
+    }
+    validateResponse(response, response => response.body.status === '0' &&
+      _.get(response, 'body.confirmRegistrationStage.mGUID'))
+
+    guid = response.body.confirmRegistrationStage.mGUID
+
+    if (_.get(response, 'body.confirmInfo.type') === 'smsp') {
+      const code = await ZenMoney.readLine('Введите код для входа в Сбербанк Онлайн для Android из SMS или пуш-уведомления', {
+        time: 120000,
+        inputType: 'number'
+      })
+      if (!code || !code.trim()) {
+        throw new TemporaryError('Получен пустой код авторизации устройства')
+      }
+      response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
+        body: {
+          operation: 'confirm',
+          mGUID: guid,
+          smsPassword: code,
+          version: API_VERSION,
+          appType: 'android'
+        },
+        sanitizeRequestLog: { body: { mGUID: true, smsPassword: true } }
+      }, null)
+      if (response.body.status === '1') {
+        throw new TemporaryError('Вы ввели некорректные реквизиты доступа или код из SMS. Повторите подключение синхронизации.')
+      } else {
+        validateResponse(response, response => response.body.status === '0')
+      }
+    }
+
+    response = await fetchXml('https://online.sberbank.ru:4477/CSAMAPI/registerApp.do', {
+      body: {
+        ...commonBody,
+        operation: 'createPIN',
+        mGUID: guid,
+        password: pin,
+        isLightScheme: false,
+        devID: device.id,
+        devIDOld: device.idOld,
+        mobileSdkData: JSON.stringify(createSdkData(login, device))
+      },
+      sanitizeRequestLog: { body: { mGUID: true, password: true, devID: true, devIDOld: true, mobileSdkData: true } },
+      sanitizeResponseLog: { body: { loginData: { token: true, externalToken: true } } }
+    }, null)
+  }
+
+  if (response.body.status === '1' && response.body.error) {
+    throw new InvalidPreferencesError(response.body.error)
+  }
+  validateResponse(response, response => response.body && response.body.status === '0' &&
+    _.get(response, 'body.loginData.token') &&
+    _.get(response, 'body.loginData.host'))
+
+  const token = response.body.loginData.token
+  const host = response.body.loginData.host
+
+  return { guid, token, host }
+}
+
+export async function login (login, pin, auth, device) {
+  const { guid, token, host } = await loginPrimary(login, pin, auth, device)
+
+  const response = await fetchXml(`https://${host}:4477/mobile9/postCSALogin.do`, {
+    headers: {
+      ...defaultHeaders,
+      Host: `${host}:4477`
+    },
+    body: {
+      token,
+      appName: '????????',
+      appBuildOSType: 'android',
+      appBuildType: 'RELEASE',
+      appFormat: 'STANDALONE',
+      deviceType: 'Android SDK built for x86_64',
+      deviceOSType: 'android',
+      deviceOSVersion: '6.0',
+      appVersion: APP_VERSION,
+      deviceName: device.model
+    },
+    sanitizeRequestLog: { body: { token: true } },
+    sanitizeResponseLog: { body: { person: true } }
+  }, null)
+  if (response.body && response.body.status === '3' && !response.body.error) {
+    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+  }
+  validateResponse(response, response => response.body.status === '0' &&
+    _.get(response, 'body.loginCompleted') === 'true')
+
+  return { guid, api: { token, host, cookie: getCookie(response) } }
+}
+
+export async function fetchAccounts (auth) {
+  const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/products/list.do`, {
+    headers: {
+      ...defaultHeaders,
+      Host: `${auth.api.host}:4477`,
+      'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
+      Cookie: auth.api.cookie
+    },
+    body: { showProductType: 'cards,accounts,imaccounts,loans' }
+  })
+  const types = ['card', 'account', 'loan', 'target']
+  return (await Promise.all(types.map(type => {
+    return Promise.all(getArray(_.get(response.body, `${type}s.${type}`)).map(async account => {
+      const params = type === 'target'
+        ? account.account && account.account.id
+          ? { id: account.account.id, type: 'account' }
+          : null
+        : account.mainCardId
+          ? null
+          : { id: account.id, type }
+      return {
+        account,
+        details: params ? await fetchAccountDetails(auth, params) : null
+      }
+    }))
+  }))).reduce((accounts, objects, i) => {
+    accounts[types[i]] = objects
+    return accounts
+  }, {})
+}
+
+async function fetchAccountDetails (auth, { id, type }) {
+  const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/info.do`, {
+    headers: {
+      ...defaultHeaders,
+      Host: `${auth.api.host}:4477`,
+      'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
+      Cookie: auth.api.cookie
+    },
+    body: { id }
+  }, null)
+  validateResponse(response, response => _.get(response, 'body.detail'))
+  return response.body
+}
+
+async function fetchPayments (auth, { id, type, instrument }, fromDate, toDate) {
+  const transactions = []
+  const limit = 50
+  let offset = 0
+  let batch = null
+  do {
+    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/list.do`, {
+      headers: {
+        ...defaultHeaders,
+        Host: `${auth.api.host}:4477`,
+        'Content-Type': 'application/x-www-form-urlencoded;charset=windows-1251',
+        Cookie: auth.api.cookie
+      },
+      body: {
+        paginationSize: limit,
+        paginationOffset: offset,
+        from: formatDate(fromDate),
+        to: formatDate(toDate),
+        includeUfs: true,
+        usedResource: `${type}:${id}`,
+        showExternal: true
+      }
+    })
+    batch = getArray(_.get(response, 'body.operations.operation'))
+    await Promise.all(batch.map(async transaction => {
+      if (transaction.state === 'DRAFT' || transaction.state === 'SAVED') {
+        return
+      }
+      const invoiceCurrency = _.get(transaction, 'operationAmount.currency.code')
+      if (!invoiceCurrency) {
+        return
+      }
+      transactions.push(transaction)
+      if (invoiceCurrency !== instrument ||
+        [
+          'TakingMeans',
+          'ExtCardTransferIn',
+          'ExtCardTransferOut',
+          'ExtCardCashOut',
+          'ExtDepositOtherDebit',
+          'RurPayment',
+          'InternalPayment',
+          'AccountOpeningClaim',
+          'AccountClosingPayment'
+        ].indexOf(transaction.form) >= 0) {
+        const detailsResponse = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/view.do`, {
+          headers: {
+            ...defaultHeaders,
+            Host: `${auth.api.host}:4477`,
+            Cookie: auth.api.cookie
+          },
+          body: {
+            id: transaction.id
+          }
+        })
+        const form = _.get(detailsResponse, 'body.document.form')
+        if (form) {
+          transaction.details = _.get(detailsResponse, `body.document.${form}Document`)
+          if (!transaction.details) {
+            throw new Error(`unexpected details form ${form}`)
+          }
+        }
+      }
+    }))
+    offset += limit
+  } while (batch && batch.length === limit)
+  return transactions
+}
+
+export async function fetchTransactions (auth, { id, type, instrument }, fromDate, toDate) {
+  if (type === 'loan') {
+    const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/${type}s/abstract.do`, {
+      headers: {
+        ...defaultHeaders,
+        Host: `${auth.api.host}:4477`,
+        Referer: `Android/6.0/${APP_VERSION}`,
+        Cookie: auth.api.cookie
+      },
+      body: { id, from: formatDate(fromDate), to: formatDate(toDate) }
+    })
+    const fromDateStr = formatDateSql(fromDate)
+    const toDateStr = formatDateSql(toDate)
+    return getArray(_.get(response, 'body.elements.element')).filter(transaction => {
+      const dateStr = formatDateSql(parseDate(transaction.date))
+      return dateStr >= fromDateStr && dateStr <= toDateStr
+    })
+  }
+  return fetchPayments(auth, { id, type, instrument }, fromDate, toDate)
+}
+
+export async function makeTransfer (login, auth, device, { fromAccount, toAccount, sum }) {
+  const response = await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/payment.do`, {
+    headers: {
+      ...defaultHeaders,
+      Host: `${auth.api.host}:4477`
+    },
+    body: {
+      fromResource: fromAccount,
+      exactAmount: 'destination-field-exact',
+      operation: 'save',
+      buyAmount: sum,
+      transactionToken: auth.api.token,
+      form: 'InternalPayment',
+      toResource: toAccount
+    },
+    sanitizeRequestLog: { body: { transactionToken: true } }
+  }, response => _.get(response, 'body.transactionToken') && _.get(response, 'body.document.id'))
+
+  const id = response.body.document.id
+  const transactionToken = response.body.transactionToken
+
+  await fetchXml(`https://${auth.api.host}:4477/mobile9/private/payments/confirm.do`, {
+    headers: {
+      ...defaultHeaders,
+      Host: `${auth.api.host}:4477`
+    },
+    body: {
+      mobileSdkData: JSON.stringify(createSdkData(login, device)),
+      operation: 'confirm',
+      id,
+      form: 'InternalPayment',
+      transactionToken
+    }
+  }, response => _.get(response, 'body.document.status') === 'EXECUTED')
+}
+
+async function fetchXml (url, options = {}, predicate = () => true) {
+  options = {
+    method: 'POST',
+    headers: defaultHeaders,
+    stringify: qs.stringify,
+    parse: parseXml,
+    ...options,
+    tls: { ca: [russianTrustedRootCa] }
+  }
+
+  _.set(options, 'sanitizeRequestLog.headers.cookie', true)
+  _.set(options, 'sanitizeRequestLog.headers.Cookie', true)
+  _.set(options, 'sanitizeResponseLog.headers.set-cookie', true)
+
+  if (typeof _.get(options, 'sanitizeResponseLog.body') === 'object') {
+    options.sanitizeResponseLog.body = { response: options.sanitizeResponseLog.body }
+  }
+
+  let response
+  try {
+    response = (await retry({
+      getter: toNodeCallbackArguments(() => network.fetch(url, options)),
+      predicate: ([error]) => !error,
+      maxAttempts: 5
+    }))[1]
+  } catch (e) {
+    if (e instanceof RetryError) {
+      throw e.failedResults[0][0]
+    } else if (e.response && typeof e.response.body === 'string') {
+      throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+    } else {
+      throw e
+    }
+  }
+
+  validateResponse(response, response => response && response.body && response.body.response)
+  response.body = response.body.response
+  response.body.error = getErrorMessage(response.body)
+  response.body.status = _.get(response, 'body.status.code')
+
+  if (isTemporaryError(response.body.error) || (predicate && response.body.status === '3')) {
+    throw new TemporaryError('Информация из Сбербанка временно недоступна. Повторите синхронизацию через некоторое время.\n\nЕсли ошибка будет повторяться, откройте Настройки синхронизации и нажмите "Отправить лог последней синхронизации разработчикам".')
+  }
+  if (response.body.status !== '0' &&
+    response.body.error &&
+    response.body.error.indexOf('личный кабинет заблокирован') >= 0) {
+    throw new InvalidPreferencesError(response.body.error)
+  }
+
+  if (predicate) {
+    validateResponse(response, response => response.body.status === '0' && predicate(response))
+  }
+
+  return response
+}
+
+export function getErrorMessage (xmlObject, maxDepth = 3) {
+  if (!xmlObject || maxDepth <= 0) {
+    return null
+  }
+  if (xmlObject.errors &&
+    xmlObject.errors.error &&
+    xmlObject.errors.error.text) {
+    return xmlObject.errors.error.text
+  }
+  if (maxDepth > 1) {
+    for (const key in xmlObject) {
+      if (Object.prototype.hasOwnProperty.call(xmlObject, key)) {
+        const error = getErrorMessage(xmlObject[key], maxDepth - 1)
+        if (error) {
+          return error
+        }
+      }
+    }
+  }
+  return null
+}
+
+function isTemporaryError (message) {
+  return message && [
+    'временно недоступна',
+    'АБС временно',
+    'АБС не доступна',
+    'Во время выполнения операции произошла ошибка',
+    'По техническим причинам Вы не можете выполнить данную операцию'
+  ].some(str => message.indexOf(str) >= 0)
+}
+
+function validateResponse (response, predicate) {
+  console.assert(!predicate || predicate(response), 'non-successful response')
+}
+
+function getCookie (response) {
+  let cookie
+  if (response.headers &&
+    response.headers['set-cookie'] &&
+    response.headers['set-cookie'].indexOf('JSESSIONID') === 0) {
+    cookie = response.headers['set-cookie'].split(';')[0]
+  } else {
+    cookie = ZenMoney.getCookie('JSESSIONID')
+    if (cookie) {
+      cookie = 'JSESSIONID=' + cookie
+    }
+  }
+  console.assert(cookie, 'could not get cookie from response', response.url)
+  return cookie
+}
+
+function getArray (object) {
+  return object === null || object === undefined
+    ? []
+    : Array.isArray(object) ? object : [object]
+}
+
+function formatDate (date) {
+  return [date.getDate(), date.getMonth() + 1, date.getFullYear()].map(toAtLeastTwoDigitsString).join('.')
+}
+
+function generateHex (mask, digits) {
+  let i = 0
+  return mask.replace(/x/ig, () => {
+    return digits[i++]
+  })
+}
+
+function createSdkData (login, device) {
+  const dt = new Date()
+  const hex = md5.hex(login + 'sdk_data')
+  const rsaAppKey = md5.hex(login + 'rsa app key').toUpperCase()
+
+  const obj = {
+    TIMESTAMP: dt.getUTCFullYear() + '-' +
+      toAtLeastTwoDigitsString(dt.getUTCMonth() + 1) + '-' +
+      toAtLeastTwoDigitsString(dt.getUTCDate()) + 'T' +
+      dt.getUTCHours() + ':' + dt.getUTCMinutes() + ':' + dt.getUTCSeconds() + 'Z',
+    HardwareID: generateImei(login, '35472406******L'),
+    SIM_ID: generateSimSN(login, '2500266********L'),
+    PhoneNumber: '',
+    GeoLocationInfo: [
+      {
+        Longitude: (37.0 + Math.random()).toString(10),
+        Latitude: (55.0 + Math.random()).toString(10),
+        HorizontalAccuracy: '5',
+        Altitude: (150 + Math.floor(Math.random() * 20)).toString(10),
+        AltitudeAccuracy: '5',
+        Timestamp: (dt.getTime() - Math.floor(Math.random() * 1000000)).toString(10),
+        Heading: (Math.random() * 90).toString(10),
+        Speed: '3',
+        Status: '3'
+      }
+    ],
+    DeviceModel: device.model,
+    MultitaskingSupported: true,
+    deviceName: device.model,
+    DeviceSystemName: 'Android',
+    DeviceSystemVersion: '22',
+    Languages: 'ru',
+    WiFiMacAddress: generateHex('44:d4:e0:xx:xx:xx', hex.substr(0, 6)),
+    WiFiNetworksData: {
+      BBSID: generateHex('5c:f4:ab:xx:xx:xx', hex.substr(6, 12)),
+      SignalStrength: Math.floor(-30 - Math.random() * 20).toString(10),
+      Channel: 'null',
+      SSID: 'TPLink'
+    },
+    CellTowerId: (12875 + Math.floor(Math.random() * 10000)).toString(10),
+    LocationAreaCode: '9722',
+    ScreenSize: '1080x1776',
+    RSA_ApplicationKey: rsaAppKey,
+    MCC: '250',
+    MNC: '02',
+    OS_ID: hex.substring(12, 16),
+    SDK_VERSION: '2.0.1',
+    Compromised: 0,
+    Emulator: 0
+  }
+
+  return obj
+}
+
+function generateImei (val, mask) {
+  const defaultImeiMask = '35374906******L' // Samsung
+  const serial = String(Math.abs(crc32(val) % 1000000))
+
+  if (!mask) {
+    mask = defaultImeiMask
+  }
+
+  mask = mask.replace(/\*{6}/, serial)
+  mask = mask.replace(/L/, luhnGet(mask.replace(/L/, '')))
+
+  return mask
+}
+
+function generateSimSN (val, mask) {
+  const defaultSimSN = '897010266********L' // билайн
+  const serial = (Math.abs(crc32(val + 'simSN') % 100000000)).toString(10)
+
+  if (!mask) {
+    mask = defaultSimSN
+  }
+
+  mask = mask.replace(/\*{8}/, serial)
+  mask = mask.replace(/L/, luhnGet(mask.replace(/L/, '')))
+
+  return mask
+}
+
+function crc32 (str) {
+  function makeCRCTable () {
+    let c
+    const crcTable = []
+    for (let n = 0; n < 256; n++) {
+      c = n
+      for (let k = 0; k < 8; k++) {
+        c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1))
+      }
+      crcTable[n] = c
+    }
+    return crcTable
+  }
+
+  const crcTable = makeCRCTable()
+  let crc = 0 ^ (-1)
+
+  for (let i = 0; i < str.length; i++) {
+    crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF]
+  }
+
+  return (crc ^ (-1)) >>> 0
+}
+
+function luhnGet (num) {
+  const arr = []
+  num = num.toString()
+  for (let i = 0; i < num.length; i++) {
+    if (i % 2 === 0) {
+      const m = parseInt(num[i], 10) * 2
+      if (m > 9) {
+        arr.push(m - 9)
+      } else {
+        arr.push(m)
+      }
+    } else {
+      const n = parseInt(num[i], 10)
+      arr.push(n)
+    }
+  }
+
+  const summ = arr.reduce((a, b) => {
+    return a + b
+  })
+  return (summ % 10)
+}

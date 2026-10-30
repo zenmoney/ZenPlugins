@@ -1,0 +1,44 @@
+{
+  "uohId": "4a86af5d-6113-4b9f-92a4-b7fbba02acf4",
+  "ufsId": "0003_9000000000000000078",
+  "date": "28.04.2025T18:44:27",
+  "creationChannel": 3,
+  "form": "UfsTransferSelf",
+  "state": {
+    "name": "EXECUTED",
+    "category": "executed"
+  },
+  "description": "Ааааа аааааа",
+  "fromResource": {
+    "id": "account:9000000000000079",
+    "displayedValue": "Аааааааааааааа аааа •• 1021"
+  },
+  "toResource": {
+    "id": "ct-account:9000000000000027",
+    "displayedValue": "Ааааааааа аааа •• 1022"
+  },
+  "correspondent": "Ааааааа Аааааааааа А.",
+  "operationAmount": {
+    "amount": -10.0,
+    "currencyCode": "USD"
+  },
+  "nationalAmount": {
+    "amount": -778.0,
+    "currencyCode": "RUB"
+  },
+  "attributes": {
+    "copyable": true,
+    "nfc": false,
+    "cashReceipt": false,
+    "compositePayment": false
+  },
+  "type": "ufsPayment",
+  "billingAmount": {
+    "id": "9000000000000079",
+    "name": "Аааааааааааааа аааа",
+    "amount": 0.0,
+    "currencyCode": "USD"
+  },
+  "externalId": "0003_9000000000000000078",
+  "isFinancial": true
+}

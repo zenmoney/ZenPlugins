@@ -1,0 +1,85 @@
+{
+  "success": true,
+  "body": {
+    "uohId": "4a86af5d-6113-4b9f-92a4-b7fbba02acf4",
+    "externalId": "0003_9000000000000000078",
+    "form": "UfsTransferSelf",
+    "statementAvailable": false,
+    "compositePayment": false,
+    "creationChannel": 3,
+    "state": {
+      "name": "EXECUTED",
+      "description": "Ааааааа аааааааа",
+      "category": "executed"
+    },
+    "header": {
+      "title": "Ааааааа Аааааааааа А.",
+      "operationAmount": {
+        "amount": 10.0,
+        "currencyCode": "USD"
+      }
+    },
+    "fields": [
+      {
+        "name": "Баланс",
+        "type": "amount",
+        "value": {
+          "amount": 0.0,
+          "currencyCode": "USD"
+        }
+      },
+      {
+        "name": "Счёт списания",
+        "type": "resource",
+        "value": {
+          "id": "account:9000000000000079",
+          "displayedValue": "Аааааааааааааа аааа •• 1021"
+        }
+      },
+      {
+        "name": "Счёт зачисления",
+        "type": "resource",
+        "value": {
+          "id": "ct-account:9000000000000027",
+          "displayedValue": "Ааааааааа аааа •• 1022"
+        }
+      },
+      {
+        "name": "Сумма в валюте зачисления",
+        "type": "amount",
+        "value": {
+          "amount": 778.0,
+          "currencyCode": "RUB"
+        }
+      },
+      {
+        "name": "Описание операции",
+        "type": "string",
+        "value": {
+          "value": "ааааа аааааа ааааааа"
+        }
+      },
+      {
+        "name": "Дополнительная информация",
+        "type": "string",
+        "value": {
+          "value": " "
+        }
+      },
+      {
+        "name": "Дата и время",
+        "type": "date",
+        "value": {
+          "value": "28.04.2025T18:44:27"
+        }
+      },
+      {
+        "name": "Тип операции",
+        "type": "string",
+        "value": {
+          "value": "Ааааа аааааа"
+        }
+      }
+    ]
+  }
+}

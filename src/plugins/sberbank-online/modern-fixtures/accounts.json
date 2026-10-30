@@ -1,0 +1,1234 @@
+{
+  "ACCOUNTS": {
+    "data": [
+      {
+        "id": 9000000000000001,
+        "name": "Ааааааааааааа аааа (Ааааааа)",
+        "rate": "12.50",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000002",
+        "balance": {
+          "amount": "2705.25",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "2705.25",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": false,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "optionPermissions": {
+          "prolongationAllowed": false
+        },
+        "openDate": "07.03.2026",
+        "debitAllowed": true,
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000003,
+        "name": "Ааа Аааааааааааа (Аааа)",
+        "rate": "0.01",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000004",
+        "balance": {
+          "amount": "0.45",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "0.45",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": true,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "optionPermissions": {
+          "prolongationAllowed": false
+        },
+        "openDate": "28.03.2021",
+        "debitAllowed": true,
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000005,
+        "name": "Ааааа  Аааа Ааааа Аааа ",
+        "rate": "0.01",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000006",
+        "balance": {
+          "amount": "3831.12",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "3831.12",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": true,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "optionPermissions": {
+          "prolongationAllowed": false
+        },
+        "openDate": "28.06.2026",
+        "debitAllowed": true,
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000007,
+        "name": "Ааааааааа Ааааааа аааааа Аааа",
+        "rate": "12.50",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000008",
+        "balance": {
+          "amount": "432.42",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "432.42",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": false,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "optionPermissions": {
+          "prolongationAllowed": false
+        },
+        "openDate": "30.12.2025",
+        "debitAllowed": true,
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000009,
+        "name": "Ааааааааа Аааа",
+        "rate": "12.50",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000010",
+        "balance": {
+          "amount": "54575.25",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "54575.25",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": false,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "optionPermissions": {
+          "prolongationAllowed": false
+        },
+        "openDate": "07.03.2026",
+        "debitAllowed": true,
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000011,
+        "name": "А Ааааа ",
+        "rate": "12.50",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000012",
+        "balance": {
+          "amount": "140031.56",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "140031.56",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": false,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "optionPermissions": {
+          "prolongationAllowed": false
+        },
+        "openDate": "06.08.2026",
+        "debitAllowed": true,
+        "hasDebt": false
+      }
+    ],
+    "state": "SUCCESS",
+    "errors": []
+  },
+  "SHARINGACCOUNTS": {
+    "data": [
+      {
+        "id": 9000000000000013,
+        "name": "Аааааа",
+        "rate": "0.01",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000014",
+        "balance": {
+          "amount": "0.39",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "0.39",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "proxySign": "1",
+        "moneyBoxAvailable": true,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "optionPermissions": {
+          "prolongationAllowed": false
+        },
+        "openDate": "28.03.2021",
+        "debitAllowed": true,
+        "hasDebt": false
+      }
+    ],
+    "state": "SUCCESS",
+    "errors": []
+  },
+  "CTACCOUNTS": {
+    "data": [
+      {
+        "id": 9000000000000015,
+        "order": 1,
+        "name": "Ааааааааа аааа",
+        "description": "Ааааааааа аааа",
+        "number": "40817000000000000016",
+        "balance": {
+          "amount": "1087.80",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "active",
+        "arrested": false,
+        "location": [
+          "wallet",
+          "header"
+        ],
+        "localCardType": "DC",
+        "iconCode": "cta",
+        "iconCodeAddSign": "12",
+        "cards": [
+          {
+            "id": 9000000000000017,
+            "name": "ААА Ааааааааа Аааааа",
+            "description": "ААА Ааааааааа",
+            "cardHolder": "<redacted>",
+            "number": "1000 20** **** 1001",
+            "selfEmployed": false,
+            "isMain": true,
+            "type": "debit",
+            "availableLimit": {
+              "amount": "1087.80",
+              "currency": {
+                "code": "RUB",
+                "name": "ааа."
+              }
+            },
+            "availableTotalLimit": {
+              "amount": "1087.80",
+              "currency": {
+                "code": "RUB",
+                "name": "ааа."
+              }
+            },
+            "state": "active",
+            "cardAccount": "40817000000000000016",
+            "arrested": false,
+            "isc": false,
+            "isPriorityP2P": false,
+            "tokenExists": true,
+            "tokenList": [
+              {
+                "cardId": "9000000000000017",
+                "tokenNumber": "<redacted>",
+                "tokenRequestorId": "<redacted>",
+                "tokenReferenceId": "<redacted>"
+              }
+            ],
+            "expireDate": "11/2035",
+            "statusWay4": "+-active",
+            "rarelyUsed": false,
+            "issueDate": "21.11.2025",
+            "issueType": 0,
+            "multiCurrencyAccounts": [],
+            "cardCode": "111835",
+            "iconCode": "wp",
+            "iconCodeAddSign": "12",
+            "personalDesignRefNum": "SBPAYSTIK18",
+            "optionPermissions": {
+              "allowedMetalPhysicalCreditCardReissue": false,
+              "changeCreditLimit": false,
+              "setPINAvailable": true,
+              "setPayrollAvailable": true,
+              "activationAvailableUfs": false,
+              "block": true,
+              "isAnimatedCardDesignAvailable": false,
+              "isMainCardCompWallet": false,
+              "additionalCardAvailable": true,
+              "isAllowedPriorityP2P": true,
+              "cardClientLimitsMainScreen": true,
+              "pay": true,
+              "createMoneyBox": true,
+              "needLimitForPensionProduct": false,
+              "closeCreditCard": false,
+              "allowedChangeTariffPPRBCreditCard": false,
+              "allowedMetalPhysicalCreditCardOrder": false,
+              "activateCreditCard": false,
+              "isSocialPackageAvailable": true,
+              "closeCardAvailable": false,
+              "changeGracePeriod": false,
+              "replenish": true,
+              "changeCardTariffAvailable": false,
+              "changePaymentDate": false,
+              "isSbercardTariffV3": true,
+              "activationAvailable": false,
+              "increaseLimitCreditCard": false,
+              "setCardDesign": true,
+              "setPriorityCard": true,
+              "isMultiCurrency": false,
+              "needRqChangeOfficeWidget": false,
+              "ownBusiness": false,
+              "sberPayTokenizable": true,
+              "getCashInAtm": true,
+              "getCvcCode": false,
+              "activateCreditCardMigration": false,
+              "autopay": false,
+              "samsungPayTokenizable": true,
+              "googlePayTokenizable": true,
+              "needRqDeliveryStatus": false,
+              "getInsurance": false,
+              "multiCurrencyCardAvailable": false,
+              "needRqLifeCycleStatusV2": false,
+              "physicalCardOrderAvailable": false,
+              "reissueCreditCard": false,
+              "isCreditCardAccountToClose": false,
+              "displayCardDesign": true,
+              "transfer2Organization": true,
+              "transfer2Person": true,
+              "applePayTokenizable": true,
+              "cashWithdrawalTransferFree": false,
+              "changeCardProduct": false,
+              "decreaseRateForCategoryOperations": false,
+              "transfer2Self": true
+            },
+            "creditOwnSum": {
+              "amount": "4523.80",
+              "currency": {
+                "code": "RUB",
+                "name": "ааа."
+              }
+            },
+            "isReissuedCard": false,
+            "sbercardLevel": 5,
+            "hasDebt": false
+          }
+        ],
+        "availableTotalLimit": {
+          "amount": "1087.80",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditDebt": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditLimit": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditMinPayment": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditOwnSum": {
+          "amount": "4523.80",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "purchaseLimit": {
+          "amount": "1087.80",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "inCalculatingBalance": true,
+        "isSocial": false,
+        "hasDebt": false,
+        "teenSign": "null"
+      },
+      {
+        "id": 9000000000000018,
+        "order": 2,
+        "name": "Аааааааааа аааа",
+        "description": "Ааааааааа аааа",
+        "number": "40817000000000000019",
+        "balance": {
+          "amount": "12000.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "active",
+        "arrested": false,
+        "location": [
+          "wallet",
+          "header"
+        ],
+        "proxySign": "1",
+        "grantor": "Ааааааа Аааааааааа А",
+        "localCardType": "DC",
+        "iconCode": "cta",
+        "iconCodeAddSign": "12",
+        "documents": [
+          {
+            "role": "trustor",
+            "representRole": "trustee",
+            "kind": "DOC-T-BankPowerOfAttorneyRSC"
+          }
+        ],
+        "availableTotalLimit": {
+          "amount": "12000.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditDebt": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditLimit": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditMinPayment": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditOwnSum": {
+          "amount": "12000.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "purchaseLimit": {
+          "amount": "12000.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "inCalculatingBalance": true,
+        "isSocial": false,
+        "hasDebt": false,
+        "teenSign": "null"
+      },
+      {
+        "id": 9000000000000020,
+        "order": 3,
+        "name": "ААА Аааа аааааа",
+        "description": "Ааааааааа аааа",
+        "number": "40817000000000000021",
+        "balance": {
+          "amount": "2670.70",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "active",
+        "arrested": false,
+        "location": [
+          "wallet",
+          "header"
+        ],
+        "localCardType": "DC",
+        "iconCode": "cta",
+        "iconCodeAddSign": "12",
+        "availableTotalLimit": {
+          "amount": "2670.70",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditDebt": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditLimit": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditMinPayment": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditOwnSum": {
+          "amount": "2670.70",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "purchaseLimit": {
+          "amount": "2670.70",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "inCalculatingBalance": true,
+        "isSocial": false,
+        "hasDebt": false,
+        "teenSign": "null"
+      },
+      {
+        "id": 9000000000000022,
+        "order": 4,
+        "name": "Ааааааааа аааа",
+        "description": "Ааааааааа аааа",
+        "number": "40817000000000000023",
+        "balance": {
+          "amount": "4701.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "active",
+        "arrested": false,
+        "location": [
+          "wallet",
+          "header"
+        ],
+        "localCardType": "DC",
+        "iconCode": "cta",
+        "iconCodeAddSign": "12",
+        "cards": [
+          {
+            "id": 9000000000000024,
+            "name": "Ааааааааа ААА",
+            "description": "АаааааАааа Ааааааааа Аааааааааааа",
+            "cardHolder": "<redacted>",
+            "number": "1002 69** **** 1003",
+            "selfEmployed": false,
+            "isMain": true,
+            "type": "debit",
+            "availableLimit": {
+              "amount": "4701.00",
+              "currency": {
+                "code": "RUB",
+                "name": "ааа."
+              }
+            },
+            "availableTotalLimit": {
+              "amount": "4701.00",
+              "currency": {
+                "code": "RUB",
+                "name": "ааа."
+              }
+            },
+            "state": "active",
+            "cardAccount": "40817000000000000023",
+            "arrested": false,
+            "isc": false,
+            "isPriorityP2P": false,
+            "tokenExists": false,
+            "tokenList": [],
+            "expireDate": "09/2030",
+            "statusWay4": "+-virt_active",
+            "rarelyUsed": false,
+            "issueDate": "02.08.2025",
+            "issueType": 2,
+            "multiCurrencyAccounts": [],
+            "cardCode": "111855",
+            "iconCode": "mp",
+            "iconCodeAddSign": "12",
+            "optionPermissions": {
+              "allowedMetalPhysicalCreditCardReissue": false,
+              "changeCreditLimit": false,
+              "setPINAvailable": true,
+              "setPayrollAvailable": false,
+              "activationAvailableUfs": false,
+              "block": true,
+              "isAnimatedCardDesignAvailable": false,
+              "isMainCardCompWallet": false,
+              "additionalCardAvailable": false,
+              "isAllowedPriorityP2P": true,
+              "cardClientLimitsMainScreen": true,
+              "pay": true,
+              "createMoneyBox": true,
+              "needLimitForPensionProduct": false,
+              "closeCreditCard": false,
+              "allowedChangeTariffPPRBCreditCard": false,
+              "allowedMetalPhysicalCreditCardOrder": false,
+              "activateCreditCard": false,
+              "isSocialPackageAvailable": false,
+              "closeCardAvailable": false,
+              "changeGracePeriod": false,
+              "replenish": true,
+              "changeCardTariffAvailable": false,
+              "changePaymentDate": false,
+              "isSbercardTariffV3": true,
+              "activationAvailable": false,
+              "increaseLimitCreditCard": false,
+              "setCardDesign": true,
+              "setPriorityCard": true,
+              "isMultiCurrency": false,
+              "needRqChangeOfficeWidget": false,
+              "ownBusiness": false,
+              "sberPayTokenizable": true,
+              "getCashInAtm": true,
+              "getCvcCode": false,
+              "activateCreditCardMigration": false,
+              "autopay": false,
+              "samsungPayTokenizable": true,
+              "googlePayTokenizable": true,
+              "needRqDeliveryStatus": false,
+              "getInsurance": false,
+              "multiCurrencyCardAvailable": false,
+              "needRqLifeCycleStatusV2": true,
+              "physicalCardOrderAvailable": false,
+              "reissueCreditCard": false,
+              "isCreditCardAccountToClose": false,
+              "displayCardDesign": false,
+              "transfer2Organization": true,
+              "transfer2Person": true,
+              "applePayTokenizable": true,
+              "cashWithdrawalTransferFree": false,
+              "changeCardProduct": false,
+              "decreaseRateForCategoryOperations": false,
+              "transfer2Self": true
+            },
+            "creditOwnSum": {
+              "amount": "4701.00",
+              "currency": {
+                "code": "RUB",
+                "name": "ааа."
+              }
+            },
+            "isReissuedCard": false,
+            "sbercardLevel": 5,
+            "hasDebt": false
+          }
+        ],
+        "availableTotalLimit": {
+          "amount": "4701.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditDebt": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditLimit": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditMinPayment": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditOwnSum": {
+          "amount": "4701.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "purchaseLimit": {
+          "amount": "4701.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "inCalculatingBalance": true,
+        "isSocial": false,
+        "hasDebt": false,
+        "teenSign": "null"
+      },
+      {
+        "id": 9000000000000025,
+        "order": 5,
+        "name": "Ааааааааа аааа",
+        "description": "Ааааааааа аааа",
+        "number": "40817000000000000026",
+        "balance": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "active",
+        "arrested": false,
+        "location": [
+          "wallet",
+          "header"
+        ],
+        "localCardType": "DC",
+        "iconCode": "cta",
+        "iconCodeAddSign": "12",
+        "cards": [
+          {
+            "id": 9000000000000027,
+            "name": "ААА Ааааааааа",
+            "description": "ААА Ааааааааа",
+            "cardHolder": "<redacted>",
+            "number": "1000 20** **** 1004",
+            "selfEmployed": false,
+            "isMain": true,
+            "type": "debit",
+            "availableLimit": {
+              "amount": "0.00",
+              "currency": {
+                "code": "RUB",
+                "name": "ааа."
+              }
+            },
+            "availableTotalLimit": {
+              "amount": "0.00",
+              "currency": {
+                "code": "RUB",
+                "name": "ааа."
+              }
+            },
+            "state": "active",
+            "cardAccount": "40817000000000000026",
+            "arrested": false,
+            "isc": false,
+            "isPriorityP2P": false,
+            "tokenExists": true,
+            "tokenList": [
+              {
+                "cardId": "9000000000000027",
+                "tokenNumber": "<redacted>",
+                "tokenRequestorId": "<redacted>",
+                "tokenReferenceId": "<redacted>"
+              }
+            ],
+            "expireDate": "08/2034",
+            "statusWay4": "+-virt_active",
+            "rarelyUsed": false,
+            "issueDate": "01.08.2024",
+            "issueType": 0,
+            "multiCurrencyAccounts": [],
+            "cardCode": "111835",
+            "deliveryStatus": "A",
+            "iconCode": "wp",
+            "iconCodeAddSign": "12",
+            "optionPermissions": {
+              "allowedMetalPhysicalCreditCardReissue": false,
+              "changeCreditLimit": false,
+              "setPINAvailable": true,
+              "setPayrollAvailable": true,
+              "activationAvailableUfs": false,
+              "block": true,
+              "isAnimatedCardDesignAvailable": false,
+              "isMainCardCompWallet": false,
+              "additionalCardAvailable": true,
+              "isAllowedPriorityP2P": true,
+              "cardClientLimitsMainScreen": true,
+              "pay": true,
+              "createMoneyBox": true,
+              "needLimitForPensionProduct": false,
+              "closeCreditCard": false,
+              "allowedChangeTariffPPRBCreditCard": false,
+              "allowedMetalPhysicalCreditCardOrder": false,
+              "activateCreditCard": false,
+              "isSocialPackageAvailable": true,
+              "closeCardAvailable": false,
+              "changeGracePeriod": false,
+              "replenish": true,
+              "changeCardTariffAvailable": false,
+              "changePaymentDate": false,
+              "isSbercardTariffV3": true,
+              "activationAvailable": false,
+              "increaseLimitCreditCard": false,
+              "setCardDesign": true,
+              "setPriorityCard": true,
+              "isMultiCurrency": false,
+              "needRqChangeOfficeWidget": false,
+              "ownBusiness": false,
+              "sberPayTokenizable": true,
+              "getCashInAtm": true,
+              "getCvcCode": false,
+              "activateCreditCardMigration": false,
+              "autopay": false,
+              "samsungPayTokenizable": true,
+              "googlePayTokenizable": true,
+              "needRqDeliveryStatus": false,
+              "getInsurance": false,
+              "multiCurrencyCardAvailable": false,
+              "needRqLifeCycleStatusV2": false,
+              "physicalCardOrderAvailable": true,
+              "reissueCreditCard": false,
+              "isCreditCardAccountToClose": false,
+              "displayCardDesign": false,
+              "transfer2Organization": true,
+              "transfer2Person": true,
+              "applePayTokenizable": true,
+              "cashWithdrawalTransferFree": false,
+              "changeCardProduct": false,
+              "decreaseRateForCategoryOperations": false,
+              "transfer2Self": true
+            },
+            "creditOwnSum": {
+              "amount": "0.00",
+              "currency": {
+                "code": "RUB",
+                "name": "ааа."
+              }
+            },
+            "isReissuedCard": false,
+            "sbercardLevel": 5,
+            "hasDebt": false
+          }
+        ],
+        "availableTotalLimit": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditDebt": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditLimit": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditMinPayment": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "creditOwnSum": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "purchaseLimit": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "isSocial": false,
+        "hasDebt": false,
+        "teenSign": "null"
+      }
+    ],
+    "state": "SUCCESS",
+    "errors": []
+  },
+  "SHARINGCTACCOUNTS": {
+    "data": [],
+    "state": "SUCCESS",
+    "errors": []
+  },
+  "IMACCOUNTS": {
+    "data": [
+      {
+        "id": 9000000000000028,
+        "name": "Ааааааа. ааа. ааааа (ааааааа)",
+        "number": "40817000000000000029",
+        "openDate": "15.09.2019T00:00:00",
+        "closeDate": "25.10.2026T00:00:00",
+        "balance": {
+          "amount": "0.00",
+          "currency": {
+            "code": "ARG",
+            "name": "а"
+          }
+        },
+        "availCash": {
+          "amount": "0.00",
+          "currency": {
+            "code": "ARG",
+            "name": "а"
+          }
+        },
+        "balanceInNationalCurrency": {
+          "amount": "0.00",
+          "currency": {
+            "code": "RUB",
+            "name": "АААААААААА ААААА"
+          }
+        },
+        "currency": "СЕРЕБРО В ГРАММАХ (ARG)",
+        "agreementNumber": "40817A90000000000030",
+        "state": "opened",
+        "arrested": false,
+        "showArrestDetail": true
+      }
+    ],
+    "state": "SUCCESS",
+    "errors": []
+  },
+  "ACCOUNTS_IN_WALLET": {
+    "data": [
+      {
+        "id": 9000000000000003,
+        "order": 7,
+        "location": [],
+        "name": "Ааа Аааааааааааа (Аааа)",
+        "rate": "0.01",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000004",
+        "balance": {
+          "amount": "0.45",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "0.45",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": true,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "openDate": "28.03.2021",
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000005,
+        "order": 8,
+        "location": [],
+        "name": "Ааааа  Аааа Ааааа Аааа ",
+        "rate": "0.01",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000006",
+        "balance": {
+          "amount": "3831.12",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "3831.12",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": true,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "openDate": "28.06.2026",
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000001,
+        "order": 9,
+        "location": [],
+        "name": "Ааааааааааааа аааа (Ааааааа)",
+        "rate": "12.50",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000002",
+        "balance": {
+          "amount": "2705.25",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "2705.25",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": false,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "openDate": "07.03.2026",
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000007,
+        "order": 10,
+        "location": [],
+        "name": "Ааааааааа Ааааааа аааааа Аааа",
+        "rate": "12.50",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000008",
+        "balance": {
+          "amount": "432.42",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "432.42",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": false,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "openDate": "30.12.2025",
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000009,
+        "order": 11,
+        "location": [],
+        "name": "Ааааааааа Аааа",
+        "rate": "12.50",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000010",
+        "balance": {
+          "amount": "54575.25",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "54575.25",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": false,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "openDate": "07.03.2026",
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000013,
+        "order": 12,
+        "location": [],
+        "name": "Аааааа",
+        "rate": "0.01",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000014",
+        "balance": {
+          "amount": "0.39",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "0.39",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": true,
+        "proxySign": "1",
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "openDate": "28.03.2021",
+        "hasDebt": false
+      },
+      {
+        "id": 9000000000000011,
+        "order": 13,
+        "location": [],
+        "name": "А Ааааа ",
+        "rate": "12.50",
+        "closeDate": "01.01.2099",
+        "number": "40817000000000000012",
+        "balance": {
+          "amount": "140031.56",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "availCash": {
+          "amount": "140031.56",
+          "currency": {
+            "code": "RUB",
+            "name": "ааа."
+          }
+        },
+        "state": "OPENED",
+        "moneyBoxAvailable": false,
+        "arrested": false,
+        "showArrestDetail": true,
+        "accountType": "AccumulativeAccount",
+        "openDate": "06.08.2026",
+        "hasDebt": false
+      }
+    ],
+    "state": "SUCCESS",
+    "errors": []
+  },
+  "DIGITALRUBLE": {
+    "data": [
+      {
+        "order": 14,
+        "location": [],
+        "id": 9000000000000000031,
+        "iconCode": "ctadigrub",
+        "walletStatus": {
+          "code": "ACTIVE",
+          "generalStatus": "retryRestrictingAccess",
+          "frontCmsDetail": {
+            "upDescription": "Получить доступ",
+            "upDescriptionColor": "brand",
+            "defaultIcon": "ds_mc_36_transaction_account_digital_ruble",
+            "downDescription": "Цифровой рубль",
+            "downDescriptionColor": "secondary",
+            "balanceColor": "secondary",
+            "cellHeight": "high"
+          }
+        },
+        "balance": {
+          "updateDateTime": "2026-10-23T14:44:57.000Z",
+          "totalAmount": "0.00",
+          "totalBlockedAmount": "0.00"
+        },
+        "walletId": "g.ru.cbrdc.wlt.clt.8ae86bb9-2782-4d38-ac76-8d35983d0ab2",
+        "certificate": {},
+        "digitalRubleAccountNumber": "40817000000000000032",
+        "accountNumberView": false,
+        "balanceView": false
+      }
+    ],
+    "state": "SUCCESS",
+    "errors": []
+  }
+}
