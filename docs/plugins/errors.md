@@ -47,7 +47,7 @@ The global terminal exception permits `BankMessageError` even without a recovery
 
 Assert classes, not just messages: ordinary failures must be `Error` but not `ZPAPIError`; deliberate UI failures use the intended subclass. Verify original transport/HTTP/runtime errors reach the exported operation unchanged where practical, while invalid received states fail the corresponding sanitized assertion.
 
-Cover each implemented classification with its confirmed positive case and observed nearby counterexamples:
+For affected classifications, use [focused test scope](../project/testing.md#focused-tests-outside-conversion) and [observed evidence](../project/fixtures.md#observed-evidence) to select positive cases and relevant counterexamples:
 
 - Credential rejection versus other failures; incorrect/expired OTP versus delivery/protocol failure or an unknown strategy mentioning SMS/OTP.
 - Every temporary branch's self-resolution or user action.

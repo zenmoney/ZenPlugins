@@ -109,5 +109,5 @@ Examples: `[privatbank] fix missing posInfo handling`, `[tinkoff] parse merchant
 
 - Confirm the [branch/split rules](#branches-and-submission) and review the diff for unrelated work or data exposure.
 - Changed behavior must satisfy applicable contracts, including completeness, unknown failures, language, and sanitization. Report [findings and evidence gaps](../debugging/README.md#findings-and-next-steps).
-- Complete [code verification](testing.md#verification-for-code-changes) with passing required checks and report regression coverage. Unresolved/unavailable checks leave verification incomplete. For submitted PRs/MRs, follow the [submission reporting rules](#submission-checks) for the final revision independently of PR/MR state.
+- Review new/changed tests against the [mandatory test requirements](testing.md#required-use), complete [code verification](testing.md#verification-for-code-changes) with passing required checks, and report regression coverage. Unresolved/unavailable checks leave verification incomplete. For submitted PRs/MRs, follow the [submission reporting rules](#submission-checks) for the final revision independently of PR/MR state.
 - Update new general cases and verify changed documentation under [maintenance](documentation.md); retain provider-specific evidence with the integration.

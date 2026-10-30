@@ -1,16 +1,16 @@
 # Receipt testing
 
-Use for receipt behavior changes. Shared runner setup and commands follow [code verification](../../project/testing.md#verification-for-code-changes).
+Use for receipt behavior changes together with the shared [mandatory test requirements](../../project/testing.md#required-use).
 
 ## Source evidence
 
-Derive provider parsing and complete expected receipts from observed responses under [fixture rules](../../project/fixtures.md#public-receipt-data). Preserve actual formats and field meanings; record missing cases beside the implementation/tests instead of fabricating provider responses. Synthetic invariants follow the shared [model-test distinction](../../project/testing.md#model-tests).
+Provider parsing follows [observed evidence](../../project/fixtures.md#observed-evidence) and [public receipt fixture rules](../../project/fixtures.md#public-receipt-data). Provider-independent invariants follow the shared [model boundary](../../project/testing.md#model-tests).
 
-Every behavior fix or improvement needs a regression test that fails before the fix and passes afterward. Assert full expected receipts against the applicable [quality cases](quality.md). Do not preserve swallowed failures, guessed quantities or truthiness-based removal of zero as expectations.
+Every parsing/conversion behavior fix or improvement needs a regression test that fails before the fix and passes afterward. Other changes follow [focused tests outside conversion](../../project/testing.md#focused-tests-outside-conversion). Assert full expected receipts against the applicable [quality cases](quality.md). Do not preserve swallowed failures, guessed quantities or truthiness-based removal of zero as expectations.
 
 ## Fixtures
 
-Keep complete inputs beside tests as `<testName>-NN.html` or `.json`; import them through shared [resource imports](../../project/bundles.md#resource-imports), for example `import html from './convertReceipt-01.html'`. Avoid escaped HTML in JSON, expectation wrappers, fixture registries and modules that only assemble case arrays.
+For parsing/conversion tests, keep complete inputs beside tests as `<testName>-NN.html` or `.json`; import them through shared [resource imports](../../project/bundles.md#resource-imports), for example `import html from './convertReceipt-01.html'`. Avoid escaped HTML in JSON, expectation wrappers, fixture registries and modules that only assemble case arrays. Other tests use [minimal observed fixtures](../../project/fixtures.md#minimal-fixtures-outside-conversion).
 
 ## Verification
 
@@ -25,4 +25,4 @@ A focused provider run is `yarn jest kofd-kz --runInBand`; all receipt and tooli
 | Bank compatibility when changing shared builds | Same artifact suite: JS/TS scrape entrypoints, XML file lists, optional preferences and adapted `main` |
 | Types/values | [Type fixtures](../../../src/types/receiptFetcher.typecheck.ts), [runtime validation](../../../src/common/receiptFetcher/receipt.test.ts), provider tests |
 
-The builder checks TypeScript before emission using the root configuration. Lint, TypeScript and Jest settings are shared with scrape plugins. Offline checks establish only the tested local behavior.
+The builder checks TypeScript before emission using the root configuration. Lint, TypeScript and Jest settings are shared with scrape plugins.

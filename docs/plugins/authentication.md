@@ -13,9 +13,11 @@ Read when implementing or changing authentication for a service-backed plugin. T
 
 ## Verification
 
-- Apply the [runtime interaction checks](runtime.md#background-execution-and-ui) to the supported login challenges
-- Test hot success including refresh, confirmed cold fallback, unchanged propagation of transient/malformed/unknown failures, and missing/legacy/incompatible state
-- Test preference changes with a working hot session and after confirmed rejection: session preserved in the former, current credentials used for cold auth in the latter
-- Test entrypoint persistence before further work: refresh then history/conversion failure, a later auth update then failure, and hot failure without any update. Assert the latest confirmed state survives and the original failure propagates
+Select affected cases under [focused test scope](../project/testing.md#focused-tests-outside-conversion):
+
+- The [runtime interaction checks](runtime.md#background-execution-and-ui) for an affected login challenge
+- Hot success including refresh, confirmed cold fallback, unchanged propagation of transient/malformed/unknown failures, and missing/legacy/incompatible state
+- Preference changes with a working hot session and after confirmed rejection: session preserved in the former, current credentials used for cold auth in the latter
+- Entrypoint persistence before further work: refresh then history/conversion failure, a later auth update then failure, or hot failure without any update. Assert the latest confirmed state survives and the original failure propagates
 
 Physical persistence belongs to the entrypoint; transition decisions belong to `api`. See [architecture](architecture.md).

@@ -42,4 +42,4 @@ Confirmed user-input mistakes are deliberate UI errors, not unknown protocol fai
 
 ## Evidence and coverage
 
-Topic decision tables define required scenarios when their inputs are supported, not verified coverage of every legacy plugin. [Scrape testing](../testing.md#bank-data-and-model-tests) owns evidence rules; [maintenance](../../../project/documentation.md) owns rule changes.
+Topic tables define required scenarios for supported source data, not one test per rule or a Cartesian product of cases. [Scrape testing](../testing.md#required-coverage) owns coverage, [fixtures](../../../project/fixtures.md#observed-evidence) own source evidence, and [maintenance](../../../project/documentation.md) owns rule changes. Missing examples remain gaps, not verified coverage.
