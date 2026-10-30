@@ -4,7 +4,7 @@ import { xml2js } from 'xml-js'
 import get, { getArray, getOptString, getString } from '../../../types/get'
 
 describe('Hapoalim Russian authentication settings', () => {
-  it('uses Russian labels without changing stored keys, values or defaults', () => {
+  it('preserves existing defaults and offers optional native login/password fields in Russian', () => {
     const document: unknown = xml2js(readFileSync(join(__dirname, '..', 'preferences.xml'), 'utf8'), { compact: false })
     const screen = getArray(document, 'elements').find(element => getOptString(element, 'name') === 'PreferenceScreen')
     const controls = getArray(screen, 'elements')
@@ -23,6 +23,32 @@ describe('Hapoalim Russian authentication settings', () => {
           positiveButtonText: 'ОК',
           negativeButtonText: 'Отмена',
           summary: '||{@s}'
+        }
+      },
+      {
+        name: 'EditTextPreference',
+        attributes: {
+          key: 'login',
+          obligatory: 'false',
+          inputType: 'text',
+          title: 'Логин Bank Hapoalim',
+          dialogTitle: 'Логин Bank Hapoalim',
+          positiveButtonText: 'ОК',
+          negativeButtonText: 'Отмена',
+          summary: '||{@s}'
+        }
+      },
+      {
+        name: 'EditTextPreference',
+        attributes: {
+          key: 'password',
+          obligatory: 'false',
+          inputType: 'textPassword',
+          title: 'Пароль Bank Hapoalim',
+          dialogTitle: 'Пароль Bank Hapoalim',
+          positiveButtonText: 'ОК',
+          negativeButtonText: 'Отмена',
+          summary: '||***********'
         }
       },
       {

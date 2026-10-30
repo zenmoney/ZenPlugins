@@ -1,14 +1,19 @@
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import { restoreCookies, saveCookies, cookieJar } from '../../common/network/cookies'
-import { authenticationMethod, fetchAccounts, fetchTransactions, getAuthGateVerifier, isLikelyAuthGateError, login, loginDirect, isMobileAuth, normalizeStoredAuth, recoverAuthFromCookieStore, recoverDirectAuth, withAuthUpdates, withSessionDeadline } from './api'
+import { authenticationMethod, authGateSummary, fetchAccounts, fetchTransactions, getAuthGateVerifier, isLikelyAuthGateError, login, loginDirect, isMobileAuth, normalizeStoredAuth, normalizeDirectAuthLifecycle, recoverAuthFromCookieStore, recoverDirectAuth, withAuthUpdates, withSessionDeadline } from './api'
 import { convertAccounts, convertTransaction } from './converters'
 import { dateInTimezone, toISODateString } from '../../common/dateUtils'
 
 async function storeAuth (state) {
   if (state.direct) {
-    if (isMobileAuth(state.auth)) state.directIdentity = state.auth.identity
+    if (isMobileAuth(state.auth)) {
+      state.directIdentity = state.auth.identity
+      // Keep the accounts-proof time even when saving after a later network error.
+      state.authLifecycle = { version: 1, kind: 'verified', reason: null, httpStatus: null, updatedAt: state.auth.acquiredAt }
+    }
     // Keep the connection binding even after rejected session cookies are gone.
     ZenMoney.setData('directIdentity', state.directIdentity ?? null)
+    if (state.authLifecycle) ZenMoney.setData('directAuthLifecycleV1', { ...state.authLifecycle })
   }
   ZenMoney.setData('auth', state.auth ? { ...state.auth } : null)
   await withSessionDeadline(() => ZenMoney.saveData(), 'auth state save')
@@ -16,6 +21,16 @@ async function storeAuth (state) {
 
 async function saveCookieStore () {
   await withSessionDeadline(() => saveCookies(), 'cookie store save')
+}
+
+async function invalidateDirectSession (state, error) {
+  if (!state.direct || !isMobileAuth(state.auth)) return
+  const summary = authGateSummary(error)
+  console.log('Bank Hapoalim direct session rejected', summary)
+  state.authLifecycle = { version: 1, kind: 'rejected', ...summary, updatedAt: Date.now() }
+  state.auth = null
+  state.directCookieSnapshot = null
+  await storeAuth(state)
 }
 
 async function withForegroundReauthRetry (fn, state) {
@@ -34,13 +49,8 @@ async function withForegroundReauthRetry (fn, state) {
       } catch (error) {
         originalAuthError = error
         if (!isLikelyAuthGateError(error)) throw error
-        if (state.direct && isMobileAuth(state.auth)) {
-          // A confirmed rejection is not a reusable session. Persist that fact
-          // before returning in background or asking for a new foreground login.
-          state.auth = null
-          state.directCookieSnapshot = null
-          await storeAuth(state)
-        }
+        // Persist confirmed revocation before background exit or foreground input.
+        await invalidateDirectSession(state, error)
       }
     }
 
@@ -73,18 +83,28 @@ async function withForegroundReauthRetry (fn, state) {
     const skipHidden = attemptedHiddenWebView
     attemptedHiddenWebView = true
     const authorize = state.direct ? loginDirect : login
-    state.auth = await authorize({
-      previousIdentity: state.statementIdentity ?? state.directIdentity,
-      isInBackground: state.isInBackground,
-      allowInteraction: !state.didInteractiveLogin,
-      skipHidden,
-      verify: getAuthGateVerifier(originalAuthError),
-      interactionError: originalAuthError,
-      rejectedCookieHeader,
-      rejectedCookieHeaders,
-      onAuthUpdate,
-      onInteraction: () => { state.didInteractiveLogin = true }
-    })
+    const allowInteraction = !state.didInteractiveLogin && (!state.direct || !state.didDirectLogin)
+    if (state.direct) state.didDirectLogin = true
+    try {
+      state.auth = await authorize({
+        preferences: state.preferences,
+        previousIdentity: state.statementIdentity ?? state.directIdentity,
+        isInBackground: state.isInBackground,
+        allowInteraction,
+        skipHidden,
+        verify: getAuthGateVerifier(originalAuthError),
+        interactionError: originalAuthError,
+        rejectedCookieHeader,
+        rejectedCookieHeaders,
+        onAuthUpdate,
+        onInteraction: () => { state.didInteractiveLogin = true }
+      })
+    } catch (error) {
+      // Login also verifies the original challenged endpoint. Its rejection
+      // must invalidate the fresh accounts-only session, not persist it as valid.
+      if (isLikelyAuthGateError(error)) await invalidateDirectSession(state, error)
+      throw error
+    }
     await storeAuth(state)
   }
 }
@@ -104,8 +124,17 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
   const storedAuth = normalizeStoredAuth(ZenMoney.getData('auth'))
   const auth = !direct && isMobileAuth(storedAuth) ? null : storedAuth
   const storedIdentity = direct ? ZenMoney.getData('directIdentity') : null
+  const authLifecycle = direct ? normalizeDirectAuthLifecycle(ZenMoney.getData('directAuthLifecycleV1')) : null
   if (storedIdentity != null && (typeof storedIdentity !== 'string' || !/^[a-f0-9]{64}$/.test(storedIdentity))) {
     throw new Error('Bank Hapoalim stored account identity is invalid')
+  }
+  if (direct) {
+    console.log('Bank Hapoalim direct auth state', {
+      authKind: isMobileAuth(auth) ? 'mobile' : auth ? 'legacy' : 'missing',
+      checkpoint: authLifecycle?.kind ?? 'unknown',
+      reason: authLifecycle?.reason ?? null,
+      hasIdentityBinding: isMobileAuth(auth) || storedIdentity != null
+    })
   }
   if (!isMobileAuth(auth)) await withSessionDeadline(() => restoreCookies(), 'cookie store restore')
   const directCookieSnapshot = direct && !isMobileAuth(auth)
@@ -114,10 +143,13 @@ export async function scrape ({ preferences, fromDate, toDate, isInBackground, i
   const state = {
     auth,
     direct,
+    preferences,
+    authLifecycle,
     directIdentity: direct && isMobileAuth(auth) ? auth.identity : storedIdentity ?? undefined,
     directCookieSnapshot,
     isInBackground,
     didInteractiveLogin: false,
+    didDirectLogin: false,
     rejectedCookieHeaders: new Set()
   }
   const accounts = []

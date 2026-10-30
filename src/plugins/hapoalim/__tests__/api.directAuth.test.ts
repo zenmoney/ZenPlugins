@@ -52,7 +52,7 @@ function setup (needsOtp = false): { fetch: jest.MockedFunction<typeof global.fe
 }
 
 beforeEach(() => {
-  jest.spyOn(console, 'debug').mockImplementation(() => {})
+  for (const method of ['debug', 'log', 'warn', 'error'] as const) jest.spyOn(console, method).mockImplementation(() => {})
 })
 afterEach(() => {
   global.ZenMoney = originalHost
@@ -62,6 +62,53 @@ afterEach(() => {
 })
 
 describe('[model] direct native authentication', () => {
+  it.each([false, true])('uses native preferences without asking for login/password (OTP: %s)', async needsOtp => {
+    const { fetch, input, save } = setup(needsOtp)
+    input.mockImplementation(async () => '123456')
+    const onInteraction = jest.fn()
+    const auth = await loginMobile({
+      preferences: { login: '  CANARY_SAVED_USER  ', password: ' CANARY_SAVED_PASSWORD ' },
+      onAuthUpdate: save,
+      onInteraction
+    })
+    const form = new URLSearchParams(String(fetch.mock.calls[0][1]?.body))
+    expect(form.get('identifier')).toBe('CANARY_SAVED_USER')
+    expect(form.get('credentials')).toBe(' CANARY_SAVED_PASSWORD ')
+    expect(input.mock.calls).toEqual(needsOtp ? [['Код из SMS', { inputType: 'numberPassword', time: 180000 }]] : [])
+    expect(onInteraction).toHaveBeenCalledTimes(needsOtp ? 1 : 0)
+    expect(save).toHaveBeenCalledWith(auth)
+    for (const secret of ['CANARY_SAVED_USER', 'CANARY_SAVED_PASSWORD', '123456']) {
+      expect(JSON.stringify(auth)).not.toContain(secret)
+      expect(JSON.stringify(['debug', 'log', 'warn', 'error'].map(method => jest.mocked(console[method as 'log']).mock.calls))).not.toContain(secret)
+    }
+  })
+
+  it.each([
+    { login: 'MODEL_USER' }, { password: 'MODEL_PASSWORD' },
+    { login: 123, password: 'MODEL_PASSWORD' }, { login: 'MODEL_USER', password: false },
+    { login: '   ', password: 'MODEL_PASSWORD' }, { login: 'MODEL_USER', password: '' },
+    { login: 'x'.repeat(501), password: 'MODEL_PASSWORD' }, { login: 'MODEL_USER', password: 'x'.repeat(501) }
+  ])('rejects incomplete or invalid stored preferences before input or HTTP: %#', async preferences => {
+    const { fetch, input, save } = setup()
+    const { InvalidPreferencesError } = jest.requireActual<typeof import('../../../errors')>('../../../errors')
+    await expect(loginMobile({ preferences, onAuthUpdate: save })).rejects.toBeInstanceOf(InvalidPreferencesError)
+    expect(input).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
+    expect(save).not.toHaveBeenCalled()
+  })
+
+  it.each([false, true])('never submits saved credentials or starts SMS in background (OTP: %s)', async needsOtp => {
+    const { fetch, input, save } = setup(needsOtp)
+    await expect(loginMobile({
+      preferences: { login: 'CANARY_SAVED_USER', password: 'CANARY_SAVED_PASSWORD' },
+      isInBackground: true,
+      onAuthUpdate: save
+    })).rejects.toBeInstanceOf(UserInteractionError)
+    expect(input).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
+    expect(save).not.toHaveBeenCalled()
+  })
+
   it.each([false, true])('confirms a scoped session and persists no entered secrets (OTP: %s)', async needsOtp => {
     const { fetch, input, save } = setup(needsOtp)
     const auth = await loginMobile({ onAuthUpdate: save })
