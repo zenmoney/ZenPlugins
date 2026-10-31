@@ -226,11 +226,27 @@ it('[model] restores a saved SSO session without credentials, including in backg
   expect(fetchMock.calls(action)).toHaveLength(0)
 })
 
-it('[model] stops at the credential form in background without submitting or persisting candidate cookies', async () => {
+it('[model] renews an expired saved session in background with stored credentials when no challenge follows', async () => {
+  fetchMock.postOnce(info, { result: 33, object: { redirectUrl: page } })
+  fetchMock.get(page, `<form id="kc-form-login" action="${action}"></form>`)
+  fetchMock.post(action, { status: 302, headers: { Location: '/priv/home' } })
+  fetchMock.get(base + '/priv/home', '<html>authenticated completion</html>')
+  fetchMock.postOnce(info, { headers: { 'Set-Cookie': 'SESSION=background-renewed-model' }, body: ok({}) }, { overwriteRoutes: false })
+  const persist = jest.fn()
+  await expect(login(preferences, saved, true, persist)).resolves.toMatchObject({ cookieHeader: 'SESSION=background-renewed-model' })
+  const fields = new URLSearchParams(String(fetchMock.lastOptions(action)?.body))
+  expect(fields.get('username')).toBe(preferences.login)
+  expect(fields.get('password')).toBe(preferences.password)
+  expect(fetchMock.calls(action)).toHaveLength(1)
+  expect(fetchMock.calls(info)).toHaveLength(2)
+  expect(persist).toHaveBeenCalledTimes(1)
+})
+
+it('[model] stops at the credential form in background when stored credentials are unavailable', async () => {
   fetchMock.post(info, { result: 33, object: { redirectUrl: page } })
   fetchMock.get(page, `<form id="kc-form-login" action="${action}"></form>`)
   const persist = jest.fn()
-  await expect(login(preferences, saved, true, persist)).rejects.toBeInstanceOf(UserInteractionError)
+  await expect(login({ login: '', password: '' }, saved, true, persist)).rejects.toBeInstanceOf(UserInteractionError)
   expect(fetchMock.calls(action)).toHaveLength(0)
   expect(persist).not.toHaveBeenCalled()
 })
