@@ -63,16 +63,19 @@ export async function login (preferences: Preferences, saved: unknown, backgroun
     return session
   }
   console.info('Levoberezhny saved authorization requires bank credential form')
-  if (background) throw new UserInteractionError()
   const username = preferences.login.trim() === ''
-    ? await ZenMoney.readLine('Логин интернет-банка Левобережного', { inputType: 'text' })
+    ? background ? null : await ZenMoney.readLine('Логин интернет-банка Левобережного', { inputType: 'text' })
     : preferences.login.trim()
   const password = preferences.password === ''
-    ? await ZenMoney.readLine('Пароль интернет-банка Левобережного', { inputType: 'textPassword' })
+    ? background ? null : await ZenMoney.readLine('Пароль интернет-банка Левобережного', { inputType: 'textPassword' })
     : preferences.password
   if (username == null || username.trim() === '' || password == null || password === '') {
+    if (background) throw new UserInteractionError()
     throw new InvalidPreferencesError('Укажите логин и пароль интернет-банка Левобережного')
   }
+  // The bank reveals whether OTP is required only after accepting credentials.
+  // A background run may submit stored preferences once, but never reads or
+  // submits an OTP and never persists the intermediate challenge state.
   response = await follow(session, await request(session, form?.action ?? '', 'POST', {
     ...form?.fields,
     username: username.trim(),
@@ -92,6 +95,7 @@ export async function login (preferences: Preferences, saved: unknown, backgroun
       console.debug('Levoberezhny additional login form schema', forms)
       throw new Error('Additional bank login form detected; inspect sanitized form schema')
     }
+    if (background) throw new UserInteractionError()
     const code = await ZenMoney.readLine('Одноразовый пароль из SMS банка Левобережный', { inputType: 'numberPassword', time: 120000 })
     console.assert(code != null && code.trim() !== '', 'Required OTP input was not provided')
     response = await follow(session, await request(session, otpForm.action, 'POST', {
