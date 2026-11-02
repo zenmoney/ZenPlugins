@@ -63,12 +63,15 @@ export async function login (preferences: Preferences, saved: unknown, backgroun
     return session
   }
   console.info('Levoberezhny saved authorization requires bank credential form')
-  const username = preferences.login.trim() === ''
+  session.cookies = (session.cookies ?? []).filter(c => !(c.name === 'JSESSIONID' && (c.path === '/mobileService' || c.path.startsWith('/mobileService/'))))
+  const loginPref = preferences.login?.trim() ?? ''
+  const passwordPref = preferences.password ?? ''
+  const username = loginPref === ''
     ? background ? null : await ZenMoney.readLine('Логин интернет-банка Левобережного', { inputType: 'text' })
-    : preferences.login.trim()
-  const password = preferences.password === ''
+    : loginPref
+  const password = passwordPref === ''
     ? background ? null : await ZenMoney.readLine('Пароль интернет-банка Левобережного', { inputType: 'textPassword' })
-    : preferences.password
+    : passwordPref
   if (username == null || username.trim() === '' || password == null || password === '') {
     if (background) throw new UserInteractionError()
     throw new InvalidPreferencesError('Укажите логин и пароль интернет-банка Левобережного')

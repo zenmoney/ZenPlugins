@@ -1,7 +1,7 @@
 import fetchMock from 'fetch-mock'
 import { fetchAccounts, fetchTransactions, login } from '../api'
 import { Auth, Session } from '../models'
-import { request } from '../fetchApi'
+import { readLoginForm, request, requestJson } from '../fetchApi'
 import { InvalidLoginOrPasswordError, UserInteractionError, ZPAPIError } from '../../../errors'
 
 const base = 'https://bl-online.nskbl.ru'
@@ -71,12 +71,56 @@ describe('[model] authorization lifecycle', () => {
     expect(logs).toContain('/mobileService/3.0/json/loginInfo')
   })
 
-  it('keeps trusted-device cookies when an expired SSO session reaches the credential form', async () => {
+  it('falls back to interactive input when credential preferences are undefined or empty', async () => {
+    const readLine = jest.fn()
+      .mockResolvedValueOnce('interactive-user')
+      .mockResolvedValueOnce('interactive-pass')
+    Object.assign(global, { ZenMoney: { readLine } })
+    fetchMock.postOnce(info, { result: 33, object: { redirectUrl: page } })
+    fetchMock.get(page, `<form id="kc-form-login" action="${action}"></form>`)
+    fetchMock.post(action, { status: 302, headers: { Location: '/login/' } })
+    fetchMock.get(base + '/login/', '<html>completion</html>')
+    fetchMock.postOnce(info, { headers: { 'Set-Cookie': 'SESSION=completed-secret' }, body: ok({}) }, { overwriteRoutes: false })
+    const persist = jest.fn()
+    await login({}, undefined, false, persist)
+    expect(readLine).toHaveBeenCalledTimes(2)
+    const fields = new URLSearchParams(String(fetchMock.lastOptions(action)?.body))
+    expect(fields.get('username')).toBe('interactive-user')
+    expect(fields.get('password')).toBe('interactive-pass')
+  })
+
+  it('extracts form action only from the opening tag and scopes hidden fields', () => {
+    const html = '<form id="kc-form-login" action="/auth/realms/login-action"><button action="/unexpected/nested">Submit</button><input type="hidden" name="scope-field" value="scoped-val"/></form><input type="hidden" name="outside" value="outside-val"/>'
+    const form = readLoginForm(html, base)
+    expect(form?.action).toBe(base + '/auth/realms/login-action')
+    expect(form?.fields).toEqual({ 'scope-field': 'scoped-val' })
+  })
+
+  it('attaches X-Login-Script-Request header exclusively to loginInfo requests', async () => {
+    fetchMock.post(info, ok({}))
+    fetchMock.post(base + '/mobileService/3.0/json/getMyFinancesPage', ok({}))
+    fetchMock.post(tape, ok({}))
+
+    await requestJson(saved, 'loginInfo')
+    expect(fetchMock.lastOptions(info)?.headers).toMatchObject({
+      'X-Login-Script-Request': 'true'
+    })
+
+    await requestJson(saved, 'getMyFinancesPage')
+    expect(fetchMock.lastOptions(base + '/mobileService/3.0/json/getMyFinancesPage')?.headers).not.toHaveProperty('X-Login-Script-Request')
+
+    await requestJson(saved, 'pfmTape')
+    expect(fetchMock.lastOptions(tape)?.headers).not.toHaveProperty('X-Login-Script-Request')
+  })
+
+  it('keeps trusted-device cookies and drops stale JSESSIONID on /mobileService when reaching the credential form', async () => {
     const staleAction = action + '&attempt=stale'
     const staleSaved = {
       cookieHeader: '',
       cookies: [
         { name: 'SRWSID', value: 'stale-mobile', path: '/', expires: null },
+        { name: 'JSESSIONID', value: 'stale-java-session', path: '/mobileService', expires: null },
+        { name: 'JSESSIONID', value: 'sso-java-session', path: '/auth-clustered/realms/mdse_multi/', expires: null },
         { name: 'instanceId', value: 'trusted-device', path: '/', expires: null },
         { name: 'session-cookie', value: 'trusted-session', path: '/', expires: null },
         { name: 'KEYCLOAK_SESSION', value: 'stale-sso', path: '/auth-clustered/realms/mdse_multi/', expires: null }
@@ -90,16 +134,20 @@ describe('[model] authorization lifecycle', () => {
     })
     fetchMock.post(staleAction, { status: 302, headers: { Location: '/priv/home' } })
     fetchMock.get(base + '/priv/home', '<html>completion</html>')
-    fetchMock.postOnce(info, ok({}), { overwriteRoutes: false })
+    fetchMock.postOnce(info, { headers: { 'Set-Cookie': 'SESSION=completed-secret' }, body: ok({}) }, { overwriteRoutes: false })
 
-    await login(preferences, staleSaved, false, jest.fn())
+    const persist = jest.fn()
+    await login(preferences, staleSaved, false, persist)
 
     expect(fetchMock.calls(staleAction)).toHaveLength(1)
     expect(fetchMock.calls(info)).toHaveLength(2)
     expect(fetchMock.lastOptions(staleAction)?.headers).toMatchObject({
-      Cookie: 'SRWSID=stale-mobile; instanceId=trusted-device; session-cookie=trusted-session'
+      Cookie: 'JSESSIONID=sso-java-session; SRWSID=stale-mobile; instanceId=trusted-device; session-cookie=trusted-session'
     })
     expect(String(fetchMock.lastOptions(staleAction)?.headers)).not.toContain('stale-sso')
+    expect(String(fetchMock.lastOptions(staleAction)?.headers)).not.toContain('stale-java-session')
+    expect(String(fetchMock.lastOptions(info)?.headers)).not.toContain('stale-java-session')
+    expect(persist).toHaveBeenCalledTimes(1)
   })
 
   it('rejects an external authorization destination before sending cookies', async () => {
