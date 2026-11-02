@@ -6,21 +6,10 @@
         inputType="textEmailAddress"
         title="Email Q-Pay"
         dialogTitle="Email Q-Pay"
-        dialogMessage="Введите email, который используется для входа на pay.quantera.pro."
+        dialogMessage="Введите email для входа на pay.quantera.pro. При первом подключении потребуется код из письма, затем PIN-код или код двухфакторной защиты, если они включены."
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="||{@s}"
-    />
-    <EditTextPreference
-        key="password"
-        obligatory="true"
-        inputType="textPassword"
-        title="Пароль Q-Pay"
-        dialogTitle="Пароль Q-Pay"
-        dialogMessage="Введите пароль от pay.quantera.pro."
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="||********"
     />
     <EditTextPreference
         key="startDate"

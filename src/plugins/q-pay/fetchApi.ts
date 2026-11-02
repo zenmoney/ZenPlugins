@@ -1,225 +1,202 @@
-import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
-import { InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
-import { generateRandomString } from '../../common/utils'
-import {
-  normalizeEmail,
-  Preferences,
-  QPayCard,
-  QPayCardBalance,
-  QPayCardTransaction,
-  QPayUser,
-  QPayWalletTransaction,
-  QPAY_BASE_URL,
-  QPAY_ENDPOINTS,
-  Session
-} from './models'
+import { fetchJson } from '../../common/network'
+import get, { getOptArray, getOptBoolean, getOptNumber, getOptString } from '../../types/get'
+import { Authorization, Device, Page, QPAY_BASE_URL, QPAY_ENDPOINTS, Session } from './models'
 
-const COMMON_HEADERS = {
-  Accept: 'application/json, text/plain, */*',
-  Origin: 'https://pay.quantera.pro',
-  Referer: 'https://pay.quantera.pro/',
-  locale: 'ru'
-}
-
-const EMAIL_REGEXP = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PASSWORD_REGEXP = /^[\w!@#$%^&*()\-_+.]{8,}$/
-const PAGE_SIZE = 100
-
-const LOG_REDACTION: Pick<FetchOptions, 'sanitizeRequestLog' | 'sanitizeResponseLog'> = {
-  // Login uses a serialized multipart body, so redact it as one opaque value. The same
-  // policy also protects the Bearer header on subsequent requests.
-  sanitizeRequestLog: { headers: { Authorization: true }, body: true },
-  // /users/self contains personal data and wallet addresses; auth responses contain two
-  // tokens. Redacting every response body is the smallest policy that covers both.
-  sanitizeResponseLog: { body: true }
-}
-
-/** Internal control-flow error used to trigger one credential re-login. */
+// Current client: auth-B0BQPmou.js and http-client-bgZ5OYD6.js, 2026-11-02.
+// Only a recognized UNAUTHORIZED response triggers the authentication workflow.
 export class SessionExpiredError extends Error {
   constructor () {
-    super('Q-Pay session expired')
+    super('Q-Pay authorization was rejected')
     this.name = 'SessionExpiredError'
   }
 }
 
-function multipartBody (fields: Record<string, string>): { body: string, boundary: string } {
-  const boundary = `----ZenMoneyFormBoundary${generateRandomString(24)}`
-  const body = Object.entries(fields)
-    .map(([name, value]) =>
-      `--${boundary}\r\n` +
-      `Content-Disposition: form-data; name="${name}"\r\n\r\n` +
-      `${value}\r\n`
-    )
-    .join('') + `--${boundary}--\r\n`
-  return { body, boundary }
+export class QPayApiError extends Error {
+  constructor (readonly status: number, readonly code: string | undefined) {
+    super(`Q-Pay request failed (HTTP ${status}, ${code != null && /^[A-Z_0-9]+$/.test(code) ? code : 'UNKNOWN'})`)
+    this.name = 'QPayApiError'
+  }
 }
 
-async function request (
-  path: string,
-  session?: Session,
-  options: FetchOptions = {},
-  isLogin = false
-): Promise<FetchResponse> {
+const RESPONSE_MASK = {
+  access_token: true,
+  refresh_token: true,
+  user_id: true,
+  delivery_target: true,
+  biometric_credential_id: true,
+  data: {
+    assets: { networks: { address: true, memo_tag: true } },
+    items: {
+      cardholder_name: true,
+      owner_display_name: true,
+      merchant_avatar_url: true
+    },
+    item: {
+      details: {
+        address: true,
+        counterparty: { display_name: true, avatar_url: true, public_uid: true, user_id: true, username: true }
+      }
+    }
+  }
+}
+
+async function request (path: string, session?: Session, body?: unknown): Promise<unknown> {
   const response = await fetchJson(QPAY_BASE_URL + path, {
-    ...options,
-    ...LOG_REDACTION,
+    method: body === undefined ? 'GET' : 'POST',
+    ...(body === undefined ? {} : { body }),
     headers: {
-      ...COMMON_HEADERS,
-      ...(options.headers as Record<string, string> | undefined),
-      ...(session != null ? { Authorization: `Bearer ${session.accessToken}` } : {})
+      Origin: 'https://pay.quantera.pro',
+      Referer: 'https://pay.quantera.pro/',
+      'Accept-Language': 'ru',
+      ...(session == null
+        ? {}
+        : {
+            Authorization: `Bearer ${session.accessToken}`,
+            'X-Device-Fingerprint': session.device.fingerprint
+          })
+    },
+    sanitizeRequestLog: {
+      headers: { Authorization: true, Cookie: true, 'X-Device-Fingerprint': true },
+      body: true
+    },
+    sanitizeResponseLog: {
+      headers: { Authorization: true, Cookie: true, 'Set-Cookie': true },
+      body: RESPONSE_MASK
     }
   })
-
-  if (response.status === 429 || response.status >= 500) {
-    throw new TemporaryError(`Q-Pay временно недоступен (HTTP ${response.status})`)
-  }
-  if (response.status === 401 || response.status === 403) {
-    if (isLogin) {
-      throw new InvalidLoginOrPasswordError('Q-Pay: неверный email или пароль')
-    }
-    throw new SessionExpiredError()
-  }
-  if (response.status >= 400) {
-    if (isLogin) {
-      throw new InvalidLoginOrPasswordError('Q-Pay: неверный email или пароль')
-    }
-    throw new TemporaryError(`Q-Pay вернул ошибку HTTP ${response.status} для ${path}`)
-  }
-  return response
+  const code = getOptString(response.body, 'error.code') ?? getOptString(response.body, 'code')
+  if (response.status === 401 && code === 'UNAUTHORIZED') throw new SessionExpiredError()
+  if (response.status < 200 || response.status >= 300) throw new QPayApiError(response.status, code)
+  return response.body
 }
 
-/** Authenticate with the same multipart contract as pay.quantera.pro. */
-export async function login (preferences: Preferences): Promise<Session> {
-  const email = normalizeEmail(preferences.email)
-  // Besides matching the web form, validation prevents CR/LF values from injecting a
-  // second multipart part into the serialized credential request.
-  if (!EMAIL_REGEXP.test(email) || !PASSWORD_REGEXP.test(preferences.password)) {
-    throw new InvalidLoginOrPasswordError('Q-Pay: проверьте email и пароль в настройках')
-  }
-  const { body, boundary } = multipartBody({
-    username: email,
-    password: preferences.password,
-    utm_last: '{}'
-  })
-  const response = await request(QPAY_ENDPOINTS.login, undefined, {
-    method: 'POST',
-    body,
-    // fetchJson normally serializes bodies as JSON. Multipart is already serialized.
-    stringify: (value: unknown) => value,
-    headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` }
-  }, true)
-  const data = response.body as { access_token?: unknown } | null | undefined
-  if (typeof data?.access_token !== 'string' || data.access_token === '') {
-    throw new InvalidLoginOrPasswordError('Q-Pay не вернул токен доступа')
-  }
-  return { email, accessToken: data.access_token }
+export async function resolveTenant (): Promise<string> {
+  const response = await request(QPAY_ENDPOINTS.config)
+  const tenantId = getOptString(response, 'tenant.id')
+  assert(tenantId != null && tenantId !== '', 'Q-Pay tenant identifier is missing')
+  return tenantId
 }
 
-/** Fetch the current user and their actually opened wallet networks. */
-export async function fetchCurrentUser (session: Session): Promise<QPayUser> {
-  const response = await request(QPAY_ENDPOINTS.currentUser, session)
-  const data = response.body as { wallets?: unknown } | null | undefined
-  const wallets = data?.wallets
-  if (!Array.isArray(wallets)) {
-    throw new TemporaryError('Q-Pay вернул неожиданный список кошельков')
+function authorization (response: unknown): Authorization {
+  const accessToken = getOptString(response, 'access_token')
+  const refreshToken = getOptString(response, 'refresh_token')
+  const expiresIn = getOptNumber(response, 'expires_in')
+  const stage = getOptString(response, 'auth_stage')
+  const methods = getOptArray(response, 'next_step.available_methods') ?? []
+  assert(accessToken != null && accessToken !== '' && refreshToken != null && refreshToken !== '',
+    'Q-Pay authorization tokens are missing')
+  assert(expiresIn != null && Number.isFinite(expiresIn) && expiresIn > 0, 'Invalid Q-Pay authorization lifetime')
+  assert(stage === 'active' || stage === 'pending_mfa' || stage === 'pending_pin',
+    'Unsupported Q-Pay authorization stage', { stage })
+  assert(methods.every(method => typeof method === 'string'), 'Invalid Q-Pay MFA methods')
+  assert(getOptBoolean(response, 'biometrics_required') !== true, 'Q-Pay requires unsupported biometric authentication')
+  return {
+    accessToken,
+    refreshToken,
+    expiresAt: Date.now() + expiresIn * 1000,
+    stage,
+    methods: methods as string[],
+    pinReset: getOptBoolean(response, 'next_step.pin_reset') === true
   }
-  return { wallets: wallets as QPayUser['wallets'] }
 }
 
-/** Fetch all card records; lifecycle filtering is applied separately. */
-export async function fetchCards (session: Session): Promise<QPayCard[]> {
-  const response = await request(QPAY_ENDPOINTS.cards, session)
-  const data = response.body as { results?: unknown } | null | undefined
-  const results = data?.results
-  if (!Array.isArray(results)) {
-    throw new TemporaryError('Q-Pay вернул неожиданный список карт')
-  }
-  return results as QPayCard[]
+export async function sendEmailCode (tenantId: string, email: string): Promise<void> {
+  const response = await request(QPAY_ENDPOINTS.sendEmail, undefined, { tenant_id: tenantId, email })
+  assert(getOptNumber(response, 'expires_in') != null, 'Invalid Q-Pay email challenge response')
 }
 
-/** Fetch the available balance for one active card. */
-export async function fetchCardBalance (session: Session, cardId: string): Promise<QPayCardBalance> {
-  const response = await request(`${QPAY_ENDPOINTS.cards}/${encodeURIComponent(cardId)}/balance`, session)
-  if (response.body == null || typeof response.body !== 'object') {
-    throw new TemporaryError('Q-Pay вернул неожиданный баланс карты')
-  }
-  return response.body as QPayCardBalance
+export async function verifyEmailCode (tenantId: string, email: string, code: string, device: Device): Promise<Authorization> {
+  return authorization(await request(QPAY_ENDPOINTS.verifyEmail, undefined, {
+    tenant_id: tenantId,
+    email,
+    code,
+    device_id: device.id,
+    device_fingerprint: device.fingerprint
+  }))
 }
 
-function transactionDate (value: string | number | null | undefined): Date | null {
-  if (typeof value === 'number') {
-    const date = new Date(value * 1000)
-    return Number.isNaN(date.getTime()) ? null : date
-  }
-  if (typeof value === 'string' && value !== '') {
-    const date = new Date(value)
-    return Number.isNaN(date.getTime()) ? null : date
-  }
-  return null
+export async function verifyPin (session: Session, pin: string): Promise<Authorization> {
+  return authorization(await request(QPAY_ENDPOINTS.pin, session, { pin }))
 }
 
-async function fetchTransactionPages<T extends { created_at?: string | number | null }> (
-  session: Session,
-  path: string,
-  fromDate: Date,
-  toDate: Date
-): Promise<T[]> {
-  const result: T[] = []
-  let offset = 0
+export async function sendMfaCode (session: Session, method: string): Promise<void> {
+  await request(QPAY_ENDPOINTS.sendMfa, session, { method })
+}
 
-  while (true) {
-    const separator = path.includes('?') ? '&' : '?'
-    const response = await request(`${path}${separator}limit=${PAGE_SIZE}&offset=${offset}`, session)
-    const body = response.body as { items?: unknown, total?: unknown } | null | undefined
-    const responseItems = body?.items
-    if (!Array.isArray(responseItems)) {
-      throw new TemporaryError('Q-Pay вернул неожиданную историю операций')
-    }
+export async function verifyMfaCode (session: Session, method: string, code: string): Promise<Authorization> {
+  return authorization(await request(QPAY_ENDPOINTS.mfa, session, { method, code }))
+}
 
-    const items = responseItems as T[]
-    result.push(...items.filter(item => {
-      const date = transactionDate(item.created_at)
-      return date != null && date >= fromDate && date <= toDate
-    }))
-
-    offset += items.length
-    const responseTotal = body?.total
-    const total = typeof responseTotal === 'number' && Number.isFinite(responseTotal)
-      ? responseTotal
-      : null
-    if (items.length === 0 || (total != null ? offset >= total : items.length < PAGE_SIZE)) {
-      break
-    }
+export async function refreshAuthorization (session: Session): Promise<Authorization> {
+  let response: unknown
+  try {
+    response = await request(QPAY_ENDPOINTS.refresh, undefined, {
+      refresh_token: session.refreshToken,
+      device_fingerprint: session.device.fingerprint
+    })
+  } catch (error) {
+    // The current application treats a 401/403 refresh rejection as terminal for
+    // this session. Other HTTP/transport failures preserve it and remain reportable.
+    if (error instanceof QPayApiError && (error.status === 401 || error.status === 403)) throw new SessionExpiredError()
+    throw error
   }
-
+  const result = authorization(response)
+  if (result.stage !== 'active') throw new SessionExpiredError()
   return result
 }
 
-/** Fetch wallet operations in the requested ZenMoney date interval. */
-export async function fetchWalletTransactions (
-  session: Session,
-  fromDate: Date,
-  toDate: Date
-): Promise<QPayWalletTransaction[]> {
-  return await fetchTransactionPages<QPayWalletTransaction>(
-    session,
-    QPAY_ENDPOINTS.transactions,
-    fromDate,
-    toDate
-  )
+function data (response: unknown): unknown {
+  assert(response != null && typeof response === 'object' && 'data' in response, 'Q-Pay response has no data envelope')
+  // Degraded flags are normally an object; callers must not accept stale/partial
+  // financial data when the server explicitly reports an unavailable source.
+  const flags = get(response, 'meta.degraded')
+  assert(flags == null || (typeof flags === 'object' && !Array.isArray(flags) &&
+    Object.values(flags).every(value => value === false)), 'Q-Pay reports degraded financial data')
+  return get(response, 'data')
 }
 
-/** Fetch operations for one active Q-Pay card in the requested date interval. */
-export async function fetchCardTransactions (
-  session: Session,
-  cardId: string,
-  fromDate: Date,
-  toDate: Date
-): Promise<QPayCardTransaction[]> {
-  return await fetchTransactionPages<QPayCardTransaction>(
-    session,
-    `${QPAY_ENDPOINTS.cards}/${encodeURIComponent(cardId)}/transactions`,
-    fromDate,
-    toDate
-  )
+export async function fetchWallet (session: Session): Promise<unknown> {
+  return data(await request(QPAY_ENDPOINTS.wallet, session))
+}
+
+export async function fetchCards (session: Session): Promise<unknown[]> {
+  const response = data(await request(QPAY_ENDPOINTS.cards, session))
+  const cards = getOptArray(response, 'items')
+  assert(cards != null, 'Q-Pay card list is missing')
+  return cards
+}
+
+export async function fetchCardBalance (session: Session, cardId: string): Promise<unknown> {
+  return data(await request(`${QPAY_ENDPOINTS.cards}/${encodeURIComponent(cardId)}/balance`, session))
+}
+
+function page (response: unknown): Page {
+  const value = data(response)
+  const items = getOptArray(value, 'items')
+  const cursor = get(value, 'next_cursor')
+  assert(items != null && (cursor === null || typeof cursor === 'string'), 'Invalid Q-Pay history page')
+  assert(cursor !== '', 'Empty Q-Pay history cursor')
+  return { items, nextCursor: cursor }
+}
+
+export async function fetchOperationsPage (session: Session, fromDate: Date, toDate: Date | null | undefined, cursor?: string): Promise<Page> {
+  const params = [
+    'limit=50',
+    `from=${encodeURIComponent(fromDate.toISOString())}`,
+    ...(toDate == null ? [] : [`to=${encodeURIComponent(toDate.toISOString())}`]),
+    ...(cursor == null ? [] : [`cursor=${encodeURIComponent(cursor)}`])
+  ]
+  return page(await request(`${QPAY_ENDPOINTS.operations}?${params.join('&')}`, session))
+}
+
+export async function fetchOperation (session: Session, id: string): Promise<unknown> {
+  const response = data(await request(`${QPAY_ENDPOINTS.operations}/${encodeURIComponent(id)}`, session))
+  const item = get(response, 'item')
+  assert(item != null && typeof item === 'object' && !Array.isArray(item), 'Q-Pay operation detail is missing')
+  return item
+}
+
+export async function fetchCardTransactionsPage (session: Session, cardId: string, cursor?: string): Promise<Page> {
+  const query = `limit=50${cursor == null ? '' : `&cursor=${encodeURIComponent(cursor)}`}`
+  return page(await request(`${QPAY_ENDPOINTS.cards}/${encodeURIComponent(cardId)}/transactions?${query}`, session))
 }

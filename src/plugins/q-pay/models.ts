@@ -1,114 +1,76 @@
-/** User-configured Q-Pay credentials. */
+import type { Account } from '../../types/zenmoney'
+import { getOptArray, getOptBoolean, getOptNumber, getOptString } from '../../types/get'
+
+/** The current application authenticates by email code, MFA and PIN. */
 export interface Preferences {
   email: string
-  password: string
   // Required by the shared ZenPlugins date adapter and exposed in preferences.xml.
   startDate?: string
 }
 
-/** Bearer session persisted between synchronizations. */
-export interface Session {
-  email: string
-  accessToken: string
+export interface Device {
+  id: string
+  fingerprint: string
 }
 
-/** Return a normalized email for authentication and persisted-session matching. */
+export interface Authorization {
+  accessToken: string
+  refreshToken: string
+  expiresAt: number
+  stage: 'active' | 'pending_mfa' | 'pending_pin'
+  methods: string[]
+  /** Whether the server offers Forgot PIN recovery for a pending PIN stage. */
+  pinReset: boolean
+}
+
+/** Versioned authorization; old password-app tokens cannot authorize the new API. */
+export interface Session extends Authorization {
+  version: 2
+  email: string
+  tenantId: string
+  device: Device
+}
+
+export type QPayFetchParams = { kind: 'wallet' } | { kind: 'card', cardId: string }
+
+export type QPayAccountPlan =
+  { accounts: Account[], fetchParams: { kind: 'wallet' } } |
+  { account: Account, fetchParams: { kind: 'card', cardId: string } }
+
+export interface Page {
+  items: unknown[]
+  nextCursor: string | null
+}
+
+/** Normalize credentials only when a new email challenge is necessary. */
 export function normalizeEmail (email: string): string {
-  return email.trim()
+  return typeof email === 'string' ? email.trim() : ''
 }
 
 /** Validate untrusted session data loaded from ZenMoney storage. */
-export function isSessionFor (value: unknown, email: string): value is Session {
-  if (value == null || typeof value !== 'object') {
-    return false
-  }
-  const session = value as Partial<Session>
-  return typeof session.email === 'string' &&
-    normalizeEmail(session.email).toLowerCase() === normalizeEmail(email).toLowerCase() &&
-    typeof session.accessToken === 'string' &&
-    session.accessToken !== ''
+export function isSession (value: unknown): value is Session {
+  const stage = getOptString(value, 'stage')
+  const methods = getOptArray(value, 'methods')
+  return getOptNumber(value, 'version') === 2 &&
+    ['email', 'tenantId', 'accessToken', 'refreshToken', 'device.id', 'device.fingerprint']
+      .every(key => (getOptString(value, key)?.length ?? 0) > 0) &&
+    Number.isFinite(getOptNumber(value, 'expiresAt')) &&
+    (stage === 'active' || stage === 'pending_mfa' || stage === 'pending_pin') &&
+    methods != null && methods.every(method => typeof method === 'string') &&
+    getOptBoolean(value, 'pinReset') != null
 }
 
-export interface QPayWalletBalance {
-  asset?: string | null
-  value?: string | number | null
-}
-
-export interface QPayWallet {
-  address?: string | null
-  network?: string | null
-  balances?: QPayWalletBalance[] | null
-}
-
-export interface QPayUser {
-  wallets: QPayWallet[]
-}
-
-export interface QPayCard {
-  id?: string | null
-  status?: string | null
-  is_revoked?: boolean | null
-}
-
-export interface QPayCardBalance {
-  available_balance?: string | number | null
-  card_currency?: string | null
-}
-
-export interface QPayCardWithBalance {
-  card: QPayCard
-  balance: QPayCardBalance
-}
-
-export interface QPayWalletTransaction {
-  id?: string | null
-  amount?: string | number | null
-  full_amount?: string | number | null
-  system_fee?: string | number | null
-  asset?: string | null
-  network?: string | null
-  status?: string | null
-  type?: string | null
-  created_at?: string | number | null
-  completed_at?: string | number | null
-  in_wallet_address?: string | null
-  out_wallet_address?: string | null
-  transaction_hash?: string | null
-}
-
-export interface QPayCardMerchant {
-  name?: string | null
-  mcc?: string | number | null
-  city?: string | null
-  country?: string | null
-}
-
-export interface QPayCardTransaction {
-  id?: string | null
-  x_id?: string | null
-  amount?: string | number | null
-  fee?: string | number | null
-  currency?: string | null
-  original_amount?: string | number | null
-  original_currency?: string | null
-  status?: string | null
-  type?: string | null
-  lifecycle_stage?: string | null
-  created_at?: string | number | null
-  description?: string | null
-  merchant?: QPayCardMerchant | null
-}
-
-export interface QPayCardTransactions {
-  cardId: string
-  transactions: QPayCardTransaction[]
-}
-
-export const QPAY_BASE_URL = 'https://pay.quantera.pro/api'
+export const QPAY_BASE_URL = 'https://pay.quantera.pro/api/v1'
 
 export const QPAY_ENDPOINTS = {
-  login: '/v1/web/auth/login',
-  currentUser: '/v1/web/users/self',
-  cards: '/v1/miniapp/cards',
-  transactions: '/v1/miniapp/transactions'
+  config: '/configs/resolve?host=pay.quantera.pro',
+  sendEmail: '/auth/email-otp/send',
+  verifyEmail: '/auth/email-otp/verify',
+  pin: '/auth/login/pin',
+  sendMfa: '/auth/login/mfa/send',
+  mfa: '/auth/login/mfa',
+  refresh: '/auth/refresh',
+  wallet: '/wallet',
+  cards: '/cards',
+  operations: '/operations'
 }

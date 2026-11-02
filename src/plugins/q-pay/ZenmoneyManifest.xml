@@ -2,6 +2,6 @@
 <provider>
     <id>q-pay</id>
     <company>16202</company>
-    <description>Q-Pay (pay.quantera.pro) — синхронизация кошельков, активных карт и истории операций.</description>
+    <description>Q-Pay (pay.quantera.pro) — денежные кошельки по активам, карты и история операций. Вход по коду на email с сохранением сессии. Бонусные баллы не поддерживаются.</description>
     <codeRequired>false</codeRequired>
 </provider>
