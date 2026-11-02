@@ -1,13 +1,14 @@
 import _ from "lodash";
 import React from "react";
 import {accountRectangleColor, zenmoneyRedColor} from "./designSystem";
+import {formatAmount} from "./formatAmount";
 
 const calculateBalanceText = ({balance, creditLimit, available, instrument}) => {
     if (_.isNumber(balance)) {
-        return `${balance} ${instrument}`;
+        return `${formatAmount(balance, instrument)} ${instrument}`;
     }
     if (_.isNumber(creditLimit) && _.isNumber(available)) {
-        return `${(available - creditLimit).toFixed(2)} ${instrument}?`;
+        return `${formatAmount(available - creditLimit, instrument)} ${instrument}?`;
     }
     if (_.isNumber(creditLimit) && _.isNumber(available)) {
         return (

@@ -1,6 +1,7 @@
 import React from "react";
 import {BreakingPre} from "./BreakingPre";
 import {accountRectangleColor, border, zenmoneyGreenColor, zenmoneyRedColor} from "./designSystem";
+import {formatAmount} from "./formatAmount";
 
 const CommentLine = ({children}) => <div style={{fontSize: 9}}><BreakingPre>{children}</BreakingPre></div>;
 
@@ -10,8 +11,8 @@ const AccountAmount = ({account, amount, opAmount, opInstrument}) => (
     <div style={{clear: "both", overflow: "hidden"}}>
         <div style={{float: "left"}}>{account.title}</div>
         <div style={{float: "right", color: (opAmount || amount) > 0 ? zenmoneyGreenColor : zenmoneyRedColor}}>
-            {amount ? (amount > 0 ? "+" : "") + amount + " " + account.instrument : ""}
-            {opAmount ? " (" + (opAmount > 0 ? "+" : "") + opAmount + " " + opInstrument + ")" : ""}
+            {amount ? (amount > 0 ? "+" : "") + formatAmount(amount, account.instrument) + " " + account.instrument : ""}
+            {opAmount ? " (" + (opAmount > 0 ? "+" : "") + formatAmount(opAmount, opInstrument) + " " + opInstrument + ")" : ""}
         </div>
     </div>
 );
