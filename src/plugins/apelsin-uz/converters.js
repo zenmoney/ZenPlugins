@@ -432,7 +432,7 @@ export function convertAccountTransaction (account, rawTransaction) {
   for (const regexp of [
     /Взнос ср-в на СКС/
   ]) {
-    const match = rawTransaction.details.match(regexp)
+    const match = rawTransaction.details?.match(regexp)
     if (match) {
       transaction.groupKeys = [`${toISODateString(dateInTimezone(transaction.date, 300))}_${invoice.instrument}_${Math.abs(invoice.sum).toString()}`]
     }
@@ -452,7 +452,7 @@ function parsePayee (rawTransaction, transaction, invoice) {
     /согл заяв\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/,
     /от\s+(\b[A-Z]+\s[A-Z]+\s[A-Z]+\b)\s*/
   ]) {
-    const match = rawTransaction.details.match(pattern)
+    const match = rawTransaction.details?.match(pattern)
     if (match) {
       transaction.merchant = {
         country: null,
