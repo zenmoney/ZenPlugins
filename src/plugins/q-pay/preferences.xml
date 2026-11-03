@@ -18,7 +18,7 @@
         title="Начальная дата"
         defaultValue="2026-01-01T00:00:00.000Z"
         dialogTitle="Начальная дата"
-        dialogMessage="Операции Q-Pay будут загружены начиная с этой даты."
+        dialogMessage="Операции по картам Q-Pay будут загружены начиная с этой даты."
         positiveButtonText="ОК"
         negativeButtonText="Отмена"
         summary="|startDate|{@s}"

@@ -221,3 +221,30 @@ describe('[model] Q-Pay authentication lifecycle', () => {
     expect(load).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('Q-Pay card history interval', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { fetchHistory } = require('../api') as typeof import('../api')
+
+  it('includes both interval boundaries and keeps a null upper bound unbounded', async () => {
+    // Reduced from the selected complete card rows in converters.test.ts:
+    // current app 1.5.770, capture 2026-11-02. Only IDs/dates affect filtering.
+    const rows = [
+      { id: '00000000-0000-4000-8000-000000000010', authorized_at: '2025-12-30T07:40:26.721Z' },
+      { id: '00000000-0000-4000-8000-000000000013', authorized_at: '2025-12-28T04:12:28.633Z' },
+      { id: '00000000-0000-4000-8000-000000000020', authorized_at: '2025-12-20T07:29:44.400Z' }
+    ]
+    const client = { run: jest.fn().mockResolvedValue({ items: rows, nextCursor: null }) }
+    const params = { kind: 'card' as const, cardId: '00000000-0000-4000-8000-000000000003' }
+    const from = new Date('2025-12-28T04:12:28.633Z')
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(from.getTime())
+    try {
+      await expect(fetchHistory(client, params, from, from)).resolves.toEqual({
+        cards: [{ cardId: params.cardId, transactions: [rows[1]] }]
+      })
+      await expect(fetchHistory(client, params, from, null)).resolves.toEqual({
+        cards: [{ cardId: params.cardId, transactions: [rows[0], rows[1]] }]
+      })
+    } finally { clock.mockRestore() }
+  })
+})

@@ -31,10 +31,10 @@ export interface Session extends Authorization {
   device: Device
 }
 
-export type QPayFetchParams = { kind: 'wallet' } | { kind: 'card', cardId: string }
+export type QPayFetchParams = { kind: 'card', cardId: string }
 
 export type QPayAccountPlan =
-  { accounts: Account[], fetchParams: { kind: 'wallet' } } |
+  { accounts: Account[], fetchParams: null } |
   { account: Account, fetchParams: { kind: 'card', cardId: string } }
 
 export interface Page {
@@ -71,6 +71,5 @@ export const QPAY_ENDPOINTS = {
   mfa: '/auth/login/mfa',
   refresh: '/auth/refresh',
   wallet: '/wallet',
-  cards: '/cards',
-  operations: '/operations'
+  cards: '/cards'
 }

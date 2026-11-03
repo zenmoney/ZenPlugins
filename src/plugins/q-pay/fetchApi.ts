@@ -179,23 +179,6 @@ function page (response: unknown): Page {
   return { items, nextCursor: cursor }
 }
 
-export async function fetchOperationsPage (session: Session, fromDate: Date, toDate: Date | null | undefined, cursor?: string): Promise<Page> {
-  const params = [
-    'limit=50',
-    `from=${encodeURIComponent(fromDate.toISOString())}`,
-    ...(toDate == null ? [] : [`to=${encodeURIComponent(toDate.toISOString())}`]),
-    ...(cursor == null ? [] : [`cursor=${encodeURIComponent(cursor)}`])
-  ]
-  return page(await request(`${QPAY_ENDPOINTS.operations}?${params.join('&')}`, session))
-}
-
-export async function fetchOperation (session: Session, id: string): Promise<unknown> {
-  const response = data(await request(`${QPAY_ENDPOINTS.operations}/${encodeURIComponent(id)}`, session))
-  const item = get(response, 'item')
-  assert(item != null && typeof item === 'object' && !Array.isArray(item), 'Q-Pay operation detail is missing')
-  return item
-}
-
 export async function fetchCardTransactionsPage (session: Session, cardId: string, cursor?: string): Promise<Page> {
   const query = `limit=50${cursor == null ? '' : `&cursor=${encodeURIComponent(cursor)}`}`
   return page(await request(`${QPAY_ENDPOINTS.cards}/${encodeURIComponent(cardId)}/transactions?${query}`, session))

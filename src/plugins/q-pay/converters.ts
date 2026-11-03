@@ -8,7 +8,6 @@ export interface QPayAccountGraph {
 }
 
 export interface QPayHistory {
-  operations: Array<{ operation: unknown, detail: unknown }>
   cards: Array<{ cardId: string, transactions: unknown[] }>
 }
 
@@ -100,7 +99,8 @@ export function convertAccounts (graph: QPayAccountGraph): QPayAccountPlan[] {
       savings: false
     })
   }
-  const plans: QPayAccountPlan[] = wallets.length === 0 ? [] : [{ accounts: wallets, fetchParams: { kind: 'wallet' } }]
+  // Wallets expose current balances only; history comes from card transactions.
+  const plans: QPayAccountPlan[] = wallets.length === 0 ? [] : [{ accounts: wallets, fetchParams: null }]
   for (const { card, balance } of graph.cards) {
     const sourceId = requiredString(card, 'id')
     const id = cardId(sourceId)
@@ -146,46 +146,6 @@ function holdValue (status: string): boolean {
 
 function amountEqual (left: number, right: number): boolean {
   return Math.abs(left - right) <= 1e-8
-}
-
-function ledgerAmount (operation: unknown): number {
-  // amount is rounded for the feed; the exact native asset value is also supplied.
-  return Math.abs(optionalNumber(operation, 'amount_exact') ?? numberValue(operation, 'amount.amount'))
-}
-
-function ledgerComment (operation: unknown, detail: unknown): string | null {
-  const message = optionalString(detail, 'details.message')
-  if (message != null) return message
-  return ['crypto_deposit', 'card_recharge', 'card_topup'].includes(requiredString(operation, 'kind'))
-    ? null
-    : optionalString(operation, 'title')
-}
-
-function ledgerTransaction (operation: unknown, detail: unknown, accounts: Map<string, Account>): Transaction {
-  const asset = requiredString(operation, 'asset')
-  const account = accountFor(accounts, walletId(asset))
-  const direction = requiredString(operation, 'direction')
-  if (direction !== 'debit' && direction !== 'credit') throw new Error('Q-Pay operation has an unknown direction')
-  const sign = direction === 'credit' ? 1 : -1
-  const currency = normalizeInstrument(requiredString(operation, 'amount.currency'))
-  if (currency !== account.instrument) throw new Error('Q-Pay ledger amount is not in its wallet currency')
-  const rawFee = get(detail, 'fee_total') ?? get(detail, 'fee')
-  const feeAmount = optionalNumber(rawFee, 'amount') ?? optionalNumber(detail, 'fee_details.fee_total') ?? 0
-  // A nonzero ledger fee needs a captured gross/net contract before splitting it.
-  if (feeAmount !== 0) throw new Error('Q-Pay ledger fee accounting requires additional source evidence')
-  return {
-    hold: holdValue(requiredString(operation, 'status')),
-    date: dateValue(operation, 'occurred_at'),
-    movements: [{
-      id: `q-pay:wallet-tx:${requiredString(operation, 'id')}`,
-      account: { id: account.id },
-      sum: sign * ledgerAmount(operation),
-      fee: 0,
-      invoice: null
-    }],
-    merchant: null,
-    comment: ledgerComment(operation, detail)
-  }
 }
 
 const CARD_CREDITS = new Set(['topup', 'load', 'refund', 'reversal', 'chargeback', 'credit', 'deposit', 'card_recharge', 'card_topup'])
@@ -248,7 +208,7 @@ function cardTransaction (transaction: unknown, sourceCardId: string, accounts: 
     principal = billing != null && billingCurrency != null && normalizeInstrument(billingCurrency) === account.instrument
       ? Math.abs(billing)
       : currency === account.instrument ? rawAmount : null
-    // Legacy top-up fees are charged to the funding wallet, not the card credit.
+    // Top-up fee fields do not reduce the card's credited amount.
     if (sign < 0 && debitFee !== 0) throw new Error('Q-Pay card fees have no confirmed account-currency total')
   }
   const movement: Movement = {
@@ -270,54 +230,15 @@ function cardTransaction (transaction: unknown, sourceCardId: string, accounts: 
   }
 }
 
-interface CardEntry {
-  cardId: string
-  source: unknown
-  converted: Transaction
-}
-
-function fundingMatch (operation: unknown, entries: CardEntry[], used: Set<CardEntry>): CardEntry | null {
-  if (!['card_recharge', 'card_topup'].includes(requiredString(operation, 'kind'))) return null
-  const target = optionalString(operation, 'card_id')
-  if (target == null) return null
-  const date = dateValue(operation, 'occurred_at').getTime()
-  const amount = ledgerAmount(operation)
-  const asset = requiredString(operation, 'asset')
-  const candidates = entries.filter(entry => !used.has(entry) && entry.cardId === target &&
-    ['topup', 'load', 'deposit'].includes(requiredString(entry.source, 'type').toLowerCase()) &&
-    optionalString(entry.source, 'wallet_asset') === asset &&
-    amountEqual(optionalNumber(entry.source, 'amount_in_wallet') ?? NaN, amount) &&
-    entry.converted.hold === holdValue(requiredString(operation, 'status')) &&
-    Math.abs(entry.converted.date.getTime() - date) <= 10 * 60 * 1000)
-  candidates.sort((left, right) => Math.abs(left.converted.date.getTime() - date) - Math.abs(right.converted.date.getTime() - date))
-  return candidates[0] ?? null
-}
-
-/** Reconcile actual wallet debits and card credits without inventing a missing side. */
+/** Import only card transactions, preserving their actual amounts and fees. */
 export function convertTransactions (graph: QPayAccountGraph, history: QPayHistory): Transaction[] {
   const accounts = accountMap(graph)
-  const entries: CardEntry[] = []
+  const result: Transaction[] = []
   for (const group of history.cards) {
     for (const source of group.transactions) {
       const converted = cardTransaction(source, group.cardId, accounts)
-      if (converted != null) entries.push({ cardId: group.cardId, source, converted })
+      if (converted != null) result.push(converted)
     }
   }
-  const result: Transaction[] = []
-  const used = new Set<CardEntry>()
-  for (const { operation, detail } of history.operations) {
-    const converted = ledgerTransaction(operation, detail, accounts)
-    const match = fundingMatch(operation, entries, used)
-    if (match != null && converted.movements[0].sum != null && converted.movements[0].sum < 0) {
-      used.add(match)
-      result.push({
-        ...converted,
-        movements: [converted.movements[0], match.converted.movements[0]],
-        merchant: null,
-        comment: optionalString(detail, 'details.message')
-      })
-    } else result.push(converted)
-  }
-  result.push(...entries.filter(entry => !used.has(entry)).map(entry => entry.converted))
   return result.sort((left, right) => left.date.getTime() - right.date.getTime())
 }

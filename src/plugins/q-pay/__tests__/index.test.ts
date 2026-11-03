@@ -25,14 +25,15 @@ describe('[model] Q-Pay entrypoint', () => {
   const accountA = { id: 'model-a', type: AccountType.checking, title: 'Model A', instrument: 'USD', syncIds: ['model-a'] }
   const accountB = { id: 'model-b', type: AccountType.checking, title: 'Model B', instrument: 'USD', syncIds: ['model-b'] }
   const accountC = { id: 'model-c', type: AccountType.ccard, title: 'Model C', instrument: 'USD', syncIds: ['model-c'] }
+  const accountD = { id: 'model-d', type: AccountType.ccard, title: 'Model D', instrument: 'USD', syncIds: ['model-d'] }
 
   beforeEach(() => {
     jest.clearAllMocks()
     global.ZenMoney = { getData: jest.fn(), setData, saveData, isAccountSkipped } as unknown as typeof ZenMoney
     mockCreateClient.mockResolvedValue(client)
     mockFetchGraph.mockResolvedValue({})
-    mockFetchHistory.mockResolvedValue({ operations: [], cards: [] })
-    mockConvertAccounts.mockReturnValue([{ accounts: [accountA], fetchParams: { kind: 'wallet' } }])
+    mockFetchHistory.mockResolvedValue({ cards: [] })
+    mockConvertAccounts.mockReturnValue([{ accounts: [accountA], fetchParams: null }])
     mockConvertTransactions.mockReturnValue([])
     isAccountSkipped.mockReturnValue(false)
   })
@@ -65,30 +66,33 @@ describe('[model] Q-Pay entrypoint', () => {
     expect(ZenMoney.locale).toBe('ru')
   })
 
-  it('executes a shared plan once, skips selected histories and retains all discovered accounts', async () => {
+  it('loads only selected card histories and retains balance-only wallets without loading their operations', async () => {
     const included: Transaction = {
       date: new Date('2026-01-02T00:00:00Z'),
       hold: false,
-      movements: [{ id: 'model-included', account: { id: 'model-a' }, sum: 5, fee: 0, invoice: null }],
+      movements: [{ id: 'model-included', account: { id: 'model-c' }, sum: 5, fee: 0, invoice: null }],
       merchant: null,
       comment: null
     }
     const skipped: Transaction = {
       date: new Date('2026-01-02T00:00:00Z'),
       hold: false,
-      movements: [{ id: 'model-skipped', account: { id: 'model-b' }, sum: 5, fee: 0, invoice: null }],
+      movements: [{ id: 'model-skipped', account: { id: 'model-d' }, sum: 5, fee: 0, invoice: null }],
       merchant: null,
       comment: null
     }
     mockConvertAccounts.mockReturnValue([
-      { accounts: [accountA, accountB], fetchParams: { kind: 'wallet' } },
-      { account: accountC, fetchParams: { kind: 'card', cardId: 'model-card' } }
+      { accounts: [accountA, accountB], fetchParams: null },
+      { account: accountC, fetchParams: { kind: 'card', cardId: 'model-card' } },
+      { account: accountD, fetchParams: { kind: 'card', cardId: 'model-skipped-card' } }
     ])
-    isAccountSkipped.mockImplementation((id: string) => id !== 'model-a')
+    isAccountSkipped.mockImplementation((id: string) => id === 'model-d')
+    mockFetchHistory.mockResolvedValue({ cards: [{ cardId: 'model-card', transactions: [] }] })
     mockConvertTransactions.mockReturnValue([included, skipped])
-    await expect(scrape(args)).resolves.toEqual({ accounts: [accountA, accountB, accountC], transactions: [included] })
+    await expect(scrape(args)).resolves.toEqual({ accounts: [accountA, accountB, accountC, accountD], transactions: [included] })
     expect(mockFetchHistory).toHaveBeenCalledTimes(1)
-    expect(mockFetchHistory).toHaveBeenCalledWith(client, { kind: 'wallet' }, args.fromDate, undefined)
+    expect(mockFetchHistory).toHaveBeenCalledWith(client, { kind: 'card', cardId: 'model-card' }, args.fromDate, undefined)
+    expect(mockConvertTransactions).toHaveBeenCalledWith({}, { cards: [{ cardId: 'model-card', transactions: [] }] })
   })
 
   it('rejects an empty account result as an ordinary reportable failure', async () => {

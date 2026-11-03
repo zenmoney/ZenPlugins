@@ -3,8 +3,8 @@ import { InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesErr
 import { getOptString } from '../../types/get'
 import type { QPayAccountGraph, QPayHistory } from './converters'
 import {
-  fetchCardBalance, fetchCards, fetchCardTransactionsPage, fetchOperation,
-  fetchOperationsPage, fetchWallet, QPayApiError, refreshAuthorization,
+  fetchCardBalance, fetchCards, fetchCardTransactionsPage,
+  fetchWallet, QPayApiError, refreshAuthorization,
   resolveTenant, sendEmailCode, sendMfaCode, SessionExpiredError,
   verifyEmailCode, verifyMfaCode, verifyPin
 } from './fetchApi'
@@ -200,21 +200,11 @@ export async function fetchHistory (
   fromDate: Date,
   toDate?: Date | null
 ): Promise<QPayHistory> {
-  const history: QPayHistory = { operations: [], cards: [] }
-  if (fetchParams.kind === 'wallet') {
-    const operations = await collectPages(async cursor => await client.run(async session => await fetchOperationsPage(session, fromDate, toDate, cursor)))
-    for (const operation of operations) {
-      if (!withinInterval(operation, 'occurred_at', fromDate, toDate)) continue
-      const id = getOptString(operation, 'id')
-      assert(id != null, 'Q-Pay operation identifier is missing')
-      history.operations.push({ operation, detail: await client.run(async session => await fetchOperation(session, id)) })
-    }
-  } else {
-    const transactions = await collectPages(async cursor => await client.run(async session => await fetchCardTransactionsPage(session, fetchParams.cardId, cursor)))
-    history.cards.push({
+  const transactions = await collectPages(async cursor => await client.run(async session => await fetchCardTransactionsPage(session, fetchParams.cardId, cursor)))
+  return {
+    cards: [{
       cardId: fetchParams.cardId,
       transactions: transactions.filter(item => withinInterval(item, 'authorized_at', fromDate, toDate))
-    })
+    }]
   }
-  return history
 }

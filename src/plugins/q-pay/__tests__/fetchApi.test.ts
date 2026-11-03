@@ -1,6 +1,6 @@
 import fetchMock from 'fetch-mock'
 import { ZPAPIError } from '../../../errors'
-import { fetchCards, fetchOperationsPage, fetchWallet, refreshAuthorization, SessionExpiredError, verifyEmailCode } from '../fetchApi'
+import { fetchCards, fetchCardTransactionsPage, fetchWallet, refreshAuthorization, SessionExpiredError, verifyEmailCode } from '../fetchApi'
 import { Session } from '../models'
 
 const session: Session = {
@@ -157,13 +157,12 @@ describe('Q-Pay current HTTP transport', () => {
     expect(error).not.toBeInstanceOf(ZPAPIError)
   })
 
-  it('sends an explicit lower bound and leaves a null upper bound unbounded', async () => {
-    // Same public rejection as above; no synthetic history response is needed
-    // to verify interval serialization and omission of the legacy offset API.
-    fetchMock.get('https://pay.quantera.pro/api/v1/operations?limit=50&from=2026-01-01T00%3A00%3A00.000Z', {
-      status: 401, body: { error: { code: 'UNAUTHORIZED', message: 'MISSING_TOKEN' } }
-    })
-    await expect(fetchOperationsPage(session, new Date('2026-01-01T00:00:00Z'), null)).rejects.toBeInstanceOf(SessionExpiredError)
+  it('[model] requests card transactions with the supplied continuation cursor', async () => {
+    // Request shape follows the current official client's card transaction API.
+    // A transport failure checks serialization without inventing provider records.
+    const failure = new Error('model history transport failure')
+    fetchMock.get('https://pay.quantera.pro/api/v1/cards/00000000-0000-4000-8000-000000000003/transactions?limit=50&cursor=model-next', { throws: failure })
+    await expect(fetchCardTransactionsPage(session, '00000000-0000-4000-8000-000000000003', 'model-next')).rejects.toBe(failure)
     expect(fetchMock.done()).toBe(true)
   })
 })

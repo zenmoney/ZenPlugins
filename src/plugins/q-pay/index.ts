@@ -21,12 +21,11 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const accounts = plans.flatMap(plan => 'accounts' in plan ? plan.accounts : [plan.account])
   assert(accounts.length > 0, 'Q-Pay returned no supported accounts')
   assert(new Set(accounts.map(account => account.id)).size === accounts.length, 'Q-Pay returned duplicate account identifiers')
-  const history: QPayHistory = { operations: [], cards: [] }
+  const history: QPayHistory = { cards: [] }
   for (const plan of plans) {
     const selected = 'accounts' in plan ? plan.accounts : [plan.account]
-    if (selected.every(account => ZenMoney.isAccountSkipped(account.id))) continue
+    if (plan.fetchParams == null || selected.every(account => ZenMoney.isAccountSkipped(account.id))) continue
     const result = await fetchHistory(client, plan.fetchParams, fromDate, toDate)
-    history.operations.push(...result.operations)
     history.cards.push(...result.cards)
   }
   const transactions = convertTransactions(graph, history).filter(transaction => transaction.movements.some(movement =>
