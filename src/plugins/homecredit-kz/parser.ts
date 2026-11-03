@@ -36,6 +36,7 @@ const LOCALE: Record<HomeCreditLocale, LocalePatterns> = {
       'Сатып алулар мен шығындар',
       'Толықтыру',
       'Шығыс аударымдар',
+      'Кредит бойынша төлемдер',
       'Refund',
       'Қайтару'
     ]),
