@@ -92,6 +92,84 @@ describe('ensureSyncIDsAreUniqueButSanitized', () => {
     ]
     expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toEqual(expected)
   })
+
+  describe('[model] account identifier masking collisions', () => {
+    it('reveals differing digits from the left until each account is unique in its instrument, regardless of order', () => {
+      // Model of mail_inbound 194553: distinct source IDs collide after the ordinary mask.
+      const accounts = [
+        { instrument: 'RUB', syncID: ['1234560000007890'] },
+        { instrument: 'RUB', syncID: ['1234560000017890'] },
+        { instrument: 'RUB', syncID: ['1234560000117890'] },
+        { instrument: 'USD', syncID: ['1234560000017890'] }
+      ]
+      const expected = [
+        { instrument: 'RUB', syncID: ['123456****007890'] },
+        { instrument: 'RUB', syncID: ['123456****017890'] },
+        { instrument: 'RUB', syncID: ['123456****1*7890'] },
+        { instrument: 'USD', syncID: ['7890'] }
+      ]
+      expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toEqual(expected)
+      expect(ensureSyncIDsAreUniqueButSanitized({ accounts: accounts.slice().reverse(), sanitizeSyncId })).toEqual(expected.slice().reverse())
+    })
+
+    it('keeps bank masks and checks expanded values against the whole instrument', () => {
+      // A bank mask can already occupy the value that the first expansion would produce.
+      const accounts = [
+        { instrument: 'RUB', syncID: ['123456*****07890'] },
+        { instrument: 'RUB', syncID: ['1234560000007890'] },
+        { instrument: 'RUB', syncID: ['1234560000017890'] }
+      ]
+      expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toEqual([
+        { instrument: 'RUB', syncID: ['123456*****07890'] },
+        { instrument: 'RUB', syncID: ['1234560****07890'] },
+        { instrument: 'RUB', syncID: ['123456*****17890'] }
+      ])
+    })
+
+    it('keeps the distinguishing digit after a second pass through the adapter', () => {
+      // A plugin may pass its masked result to the host adapter again.
+      const accounts = [
+        { instrument: 'RUB', syncID: ['1234560000007890'] },
+        { instrument: 'RUB', syncID: ['1234560000017890'] }
+      ]
+      const expected = [
+        { instrument: 'RUB', syncID: ['123456*****07890'] },
+        { instrument: 'RUB', syncID: ['123456*****17890'] }
+      ]
+      const masked = ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })
+      expect(masked).toEqual(expected)
+      expect(ensureSyncIDsAreUniqueButSanitized({ accounts: masked, sanitizeSyncId })).toEqual(expected)
+    })
+
+    it('expands the masked prefix of longer account numbers', () => {
+      // Account-number masks hide a prefix rather than the middle of the source ID.
+      const accounts = [
+        { instrument: 'EUR', syncID: ['10000123456789012'] },
+        { instrument: 'EUR', syncID: ['20000123456789012'] }
+      ]
+      expect(ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toEqual([
+        { instrument: 'EUR', syncID: ['1****123456789012'] },
+        { instrument: 'EUR', syncID: ['2****123456789012'] }
+      ])
+    })
+
+    it('still rejects indistinguishable source identifiers even when account IDs differ', () => {
+      // Stable account IDs must not hide a collision already present in plugin output.
+      const accounts = [
+        { id: 'first-account', instrument: 'RUB', syncID: ['123456******9876'] },
+        { id: 'second-account', instrument: 'RUB', syncID: ['123456******9876'] }
+      ]
+      expect(() => ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toThrow('syncId replacementPairs have duplicates')
+    })
+
+    it('reports a collision if distinguishing all accounts would expose the full number', () => {
+      // Each neighbour differs from the all-zero middle in exactly one position.
+      const accounts = ['000000', '100000', '010000', '001000', '000100', '000010', '000001'].map(middle => ({
+        instrument: 'RUB', syncID: [`123456${middle}7890`]
+      }))
+      expect(() => ensureSyncIDsAreUniqueButSanitized({ accounts, sanitizeSyncId })).toThrow('syncId replacementPairs have duplicates')
+    })
+  })
 })
 
 describe('sanitizeSyncId', () => {

@@ -25,54 +25,77 @@ export function trimSyncId (id) {
   return firstPart + padLeft(secondPart, 4 - firstPart.length, '*')
 }
 
-const groupReplacementPairsByReplacement = (replacementPairs) => {
-  return _.toPairs(_.groupBy(replacementPairs, ([, replacement]) => replacement))
+function expandMask (mask, group, replacements) {
+  // Keep at least one character masked, even when every hidden digit differs.
+  if (mask.indexOf('*') === mask.lastIndexOf('*')) {
+    return false
+  }
+  const sources = group.map(({ source }) => replacements.get(source) || source)
+  if (sources.some(source => source.length !== mask.length)) {
+    return false
+  }
+  for (let i = mask.indexOf('*'); i < mask.length; i++) {
+    if (mask[i] === '*' && sources.some(source => source[i] !== sources[0][i])) {
+      group.forEach((entry, j) => {
+        entry.mask = mask.slice(0, i) + sources[j][i] + mask.slice(i + 1)
+      })
+      return true
+    }
+  }
+  return false
 }
 
-const ensureReplacementsAreUnique = (replacementPairsByInstrument) => {
-  return _.mapValues(replacementPairsByInstrument, (replacementPairs) => {
-    return _.flatMap(groupReplacementPairsByReplacement(replacementPairs), ([, pairs]) => {
-      return pairs.length === 1
-        ? pairs
-        : []
-    })
-  })
+function resolveReplacements (entries, accounts) {
+  const groupByMask = () => _.toPairs(_.groupBy(entries, 'mask'))
+  let groups = groupByMask()
+  const replacements = new Map()
+  for (const [mask, group] of groups) {
+    if (group.length === 1) replacements.set(group[0].source, mask)
+  }
+  const missingAccounts = accounts.filter(account => !account.syncID.some(id => replacements.has(id)))
+  if (missingAccounts.length === 0) return { replacements, duplicates: [] }
+  const missingSources = new Set(_.flatMap(missingAccounts, 'syncID'))
+  let changed
+  do {
+    changed = false
+    for (const [mask, group] of groups) {
+      if (group.length > 1 && group.some(({ source }) => missingSources.has(source)) && expandMask(mask, group, replacements)) {
+        changed = true
+      }
+    }
+    // An expanded mask can meet a bank-supplied mask from a different group.
+    if (changed) groups = groupByMask()
+  } while (changed)
+  const duplicates = []
+  for (const [mask, group] of groups) {
+    if (group.length === 1) {
+      replacements.set(group[0].source, mask)
+    } else {
+      duplicates.push([mask, group.length])
+    }
+  }
+  return { replacements, duplicates }
 }
 
 export function ensureSyncIDsAreUniqueButSanitized ({ accounts, sanitizeSyncId }) {
   console.assert(Array.isArray(accounts), 'accounts must be array')
   console.assert(typeof sanitizeSyncId === 'function', 'sanitizeSyncId must be function')
-  const replacementPairsByInstrument = _.mapValues(_.groupBy(accounts, (x) => x.instrument), (accounts) => {
-    const flattenedAccounts = _.flatMap(accounts, ({ syncID, ...rest }) => {
+  const byInstrument = _.mapValues(_.groupBy(accounts, (x) => x.instrument), (accounts) => {
+    const sources = _.flatMap(accounts, ({ syncID }) => {
       console.assert(Array.isArray(syncID) && syncID.length > 0, 'account.syncIds must be array of non-empty strings')
-      return syncID.map((singleSyncID) => {
-        console.assert(typeof singleSyncID === 'string' && singleSyncID.length > 0, 'account.syncIds must be array of non-empty strings, met not a valid string: ' + JSON.stringify(singleSyncID))
-        return ({ singleSyncID, ...rest })
-      })
+      for (const source of syncID) {
+        console.assert(typeof source === 'string' && source.length > 0, 'account.syncIds must be array of non-empty strings, met not a valid string: ' + JSON.stringify(source))
+      }
+      return _.uniq(syncID)
     })
-    const flattenedAccountsByLast4Digits = _.groupBy(flattenedAccounts, (account) => {
-      return trimSyncId(account.singleSyncID)
-    })
-    return _.flatMap(
-      _.toPairs(flattenedAccountsByLast4Digits),
-      ([last4, flattenedAccountsSharingKey]) => flattenedAccountsSharingKey.length === 1
-        ? [[flattenedAccountsSharingKey[0].singleSyncID, last4]]
-        : flattenedAccountsSharingKey.map((x) => [x.singleSyncID, sanitizeSyncId(x.singleSyncID)])
-    )
+    const entries = _.flatMap(_.toPairs(_.groupBy(sources, trimSyncId)), ([last4, group]) =>
+      group.map(source => ({ source, mask: group.length === 1 ? last4 : sanitizeSyncId(source) })))
+    return resolveReplacements(entries, accounts)
   })
-  const replacementsByInstrument = _.mapValues(
-    ensureReplacementsAreUnique(replacementPairsByInstrument),
-    (replacementPairs) => _.fromPairs(replacementPairs)
-  )
   return accounts.map((account) => {
-    const syncIds = account.syncID
-      .map((syncId) => replacementsByInstrument[account.instrument][syncId])
-      .filter((syncId) => syncId)
-    console.assert(syncIds.length > 0, 'invariant: syncId replacementPairs have duplicates', {
-      duplicates: groupReplacementPairsByReplacement(replacementPairsByInstrument[account.instrument])
-        .filter(([, pairs]) => pairs.length > 1)
-        .map(([replacement, pair]) => [replacement, pair.length])
-    })
+    const { replacements, duplicates } = byInstrument[account.instrument]
+    const syncIds = _.uniq(account.syncID).map(id => replacements.get(id)).filter(Boolean)
+    console.assert(syncIds.length > 0, 'invariant: syncId replacementPairs have duplicates', { duplicates })
     return {
       ...account,
       syncID: syncIds

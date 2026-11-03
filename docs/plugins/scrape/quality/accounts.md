@@ -20,21 +20,18 @@ The whole public result, including fetch plans when applicable, is the unit of v
 
 New plugins and substantial migrations MUST emit `syncIds: string[]`, not legacy `syncID`. `account.id` must also remain stable across runs and unique in the result.
 
-Prefer stable natural identifiers: IBAN, domestic account number, and bank-provided masked card numbers belonging to this account. Evaluate uniqueness over the complete account set returned by the plugin, before host-adapter transformations. When natural identifiers distinguish accounts, use only those; do not copy every API object/product/card ID into `syncIds`.
+Include the account number (IBAN or domestic number) and the numbers of all cards linked to that account in `syncIds`, as supplied by the bank. Keep bank-provided card masks. Deduplicate the values and keep their order deterministic across runs.
 
-If natural identifiers are absent or collide, add the minimum stable non-secret technical identifier needed so every account has at least one distinguishing identifier. A collision alone does not justify merging two accounts. The fallback MUST NOT be an auth credential, secret, or short-lived token. Deduplicate `syncIds` and make their values and order deterministic across runs.
-
-Collisions introduced later by the shared adapter's `trimSyncId` or `sanitizeSyncId` are adapter limitations, not an additional plugin identity requirement. Report them separately; do not add technical identifiers solely to work around host masking of an otherwise unique plugin result.
+If neither an account number nor a linked card number is available, use a loan agreement number or another stable, non-secret identifier for the account. If the supplied numbers are all shared with other accounts in the same `instrument`, add one such identifier to distinguish the account.
 
 | Case | Required result |
 | --- | --- |
-| Unique IBAN plus several unrelated API IDs | Natural identifier(s), no unnecessary technical fallback |
-| Two accounts have the same masked card value | Preserve separate accounts and add a stable distinguishing identifier |
+| One account has an IBAN, two linked cards and several API object IDs | Return the IBAN and both card numbers |
+| Two accounts in the same currency have only the same masked card number | Keep both accounts and add a stable distinguishing identifier to each |
 | No natural identifier but stable loan contract ID exists | Use the minimal appropriate stable fallback |
 | Only a session token distinguishes raw objects | Do not use it as identity; find the real account identifier or fail visibly |
 | One loan links a separately returned payment account | Do not reuse the payment account number as the loan's identity |
 | API order changes or repeats a card | Identical deterministic `syncIds` without duplicates |
-| Distinct plugin identifiers collide only after shared adapter masking | Keep the valid plugin identity set and report the adapter limitation |
 
 ## ACCOUNT-003 Preserve product and balance semantics
 
