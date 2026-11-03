@@ -31,7 +31,10 @@ export interface Session extends Authorization {
   device: Device
 }
 
-export type QPayFetchParams = { kind: 'card', cardId: string }
+export interface QPayFetchParams {
+  kind: 'card'
+  cardId: string
+}
 
 export type QPayAccountPlan =
   { accounts: Account[], fetchParams: null } |
