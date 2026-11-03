@@ -4,6 +4,18 @@ Read only for plugins backed by the shared Nordigen implementation. The shared i
 
 Many European banks use Nordigen (GoCardless) as an aggregator. These plugins share code in `src/plugins/nordigen/`.
 
+## Operation dates
+
+All Nordigen integrations MUST follow [DATE-001](quality/amounts-and-statuses.md#date-001-preserve-the-operation-date), including the shared converter, custom parsers, dates extracted from descriptions, and date-only fallbacks.
+
+The [GoCardless transaction schema](https://docs.gocardless.com/docs/bank-account-data/output-transaction-details) defines `bookingDate`/`bookingDateTime` as posting to the account. Inspect bank-provided remittance descriptions (including arrays), `additionalInformation`, and bank-specific supplementary fields alongside the primary dates: they may carry the original card transaction/authorisation date. Apply the [date-selection rule](quality/amounts-and-statuses.md#select-the-transaction-date) before interpreting its time zone. The presence of `valueDate`/`valueDateTime`, or an earlier value than the booking date, does not by itself identify an authorisation date.
+
+Bank-specific date extraction normally belongs in a `parseDate` [custom parser](#shared-implementation-and-custom-parsers) in the bank plugin's converter module. Extend the existing parser or add it to the plugin's `parsers` chain. It replaces the base date only when the bank's format establishes the transaction/authorisation date; ambiguous text leaves the confirmed base date intact under DATE-001. Cover the complete conversion in the relevant operation-type test file.
+
+Nordigen exposes many banks through one API; that common interface does not establish a common processing time zone. Evaluate the evidence for each bank and source field. Apply the general rule's local fallback when the processing zone is unknown, and retain explicit or bank-confirmed zone semantics when available. A date-only field does not create an exception to that evidence order.
+
+## Shared implementation and custom parsers
+
 **Default approach**: Always use custom parsers in the specific plugin directory instead of modifying shared nordigen code.
 
 **When to modify `src/plugins/nordigen/`**: Only when there's strong confidence that it's a bug or oversight in the core shared logic that affects all Nordigen banks (e.g., a field that was simply never handled, a parsing bug in date handling). **Always ask the user for explicit approval before modifying nordigen.**

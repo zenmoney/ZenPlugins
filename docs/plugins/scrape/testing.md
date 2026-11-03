@@ -36,14 +36,18 @@ Use the shared [model boundary](../../project/testing.md#model-tests) for provid
 
 ## Test placement
 
-For new plugins, substantial migrations, and plugins already using this layout:
+New or changed account/transaction converter cases MUST be grouped in files by account or operation type, such as `card`, `loan`, `purchase`, `income`, `expense`, `innerTransfer`, `outerTransfer`, `cashDeposit`, `cashWithdrawal`, or `refund`. Extend the existing file for that type when available. Cases for unrelated types MUST NOT be collected in a generic `quality`, `review`, or `regressions` file, or grouped by the investigation that found them.
+
+For new plugins, substantial migrations, and plugins already using this layout, use one file per type:
 
 ```text
 src/plugins/<PLUGIN_ID>/__tests__/converters/accounts/<type>.test.ts
 src/plugins/<PLUGIN_ID>/__tests__/converters/transactions/<type>.test.ts
 ```
 
-Use one file per account/operation class with cases inside it, such as `card`, `loan`, `purchase`, `innerTransfer`, `outerTransfer`, `cashWithdrawal`, or `refund`. Focused legacy fixes keep their existing layout, with new or changed cases following the [complete input/output format](#complete-input-and-output-in-each-case).
+Focused legacy fixes keep the existing directory layout and preserve unrelated cases. Add or move only the new or changed cases into the corresponding type file; create a type-specific file if none exists, following the [language rules](../../project/style.md#type-safety). This does not require reorganizing the rest of the legacy suite.
+
+Within a type file, each case still follows the [complete input/output format](#complete-input-and-output-in-each-case): keep a required account graph or both sides of a transfer together, and verify the full conversion rather than splitting the case by individual fields or quality rules.
 
 ## Tests by layer
 

@@ -51,9 +51,45 @@ Test the accurate mapping of observed pending, settled, and genuinely unknown st
 
 ## DATE-001 Preserve the operation date
 
-Return valid `Date` values with the bank's confirmed time-zone semantics. When initiation/hold and settlement dates describe the same operation and both are available, retain the initiation date. If only booking/settlement date exists, use the available documented date rather than inventing an earlier one.
+Applies to all scrape integrations, including shared providers, custom parsers, dates extracted from descriptions, and date-only fallbacks.
 
-Do not parse date-only data in the developer machine's implicit time zone without verifying the service's meaning. Test day/month boundaries and offset transitions where relevant; freeze the clock or supply fixed dates. API interval boundaries and manual statement-import behavior belong to the [scrape contract](../contract.md#dates-and-repeated-runs).
+Converters MUST return valid `Date` values. Prefer the date when the transaction took place (**transaction date**); for a card payment, this includes the original **authorisation date/time** associated with the hold for that same operation. This date takes precedence over the booking/posting or settlement date. Preserve the supplied time of the selected event when available.
+
+### Select the transaction date
+
+During development and data-quality review, inspect the available date fields, supplementary fields, and transaction descriptions even when a primary date field is populated. Converters MUST extract and use a transaction/authorisation date from those sources when bank evidence clearly establishes its meaning for the current operation. A text field can be a better source than a dedicated date field that describes later processing.
+
+The interpretation MUST follow the observed bank format and context, such as a confirmed label or documented field meaning. A date-shaped substring, its position in the text, or an earlier value alone is not proof of a transaction date. Do not select the earliest of all available dates indiscriminately. Keep the source evidence and interpretation with the relevant tests or existing integration notes.
+
+| Source evidence | Required selection |
+| --- | --- |
+| A description or supplementary field contains the confirmed transaction/authorisation date and time; the primary field describes booking or settlement | Extract and use the transaction/authorisation date and time, even though the primary field is valid and populated. |
+| Only the confirmed transaction/authorisation day is supplied in the description, while booking or settlement supplies a full timestamp | Use the transaction/authorisation day at midnight under the time-zone rules below. Greater timestamp precision does not override the event's meaning. |
+| Two sources describe the same transaction event, and one supplies a confirmed time as well as the day | Use the more precise source for that event, preserving its supplied time. |
+| Text contains a date with unclear meaning, or several dates without evidence identifying the transaction date | Keep the confirmed primary date and record the ambiguity for investigation. Do not replace it with an unconfirmed text date. |
+| Text refers to another event, such as an invoice due date or the original purchase referenced by a refund | Keep the date of the current operation; the other event's date is not its transaction date. |
+| Only a booking/settlement date is available | Use the available documented date rather than inventing an earlier one. |
+
+Apply the time-zone rules to the selected event's source. Converters MUST NOT borrow a missing time or zone from a booking/settlement timestamp without bank evidence that it applies to the selected transaction date. In particular, an explicit settlement offset alone does not establish the zone of a transaction date extracted from text.
+
+### Interpret the selected date's time zone
+
+Choose the time-zone interpretation from the source evidence in this order. The ISO strings below are illustrative examples, not bank fixtures.
+
+| Source evidence | Required interpretation |
+| --- | --- |
+| An explicit zone or UTC offset, including `Z`, such as `2026-01-01T15:30:00+02:00` | Use the supplied zone/offset to construct the `Date`; preserve the resulting instant. MUST NOT strip or replace the zone with the runtime or bank default. |
+| No zone in the value, but bank evidence confirms the processing zone for this field | Interpret the supplied date and time in that zone. For a date without a time, use midnight in that zone. Apply its rules for the operation date, including offset changes where applicable. |
+| A date and time without a zone, with the processing zone unknown, such as `2026-01-01T15:30:00` | Preserve both date and time in the synchronization runtime's local zone: `new Date('2026-01-01T15:30:00')`. |
+| A date without a time, with the processing zone unknown, such as `2026-01-01` | Construct local midnight: `new Date('2026-01-01T00:00:00')`. |
+
+When the processing zone is unknown, local interpretation is the explicit fallback; it does not establish the bank's actual zone. Converters MUST NOT append `Z`, attach a guessed offset, or use `new Date('2026-01-01')`, whose date-only ISO parsing would silently assign UTC. A confirmed UTC zone still uses UTC under the evidence rules above.
+
+A processing zone MUST be supported by data or documentation from the specific bank for the relevant source field. Record that evidence in existing integration notes or alongside the relevant tests. A bank's country, merchant location, or use of a shared API alone does not establish its processing zone. An offset observed for one operation does not by itself establish a fixed offset for all dates or other banks.
+
+Verification: for date-selection changes, cover the supported cases above with complete raw input and full expected conversion under [scrape testing](../testing.md#complete-input-and-output-in-each-case), including a text-sourced transaction date differing from the primary processing date, day-only transaction data, and ambiguous or unrelated text dates where observed. Follow the [source-evidence requirements](../../../project/fixtures.md#observed-evidence); illustrative examples do not establish bank behavior.
+
+Use fixed dates or freeze the clock. For supported cases, run conversion in multiple runtime time zones: unknown-zone values MUST retain their local calendar components and supplied time, while values with an explicit or confirmed zone MUST retain the same instant. Cover day/month boundaries and offset transitions where relevant. API interval boundaries and manual statement-import behavior belong to the [scrape contract](../contract.md#dates-and-repeated-runs).
 
 ## ID-001 Keep movement identities stable
 
