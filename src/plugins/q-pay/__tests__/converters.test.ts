@@ -3,11 +3,12 @@ import { convertAccounts, convertTransactions, QPayAccountGraph, QPayHistory } f
 describe('Q-Pay current application conversion', () => {
   // Source: authorized pay.quantera.pro application 1.5.770, 2026-11-02.
   // Complete /wallet data, /cards item graph, card balance and selected complete
-  // card transaction rows. Wallet history is intentionally outside plugin scope.
+  // card transaction rows. Only card history is fetched; its wallet source fields
+  // describe top-up transfers (also confirmed by the captured paired wallet debits).
   // Personal identifiers/names and financial amounts/dates were replaced consistently;
   // shape, technical enums, precision and financial relationships were preserved.
   // Selected histories are projected pages, not a claim of complete historical coverage.
-  it('keeps wallet balances without history and imports only card transactions with exact fees', () => {
+  it('imports only card history and links confirmed owner-card top-ups to their source wallet', () => {
     const graph: QPayAccountGraph = {
       wallet: {
         total: {
@@ -601,12 +602,19 @@ describe('Q-Pay current application conversion', () => {
       }
     ])
 
-    // Only card transactions contribute history; wallet accounts are balance-only.
+    // The card source amount is the actual wallet debit, not an inferred FX rate.
+    // The initial 20 top-up has no confirmed relationship to the separate issuance.
     expect(convertTransactions(graph, history)).toEqual([
       {
         hold: false,
         date: new Date('2025-10-28T11:08:33.520Z'),
         movements: [{
+          id: 'q-pay:card-tx:00000000-0000-4000-8000-000000000024:wallet',
+          account: { id: 'q-pay:wallet:USDT' },
+          sum: -20,
+          fee: 0,
+          invoice: null
+        }, {
           id: 'q-pay:card-tx:00000000-0000-4000-8000-000000000024',
           account: { id: 'q-pay:card:00000000-0000-4000-8000-000000000003' },
           sum: 20,
@@ -646,6 +654,12 @@ describe('Q-Pay current application conversion', () => {
         hold: false,
         date: new Date('2025-12-18T04:37:32.804Z'),
         movements: [{
+          id: 'q-pay:card-tx:00000000-0000-4000-8000-000000000023:wallet',
+          account: { id: 'q-pay:wallet:USDT' },
+          sum: -633.68,
+          fee: 0,
+          invoice: null
+        }, {
           id: 'q-pay:card-tx:00000000-0000-4000-8000-000000000023',
           account: { id: 'q-pay:card:00000000-0000-4000-8000-000000000003' },
           sum: 610.2338,
@@ -672,6 +686,12 @@ describe('Q-Pay current application conversion', () => {
         hold: false,
         date: new Date('2025-12-28T04:12:28.633Z'),
         movements: [{
+          id: 'q-pay:card-tx:00000000-0000-4000-8000-000000000013:wallet',
+          account: { id: 'q-pay:wallet:USDT' },
+          sum: -500,
+          fee: 0,
+          invoice: null
+        }, {
           id: 'q-pay:card-tx:00000000-0000-4000-8000-000000000013',
           account: { id: 'q-pay:card:00000000-0000-4000-8000-000000000003' },
           sum: 481.5,

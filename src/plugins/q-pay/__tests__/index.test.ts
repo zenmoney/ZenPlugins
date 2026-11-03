@@ -66,11 +66,14 @@ describe('[model] Q-Pay entrypoint', () => {
     expect(ZenMoney.locale).toBe('ru')
   })
 
-  it('loads only selected card histories and retains balance-only wallets without loading their operations', async () => {
+  it('loads only selected card histories and retains a confirmed transfer even when wallet history is skipped', async () => {
     const included: Transaction = {
       date: new Date('2026-01-02T00:00:00Z'),
       hold: false,
-      movements: [{ id: 'model-included', account: { id: 'model-c' }, sum: 5, fee: 0, invoice: null }],
+      movements: [
+        { id: 'model-wallet-side', account: { id: 'model-a' }, sum: -5, fee: 0, invoice: null },
+        { id: 'model-included', account: { id: 'model-c' }, sum: 5, fee: 0, invoice: null }
+      ],
       merchant: null,
       comment: null
     }
@@ -86,7 +89,7 @@ describe('[model] Q-Pay entrypoint', () => {
       { account: accountC, fetchParams: { kind: 'card', cardId: 'model-card' } },
       { account: accountD, fetchParams: { kind: 'card', cardId: 'model-skipped-card' } }
     ])
-    isAccountSkipped.mockImplementation((id: string) => id === 'model-d')
+    isAccountSkipped.mockImplementation((id: string) => id === 'model-a' || id === 'model-d')
     mockFetchHistory.mockResolvedValue({ cards: [{ cardId: 'model-card', transactions: [] }] })
     mockConvertTransactions.mockReturnValue([included, skipped])
     await expect(scrape(args)).resolves.toEqual({ accounts: [accountA, accountB, accountC, accountD], transactions: [included] })

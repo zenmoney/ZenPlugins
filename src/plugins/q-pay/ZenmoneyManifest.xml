@@ -2,6 +2,6 @@
 <provider>
     <id>q-pay</id>
     <company>16202</company>
-    <description>Q-Pay (pay.quantera.pro) — балансы денежных кошельков и карт, история операций только по картам. История кошельков и бонусные баллы не поддерживаются. Вход по коду на email с сохранением сессии.</description>
+    <description>Q-Pay (pay.quantera.pro) — балансы кошельков и карт, карточные операции и связанные с пополнением переводы. Прочая история кошельков и бонусные баллы не поддерживаются. Вход по коду на email с сохранением сессии.</description>
     <codeRequired>false</codeRequired>
 </provider>

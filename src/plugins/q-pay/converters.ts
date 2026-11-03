@@ -99,7 +99,7 @@ export function convertAccounts (graph: QPayAccountGraph): QPayAccountPlan[] {
       savings: false
     })
   }
-  // Wallets expose current balances only; history comes from card transactions.
+  // Wallets have no independent history source; card records can describe funding.
   const plans: QPayAccountPlan[] = wallets.length === 0 ? [] : [{ accounts: wallets, fetchParams: null }]
   for (const { card, balance } of graph.cards) {
     const sourceId = requiredString(card, 'id')
@@ -230,14 +230,41 @@ function cardTransaction (transaction: unknown, sourceCardId: string, accounts: 
   }
 }
 
-/** Import only card transactions, preserving their actual amounts and fees. */
+function linkWalletFunding (source: unknown, converted: Transaction, accounts: Map<string, Account>): Transaction {
+  const credit = converted.movements[0]
+  if (getOptString(source, 'type')?.toLowerCase() !== 'topup' ||
+    getOptString(source, 'status') !== 'settled' ||
+    optionalString(source, 'funded_by') != null || credit.sum == null || credit.sum <= 0) return converted
+  const asset = optionalString(source, 'wallet_asset')
+  const amount = optionalNumber(source, 'amount_in_wallet')
+  if (asset == null || amount == null) return converted
+  if (amount <= 0) throw new Error('Q-Pay card funding has a nonpositive wallet amount')
+  const wallet = accountFor(accounts, walletId(asset))
+  // Both native account effects are explicit; do not infer an FX rate or another fee.
+  // The wallet-side ID is derived from the card record, not an independent ledger ID.
+  return {
+    ...converted,
+    movements: [{
+      id: `q-pay:card-tx:${requiredString(source, 'id')}:wallet`,
+      account: { id: wallet.id },
+      sum: -amount,
+      fee: 0,
+      invoice: null
+    }, credit],
+    merchant: null
+  }
+}
+
+/** Import card history, including wallet funding explicitly confirmed by a top-up. */
 export function convertTransactions (graph: QPayAccountGraph, history: QPayHistory): Transaction[] {
   const accounts = accountMap(graph)
+  const ownedCards = new Set(graph.cards.filter(({ card }) => getOptString(card, 'access') === 'owner')
+    .map(({ card }) => requiredString(card, 'id')))
   const result: Transaction[] = []
   for (const group of history.cards) {
     for (const source of group.transactions) {
       const converted = cardTransaction(source, group.cardId, accounts)
-      if (converted != null) result.push(converted)
+      if (converted != null) result.push(ownedCards.has(group.cardId) ? linkWalletFunding(source, converted, accounts) : converted)
     }
   }
   return result.sort((left, right) => left.date.getTime() - right.date.getTime())
