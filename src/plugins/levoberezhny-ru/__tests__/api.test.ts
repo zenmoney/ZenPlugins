@@ -240,7 +240,7 @@ it('[model] keeps declared current-account scope when opaque loan products are p
     depositList: { deposits: [] }
   }))
   const persist = jest.fn()
-  expect(await fetchAccounts({ ...saved, persist })).toEqual(source.accounts)
+  expect(await fetchAccounts({ ...saved, persist })).toEqual({ accounts: source.accounts, deposits: [] })
   expect(persist).toHaveBeenCalledWith({
     ...saved,
     cookies: [{ name: 'SESSION', value: 'cookie-secret', path: '/', expires: null }]
