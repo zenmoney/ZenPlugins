@@ -14,9 +14,17 @@ Remote loading and [file import](file-import.md) share this interface, result, q
 | `isFirstRun` | No successful synchronization has completed yet |
 | `isInBackground` | `true` means UI is unavailable; follow the shared [runtime UI contract](../runtime.md#background-execution-and-ui) |
 
-Return `Promise<{ accounts: Account[], transactions: Transaction[] }>` containing the complete set of accounts and transactions to be saved, with both arrays and at least one account. `transactions` MAY be empty when no operations are in scope or all histories are skipped.
+Return `Promise<{ accounts: Account[], transactions: Transaction[], cashbacks?: PluginCashbacksPayload }>` containing the complete set of accounts and transactions to be saved, with both arrays and at least one account. `transactions` MAY be empty when no operations are in scope or all histories are skipped.
 
 Every movement reference by ID MUST resolve to an account in the same result. Account IDs MUST be unique. A transfer's external/cash side uses a reference by data; it does not require a fabricated fetched account. See [accounts](accounts.md#account-references) and [transactions](transactions.md).
+
+### Cashback snapshots
+
+The optional `cashbacks` result field is a complete snapshot object, not an array. Its own `cashbacks` field contains the cashback rules. It MUST conform to the [payload schema](../../../src/common/cashback/payload.schema.json); [TypeScript declarations](../../../src/types/cashback.d.ts) are generated from that schema.
+
+Omit the outer field when no cashback update is provided. `{ cashbacks: [] }` is an explicit empty snapshot and can clear previously imported cashbacks; it MUST NOT replace a loading or conversion failure. Account binding `externalId` values identify `account.id` values from the same scrape, not `syncIds` or application-local account IDs. Card-specific cashback MUST use an account binding for the corresponding plugin account; a separate card binding is not supported. Preserve supported raw-text variants when the bank provides text that cannot safely be parsed.
+
+Validate actual converter output in tests under [cashback testing](testing.md#cashback-payloads). Schema validation checks the payload shape, not whether bank data was interpreted correctly or account references resolve.
 
 ## Dates and repeated runs
 

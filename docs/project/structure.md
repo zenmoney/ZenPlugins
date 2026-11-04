@@ -8,10 +8,12 @@ locales/                Common user-facing error translations
 scripts/                Build, browser debugging, and Bootloader server
 src/
   common/               Cross-plugin helpers and their tests
+    cashback/           Cashback payload schema, test validator and its tests
     receiptFetcher/     Shared receipt helpers and their tests
   types/
     index.d.ts          Global ZenMoney state, UI and lifecycle API
     zenmoney.ts         Scrape domain types and entrypoint signature
+    cashback.d.ts       Generated cashback payload declarations
     receiptFetcher.ts   Receipt operations, values, manifest and descriptor types
     get.ts              Safe access to unknown values
   UI/                   Browser development interface
@@ -41,7 +43,7 @@ The [shared utilities index](../plugins/utilities.md) locates runtime adapters a
 - Use TypeScript for all new code files under [style](style.md#type-safety). Preserve the language and public structure when editing an existing legacy file during an isolated fix.
 - Keep bank-specific parsers, crypto/protocol details, fixtures, and DTOs inside that plugin. Keep existing plugin-local documentation in place; do not create a README for every plugin as part of general documentation work.
 - Add code to `src/common` only when its behavior is reusable across integrations. A similarly named bank field is not sufficient evidence that two protocols are interchangeable.
-- Keep scrape domain types in `src/types/zenmoney.ts`, receipt types in `src/types/receiptFetcher.ts`, native transport constructors and their types together in `src/common`, and the remaining global host API declarations in `src/types/index.d.ts`. Keep service response validation close to the consuming layer.
+- Keep scrape domain types in `src/types/zenmoney.ts`, generated cashback declarations in `src/types/cashback.d.ts`, receipt types belong in `src/types/receiptFetcher.ts`, native transport constructors and their types together in `src/common`, and the remaining global host API declarations in `src/types/index.d.ts`. Keep service response validation close to the consuming layer.
 - Use the existing test layout for a focused legacy fix. For new implementations use the type's [test layout](testing.md#verification-for-code-changes).
 - Put raw local logs in `logs/<plugin-id>.log` or `logs/<plugin-id>/`. Keep captures/APKs in an ignored local directory such as `.local/research/<plugin-id>/`; publish only selected safe examples.
 - Plugin build output is `build/<source-name>/index.js` beside `ZenmoneyManifest.xml` for scrape or `ZenmoneyManifest.json` for receipts. Scrape output also includes optional `preferences.xml` under the [source-file contract](../plugins/scrape/manifest.md#source-files-and-build-output). Receipt [artifact requirements](../plugins/receipt-fetchers/development.md#build-artifacts) apply within the shared build. Browser files such as `zp_preferences.json` and Bootloader configuration contain local state and belong outside Git.
