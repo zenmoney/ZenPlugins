@@ -56,7 +56,7 @@ async function loadAccountsAndSources (token) {
   const accounts = convertAccounts(products)
   const visibleAccountIds = new Set(accounts.map(account => account.id))
   const linkedAccounts = products
-    .map(convertLinkedAccountSource)
+    .map(product => convertLinkedAccountSource(product, accounts))
     .filter(account => account !== null && visibleAccountIds.has(account.id))
 
   const sources = accounts.flatMap(account => {

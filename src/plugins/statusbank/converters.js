@@ -39,8 +39,9 @@ export function convertAccount (ob) {
   if (productType === 'MS' && ob.Enabled && ob.Enabled[0] === 'N') {
     return null
   }
-  const id = ob.Id[0].split('-')[0]
-  if (ZenMoney.isAccountSkipped(id)) {
+  // Product Id is session-specific; BankId and the natural product number are stable.
+  const id = ob.BankId?.[0] || `${productType}:${ob.No[0]}:${ob.Currency[0]}`
+  if (ZenMoney.isAccountSkipped(id) || ZenMoney.isAccountSkipped(ob.Id[0].split('-')[0])) {
     return null
   }
   if (productType === 'MS') {
@@ -78,7 +79,7 @@ export function convertAccount (ob) {
   return null
 }
 
-export function convertLinkedAccountSource (ob) {
+export function convertLinkedAccountSource (ob, accounts) {
   if (ob.ProductType?.[0] !== 'ACCOUNT' ||
     ob.ProductTypeName?.[0] !== 'Счёт с картой' ||
     ob.LinkedProductType?.[0] !== 'MS' ||
@@ -87,8 +88,11 @@ export function convertLinkedAccountSource (ob) {
     return null
   }
 
+  const card = accounts.find(account => account.productId === ob.LinkedProductId[0])
+  if (card == null) return null
+
   return {
-    id: ob.LinkedProductId[0].split('-')[0],
+    id: card.id,
     transactionsAccId: ob.statementExecutionId,
     type: 'card',
     instrument: codeToCurrencyLookup[ob.Currency[0]],
@@ -336,6 +340,10 @@ function parseCurrencyExchange (transaction, apiTransaction) {
 }
 
 function parsePayee (transaction, apiTransaction) {
+  if (apiTransaction.statementType === 'account') {
+    transaction.comment = apiTransaction.description?.replace(/\s+/g, ' ').trim() || null
+    return true
+  }
   if (!apiTransaction.place && !apiTransaction.payeeLastTransaction) {
     return false
   }
@@ -366,16 +374,22 @@ function parsePayee (transaction, apiTransaction) {
   } else if (merchant.length === 3) {
     transaction.merchant.fullTitle = apiTransaction.place.split(', ')[2]
   } else if (merchant.length > 1) {
-    const [country, title, city] = apiTransaction.place.match(/([a-zA-Z]{2}) (.*), (.*)/).slice(1)
-    transaction.merchant.title = title
-    transaction.merchant.city = city
-    transaction.merchant.country = country
+    const match = apiTransaction.place.match(/^([a-zA-Z]{2}) (.*), (.*)$/)
+    if (match) {
+      transaction.merchant.title = match[2]
+      transaction.merchant.city = match[3]
+      transaction.merchant.country = match[1]
+    } else {
+      transaction.merchant.fullTitle = apiTransaction.place
+    }
   } else {
     throw new Error('Ошибка обработки транзакции с получателем: ' + apiTransaction.place)
   }
 }
 
 function getDate (str) {
-  const [day, month, year] = str.match(/(\d{2}).(\d{2}).(\d{4})/).slice(1)
-  return new Date(`${year}-${month}-${day}`)
+  const match = str.match(/^(\d{2})\.(\d{2})\.(\d{4})(?: (\d{2}:\d{2}:\d{2}))?$/)
+  console.assert(match !== null, 'Invalid Statusbank operation date', { date: str })
+  const [, day, month, year, time] = match
+  return new Date(`${year}-${month}-${day}T${time || '00:00:00'}`)
 }

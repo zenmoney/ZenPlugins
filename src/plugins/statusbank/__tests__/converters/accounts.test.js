@@ -18,7 +18,7 @@ describe('convertAccount', () => {
   }
   it('maps bank card to zenmoney one', () => {
     expect(convertAccount(bankCard)).toEqual({
-      id: '11161311',
+      id: 'cb727d83-2d8a-4c54-898f-6d45f0eba713',
       transactionsAccId: 'yyyy',
       latestTrID: 'xxxx',
       type: 'card',
@@ -50,7 +50,7 @@ describe('convertAccount', () => {
 
   it('maps a standalone bank account to a checking account', () => {
     expect(convertAccount(standaloneAccount)).toEqual({
-      id: '73124567',
+      id: 'ACCOUNT:договор N 307451928:840',
       transactionsAccId: '73129901-a1b2c3-account-2048571-b735-getordering-1',
       latestTrID: null,
       type: 'checking',
@@ -73,8 +73,8 @@ describe('convertAccount', () => {
     }
 
     expect(convertAccount(linkedAccount)).toBeNull()
-    expect(convertLinkedAccountSource(linkedAccount)).toEqual({
-      id: '73120042',
+    expect(convertLinkedAccountSource(linkedAccount, [{ id: 'stable-card', productId: '73120042-d4e5f6' }])).toEqual({
+      id: 'stable-card',
       transactionsAccId: '73129901-a1b2c3-account-2048571-b735-getordering-1',
       type: 'card',
       instrument: 'USD',

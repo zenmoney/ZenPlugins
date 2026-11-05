@@ -31,7 +31,7 @@ describe('convertTransaction', () => {
       },
       expectedTransaction: {
         comment: null,
-        date: new Date('2019-01-18T00:00:00.000Z'),
+        date: new Date('2019-01-18T00:00:00'),
         hold: false,
         merchant: {
           location: null,
@@ -69,7 +69,7 @@ describe('convertTransaction', () => {
       },
       expectedTransaction: {
         comment: null,
-        date: new Date('2019-01-02T00:00:00.000Z'),
+        date: new Date('2019-01-02T00:00:00'),
         hold: false,
         merchant: {
           city: 'DOUGLAS',
@@ -112,7 +112,7 @@ describe('convertTransaction', () => {
       },
       expectedTransaction: {
         comment: null,
-        date: new Date('2026-05-30T00:00:00.000Z'),
+        date: new Date('2026-05-30T20:59:08'),
         hold: false,
         merchant: {
           fullTitle: 'Test merchant',
@@ -170,7 +170,7 @@ describe('convertTransaction', () => {
       },
       expectedTransaction: {
         comment: null,
-        date: new Date('2026-05-26T00:00:00.000Z'),
+        date: new Date('2026-05-26T19:35:22'),
         hold: false,
         merchant: {
           fullTitle: 'UNID*TEST PERSON',
@@ -207,7 +207,7 @@ describe('convertTransaction', () => {
       },
       expectedTransaction: {
         comment: null,
-        date: new Date('2026-05-25T00:00:00.000Z'),
+        date: new Date('2026-05-25T12:34:56'),
         hold: false,
         merchant: null,
         movements: [
@@ -510,7 +510,7 @@ describe('convertTransaction', () => {
     const transactions = deduplicateTransactions([statement, latest], [account])
 
     expect(transactions).toEqual([{
-      date: new Date('2026-06-10T00:00:00.000Z'),
+      date: new Date('2026-06-10T12:05:00'),
       movements: [
         {
           id: '444444',

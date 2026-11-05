@@ -21,7 +21,7 @@ it('converts the complete graph with a blocked card lacking its own balance', as
   const products = await fetchAccounts('model-session')
   const expected = [
     {
-      id: '71000001',
+      id: 'MB-000006-0004-0216000001',
       transactionsAccId: '91135127-9974e8-ms-1728104-b735-getordering-1',
       latestTrID: '91135128-8d998b-ms-1728104-wsig-lasttrx-1',
       type: 'card',
@@ -35,7 +35,7 @@ it('converts the complete graph with a blocked card lacking its own balance', as
       productType: 'MS'
     },
     {
-      id: '71000002',
+      id: 'MB-000006-0014-0215000002',
       transactionsAccId: '91135129-0ba526-ms-1728296-b735-getordering-1',
       latestTrID: '91135130-742416-ms-1728296-wsig-lasttrx-1',
       type: 'card',
@@ -49,7 +49,7 @@ it('converts the complete graph with a blocked card lacking its own balance', as
       productType: 'MS'
     },
     {
-      id: '71000003',
+      id: 'MB-000006-0004-0216000003',
       transactionsAccId: '91135131-7116fe-ms-1728264-b735-getordering-1',
       latestTrID: '91135132-d6d27d-ms-1728264-wsig-lasttrx-1',
       type: 'card',
