@@ -45,7 +45,7 @@ export function convertReceipt (data: unknown, code: string): Receipt {
     if ((bin == null) && !emptyStrPassed) payee += text.trim().replace(/\s+/g, ' ')
   }
   const merchant: ReceiptMerchant = { ...optional('name', text(payee)) }
-  if (bin != null) merchant.identifiers = [{ value: bin, countryCode: 'KZ' }]
+  if (bin != null) merchant.identifiers = [{ value: bin, countryCode: 'KZ', scheme: 'BIN' }]
   const receipt = {
     completeness: 'full',
     currency: 'KZT',

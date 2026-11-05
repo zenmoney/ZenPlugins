@@ -17,7 +17,8 @@ test('converts source case 01', () => {
       identifiers: [
         {
           value: '201140012912',
-          countryCode: 'KZ'
+          countryCode: 'KZ',
+          scheme: 'BIN'
         }
       ]
     },
@@ -71,7 +72,8 @@ test('converts source case 02', () => {
       identifiers: [
         {
           value: '051240004724',
-          countryCode: 'KZ'
+          countryCode: 'KZ',
+          scheme: 'BIN'
         }
       ]
     },
@@ -107,7 +109,8 @@ test('converts source case 03', () => {
       identifiers: [
         {
           value: '110640022629',
-          countryCode: 'KZ'
+          countryCode: 'KZ',
+          scheme: 'BIN'
         }
       ]
     },
