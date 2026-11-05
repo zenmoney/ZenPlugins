@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no">
+    <title>Առցանց ՀԴՄ կտրոն</title>
+    <style>
+        body {
+            font-family: "GHEA Grapalat", "Arian AMU", Tahoma, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .receipt-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 350px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .receipt-row:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 100.3%;
+        }
+        .label {
+            color: #333;
+        }
+        .value {
+            font-weight: bold;
+            color: #666;
+            text-align: right;
+        }
+        .qr-code {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .qr-code img {
+            width: 100px;
+            height: 100px;
+        }
+
+        .no-border {
+            border: none !important;
+        }
+    </style>
+</head>
+<body>
+<div class="receipt-container">
+        <div class="receipt-row no-border">
+        <div class="label">Ֆիսկալ համար</div>
+        <div class="value">26BHCRE4FT71JM</div>
+    </div>
+    <div class="receipt-row no-border">
+        <div class="label">Անվանում</div>
+        <div class="value">ՄԻՔԱՅԵԼ ԳԱԼՍՏՅԱՆ</div>
+    </div>
+    <div class="receipt-row">
+        <div class="label">ՀԴՄ գրանցման համար</div>
+        <div class="value">78734058</div>
+    </div>
+    <div class="receipt-row ">
+        <div class="label">Ծառայության մատուցողի ՀՎՀՀ</div>
+        <div class="value">78734058</div>
+    </div>
+                <div class="receipt-row no-border">
+            <div class="label">Հարթակի ՀՎՀՀ</div>
+            <div class="value">02274309</div>
+        </div>
+        <div class="receipt-row">
+            <div class="label">Հարթակի անվանում</div>
+            <div class="value">«ՐԱՅԴԹԵՔ ԷՅ ԷՄ»</div>
+        </div>
+        <div class="receipt-row">
+        <div class="label">Ամսաթիվ, ժամ</div>
+        <div class="value">2026-07-24 00:17:35</div>
+    </div>
+    <div class="receipt-row no-border">
+        <div class="label">Ծառայության անվանում</div>
+        <div class="value">Տաքսի</div>
+    </div>
+    <div class="receipt-row">
+        <div class="label">Ծառայության կոդ</div>
+        <div class="value">49.32</div>
+    </div>
+    <div class="receipt-row no-border">
+        <div class="label">Վճարման տեսակ</div>
+        <div class="value">Անկանխիկ</div>
+    </div>
+    <div class="receipt-row">
+        <div class="label">Ծառայության գումար</div>
+        <div class="value">2,800 <span style="font-family:Arial, Helvetica;">֏</span></div>
+    </div>
+    <div class="receipt-row" style="font-weight: bold; font-size: 100.3%;">
+        <div class="label">Ընդամենը`</div>
+        <div class="value">2,800 <span style="font-family:Arial, Helvetica;">֏</span></div>
+    </div>
+    <div class="qr-code">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://mytax.taxservice.am/receipt/1784837855/26BHCRE4FT71JM" alt="QR Code">
+    </div>
+</div>
+</body>
+</html>
