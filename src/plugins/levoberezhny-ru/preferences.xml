@@ -27,8 +27,8 @@
         dialogMessage="Поддерживаются открытые текущие счета без карт и счета с незакрытыми банковскими картами. Закрытые счета без карт, кредиты и вклады не загружаются."
         defaultValue="2026-01-01T00:00:00.000+03:00"
         dialogTitle="С какой даты загружать операции"
-        positiveButtonText="OK"
-        negativeButtonText="Cancel"
+        positiveButtonText="ОК"
+        negativeButtonText="Отмена"
         summary="|startDate|{@s}"
     />
 </PreferenceScreen>

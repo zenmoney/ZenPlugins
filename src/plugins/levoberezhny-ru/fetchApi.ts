@@ -81,7 +81,7 @@ export function readJson (response: FetchResponse): unknown {
   return typeof response.body === 'string' ? JSON.parse(response.body) : response.body
 }
 
-export async function request (auth: Auth, url: string, method = 'GET', params?: Record<string, string>): Promise<FetchResponse> {
+export async function request (auth: Auth, url: string, method = 'GET', params?: Record<string, string>, extraHeaders: Record<string, string> = {}): Promise<FetchResponse> {
   const target = bankUrl(url)
   const parsedTarget = new URL(target)
   const requestCookies = activeCookies(auth, parsedTarget)
@@ -94,6 +94,7 @@ export async function request (auth: Auth, url: string, method = 'GET', params?:
       'F-Client': 'web',
       'F-Site-Code': 'nskbl',
       Origin: bankOrigin,
+      ...extraHeaders,
       ...(requestCookies.length === 0 ? {} : { Cookie: requestCookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ') })
     },
     body: params == null ? undefined : Object.entries(params).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&'),
@@ -143,22 +144,24 @@ export async function request (auth: Auth, url: string, method = 'GET', params?:
 }
 
 export async function requestJson (auth: Auth, endpoint: 'loginInfo' | 'getMyFinancesPage' | 'pfmTape', params: Record<string, string> = {}): Promise<FetchResponse> {
+  const extraHeaders: Record<string, string> = endpoint === 'loginInfo' ? { 'X-Login-Script-Request': 'true' } : {}
   return await request(auth, bankOrigin + jsonPath + endpoint, 'POST', {
     locale: 'ru',
     reqId: 'WEB' + generateRandomString(5, '0123456789'),
     ...params
-  })
+  }, extraHeaders)
 }
 
 export function readLoginForm (html: string, base: string): { action: string, fields: Record<string, string> } | null {
   // Same form serialization as primsocbank-ru, restricted to the observed login form.
   const decode = (value: string): string => value.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-  const form = /<form\b[^>]*\bid=["']kc-form-login["'][^>]*>/i.exec(html)?.[0]
-  if (form == null) return null
-  const action = /\baction=["']([^"']+)["']/i.exec(form)?.[1]
+  const formMatch = /(<form\b[^>]*\bid=["']kc-form-login["'][^>]*>)([\s\S]*?)<\/form\s*>/i.exec(html)
+  if (formMatch == null) return null
+  const [, openingTag, formContent] = formMatch
+  const action = /\baction=["']([^"']+)["']/i.exec(openingTag)?.[1]
   console.assert(action != null, 'Missing login form action')
   const fields: Record<string, string> = {}
-  for (const input of html.match(/<input\b[^>]*>/gi) ?? []) {
+  for (const input of formContent.match(/<input\b[^>]*>/gi) ?? []) {
     if (!/\btype=["']hidden["']/i.test(input)) continue
     const name = /\bname=["']([^"']+)["']/i.exec(input)?.[1]
     const value = /\bvalue=["']([^"']*)["']/i.exec(input)?.[1] ?? ''

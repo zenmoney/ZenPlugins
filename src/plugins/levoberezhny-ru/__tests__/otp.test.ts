@@ -1,7 +1,7 @@
 import fetchMock from 'fetch-mock'
 import { login } from '../api'
 import { describeLoginForms } from '../fetchApi'
-import { InvalidOtpCodeError } from '../../../errors'
+import { InvalidOtpCodeError, UserInteractionError } from '../../../errors'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const observed = require('./fixtures/otp-form-schema.json') as {
@@ -15,6 +15,7 @@ const passwordAction = base + observed.schema.actionPath + '?session_code=passwo
 const otpAction = base + observed.schema.actionPath + '?session_code=otp-form-secret&execution=model-step'
 const callback = base + '/mobileService/sso/login?code=callback-secret'
 const preferences = { login: 'login-secret', password: 'password-secret' }
+const saved = { cookieHeader: 'SESSION=saved-cookie-secret', fingerprint: 'saved-device' }
 const code = '073492'
 
 // [model] Only the method/path/input schema is source evidence. The HTML container,
@@ -41,6 +42,15 @@ afterEach(() => {
 })
 
 describe('[model] observed OTP form workflow', () => {
+  it('stops a background renewal after stored credentials trigger the observed OTP challenge', async () => {
+    const persist = jest.fn()
+    await expect(login(preferences, saved, true, persist)).rejects.toBeInstanceOf(UserInteractionError)
+    expect(fetchMock.calls(passwordAction)).toHaveLength(1)
+    expect(fetchMock.calls(otpAction)).toHaveLength(0)
+    expect(readLine).not.toHaveBeenCalled()
+    expect(persist).not.toHaveBeenCalled()
+  })
+
   it('uses the observed form schema, its current action and challenge cookies', async () => {
     expect(describeLoginForms(challengeHtml)).toEqual([observed.schema])
     const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})

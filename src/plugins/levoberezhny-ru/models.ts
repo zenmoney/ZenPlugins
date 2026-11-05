@@ -1,8 +1,8 @@
 import { Account } from '../../types/zenmoney'
 
 export interface Preferences {
-  login: string
-  password: string
+  login?: string
+  password?: string
   startDate?: string
 }
 
