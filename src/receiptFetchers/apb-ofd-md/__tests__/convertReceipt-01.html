@@ -1,0 +1,1928 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <meta charset="utf-8" />
+    <title>Оператор Фискальных Данных - APB.OFD</title>
+    <link href="/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/images/icons/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/images/icons/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/images/icons/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/images/icons/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/images/icons/pple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/images/icons/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/images/icons/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/images/icons/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/images/icons/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/images/icons/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/favicon-16x16.png">
+    <link rel="manifest" href="/images/icons/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/images/icons/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link type="text/css" href="/css/bootstrap-theme.min.css" rel="stylesheet" />
+    <link type="text/css" href="/css/bootstrap.min.css" rel="stylesheet" />
+    <link type="text/css" href="/css/site.css" rel="stylesheet" />
+    <link type="text/css" href="/css/anim.min.css" rel="stylesheet" />
+    
+    <link type="text/css" href="/css/bootstrap-datetimepicker.min.css" rel="stylesheet" />
+
+    <script src="/js/jquery-3.3.1.min.js"></script>
+    
+    <script src="/js/jquery-3.3.1.slim.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/knockout-3.4.2.js"></script>
+    <script src="/js/knockout.validation.min.js"></script>
+    <script src="/js/modernizr-2.8.3.js"></script>
+    <script src="/js/sammy-0.7.5.min.js"></script>
+    
+    <script src="/js/moment-with-locales.min.js"></script>
+    <script src="/js/bootstrap-datetimepicker.min.js"></script>
+
+
+</head>
+<body style="background-color:#4752A3;">
+
+    <style>
+        .invoice-box {
+            background-color: white;
+        }
+
+        .fixed-top {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1030;
+        }
+
+        .fixed-bottom {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            z-index: 1030;
+        }
+
+        .header-top a {
+            padding-top: 20px;
+        }
+    </style>
+
+    
+    <br class="hidden-xs" />
+
+    <header class="fixed-top hidden-xs">
+        <div class="header-top">
+            <div class="container">
+                <div class="row">
+                    
+                    <div class="col-sm-3">
+                        <a href="/"><img class="logo" src="/images/Logo.svg" alt="" /></a>
+                    </div>
+                    <div class="col-sm-2">
+                        <a href="#"><img src="/images/phone.svg">16-61</a>
+                    </div>
+                    <div class="col-sm-4 col-md-3">
+                        <a href="#"><img src="/images/mail.svg">e-center@agroprombank.com</a>
+                    </div>
+                    <div class="col-sm-3 col-md-3">
+                        <a href="//kassa.apb.online/"><img src="/images/contacts.svg">Личный кабинет</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    
+    <div class="container" style="margin-top: 120px; margin-bottom: 100px;">
+        <div class="row">
+                <div class="col-md-6 col-md-push-3 col-sm-12 col-xs-12" style="padding:0; min-height:400px;">
+                        <div class="invoice-box">
+                            <style>
+                                .print-service-receipt {
+                                    border-left: solid 1px #d4dae6;
+                                    border-right: solid 1px #d4dae6;
+                                    border-top: solid 1px #d4dae6;
+                                    color: #45545e;
+                                    font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
+                                    font-size: 14px;
+                                    font-stretch: normal;
+                                    font-style: normal;
+                                    font-weight: normal;
+                                    letter-spacing: normal;
+                                    line-height: 0;
+                                    width: 100%;
+                                    overflow-wrap: break-word;
+                                }
+
+                                table.print-service-receipt {
+                                    border-spacing: 0;
+                                    -premailer-cellspacing: 0;
+                                    -premailer-cellpadding: 0;
+                                    border-collapse: separate;
+                                }
+
+                                .print-service-receipt table {
+                                    color: #45545e;
+                                    width: 100%;
+                                    min-width: 100%; /* gmail android */
+                                    border-spacing: 0;
+                                    -premailer-cellspacing: 0;
+                                    -premailer-cellpadding: 0;
+                                    -premailer-width: 100%;
+                                    border-collapse: separate;
+                                }
+
+                                    .print-service-receipt table td {
+                                        padding: 0;
+                                    }
+
+                                .receipt-row-1 {
+                                    clear: both;
+                                    text-align: center;
+                                }
+
+                                .receipt-name-1042, .receipt-value-1042, .receipt-name-1012, .receipt-value-1012, .receipt-value-1043, .receipt-name-1129, .receipt-name-1130, .receipt-name-1131, .receipt-name-1132, .receipt-name-1133, .receipt-name-1145, .receipt-name-1146, .receipt-name-1232, .receipt-name-1233, .receipt-name-1194, .receipt-name-1157, .receipt-name-1158 {
+                                    color: darkslategray; /*#0069b3;*/
+                                    font-size: 16px;
+                                    font-weight: bold;
+                                    line-height: 1.38;
+                                }
+
+                                .receipt-row-2 .receipt-col1 {
+                                    text-align: left;
+                                    /* padding-top: 4px; */
+                                }
+
+                                .receipt-row-2 .receipt-col2 {
+                                    text-align: right;
+                                    /* padding-top: 4px; */
+                                }
+
+                                .receipt-value-1038, .receipt-value-1021 {
+                                    font-weight: bold;
+                                }
+
+                                td.side-padding {
+                                    width: 42px;
+                                }
+
+                                .receipt-header1, .receipt-header2, .receipt-body, .receipt-footer, .receipt-footer2, .print-service-receipt .banner {
+                                    line-height: 1.57;
+                                }
+
+                                    .receipt-header1 td.receipt-header1 {
+                                        padding-top: 16px;
+                                        padding-bottom: 10px;
+                                    }
+
+                                    .receipt-footer td.receipt-footer {
+                                        padding-top: 5px;
+                                        padding-bottom: 10px;
+                                    }
+
+                                    .receipt-footer2 td.receipt-footer2 {
+                                        padding-bottom: 30px;
+                                        padding-top: 10px;
+                                    }
+
+                                    .receipt-header2 td.receipt-header2, .receipt-body td.receipt-body {
+                                        padding-bottom: 8px;
+                                        padding-top: 10px;
+                                    }
+
+                                .receipt-company-name {
+                                    font-size: 16px;
+                                    line-height: 1.38;
+                                    margin-top: 10px;
+                                }
+
+                                    .receipt-company-name .receipt-row-1 {
+                                        text-align: left;
+                                    }
+
+                                .receipt-delimiter {
+                                    /*
+                                        background-position-x: center;
+                                        background-image: url(/images/background-copy-3.png);
+                                        background-repeat: no-repeat;
+                                            */
+                                    clear: both;
+                                    height: 9px;
+                                    margin-bottom: 3px;
+                                    margin-top: 3px;
+                                    width: 100%;
+                                }
+
+                                .receipt-value-1054 {
+                                    color: darkslategray; /*#0069b3;*/
+                                    display: inline-block;
+                                    font-size: 24px;
+                                    font-weight: bold;
+                                    line-height: 1.17;
+                                }
+
+                                .receipt-value-1030 {
+                                    color: darkslategray; /*#0069b3;*/
+                                    display: block;
+                                    font-size: 18px;
+                                    font-weight: bold;
+                                    line-height: 1.22;
+                                    text-align: left;
+                                }
+
+                                .receipt-delimiter2 {
+                                    /*
+                                        background-image: url(/images/background-copy-3-new.png);
+                                        background-position-x: center;
+                                        background-repeat: no-repeat;
+                                        */
+                                    border-bottom: 1px solid darkslategray;
+                                    clear: both;
+                                    height: 9px;
+                                    margin-bottom: 2px;
+                                    margin-top: 2px;
+                                    width: 100%;
+                                }
+
+                                .receipt-name-1020, .receipt-value-1020 {
+                                    color: darkslategray; /*#0069b3;*/
+                                    display: block;
+                                    font-size: 20px;
+                                    font-weight: bold;
+                                    line-height: 1.4;
+                                    margin-bottom: 10px;
+                                }
+
+
+                                .receipt-delimiter3 {
+                                    background: white;
+                                    height: 20px;
+                                }
+
+                                .receipt-title {
+                                    display: block;
+                                    font-size: 30px;
+                                    font-weight: bold;
+                                    line-height: 1;
+                                }
+
+                                .receipt-header1 {
+                                    background-color: #ffffff;
+                                }
+
+                                    .receipt-header1 table {
+                                        background-color: #ffffff;
+                                    }
+
+                                .receipt-border1 {
+                                    background-color: #f0f3f5;
+                                }
+
+                                    .receipt-border1 table {
+                                        background-color: #f0f3f5;
+                                    }
+
+                                .receipt-thanks {
+                                    font-size: 24px;
+                                    font-weight: bold;
+                                    height: 10rem;
+                                    position: relative;
+                                    background: #f0f3f5;
+                                    text-align: center;
+                                }
+
+                                .receipt-subtitle {
+                                    display: block;
+                                    font-size: 18px;
+                                }
+
+                                .receipt-footer2 {
+                                    background-color: #ffffff;
+                                }
+
+                                .receipt-footer, .receipt-footer table {
+                                    background-color: #ffffff;
+                                }
+
+                                .receipt-footer2 table {
+                                    background-color: #ffffff;
+                                }
+
+                                .print-service-receipt td {
+                                    vertical-align: middle;
+                                }
+
+                                .banner {
+                                    padding-left: 42px;
+                                    padding-right: 42px;
+                                }
+
+                                .banner-title {
+                                    font-size: 24px;
+                                    text-align: center;
+                                }
+
+                                .banner-text {
+                                    text-align: center;
+                                    width: 424px;
+                                }
+
+                                .banner-button {
+                                    text-align: center;
+                                }
+
+                                    .banner-button a {
+                                        color: darkslategray; /*#0069b3;*/
+                                        padding: 10px;
+                                        display: inline-block;
+                                    }
+
+                                .receipt-banner-bottom-image {
+                                    margin-top: -7px;
+                                    border-bottom: solid 1px #d4dae6;
+                                }
+
+                                .receipt-content-width {
+                                    max-width: 424px;
+                                }
+
+                                @media print {
+                                    .print-service-receipt,
+                                    .receipt-name-1042, .receipt-value-1042, .receipt-name-1012, .receipt-value-1012, .receipt-value-1043, .receipt-name-1129,
+                                    .receipt-name-1130, .receipt-name-1131, .receipt-name-1132, .receipt-name-1133, .receipt-name-1145, .receipt-name-1146,
+                                    .receipt-name-1232, .receipt-name-1233, .receipt-name-1194, .receipt-name-1157, .receipt-name-1158,
+                                    .receipt-company-name,
+                                    .receipt-value-1030,
+                                    .receipt-value-1054,
+                                    .receipt-name-1020, .receipt-value-1020,
+                                    .receipt-title,
+                                    .receipt-thanks,
+                                    .receipt-subtitle,
+                                    .banner-title {
+                                        font-size: normal !important;
+                                        line-height: normal !important;
+                                    }
+
+                                    .receipt-delimiter,
+                                    .receipt-delimiter2,
+                                    .gray_saw {
+                                        display: none !important;
+                                    }
+
+                                    .receipt-name-1020, .receipt-value-1020 {
+                                        margin-bottom: 0;
+                                    }
+
+                                    .receipt-value-1012,
+                                    .receipt-name-1042 {
+                                        /* font-weight: normal; */
+                                        font-size: 1.6rem;
+                                    }
+
+                                    .invoice-box {
+                                        border-bottom: 1px silver dashed;
+                                        width: 60%;
+                                        margin: 0 auto;
+                                    }
+                                }
+                            </style>
+
+
+
+                            <table class="print-service-receipt">
+                                <tbody>
+                                    <tr>
+                                        <td>
+
+                                            <table class="receipt-header1">
+                                                <tbody>
+                                                    <tr>
+                                                        
+                                                        <td class="receipt-header1" style="position:relative;">
+                                                            <div class="text-left">
+                                                                <img src="/images/CheckLogo.png" style="margin-left:2rem;" />
+                                                                
+                                                            </div>
+
+                                                                <div class="receipt-row-1" style="margin-top: 0;">
+                                                                    <table>
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td style="padding-top: 25px; text-align: center" class="receipt-content-width">
+                                                                                    <span class="receipt-subtitle">
+
+                                                                                        ООО &#171;ШЕРИФ&#187;
+                                                                                        <br />
+                                                                                        <b>Супермаркет &quot;ШЕРИФ-4&quot;</b>
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                                <div class="receipt-row-1 receipt-company-name">
+                                                                    <table>
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td style="padding-right: 0px"></td>
+                                                                                <td style="width: 100%;">
+                                                                                    <div class="receipt-row-1" style="text-align: center;">
+                                                                                        г.Дубоссары, ул.Дзержинского, 2а
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+
+                                                        </td>
+                                                        
+
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 508 17" style="margin-top: -7px;" class="hidden-print">
+                                                <path fill="#f0f3f5" fill-rule="evenodd" d="M0 0l13.368 5.593L26.737 0l13.368 5.593L53.474 0l13.368 5.593L80.211 0l13.368 5.593L106.947 0l13.369 5.593L133.684 0l13.369 5.593L160.42 0l13.368 5.593L187.158 0l13.368 5.593L213.895 0l13.368 5.593L240.632 0 254 5.593 267.368 0l13.369 5.593L294.105 0l13.369 5.593L320.842 0l13.369 5.593L347.579 0l13.368 5.593L374.316 0l13.368 5.593L401.053 0l13.368 5.593L427.79 0l13.369 5.593L454.526 0l13.369 5.593L481.263 0l13.369 5.593L508 0v17.688H0z"></path>
+                                            </svg>
+
+                                            <div class="receipt-border1">
+                                                    <table class="receipt-header2">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="side-padding"></td>
+                                                                <td class="receipt-header2">
+                                                                    <table class="receipt-row-2">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="receipt-col1">
+                                                                                    <span class="name name receipt-name-1042">КАССОВЫЙ ЧЕК №</span>
+                                                                                    <span class="value name receipt-name-1042">
+                                                                                        10783
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td class="receipt-col2">
+                                                                                    <span class="value value receipt-value-1012">
+                                                                                        31.07.2026 21:34:05
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                    <table class="receipt-row-2">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="receipt-col1">
+                                                                                    <span class="name">
+                                                                                        № СМЕНЫ
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td class="receipt-col2">
+                                                                                    <span class="value">
+                                                                                        37
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                    <table class="receipt-row-2">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="receipt-col1">
+                                                                                    <span class="name">
+                                                                                        № ЧЕКА В СМЕНЕ
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td class="receipt-col2">
+                                                                                    <span class="value">
+                                                                                        262
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+
+                                                                    <table class="receipt-row-2">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="receipt-col1">
+                                                                                    <span class="name ">
+                                                                                        Кассир
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td class="receipt-col2">
+                                                                                    <span class="value receipt-value-1021">
+
+                                                                                        Ковра М.И.
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                                <td class="side-padding"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <div class="receipt-delimiter"></div>
+                                                    <table class="receipt-body">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="side-padding"></td>
+                                                                <td class="receipt-body" style="">
+                                                                    <table class="receipt-row-1">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td style="padding-bottom:10px">
+                                                                                    <span class="value receipt-value-1054 text-uppercase">
+                                                                                        Приход
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                    
+                                                                <div class="items">
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        1 Пакет420(95*2)*680 М6 Шериф ПМ
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        2,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        1,80 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        3,60 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        2 Пиво ДОБРОВАР Венское 1,5 ПЭТ
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        2,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        29,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        58,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        3 Мак.изд.МАКФА Спирал-экспр.0,4
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        14,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        14,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        4 Салат листовой пучок ПМР
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        11,70 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        11,70 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        5 Сметана СП Брест-Литов.20% 180
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        15,20 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        15,20 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        6 Сыр VALIO Olterman.б л 17% 250
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        60,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        60,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        7 Масло сл.VALIO 82% 200гр
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        50,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        50,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        8 Кофе JACOBS Monarch раст130м у
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        164,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        164,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        9 Чипсы риф.LAY S креветка 105г
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        33,30 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        33,30 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        10 Чипсы BON GIOR Хамон 80г
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        20,90 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        20,90 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        11 Сухарики ФЛИНТ бекон 140г
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        13,30 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        13,30 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        12 Каша ФрутоНяня мол овсянка 190
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        45,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        45,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        13 Арахис BIG BOB сол.бастурма 60
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        10,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        10,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        14 Карт.АКВАФОР A5H
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        110,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        110,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        15 Мор.ГРАН-ПРИ какао рож.155гр
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        16,20 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        16,20 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        16 Мор.РУДЬ Пломбир 100% 1кг
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        60,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        60,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        17 Палочки кукур.МАКДАК Клас.75г
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        7,60 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        7,60 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        18 Шарики START глаз.с какао 500г
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        30,80 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        30,80 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        19 Каша ФрутоНяня зл печ манго200
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        53,50 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        53,50 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        20 БМК Колб.Сливочная вар.в с вес
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        0,276
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        128,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        35,33 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        21 Кр-мыло ФП Овсяное безе 290мл
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        36,90 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        36,90 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        22 Пюре ФрутоНяня кабачок 80г
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        3,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        12,50 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        37,50 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        23 Пюре Мал.Счастье хек 80г с б
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        2,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        25,00 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        50,00 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        24 Пюре HAME телятина 100г ж б
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        3,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        27,60 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        82,80 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        25 Филе СБ МАТИАС оригинал.кус200
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        36,50 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        36,50 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+                                                                                <div class="item">
+                                                                                    <table class="receipt-row-1">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="text-align: left">
+                                                                                                    <span class="value receipt-value-1030">
+                                                                                                        26 Зефир ZERFER DUO Marshm.90 KDV
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <table class="receipt-row-2">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td class="receipt-col1">
+                                                                                                    <span class="value receipt-value-1023">
+
+                                                                                                        1,000
+                                                                                                    </span>
+                                                                                                    x
+                                                                                                    <span class="value receipt-value-1079">
+
+                                                                                                        14,50 
+                                                                                                    </span>
+
+
+                                                                                                                                                                                                    </td>
+                                                                                                <td class="receipt-col2">
+                                                                                                    <span class="value receipt-value-1043">
+
+                                                                                                        14,50 
+                                                                                                    </span>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+
+                                                                                    <div style="clear: both"></div>
+                                                                                    <div class="receipt-delimiter2"></div>
+
+                                                                                </div>
+
+
+
+                                                                    
+
+
+
+                                                                    <table class="receipt-row-2"  data-discount=&#39;&#39;>
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="receipt-col1">
+                                                                                    <span class="name receipt-value-1030">доп. скидка</span>
+                                                                                </td>
+                                                                                <td class="receipt-col2">
+                                                                                    <span class="value receipt-value-1043">
+
+
+                                                                                        0,00 RUP 
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+
+
+
+                                                                    <table class="receipt-row-2" style="">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="receipt-col1">
+                                                                                    <span class="name receipt-name-1020">Наценка</span>
+                                                                                </td>
+                                                                                <td class="receipt-col2">
+                                                                                    <span class="value receipt-value-1043">
+                                                                                        0.00
+                                                                                        RUP
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+
+                                                                    <table class="receipt-row-2">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="receipt-col1">
+                                                                                    <span class="name receipt-name-1020">ИТОГ</span>
+                                                                                </td>
+                                                                                <td class="receipt-col2">
+                                                                                    <span class="value receipt-value-1020">
+
+                                                                                        1070,63 RUP 
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+
+
+                                                                </div>
+                                                                </td>
+                                                                <td class="side-padding"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+
+                                                
+                                            </div>
+                                            <table class="receipt-footer">
+                                                <tbody>
+                                                    <tr>
+                                                        <td class="side-padding"></td>
+                                                        <td class="receipt-footer">
+                                                                        <table class="receipt-row-2">
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td class="receipt-col1">
+                                                                                        <span class="name">ОПЛАТА КАРТОЙ</span>
+                                                                                    </td>
+                                                                                    <td class="receipt-col2">
+                                                                                        <span class="value">1070,63  RUP </span>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+
+                                                                    <table class="receipt-row-2">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td class="receipt-col1">
+                                                                                    <span class="name">СДАЧА</span>
+                                                                                </td>
+                                                                                <td class="receipt-col2">
+                                                                                    <span class="value">0,00  RUP </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+
+
+                                                            <div style="clear: both"></div>
+                                                            <table class="receipt-row-2">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td class="receipt-col1">
+                                                                            <span class="name">ИК</span> 
+                                                                        </td>
+                                                                        <td class="receipt-col2">
+
+                                                                            <span class="value receipt-value-1037">
+                                                                                0000012726
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                            <table class="receipt-row-2">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td class="receipt-col1">
+                                                                            <span class="name receipt-name-1041">ФД</span> 
+                                                                        </td>
+                                                                        <td class="receipt-col2">
+
+                                                                            <span class="value ">
+                                                                                000086460031
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+
+
+
+                                                        </td>
+                                                        <td class="side-padding"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <div class="visible-print text-center" style="margin-bottom:20px;">
+
+                                                <p> System.Xml.XmlElement?.InnerText </p>
+
+                                                    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCADcANwDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD9U6KKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA+Vf25/25/8Ahi7/AIQn/iif+Ex/4SX7d/zFvsP2b7P9n/6YS7932j2xt754+Vf+H53/AFRP/wAuv/7io/4Lnf8ANE/+43/7YV9Vftz/ALc//DF3/CE/8UT/AMJj/wAJL9u/5i32H7N9n+z/APTCXfu+0e2NvfPAB8q/8Pzv+qJ/+XX/APcVH/D87/qif/l1/wD3FR/w/O/6on/5df8A9xUf8Fzv+aJ/9xv/ANsKAPqr9uf9uf8A4Yu/4Qn/AIon/hMf+El+3f8AMW+w/Zvs/wBn/wCmEu/d9o9sbe+ePqqivyr/AOULn/VYv+Flf9wP+zv7P/8AAnzfM+3/AOxt8r+Ld8oAf8Pzv+qJ/wDl1/8A3FX1V+3P+3P/AMMXf8IT/wAUT/wmP/CS/bv+Yt9h+zfZ/s//AEwl37vtHtjb3zx8q/8ABc7/AJon/wBxv/2wr5V/bn/YY/4Yu/4Qn/itv+Ex/wCEl+3f8wn7D9m+z/Z/+m8u/d9o9sbe+eAD6q/4fnf9UT/8uv8A+4q/VSvwB/YY/bn/AOGLv+E2/wCKJ/4TH/hJfsP/ADFvsP2b7P8AaP8AphLv3faPbG3vnj6q/wCHGP8A1Wz/AMtT/wC7aAPqr9uf9uf/AIYu/wCEJ/4on/hMf+El+3f8xb7D9m+z/Z/+mEu/d9o9sbe+ePlX/h+d/wBUT/8ALr/+4qP+U0f/AFR3/hWv/cc/tH+0P/AbyvL+wf7e7zf4dvzH/D87/qif/l1//cVAH6qV8q/tz/tz/wDDF3/CE/8AFE/8Jj/wkv27/mLfYfs32f7P/wBMJd+77R7Y2988fKv/AAXO/wCaJ/8Acb/9sKP+CGP/ADWz/uCf+39AH6qV8q/tz/tz/wDDF3/CE/8AFE/8Jj/wkv27/mLfYfs32f7P/wBMJd+77R7Y2988fKv/AA4x/wCq2f8Alqf/AHbR/wAPzv8Aqif/AJdf/wBxUAH/AA/O/wCqJ/8Al1//AHFX6qV+Vf8Ayhc/6rF/wsr/ALgf9nf2f/4E+b5n2/8A2NvlfxbvlP8Aghj/AM1s/wC4J/7f0AfVX7c/7c//AAxd/wAIT/xRP/CY/wDCS/bv+Yt9h+zfZ/s//TCXfu+0e2NvfPB+3P8Atz/8MXf8IT/xRP8AwmP/AAkv27/mLfYfs32f7P8A9MJd+77R7Y2988fKv/BDH/mtn/cE/wDb+j/gud/zRP8A7jf/ALYUAH/D87/qif8A5df/ANxUf8Pzv+qJ/wDl1/8A3FX1V+3P+3P/AMMXf8IT/wAUT/wmP/CS/bv+Yt9h+zfZ/s//AEwl37vtHtjb3zx8q/8AD87/AKon/wCXX/8AcVAB/wAPzv8Aqif/AJdf/wBxV+qlflX/AMFzv+aJ/wDcb/8AbCv1UoAKKKKACiiigD8q/wDgud/zRP8A7jf/ALYUf8Fzv+aJ/wDcb/8AbCj/AILnf80T/wC43/7YUf8AD87/AKon/wCXX/8AcVAH5V1+qn/Bc7/mif8A3G//AGwo/wCH53/VE/8Ay6//ALir5V/bn/bn/wCG0f8AhCf+KJ/4Q7/hGvt3/MW+3faftH2f/phFs2/Z/fO7tjkA/f6vyr/4cY/9Vs/8tT/7tr6q/bn/AG5/+GLv+EJ/4on/AITH/hJft3/MW+w/Zvs/2f8A6YS7932j2xt754+Vf+ULn/VYv+Flf9wP+zv7P/8AAnzfM+3/AOxt8r+Ld8oAf8Pzv+qJ/wDl1/8A3FR/ymj/AOqO/wDCtf8AuOf2j/aH/gN5Xl/YP9vd5v8ADt+b5V/bn/YY/wCGLv8AhCf+K2/4TH/hJft3/MJ+w/Zvs/2f/pvLv3faPbG3vng/bn/YY/4Yu/4Qn/itv+Ex/wCEl+3f8wn7D9m+z/Z/+m8u/d9o9sbe+eAD6q/4IY/81s/7gn/t/R/w4x/6rZ/5an/3bXyr+3P+wx/wxd/whP8AxW3/AAmP/CS/bv8AmE/Yfs32f7P/ANN5d+77R7Y2988H7c/7DH/DF3/CE/8AFbf8Jj/wkv27/mE/Yfs32f7P/wBN5d+77R7Y2988AH6qftz/ALc//DF3/CE/8UT/AMJj/wAJL9u/5i32H7N9n+z/APTCXfu+0e2NvfPHyr/w/O/6on/5df8A9xUf8Fzv+aJ/9xv/ANsK+qv25/25/wDhi7/hCf8Aiif+Ex/4SX7d/wAxb7D9m+z/AGf/AKYS7932j2xt754APyr/AG5/25/+G0f+EJ/4on/hDv8AhGvt3/MW+3faftH2f/phFs2/Z/fO7tjn6q/4fnf9UT/8uv8A+4qP+C53/NE/+43/AO2FfKv7c/7DH/DF3/CE/wDFbf8ACY/8JL9u/wCYT9h+zfZ/s/8A03l37vtHtjb3zwAfVX/DjH/qtn/lqf8A3bXyr+3P+3P/AMNo/wDCE/8AFE/8Id/wjX27/mLfbvtP2j7P/wBMItm37P753dscn7c/7DH/AAxd/wAIT/xW3/CY/wDCS/bv+YT9h+zfZ/s//TeXfu+0e2NvfPH6qftz/tz/APDF3/CE/wDFE/8ACY/8JL9u/wCYt9h+zfZ/s/8A0wl37vtHtjb3zwAfKv8Aw4x/6rZ/5an/AN20f8oXP+qxf8LK/wC4H/Z39n/+BPm+Z9v/ANjb5X8W75flX9uf9hj/AIYu/wCEJ/4rb/hMf+El+3f8wn7D9m+z/Z/+m8u/d9o9sbe+eP1U/bn/AG5/+GLv+EJ/4on/AITH/hJft3/MW+w/Zvs/2f8A6YS7932j2xt754APwBr9VP8Agud/zRP/ALjf/thX1V+3P+3P/wAMXf8ACE/8UT/wmP8Awkv27/mLfYfs32f7P/0wl37vtHtjb3zx8q/8Fzv+aJ/9xv8A9sKAD/gud/zRP/uN/wDthX5V1+qn/D87/qif/l1//cVH/D87/qif/l1//cVAB/wXO/5on/3G/wD2wr9VK/AH9uf9uf8A4bR/4Qn/AIon/hDv+Ea+3f8AMW+3faftH2f/AKYRbNv2f3zu7Y5/f6gAooooAKKKKAPlX9uf9uf/AIYu/wCEJ/4on/hMf+El+3f8xb7D9m+z/Z/+mEu/d9o9sbe+eD9hj9uf/htH/hNv+KJ/4Q7/AIRr7D/zFvt32n7R9o/6YRbNv2f3zu7Y5P25/wBuf/hi7/hCf+KJ/wCEx/4SX7d/zFvsP2b7P9n/AOmEu/d9o9sbe+eD9uf9hj/htH/hCf8Aitv+EO/4Rr7d/wAwn7d9p+0fZ/8ApvFs2/Z/fO7tjkA+Vf8Ah+d/1RP/AMuv/wC4q+qv25/25/8Ahi7/AIQn/iif+Ex/4SX7d/zFvsP2b7P9n/6YS7932j2xt754+Vf+HGP/AFWz/wAtT/7to/5Quf8AVYv+Flf9wP8As7+z/wDwJ83zPt/+xt8r+Ld8oB9Vftz/ALDH/DaP/CE/8Vt/wh3/AAjX27/mE/bvtP2j7P8A9N4tm37P753dsc/Kv/KaP/qjv/Ctf+45/aP9of8AgN5Xl/YP9vd5v8O35vlX9uf9uf8A4bR/4Qn/AIon/hDv+Ea+3f8AMW+3faftH2f/AKYRbNv2f3zu7Y5/f6gD5V/YY/YY/wCGLv8AhNv+K2/4TH/hJfsP/MJ+w/Zvs/2j/pvLv3faPbG3vnj5V/5Quf8AVYv+Flf9wP8As7+z/wDwJ83zPt/+xt8r+Ld8vyr+3P8AsMf8MXf8IT/xW3/CY/8ACS/bv+YT9h+zfZ/s/wD03l37vtHtjb3zx9Vf8Fzv+aJ/9xv/ANsKAPyrr6q/YY/bn/4Yu/4Tb/iif+Ex/wCEl+w/8xb7D9m+z/aP+mEu/d9o9sbe+eD9hj9uf/hi7/hNv+KJ/wCEx/4SX7D/AMxb7D9m+z/aP+mEu/d9o9sbe+eP1U/bn/bn/wCGLv8AhCf+KJ/4TH/hJft3/MW+w/Zvs/2f/phLv3faPbG3vngA/Kv9uf8Abn/4bR/4Qn/iif8AhDv+Ea+3f8xb7d9p+0fZ/wDphFs2/Z/fO7tjn6q/4fnf9UT/APLr/wDuKvqr9uf9hj/htH/hCf8Aitv+EO/4Rr7d/wAwn7d9p+0fZ/8ApvFs2/Z/fO7tjk/YY/bn/wCG0f8AhNv+KJ/4Q7/hGvsP/MW+3faftH2j/phFs2/Z/fO7tjkA/Kv9uf8Abn/4bR/4Qn/iif8AhDv+Ea+3f8xb7d9p+0fZ/wDphFs2/Z/fO7tjk/bn/YY/4Yu/4Qn/AIrb/hMf+El+3f8AMJ+w/Zvs/wBn/wCm8u/d9o9sbe+eD9hj9uf/AIYu/wCE2/4on/hMf+El+w/8xb7D9m+z/aP+mEu/d9o9sbe+ePqr/hxj/wBVs/8ALU/+7aAD/lC5/wBVi/4WV/3A/wCzv7P/APAnzfM+3/7G3yv4t3y/lXX6qf8ABc7/AJon/wBxv/2wr5V/YY/YY/4bR/4Tb/itv+EO/wCEa+w/8wn7d9p+0faP+m8Wzb9n987u2OQD9VP2GP2GP+GLv+E2/wCK2/4TH/hJfsP/ADCfsP2b7P8AaP8ApvLv3faPbG3vnj8Aa/VT/lC5/wBVi/4WV/3A/wCzv7P/APAnzfM+3/7G3yv4t3y/lXQB+/37c/7DH/DaP/CE/wDFbf8ACHf8I19u/wCYT9u+0/aPs/8A03i2bfs/vnd2xyftz/tz/wDDF3/CE/8AFE/8Jj/wkv27/mLfYfs32f7P/wBMJd+77R7Y2988flX+wx+wx/w2j/wm3/Fbf8Id/wAI19h/5hP277T9o+0f9N4tm37P753dsc/qp+3P+wx/w2j/AMIT/wAVt/wh3/CNfbv+YT9u+0/aPs//AE3i2bfs/vnd2xyAfVVFfKv7c/7DH/DaP/CE/wDFbf8ACHf8I19u/wCYT9u+0/aPs/8A03i2bfs/vnd2xz+Vf7c/7c//AA2j/wAIT/xRP/CHf8I19u/5i3277T9o+z/9MItm37P753dscgH6qftz/tz/APDF3/CE/wDFE/8ACY/8JL9u/wCYt9h+zfZ/s/8A0wl37vtHtjb3zx9VV+AP7DH7c/8Awxd/wm3/ABRP/CY/8JL9h/5i32H7N9n+0f8ATCXfu+0e2NvfPH7/AFABRRRQAUUUUAFflX/w/O/6on/5df8A9xV+qlflX/wXO/5on/3G/wD2woAP+U0f/VHf+Fa/9xz+0f7Q/wDAbyvL+wf7e7zf4dvzfKv7DH7c/wDwxd/wm3/FE/8ACY/8JL9h/wCYt9h+zfZ/tH/TCXfu+0e2NvfPH6qftz/sMf8ADaP/AAhP/Fbf8Id/wjX27/mE/bvtP2j7P/03i2bfs/vnd2xz8q/8oXP+qxf8LK/7gf8AZ39n/wDgT5vmfb/9jb5X8W75QA/5TR/9Ud/4Vr/3HP7R/tD/AMBvK8v7B/t7vN/h2/N+Vdfqp/yhc/6rF/wsr/uB/wBnf2f/AOBPm+Z9v/2Nvlfxbvl+Vf2GP2GP+G0f+E2/4rb/AIQ7/hGvsP8AzCft32n7R9o/6bxbNv2f3zu7Y5AP1U/YY/YY/wCGLv8AhNv+K2/4TH/hJfsP/MJ+w/Zvs/2j/pvLv3faPbG3vnj8q/2GP25/+GLv+E2/4on/AITH/hJfsP8AzFvsP2b7P9o/6YS7932j2xt754+qv+U0f/VHf+Fa/wDcc/tH+0P/AAG8ry/sH+3u83+Hb8x/wQx/5rZ/3BP/AG/oA+qv2GP2GP8Ahi7/AITb/itv+Ex/4SX7D/zCfsP2b7P9o/6by7932j2xt754/Kv9uf8AYY/4Yu/4Qn/itv8AhMf+El+3f8wn7D9m+z/Z/wDpvLv3faPbG3vnj6q/4fnf9UT/APLr/wDuKv1UoA+Vf2GP2GP+GLv+E2/4rb/hMf8AhJfsP/MJ+w/Zvs/2j/pvLv3faPbG3vng/bn/AGGP+G0f+EJ/4rb/AIQ7/hGvt3/MJ+3faftH2f8A6bxbNv2f3zu7Y5/Kv9uf9hj/AIYu/wCEJ/4rb/hMf+El+3f8wn7D9m+z/Z/+m8u/d9o9sbe+ePqr/ghj/wA1s/7gn/t/QB+Vdfv9+wx+3P8A8No/8Jt/xRP/AAh3/CNfYf8AmLfbvtP2j7R/0wi2bfs/vnd2xz8q/wDKFz/qsX/Cyv8AuB/2d/Z//gT5vmfb/wDY2+V/Fu+X5V/bn/bn/wCG0f8AhCf+KJ/4Q7/hGvt3/MW+3faftH2f/phFs2/Z/fO7tjkA+qv+ULn/AFWL/hZX/cD/ALO/s/8A8CfN8z7f/sbfK/i3fL9Vftz/ALc//DF3/CE/8UT/AMJj/wAJL9u/5i32H7N9n+z/APTCXfu+0e2NvfPH4A1+qn/KaP8A6o7/AMK1/wC45/aP9of+A3leX9g/293m/wAO35gA/wCC53/NE/8AuN/+2FH/AA/O/wCqJ/8Al1//AHFX1V+3P+wx/wANo/8ACE/8Vt/wh3/CNfbv+YT9u+0/aPs//TeLZt+z++d3bHPyr/wQx/5rZ/3BP/b+gD6q/YY/bn/4bR/4Tb/iif8AhDv+Ea+w/wDMW+3faftH2j/phFs2/Z/fO7tjn5V/5Quf9Vi/4WV/3A/7O/s//wACfN8z7f8A7G3yv4t3y/lXRQB9VfsMftz/APDF3/Cbf8UT/wAJj/wkv2H/AJi32H7N9n+0f9MJd+77R7Y2988fVX/DjH/qtn/lqf8A3bR/w/O/6on/AOXX/wDcVH/Bc7/mif8A3G//AGwoA+qv25/25/8Ahi7/AIQn/iif+Ex/4SX7d/zFvsP2b7P9n/6YS7932j2xt754+qq+Vf2GP25/+G0f+E2/4on/AIQ7/hGvsP8AzFvt32n7R9o/6YRbNv2f3zu7Y5+qqACiiigAooooA+Vf25/25/8Ahi7/AIQn/iif+Ex/4SX7d/zFvsP2b7P9n/6YS7932j2xt754P25/2GP+G0f+EJ/4rb/hDv8AhGvt3/MJ+3faftH2f/pvFs2/Z/fO7tjk/bn/AG5/+GLv+EJ/4on/AITH/hJft3/MW+w/Zvs/2f8A6YS7932j2xt754+qqAPyr/5Quf8AVYv+Flf9wP8As7+z/wDwJ83zPt/+xt8r+Ld8v1V+3P8Atz/8MXf8IT/xRP8AwmP/AAkv27/mLfYfs32f7P8A9MJd+77R7Y2988flX+3P+3P/AMNo/wDCE/8AFE/8Id/wjX27/mLfbvtP2j7P/wBMItm37P753dscn7DH7c//AAxd/wAJt/xRP/CY/wDCS/Yf+Yt9h+zfZ/tH/TCXfu+0e2NvfPAB9Vf8OMf+q2f+Wp/9219Vftz/ALc//DF3/CE/8UT/AMJj/wAJL9u/5i32H7N9n+z/APTCXfu+0e2NvfPB+wx+3P8A8No/8Jt/xRP/AAh3/CNfYf8AmLfbvtP2j7R/0wi2bfs/vnd2xz9VUAfgD+wx+3P/AMMXf8Jt/wAUT/wmP/CS/Yf+Yt9h+zfZ/tH/AEwl37vtHtjb3zwftz/sMf8ADF3/AAhP/Fbf8Jj/AMJL9u/5hP2H7N9n+z/9N5d+77R7Y2988fKtfv8AfsMfsMf8MXf8Jt/xW3/CY/8ACS/Yf+YT9h+zfZ/tH/TeXfu+0e2NvfPAAftz/sMf8No/8IT/AMVt/wAId/wjX27/AJhP277T9o+z/wDTeLZt+z++d3bHPyr/AMFzv+aJ/wDcb/8AbCj/AILnf80T/wC43/7YUf8AKaP/AKo7/wAK1/7jn9o/2h/4DeV5f2D/AG93m/w7fmAD/lNH/wBUd/4Vr/3HP7R/tD/wG8ry/sH+3u83+Hb83yr+3P8AsMf8MXf8IT/xW3/CY/8ACS/bv+YT9h+zfZ/s/wD03l37vtHtjb3zx+qn7DH7c/8Aw2j/AMJt/wAUT/wh3/CNfYf+Yt9u+0/aPtH/AEwi2bfs/vnd2xz+Vf7DH7DH/DaP/Cbf8Vt/wh3/AAjX2H/mE/bvtP2j7R/03i2bfs/vnd2xyAH7c/7c/wDw2j/whP8AxRP/AAh3/CNfbv8AmLfbvtP2j7P/ANMItm37P753dsc/VX/BDH/mtn/cE/8Ab+j/AIfnf9UT/wDLr/8AuKj/AIIY/wDNbP8AuCf+39AH6qV8q/tz/sMf8No/8IT/AMVt/wAId/wjX27/AJhP277T9o+z/wDTeLZt+z++d3bHP4A1+qn/ACmj/wCqO/8ACtf+45/aP9of+A3leX9g/wBvd5v8O35gA/4fnf8AVE//AC6//uKv1Ur8q/8Ahxj/ANVs/wDLU/8Au2vlX9hj9hj/AIbR/wCE2/4rb/hDv+Ea+w/8wn7d9p+0faP+m8Wzb9n987u2OQD6q/4IY/8ANbP+4J/7f19VfsMfsMf8MXf8Jt/xW3/CY/8ACS/Yf+YT9h+zfZ/tH/TeXfu+0e2NvfPB+3P+wx/w2j/whP8AxW3/AAh3/CNfbv8AmE/bvtP2j7P/ANN4tm37P753dsc/Kv8AwQx/5rZ/3BP/AG/oA/VSvyr/AOHGP/VbP/LU/wDu2vqr9uf9uf8A4Yu/4Qn/AIon/hMf+El+3f8AMW+w/Zvs/wBn/wCmEu/d9o9sbe+ePyr/AGGP2GP+G0f+E2/4rb/hDv8AhGvsP/MJ+3faftH2j/pvFs2/Z/fO7tjkA/VT9uf9uf8A4Yu/4Qn/AIon/hMf+El+3f8AMW+w/Zvs/wBn/wCmEu/d9o9sbe+ePqqvwB/bn/YY/wCGLv8AhCf+K2/4TH/hJft3/MJ+w/Zvs/2f/pvLv3faPbG3vnj9/qACiiigAooooAK/Kv8A5TR/9Ud/4Vr/ANxz+0f7Q/8AAbyvL+wf7e7zf4dvzfqpXyr+wx+3P/w2j/wm3/FE/wDCHf8ACNfYf+Yt9u+0/aPtH/TCLZt+z++d3bHIAftz/tz/APDF3/CE/wDFE/8ACY/8JL9u/wCYt9h+zfZ/s/8A0wl37vtHtjb3zx+Vf7DH7c//AAxd/wAJt/xRP/CY/wDCS/Yf+Yt9h+zfZ/tH/TCXfu+0e2NvfPB+3P8Atz/8No/8IT/xRP8Awh3/AAjX27/mLfbvtP2j7P8A9MItm37P753dsc/qp+3P+3P/AMMXf8IT/wAUT/wmP/CS/bv+Yt9h+zfZ/s//AEwl37vtHtjb3zwAfKv/AA/O/wCqJ/8Al1//AHFXyr+wx+3P/wAMXf8ACbf8UT/wmP8Awkv2H/mLfYfs32f7R/0wl37vtHtjb3zx9Vf8Fzv+aJ/9xv8A9sK+qv2GP2GP+GLv+E2/4rb/AITH/hJfsP8AzCfsP2b7P9o/6by7932j2xt754APqqvyr/4IY/8ANbP+4J/7f0f8OMf+q2f+Wp/920f8EMf+a2f9wT/2/oA/VSv5V6/VT/hxj/1Wz/y1P/u2v1UoA/Kv/gud/wA0T/7jf/thR/w/O/6on/5df/3FXyr+3P8Atz/8No/8IT/xRP8Awh3/AAjX27/mLfbvtP2j7P8A9MItm37P753dsc/qp+3P+3P/AMMXf8IT/wAUT/wmP/CS/bv+Yt9h+zfZ/s//AEwl37vtHtjb3zwAflX+3P8Atz/8No/8IT/xRP8Awh3/AAjX27/mLfbvtP2j7P8A9MItm37P753dsc/qp+3P+wx/w2j/AMIT/wAVt/wh3/CNfbv+YT9u+0/aPs//AE3i2bfs/vnd2xz8q/8ABc7/AJon/wBxv/2wo/4cY/8AVbP/AC1P/u2gA/4Lnf8ANE/+43/7YV8q/tz/ALc//DaP/CE/8UT/AMId/wAI19u/5i3277T9o+z/APTCLZt+z++d3bHP7/V8q/tz/sMf8No/8IT/AMVt/wAId/wjX27/AJhP277T9o+z/wDTeLZt+z++d3bHIB9VV+Vf/KFz/qsX/Cyv+4H/AGd/Z/8A4E+b5n2//Y2+V/Fu+U/4IY/81s/7gn/t/X5V0AfVX7DH7c//AAxd/wAJt/xRP/CY/wDCS/Yf+Yt9h+zfZ/tH/TCXfu+0e2NvfPB+3P8Atz/8No/8IT/xRP8Awh3/AAjX27/mLfbvtP2j7P8A9MItm37P753dsc/Ktfv9+3P+3P8A8MXf8IT/AMUT/wAJj/wkv27/AJi32H7N9n+z/wDTCXfu+0e2NvfPAB+ANfqp/wApo/8Aqjv/AArX/uOf2j/aH/gN5Xl/YP8Ab3eb/Dt+Y/4Lnf8ANE/+43/7YV9Vftz/ALDH/DaP/CE/8Vt/wh3/AAjX27/mE/bvtP2j7P8A9N4tm37P753dscgHyr/w4x/6rZ/5an/3bX6qV+Vf/KFz/qsX/Cyv+4H/AGd/Z/8A4E+b5n2//Y2+V/Fu+X9VKACiiigAooooAK/Kv/gud/zRP/uN/wDthR/wXO/5on/3G/8A2wr5V/YY/YY/4bR/4Tb/AIrb/hDv+Ea+w/8AMJ+3faftH2j/AKbxbNv2f3zu7Y5AD9uf9hj/AIYu/wCEJ/4rb/hMf+El+3f8wn7D9m+z/Z/+m8u/d9o9sbe+ePqr/h+d/wBUT/8ALr/+4qP+H53/AFRP/wAuv/7ir6q/bn/bn/4Yu/4Qn/iif+Ex/wCEl+3f8xb7D9m+z/Z/+mEu/d9o9sbe+eAD8q/25/25/wDhtH/hCf8Aiif+EO/4Rr7d/wAxb7d9p+0fZ/8AphFs2/Z/fO7tjk/bn/YY/wCGLv8AhCf+K2/4TH/hJft3/MJ+w/Zvs/2f/pvLv3faPbG3vng/YY/YY/4bR/4Tb/itv+EO/wCEa+w/8wn7d9p+0faP+m8Wzb9n987u2OT9uf8AYY/4Yu/4Qn/itv8AhMf+El+3f8wn7D9m+z/Z/wDpvLv3faPbG3vngA+qv+C53/NE/wDuN/8AthX1V+3P+wx/w2j/AMIT/wAVt/wh3/CNfbv+YT9u+0/aPs//AE3i2bfs/vnd2xz+Vf7c/wC3P/w2j/whP/FE/wDCHf8ACNfbv+Yt9u+0/aPs/wD0wi2bfs/vnd2xyfsMfsMf8No/8Jt/xW3/AAh3/CNfYf8AmE/bvtP2j7R/03i2bfs/vnd2xyAH7DH7c/8Awxd/wm3/ABRP/CY/8JL9h/5i32H7N9n+0f8ATCXfu+0e2NvfPH6qftz/ALc//DF3/CE/8UT/AMJj/wAJL9u/5i32H7N9n+z/APTCXfu+0e2NvfPH5V/sMfsMf8No/wDCbf8AFbf8Id/wjX2H/mE/bvtP2j7R/wBN4tm37P753dsc/qp+wx+3P/w2j/wm3/FE/wDCHf8ACNfYf+Yt9u+0/aPtH/TCLZt+z++d3bHIB+Vf7c/7DH/DF3/CE/8AFbf8Jj/wkv27/mE/Yfs32f7P/wBN5d+77R7Y2988fVX/AA/O/wCqJ/8Al1//AHFR/wApo/8Aqjv/AArX/uOf2j/aH/gN5Xl/YP8Ab3eb/Dt+b8q6APqr9uf9uf8A4bR/4Qn/AIon/hDv+Ea+3f8AMW+3faftH2f/AKYRbNv2f3zu7Y5P2GP25/8Ahi7/AITb/iif+Ex/4SX7D/zFvsP2b7P9o/6YS7932j2xt754+qv+U0f/AFR3/hWv/cc/tH+0P/AbyvL+wf7e7zf4dvzfKv7c/wC3P/w2j/whP/FE/wDCHf8ACNfbv+Yt9u+0/aPs/wD0wi2bfs/vnd2xyAfqp+3P+3P/AMMXf8IT/wAUT/wmP/CS/bv+Yt9h+zfZ/s//AEwl37vtHtjb3zwfsMfsMf8ADF3/AAm3/Fbf8Jj/AMJL9h/5hP2H7N9n+0f9N5d+77R7Y2988fgDX6qf8po/+qO/8K1/7jn9o/2h/wCA3leX9g/293m/w7fmAPlX9uf9uf8A4bR/4Qn/AIon/hDv+Ea+3f8AMW+3faftH2f/AKYRbNv2f3zu7Y5+qv8Aghj/AM1s/wC4J/7f0f8ADjH/AKrZ/wCWp/8AdtH/AAQx/wCa2f8AcE/9v6APlX9uf9hj/hi7/hCf+K2/4TH/AISX7d/zCfsP2b7P9n/6by7932j2xt754+qv+H53/VE//Lr/APuKvqr9uf8Abn/4Yu/4Qn/iif8AhMf+El+3f8xb7D9m+z/Z/wDphLv3faPbG3vng/YY/YY/4Yu/4Tb/AIrb/hMf+El+w/8AMJ+w/Zvs/wBo/wCm8u/d9o9sbe+eAD8q/wBuf9uf/htH/hCf+KJ/4Q7/AIRr7d/zFvt32n7R9n/6YRbNv2f3zu7Y5+qv+HGP/VbP/LU/+7a+qv2GP25/+G0f+E2/4on/AIQ7/hGvsP8AzFvt32n7R9o/6YRbNv2f3zu7Y5/Kv9uf9uf/AIbR/wCEJ/4on/hDv+Ea+3f8xb7d9p+0fZ/+mEWzb9n987u2OQD6q/5Quf8AVYv+Flf9wP8As7+z/wDwJ83zPt/+xt8r+Ld8v6qUUUAFFFFABRRRQB+Vf/Bc7/mif/cb/wDbCj/ghj/zWz/uCf8At/R/wXO/5on/ANxv/wBsKP8Ahxj/ANVs/wDLU/8Au2gD6q/bn/YY/wCG0f8AhCf+K2/4Q7/hGvt3/MJ+3faftH2f/pvFs2/Z/fO7tjn8q/2GP25/+GLv+E2/4on/AITH/hJfsP8AzFvsP2b7P9o/6YS7932j2xt754+qv+CGP/NbP+4J/wC39fVX7c/7c/8Awxd/whP/ABRP/CY/8JL9u/5i32H7N9n+z/8ATCXfu+0e2NvfPAB+Vf7DH7c//DF3/Cbf8UT/AMJj/wAJL9h/5i32H7N9n+0f9MJd+77R7Y2988fqp+wx+wx/wxd/wm3/ABW3/CY/8JL9h/5hP2H7N9n+0f8ATeXfu+0e2NvfPB+3P+3P/wAMXf8ACE/8UT/wmP8Awkv27/mLfYfs32f7P/0wl37vtHtjb3zx8q/8EMf+a2f9wT/2/oA+qv25/wBhj/htH/hCf+K2/wCEO/4Rr7d/zCft32n7R9n/AOm8Wzb9n987u2OflX/gud/zRP8A7jf/ALYV+VdFAH1V+wx+3P8A8MXf8Jt/xRP/AAmP/CS/Yf8AmLfYfs32f7R/0wl37vtHtjb3zwftz/sMf8MXf8IT/wAVt/wmP/CS/bv+YT9h+zfZ/s//AE3l37vtHtjb3zwftz/sMf8ADF3/AAhP/Fbf8Jj/AMJL9u/5hP2H7N9n+z/9N5d+77R7Y2988fVX/BDH/mtn/cE/9v6APqr9uf8AYY/4bR/4Qn/itv8AhDv+Ea+3f8wn7d9p+0fZ/wDpvFs2/Z/fO7tjk/YY/YY/4Yu/4Tb/AIrb/hMf+El+w/8AMJ+w/Zvs/wBo/wCm8u/d9o9sbe+ePyr/AGGP25/+GLv+E2/4on/hMf8AhJfsP/MW+w/Zvs/2j/phLv3faPbG3vnj9VP25/25/wDhi7/hCf8Aiif+Ex/4SX7d/wAxb7D9m+z/AGf/AKYS7932j2xt754APyr/AG5/25/+G0f+EJ/4on/hDv8AhGvt3/MW+3faftH2f/phFs2/Z/fO7tjn9VP2GP2GP+GLv+E2/wCK2/4TH/hJfsP/ADCfsP2b7P8AaP8ApvLv3faPbG3vnj5V/wCHGP8A1Wz/AMtT/wC7aP8Aghj/AM1s/wC4J/7f0AfVX7DH7c//AA2j/wAJt/xRP/CHf8I19h/5i3277T9o+0f9MItm37P753dsc/lX+3P+3P8A8No/8IT/AMUT/wAId/wjX27/AJi3277T9o+z/wDTCLZt+z++d3bHJ+wx+3P/AMMXf8Jt/wAUT/wmP/CS/Yf+Yt9h+zfZ/tH/AEwl37vtHtjb3zx9Vf8ADjH/AKrZ/wCWp/8AdtAB/wAPzv8Aqif/AJdf/wBxUf8ABc7/AJon/wBxv/2wr6q/YY/YY/4Yu/4Tb/itv+Ex/wCEl+w/8wn7D9m+z/aP+m8u/d9o9sbe+ePyr/YY/YY/4bR/4Tb/AIrb/hDv+Ea+w/8AMJ+3faftH2j/AKbxbNv2f3zu7Y5AD9hj9uf/AIYu/wCE2/4on/hMf+El+w/8xb7D9m+z/aP+mEu/d9o9sbe+ePqr/lC5/wBVi/4WV/3A/wCzv7P/APAnzfM+3/7G3yv4t3y/VX7c/wC3P/wxd/whP/FE/wDCY/8ACS/bv+Yt9h+zfZ/s/wD0wl37vtHtjb3zx8q/8oXP+qxf8LK/7gf9nf2f/wCBPm+Z9v8A9jb5X8W75QA/4fnf9UT/APLr/wDuKvqr9uf9hj/htH/hCf8Aitv+EO/4Rr7d/wAwn7d9p+0fZ/8ApvFs2/Z/fO7tjn5V/wCHGP8A1Wz/AMtT/wC7aP8Aghj/AM1s/wC4J/7f0AfVX7c/7DH/AA2j/wAIT/xW3/CHf8I19u/5hP277T9o+z/9N4tm37P753dsc/VVfgD+3P8Atz/8No/8IT/xRP8Awh3/AAjX27/mLfbvtP2j7P8A9MItm37P753dsc/v9QAUUUUAFFFFABRXyr+3P+wx/wANo/8ACE/8Vt/wh3/CNfbv+YT9u+0/aPs//TeLZt+z++d3bHJ+wx+wx/wxd/wm3/Fbf8Jj/wAJL9h/5hP2H7N9n+0f9N5d+77R7Y2988AHyr/w4x/6rZ/5an/3bXyr+wx+3P8A8MXf8Jt/xRP/AAmP/CS/Yf8AmLfYfs32f7R/0wl37vtHtjb3zwftz/sMf8MXf8IT/wAVt/wmP/CS/bv+YT9h+zfZ/s//AE3l37vtHtjb3zx+qn7c/wC3P/wxd/whP/FE/wDCY/8ACS/bv+Yt9h+zfZ/s/wD0wl37vtHtjb3zwAfgDX7/AH7DH7c//DaP/Cbf8UT/AMId/wAI19h/5i3277T9o+0f9MItm37P753dsc/lX+wx+3P/AMMXf8Jt/wAUT/wmP/CS/Yf+Yt9h+zfZ/tH/AEwl37vtHtjb3zx9Vf8AD87/AKon/wCXX/8AcVAB/wAFzv8Amif/AHG//bCj/lNH/wBUd/4Vr/3HP7R/tD/wG8ry/sH+3u83+Hb8x/wQx/5rZ/3BP/b+vyroA/f79uf9uf8A4Yu/4Qn/AIon/hMf+El+3f8AMW+w/Zvs/wBn/wCmEu/d9o9sbe+ePwBr9/v25/2GP+G0f+EJ/wCK2/4Q7/hGvt3/ADCft32n7R9n/wCm8Wzb9n987u2OT9uf9uf/AIYu/wCEJ/4on/hMf+El+3f8xb7D9m+z/Z/+mEu/d9o9sbe+eAA/bn/bn/4Yu/4Qn/iif+Ex/wCEl+3f8xb7D9m+z/Z/+mEu/d9o9sbe+ePlX/h+d/1RP/y6/wD7ir5V/bn/AGGP+GLv+EJ/4rb/AITH/hJft3/MJ+w/Zvs/2f8A6by7932j2xt754P2GP25/wDhi7/hNv8Aiif+Ex/4SX7D/wAxb7D9m+z/AGj/AKYS7932j2xt754AD9uf9uf/AIbR/wCEJ/4on/hDv+Ea+3f8xb7d9p+0fZ/+mEWzb9n987u2Of1U/bn/AGGP+G0f+EJ/4rb/AIQ7/hGvt3/MJ+3faftH2f8A6bxbNv2f3zu7Y5P2GP2GP+GLv+E2/wCK2/4TH/hJfsP/ADCfsP2b7P8AaP8ApvLv3faPbG3vnj5V/wCU0f8A1R3/AIVr/wBxz+0f7Q/8BvK8v7B/t7vN/h2/MAH/AAXO/wCaJ/8Acb/9sKP+CGP/ADWz/uCf+39H/BDH/mtn/cE/9v6+Vf2GP2GP+G0f+E2/4rb/AIQ7/hGvsP8AzCft32n7R9o/6bxbNv2f3zu7Y5AP1U/YY/YY/wCGLv8AhNv+K2/4TH/hJfsP/MJ+w/Zvs/2j/pvLv3faPbG3vnj5V/5Quf8AVYv+Flf9wP8As7+z/wDwJ83zPt/+xt8r+Ld8p/w/O/6on/5df/3FXyr+3P8Atz/8No/8IT/xRP8Awh3/AAjX27/mLfbvtP2j7P8A9MItm37P753dscgH1V/yhc/6rF/wsr/uB/2d/Z//AIE+b5n2/wD2Nvlfxbvl/VSvwB/bn/bn/wCG0f8AhCf+KJ/4Q7/hGvt3/MW+3faftH2f/phFs2/Z/fO7tjk/bn/bn/4bR/4Qn/iif+EO/wCEa+3f8xb7d9p+0fZ/+mEWzb9n987u2OQD6q/4cY/9Vs/8tT/7tr6q/bn/AGGP+G0f+EJ/4rb/AIQ7/hGvt3/MJ+3faftH2f8A6bxbNv2f3zu7Y5+Vf+U0f/VHf+Fa/wDcc/tH+0P/AAG8ry/sH+3u83+Hb831V+wx+3P/AMNo/wDCbf8AFE/8Id/wjX2H/mLfbvtP2j7R/wBMItm37P753dscgB+wx+wx/wAMXf8ACbf8Vt/wmP8Awkv2H/mE/Yfs32f7R/03l37vtHtjb3zx9VV+Vf8Aw/O/6on/AOXX/wDcVfqpQAUUUUAFFFFAHyr+3P8Atz/8MXf8IT/xRP8AwmP/AAkv27/mLfYfs32f7P8A9MJd+77R7Y2988fKv/DjH/qtn/lqf/dtfVX7c/7c/wDwxd/whP8AxRP/AAmP/CS/bv8AmLfYfs32f7P/ANMJd+77R7Y2988fKv8Aw/O/6on/AOXX/wDcVAH5V1+/37c/7c//AAxd/wAIT/xRP/CY/wDCS/bv+Yt9h+zfZ/s//TCXfu+0e2NvfPHyr/w/O/6on/5df/3FR/w/O/6on/5df/3FQB9Vftz/ALDH/DaP/CE/8Vt/wh3/AAjX27/mE/bvtP2j7P8A9N4tm37P753dsc/gDX7/AH7c/wCwx/w2j/whP/Fbf8Id/wAI19u/5hP277T9o+z/APTeLZt+z++d3bHPyr/w/O/6on/5df8A9xUAfqpX8q9fv9+3P+wx/wANo/8ACE/8Vt/wh3/CNfbv+YT9u+0/aPs//TeLZt+z++d3bHPyr/yhc/6rF/wsr/uB/wBnf2f/AOBPm+Z9v/2NvlfxbvlAD/lNH/1R3/hWv/cc/tH+0P8AwG8ry/sH+3u83+Hb8x/wXO/5on/3G/8A2wr5V/YY/bn/AOGLv+E2/wCKJ/4TH/hJfsP/ADFvsP2b7P8AaP8AphLv3faPbG3vnj6q/wCCGP8AzWz/ALgn/t/QAf8AD87/AKon/wCXX/8AcVflXX1V+3P+wx/wxd/whP8AxW3/AAmP/CS/bv8AmE/Yfs32f7P/ANN5d+77R7Y2988fqp+3P+3P/wAMXf8ACE/8UT/wmP8Awkv27/mLfYfs32f7P/0wl37vtHtjb3zwAfgDX9VFflX/AMFzv+aJ/wDcb/8AbCj/AILnf80T/wC43/7YUAfKv7DH7c//AAxd/wAJt/xRP/CY/wDCS/Yf+Yt9h+zfZ/tH/TCXfu+0e2NvfPH6qftz/sMf8No/8IT/AMVt/wAId/wjX27/AJhP277T9o+z/wDTeLZt+z++d3bHPyr/AMFzv+aJ/wDcb/8AbCj/AJTR/wDVHf8AhWv/AHHP7R/tD/wG8ry/sH+3u83+Hb8wAf8ABc7/AJon/wBxv/2wr9VK/Kv/AJTR/wDVHf8AhWv/AHHP7R/tD/wG8ry/sH+3u83+Hb831V+wx+3P/wANo/8ACbf8UT/wh3/CNfYf+Yt9u+0/aPtH/TCLZt+z++d3bHIB+Vf7c/7c/wDw2j/whP8AxRP/AAh3/CNfbv8AmLfbvtP2j7P/ANMItm37P753dsc/KtfVX7c/7c//AA2j/wAIT/xRP/CHf8I19u/5i3277T9o+z/9MItm37P753dsc/qp+3P+3P8A8MXf8IT/AMUT/wAJj/wkv27/AJi32H7N9n+z/wDTCXfu+0e2NvfPAB+ANfqp/wAOMf8Aqtn/AJan/wB20f8ABc7/AJon/wBxv/2wo/4IY/8ANbP+4J/7f0AfqpRXyr+wx+3P/wANo/8ACbf8UT/wh3/CNfYf+Yt9u+0/aPtH/TCLZt+z++d3bHP1VQAUUUUAFFFFAH5V/wDBc7/mif8A3G//AGwr6q/bn/bn/wCGLv8AhCf+KJ/4TH/hJft3/MW+w/Zvs/2f/phLv3faPbG3vnj5V/4Lnf8ANE/+43/7YUf8Fzv+aJ/9xv8A9sKAD/h+d/1RP/y6/wD7io/4Lnf80T/7jf8A7YV+Vdfqp/wXO/5on/3G/wD2woA+qv25/wBuf/hi7/hCf+KJ/wCEx/4SX7d/zFvsP2b7P9n/AOmEu/d9o9sbe+eD9uf9uf8A4Yu/4Qn/AIon/hMf+El+3f8AMW+w/Zvs/wBn/wCmEu/d9o9sbe+eD9uf9hj/AIbR/wCEJ/4rb/hDv+Ea+3f8wn7d9p+0fZ/+m8Wzb9n987u2Ofyr/bn/AG5/+G0f+EJ/4on/AIQ7/hGvt3/MW+3faftH2f8A6YRbNv2f3zu7Y5APqr/gud/zRP8A7jf/ALYV9VfsMftz/wDDaP8Awm3/ABRP/CHf8I19h/5i3277T9o+0f8ATCLZt+z++d3bHP5V/tz/ALDH/DF3/CE/8Vt/wmP/AAkv27/mE/Yfs32f7P8A9N5d+77R7Y2988fv9QB+AP7DH7DH/DaP/Cbf8Vt/wh3/AAjX2H/mE/bvtP2j7R/03i2bfs/vnd2xz9Vf8Pzv+qJ/+XX/APcVH/BDH/mtn/cE/wDb+vyroA+qv25/2GP+GLv+EJ/4rb/hMf8AhJft3/MJ+w/Zvs/2f/pvLv3faPbG3vnj6q/4fnf9UT/8uv8A+4q+Vf25/wBhj/hi7/hCf+K2/wCEx/4SX7d/zCfsP2b7P9n/AOm8u/d9o9sbe+eD9hj9hj/htH/hNv8Aitv+EO/4Rr7D/wAwn7d9p+0faP8ApvFs2/Z/fO7tjkAP25/25/8AhtH/AIQn/iif+EO/4Rr7d/zFvt32n7R9n/6YRbNv2f3zu7Y5P2GP25/+GLv+E2/4on/hMf8AhJfsP/MW+w/Zvs/2j/phLv3faPbG3vnj5Vr+qigD5V/YY/YY/wCGLv8AhNv+K2/4TH/hJfsP/MJ+w/Zvs/2j/pvLv3faPbG3vnj8q/2GP2GP+G0f+E2/4rb/AIQ7/hGvsP8AzCft32n7R9o/6bxbNv2f3zu7Y5P2GP2GP+G0f+E2/wCK2/4Q7/hGvsP/ADCft32n7R9o/wCm8Wzb9n987u2Ofqr/AJTR/wDVHf8AhWv/AHHP7R/tD/wG8ry/sH+3u83+Hb8wAf8AD87/AKon/wCXX/8AcVH/AChc/wCqxf8ACyv+4H/Z39n/APgT5vmfb/8AY2+V/Fu+U/4cY/8AVbP/AC1P/u2vyroA+qv25/25/wDhtH/hCf8Aiif+EO/4Rr7d/wAxb7d9p+0fZ/8AphFs2/Z/fO7tjn6q/wCH53/VE/8Ay6//ALir6q/bn/bn/wCGLv8AhCf+KJ/4TH/hJft3/MW+w/Zvs/2f/phLv3faPbG3vnj5V/4fnf8AVE//AC6//uKgD5V/bn/bn/4bR/4Qn/iif+EO/wCEa+3f8xb7d9p+0fZ/+mEWzb9n987u2Ofqr/lNH/1R3/hWv/cc/tH+0P8AwG8ry/sH+3u83+Hb831V+3P+3P8A8MXf8IT/AMUT/wAJj/wkv27/AJi32H7N9n+z/wDTCXfu+0e2NvfPHyr/AMOMf+q2f+Wp/wDdtAH1V+3P+3P/AMMXf8IT/wAUT/wmP/CS/bv+Yt9h+zfZ/s//AEwl37vtHtjb3zx9VV8q/sMftz/8No/8Jt/xRP8Awh3/AAjX2H/mLfbvtP2j7R/0wi2bfs/vnd2xz9VUAFFFFABRRRQB+Vf/AAXO/wCaJ/8Acb/9sKP+H53/AFRP/wAuv/7ir9VKKAPyr/4fnf8AVE//AC6//uKvlX9uf9uf/htH/hCf+KJ/4Q7/AIRr7d/zFvt32n7R9n/6YRbNv2f3zu7Y5/f6igD8q/8Agud/zRP/ALjf/thX1V+3P+3P/wAMXf8ACE/8UT/wmP8Awkv27/mLfYfs32f7P/0wl37vtHtjb3zx9VUUAflX/wApo/8Aqjv/AArX/uOf2j/aH/gN5Xl/YP8Ab3eb/Dt+Y/4IY/8ANbP+4J/7f1+qlFAH5V/8OMf+q2f+Wp/9218q/sMftz/8MXf8Jt/xRP8AwmP/AAkv2H/mLfYfs32f7R/0wl37vtHtjb3zx+/1FAHyr+wx+3P/AMNo/wDCbf8AFE/8Id/wjX2H/mLfbvtP2j7R/wBMItm37P753dsc/Kv/AAQx/wCa2f8AcE/9v6/VSigD8q/+ULn/AFWL/hZX/cD/ALO/s/8A8CfN8z7f/sbfK/i3fL9VfsMfsMf8MXf8Jt/xW3/CY/8ACS/Yf+YT9h+zfZ/tH/TeXfu+0e2NvfPH1VRQB/KvX6qf8Fzv+aJ/9xv/ANsK/VSigD5V/YY/YY/4Yu/4Tb/itv8AhMf+El+w/wDMJ+w/Zvs/2j/pvLv3faPbG3vnj5V/4IY/81s/7gn/ALf1+qlFAH5V/wDDjH/qtn/lqf8A3bXyr+3P+3P/AMNo/wDCE/8AFE/8Id/wjX27/mLfbvtP2j7P/wBMItm37P753dsc/v8AUUAflX/w4x/6rZ/5an/3bR/ymj/6o7/wrX/uOf2j/aH/AIDeV5f2D/b3eb/Dt+b9VKKAPyr/AOHGP/VbP/LU/wDu2v1UoooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA/9k=" />
+                                            </div>
+                                            <div class="receipt-thanks hidden-print" style="position:relative;color:darkslategray;padding-top:5rem;">
+                                                СПАСИБО ЗА ПОКУПКУ
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                </div>
+
+
+            
+
+            <style type="text/css">
+                .btn-green,
+                .btn-green:hover {
+                    background-color: #79C143;
+                    color: white;
+                    text-transform: uppercase;
+                }
+
+                    .btn-green:hover {
+                        font-weight: bold;
+                    }
+
+                .req-check-title {
+                    text-transform: uppercase;
+                    padding: 2.5rem 0;
+                    padding-top: 0;
+                }
+            </style>
+
+            <div class="col-md-6 col-md-push-3 hidden-print hidden" style="min-height:450px; background-color:white; padding-top:1rem;">
+
+                <div class="alert text-danger" style=&#39;visibility:hidden&#39;>
+                </div>
+
+
+
+                <h3 class="req-check-title text-center"> проверка чека </h3>
+
+                <div class="col-md-10 col-md-push-1">
+                    <form action="/Ofd/check">
+
+                        <input type="hidden" name="type" value="check" />
+                        <input type="hidden" name="sign" value="cash_in" />
+                        
+                        <div class="form-group">
+                            <label for="fiscal_code">Фискальный код чека (ФД)</label>
+                            <input type="text" class="form-control" id="fiscal_code" name="fiscal_code" placeholder="Фискальный код чека">
+                            <small class="form-text text-muted">Фискальный код чека 12 символов.</small>
+                        </div>
+                        <div class="form-group" style="position: relative">
+                            <label for="fiscal_code">Время формирования чека</label>
+                            <input type="text" class="form-control" data-format="dd.MM.yyyy hh:mm:ss" id="timestamp" name="timestamp" placeholder="Время формирования чека">
+                            <small class="form-text text-muted">
+                                Например: 05.11.2026 14:55:34
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="fiscal_code">Сумма</label>
+                            <input type="number" min="0.00" max="1000000.00" step="0.01" class="form-control" id="amount_str" name="amount_str" placeholder="Сумма чека" />
+                            <small class="form-text text-muted">
+                                Например: 12.47
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="fiscal_code">Валюта</label>
+                            <select class="form-control" name="currency_code" placeholder="Код валюты">
+                                <option value="000" selected="selected">Рубли ПМР</option>
+                                <option value="840">Доллар США</option>
+                                
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group text-center" style="padding:2rem 0;">
+                            <button type="submit" class="btn btn-green">Запросить чек</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            $(function () {
+                $('#timestamp').datetimepicker({
+                    locale: 'RU',
+                    format: 'DD.MM.YYYY HH:mm:ss',
+                }).on('dp.change', function (e) {
+                    if (!e.oldDate || !e.date.isSame(e.oldDate, 'day')) {
+                        $(this).data('DateTimePicker').hide();
+                    }
+                });
+            });
+        </script>
+
+
+    </div>
+
+    <footer class="hidden-print hidden-xs fixed-bottom">
+        <div class="container text-center" style="background: none;">
+            <p style="margin-top:10px;color:white;">
+                &copy; 1991 - 2026 ЗАО «Агропромбанк», г.Тирасполь, ул.25 Октября, 65/1
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
