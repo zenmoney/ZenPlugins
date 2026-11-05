@@ -1,3 +1,5 @@
+import get from '../../../types/get'
+import cloudReceipt from './convertHtmlReceipt-03.html'
 import fetchMock from 'fetch-mock'
 import papaDoner from './convertHtmlReceipt-01.html'
 import proStore from './convertHtmlReceipt-02.html'
@@ -110,4 +112,15 @@ test('[model] unstructured receipt HTML and authorization cookies are not emitte
   fetchMock.get(endpoint, { body: papaDoner, headers: { 'Set-Cookie': 'session=synthetic-secret' } })
   await fetchReceipt(args(uid))
   expect(debug).not.toHaveBeenCalled()
+})
+
+// Observed cloud domain and document, 2026-11-05, receipts.csv row 1489.
+test('uses the observed cloud host rather than the legacy render database', async () => {
+  const code = 'https://receipts.cloud.ikassa.by/render/150B5F7DDEA9F05207196D2D'
+  fetchMock.get(code, { body: cloudReceipt })
+  await expect(fetchReceipt({ ...args(code), isInBackground: true })).resolves.toEqual({ status: 'found', receipt: convertReceipt(cloudReceipt) })
+  expect(get(fetchMock.calls(), 'matched')).toHaveLength(1)
+  const matcher = manifest.capabilities.fetchReceipt?.matcher
+  assert(matcher != null && typeof matcher === 'object' && 'any' in matcher, 'Expected matcher alternatives')
+  expect(matcher.any.some(child => child instanceof RegExp && child.test(code))).toBe(true)
 })

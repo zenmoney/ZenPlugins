@@ -8,7 +8,7 @@ function parseDocumentId (code: string): string | undefined {
   if (isDocumentId(code)) return code
   const { documentId } = queryParams(code)
   if (documentId !== undefined && !isDocumentId(documentId)) return undefined
-  if (hasHost(code, ['receipts.ikassa.by'])) {
+  if (hasHost(code, ['receipts.ikassa.by', 'receipts.cloud.ikassa.by'])) {
     let url: URL
     try { url = new URL(code) } catch (error) {
       if (get(error, 'name') === 'TypeError') return undefined
@@ -23,7 +23,7 @@ function parseDocumentId (code: string): string | undefined {
 export async function fetchReceipt (code: string): Promise<{ status: 'found', data: unknown, documentId: string } | { status: 'notApplicable' | 'notFound' }> {
   const documentId = parseDocumentId(code)
   if (documentId === undefined) return { status: 'notApplicable' }
-  const response = await fetchReceiptRaw(documentId)
+  const response = await fetchReceiptRaw(documentId, hasHost(code, ['receipts.cloud.ikassa.by']))
   // Observed for a missing UID on 2026-10-25; a generic 400 is not absence.
   if (response.status === 400 && typeof response.body === 'string' && response.body.startsWith('{')) {
     const error: unknown = JSON.parse(response.body)

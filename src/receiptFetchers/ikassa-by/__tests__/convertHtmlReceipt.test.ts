@@ -1,3 +1,4 @@
+import cloudReceipt from './convertHtmlReceipt-03.html'
 import papaDoner from './convertHtmlReceipt-01.html'
 import proStore from './convertHtmlReceipt-02.html'
 import { convertReceipt } from '../converters'
@@ -118,4 +119,19 @@ test('[model] a changed item container fails instead of skipping its products', 
 
 test('[model] invalid source calendar dates remain failures', () => {
   expect(() => convertReceipt(papaDoner.replace('25.10.2026', '31.02.2026'))).toThrow('Invalid receipt calendar date')
+})
+
+// Complete public cloud-host receipt, captured 2026-11-05; receipts.csv row 1489.
+test('converts the cloud-host document without changing its identity', () => {
+  expect(convertReceipt(cloudReceipt)).toEqual({
+    completeness: 'full',
+    id: '150B5F7DDEA9F05207196D2D',
+    currency: 'BYN',
+    operation: 'unknown',
+    issuedAt: { date: '2026-10-23', time: '07:43:28' },
+    totalAmount: '0.92',
+    merchant: { name: 'Общество с ограниченной ответственностью "Либретик" магазин "Соседи"', address: 'г. Минск ПР. ДЗЕРЖИНСКОГО, 11', identifiers: [{ value: '101454161', countryCode: 'BY', scheme: 'UNP' }] },
+    items: [{ name: 'СЫРОК ГЛ.МОЛОЧНАЯ СТРАНА 18% КАРТОШ.45Г', quantity: '1', unitPrice: '0.92', totalAmount: '0.92' }],
+    payments: [{ method: 'card', amount: '0.92' }]
+  })
 })

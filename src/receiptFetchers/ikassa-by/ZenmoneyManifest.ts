@@ -5,7 +5,7 @@ export const manifest: ReceiptFetcherManifest = {
   countryCodes: ['BY'],
   capabilities: {
     fetchReceipt: {
-      matcher: { any: [/^[A-Za-z0-9]{24}$/, 'documentId=', /^https?:\/\/receipts\.ikassa\.by\/render\//i] }
+      matcher: { any: [/^[A-Za-z0-9]{24}$/, 'documentId=', /^https?:\/\/receipts\.(?:cloud\.)?ikassa\.by\/render\//i] }
     }
   }
 }
