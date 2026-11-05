@@ -8,7 +8,7 @@ import { decimal } from '../../common/decimal'
 import { assertReceipt, optional, text } from '../../common/receiptFetcher/receipt'
 
 function convertFloat (str: string): string {
-  return decimal(str.replace(',', '.'))
+  return decimal(str.replace(/\s/g, '').replace(',', '.'))
 }
 
 export function convertReceipt (html: unknown): Receipt {
@@ -29,14 +29,15 @@ export function convertReceipt (html: unknown): Receipt {
   _.times(baseInfo.length, (i) => {
     const itemText = $(baseInfo[i]).text()
     if (i === 0) Object.assign(merchant, optional('name', text(itemText)))
-    if ((merchant.identifiers == null) && itemText.includes('ИИН')) merchant.identifiers = [{ value: itemText.split(' ')[1], countryCode: 'KZ' }]
+    const taxId = itemText.match(/(ИИН(?:\/БИН)?):?\s*(\d+)/)
+    if ((merchant.identifiers == null) && taxId !== null) merchant.identifiers = [{ value: taxId[2], countryCode: 'KZ', scheme: taxId[1] === 'ИИН' ? 'IIN' : 'IIN/BIN' }]
     merchant.address = (merchant.address == null) && itemText.includes('Адрес:')
       ? itemText.split('Адрес: ')[1].replace('\n', ' ').trim().replace(/\s+/g, ' ')
       : merchant.address
     if (itemText.includes('ата и время')) {
       const localeMatch = html.match(/<html lang="([a-z]+)">/i)
       const dateTime = itemText.split('Дата и время: ')[1].split(', ')
-      issuedAt.time = `${dateTime[1]}:00`
+      issuedAt.time = dateTime[1]
       // The provider omits the dot in Russian abbreviations ("апр" vs "апр.").
       issuedAt.date = moment(dateTime[0], ['D MMM YYYY', 'D MMMM YYYY'], (localeMatch != null) ? localeMatch[1] : 'ru').format('YYYY-MM-DD')
     }
@@ -45,19 +46,20 @@ export function convertReceipt (html: unknown): Receipt {
   const itemNodes = $(detailInfo).children().first().children()
   _.times(itemNodes.length, (i) => {
     const itemText = $(itemNodes[i]).text()
-    const match = itemText.match(/(\d+\.\d{2})\s*x\s*([\d.,]+)\D+(\d+\.\d{2})/)
+    const match = itemText.match(/(\d+\.\d{2})\s*x\s*([\d.,]+)\s+([^=]+?)\s*=\s*(\d+\.\d{2})/)
     assert(match !== null, 'Missing receipt item details')
     items.push({
-      totalAmount: convertFloat(match[3]),
+      totalAmount: convertFloat(match[4]),
       name: itemText.replace(match[0], '').trim(),
       unitPrice: convertFloat(match[1]),
-      quantity: convertFloat(match[2])
+      quantity: convertFloat(match[2]),
+      unit: match[3].trim()
     })
   })
-  const totalSumInfo = $(detailInfo).children().first().next().text()
-  const sumMatch = totalSumInfo.match(/ИТОГО: ([\d.,]+)/)
+  const totalSumInfo = $(detailInfo).children('.total_sum').text()
+  const sumMatch = totalSumInfo.match(/ИТОГО:\s*([\d., ]+)/)
   const totalAmount = sumMatch !== null ? convertFloat(sumMatch[1]) : undefined
-  const cardSumMatch = totalSumInfo.match(/Карта: ([\d.,]+)/)
+  const cardSumMatch = totalSumInfo.match(/Карта:\s*([\d., ]+)/)
   if (cardSumMatch != null) payments = [{ method: 'card', amount: convertFloat(cardSumMatch[1]) }]
   merchant.name = text(merchant.name)
   merchant.address = text(merchant.address)
