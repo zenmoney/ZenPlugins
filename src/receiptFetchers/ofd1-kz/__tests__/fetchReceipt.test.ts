@@ -26,7 +26,7 @@ test.each([false, true])('retrieves the current receipt after the verification p
       operation: 'unknown',
       merchant: {
         name: 'Товарищество с ограниченной ответственностью "ОЗОН Маркетплейс Казахстан"',
-        identifiers: [{ value: '211040009534', countryCode: 'KZ' }]
+        identifiers: [{ value: '211040009534', countryCode: 'KZ', scheme: 'IIN/BIN' }]
       },
       items: [{
         name: 'Ароматизатор для автомобиля Новая машина, вонючка пахучка в машину, освежитель воздуха для автомобиля, автопарфюм',

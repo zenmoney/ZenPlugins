@@ -20,7 +20,8 @@ test('converts source case 01', () => {
       identifiers: [
         {
           value: '020340002288',
-          countryCode: 'KZ'
+          countryCode: 'KZ',
+          scheme: 'IIN/BIN'
         }
       ]
     },
@@ -87,7 +88,8 @@ test('converts source case 02', () => {
       identifiers: [
         {
           value: '020340002288',
-          countryCode: 'KZ'
+          countryCode: 'KZ',
+          scheme: 'IIN/BIN'
         }
       ]
     },
@@ -177,7 +179,8 @@ test('converts source case 03', () => {
       identifiers: [
         {
           value: '020340002288',
-          countryCode: 'KZ'
+          countryCode: 'KZ',
+          scheme: 'IIN/BIN'
         }
       ]
     },
@@ -279,7 +282,8 @@ test('converts source case 04', () => {
       identifiers: [
         {
           value: '110740013861',
-          countryCode: 'KZ'
+          countryCode: 'KZ',
+          scheme: 'IIN/BIN'
         }
       ]
     },
@@ -341,7 +345,7 @@ test('converts the current Ozon receipt fragment without the legacy page wrapper
     operation: 'unknown',
     merchant: {
       name: 'Товарищество с ограниченной ответственностью "ОЗОН Маркетплейс Казахстан"',
-      identifiers: [{ value: '211040009534', countryCode: 'KZ' }]
+      identifiers: [{ value: '211040009534', countryCode: 'KZ', scheme: 'IIN/BIN' }]
     },
     items: [{
       name: 'Ароматизатор для автомобиля Новая машина, вонючка пахучка в машину, освежитель воздуха для автомобиля, автопарфюм',

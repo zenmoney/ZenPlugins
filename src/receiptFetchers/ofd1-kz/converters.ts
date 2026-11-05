@@ -32,8 +32,8 @@ export function convertReceipt (receiptHtml: unknown, code: string): Receipt {
   const ticket = $('.ready_ticket.tickets_data_for_print')
   assert(ticket.length === 1, 'Expected one receipt')
   const payee = ticket.find('.ticket_header > div:first-child > span').text().trim()
-  const binMatch = receiptHtml.match(/БИН\D+(\d+)/)
-  const bin = (binMatch != null) && (binMatch.length !== 0) ? binMatch[1] : ''
+  const binMatch = receiptHtml.match(/(ИИН\/БИН|БИН)\D+(\d+)/)
+  const bin = binMatch !== null ? binMatch[2] : ''
   const issuedAt: Partial<ReceiptDateTime> = fiscalDate(code)
   const merchant: ReceiptMerchant = { ...optional('name', text(payee)) }
   const items: ReceiptItem[] = []
@@ -58,7 +58,7 @@ export function convertReceipt (receiptHtml: unknown, code: string): Receipt {
   })
   if (cardSum != null) payments = [{ method: 'card', amount: cardSum }]
   if ((bin.length > 0)) {
-    merchant.identifiers = [{ value: bin, countryCode: 'KZ' }]
+    merchant.identifiers = [{ value: bin, countryCode: 'KZ', scheme: binMatch?.[1] === 'БИН' ? 'BIN' : 'IIN/BIN' }]
   }
   const receipt = {
     completeness: 'full',
