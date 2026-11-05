@@ -43,7 +43,7 @@ export function convertReceipt (source: unknown): Receipt {
     merchant: {
       ...optional('name', text(get(source, 'duplicated.company.name'))),
       ...optional('address', text(get(source, 'duplicated.kassa.address'))),
-      ...(bin !== undefined ? { identifiers: [{ value: bin, countryCode: 'KZ' }] } : {})
+      ...(bin !== undefined ? { identifiers: [{ value: bin, countryCode: 'KZ', scheme: 'IIN/BIN' }] } : {})
     },
     items,
     payments: payments.map((payment: unknown): ReceiptPayment => {
