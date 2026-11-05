@@ -12,7 +12,11 @@ export function convertReceipt (html: unknown): Receipt {
   assert(typeof encoded === 'string', 'Missing encoded receipt')
   const $ = cheerio.load(html)
   const timestamp = $('body').text().match(/Дата и время:\s*(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/)?.[1]
-  return convertReceiptData(decodeReceipt(encoded), timestamp)
+  const receipt = convertReceiptData(decodeReceipt(encoded), timestamp)
+  const bin = $('body').text().match(/БСН\/БИН:\s*(\d+)/)?.[1]
+  const identifier = receipt.merchant?.identifiers?.find(identifier => identifier.value === bin)
+  if (identifier !== undefined) identifier.scheme = 'BIN'
+  return receipt
 }
 
 export function convertReceiptData (source: unknown, timestamp: unknown): Receipt {
@@ -39,7 +43,7 @@ export function convertReceiptData (source: unknown, timestamp: unknown): Receip
     merchant: {
       ...optional('name', text(get(source, 'merchant.name'))),
       ...optional('address', text(get(source, 'merchant.address'))),
-      ...(tin !== undefined ? { identifiers: [{ value: tin, countryCode: 'KZ' }] } : {})
+      ...(tin !== undefined ? { identifiers: [{ value: tin, countryCode: 'KZ', scheme: 'IIN/BIN' }] } : {})
     },
     items: rows.map((row: unknown) => {
       assert(get(row, 'currency') === 398, 'Unsupported item currency')

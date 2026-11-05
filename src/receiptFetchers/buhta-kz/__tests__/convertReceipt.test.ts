@@ -19,7 +19,7 @@ test('converts the complete source receipt without duplicating the rounded tax s
     merchant: {
       name: 'ТОО "Надежный Сервис"',
       address: 'Казахстан, Алматинская обл., г. Алматы, ул. ПРОСПЕКТ АЛЬ-ФАРАБИ, д. 21, кв. (офис) 1069л',
-      identifiers: [{ value: '230340005177', countryCode: 'KZ' }]
+      identifiers: [{ value: '230340005177', countryCode: 'KZ', scheme: 'BIN' }]
     },
     items: [{
       name: 'Арендная плата за аренду электросамоката',
