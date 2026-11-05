@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="public-fixture-csrf-token-not-valid-000000">
+
+    <title>Nurkassa</title>
+    <!-- Fonts -->
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet" type="text/css">
+    <style type="text/css">
+        .csAC6A4475 {height:0px;width:0px;overflow:hidden;font-size:0px;line-height:0px;}
+    </style>
+    <!-- Styles -->
+
+    <link rel="preload" as="style" href="https://nurkassa.kz/build/assets/all-CNOaDOfR.css" /><link rel="stylesheet" href="https://nurkassa.kz/build/assets/all-CNOaDOfR.css" />
+
+
+</head>
+<body>
+
+    <div class="container" style="max-width: 340px">
+        <h2 class="mb-3">Проверка чека</h2>
+
+        
+        <form id="consumerForm"
+              method="GET"
+              action="https://nurkassa.kz/consumer/check"
+              class="card card-body mb-3">
+            <div class="mb-2">
+                <label class="form-label">Регистрационный номер ККМ (РНМ)</label>
+                <input
+                    id="field_f"
+                    name="f"
+                    class="form-control"
+                    value="010101994981"
+                    placeholder="Введите РНМ кассы"
+                    inputmode="numeric"
+                    minlength="12"
+                    pattern="\d{12,}"
+                    required>
+                <div class="invalid-feedback d-block" id="err_f" style="display:none"></div>
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label">Фискальный признак</label>
+                <input
+                    id="field_i"
+                    name="i"
+                    class="form-control"
+                    value="2005534015"
+                    placeholder="Введите фискальный признак"
+                    inputmode="numeric"
+                    minlength="10"
+                    pattern="\d{10,}"
+                    required>
+                <div class="invalid-feedback d-block" id="err_i" style="display:none"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                Найти чек
+            </button>
+        </form>
+
+        <div style="background-color: #fff; padding-top: 20px; padding-bottom: 20px;">
+                            <style>
+    body {
+        word-wrap: break-word;
+        margin: 0;
+        padding: 0;
+    }
+
+    .check-table {
+        width: 256px;
+        margin: 0 auto;
+        font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+        color: #000;
+        text-align: left;
+        font-size: 11px;
+        table-layout: fixed;
+        border: 0;
+        background: #fff;
+        line-height: 1.35;
+        border-collapse: collapse;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .check-table td {
+        vertical-align: top;
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        padding: 0 8px 2px;
+        box-sizing: border-box;
+    }
+
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-bold { font-weight: bold; }
+
+    .text-brand {
+        font-size: 14px;
+        font-weight: bold;
+        text-align: center;
+        padding-bottom: 2px;
+    }
+
+    .check-table td.text-slogan {
+        text-align: center;
+        padding-bottom: 5px;
+    }
+
+    .text-org {
+        text-align: center;
+    }
+
+    .text-title {
+        font-size: 11px;
+        font-weight: bold;
+        text-align: center;
+        padding-top: 4px;
+    }
+
+    .check-table td.text-operation {
+        font-size: 11px;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .check-table td.text-total {
+        font-size: 11px;
+        font-weight: bold;
+        padding-top: 4px;
+    }
+
+    .check-table td.sep {
+        border-bottom: 1px dashed #000;
+        height: 1px;
+        line-height: 1px;
+        font-size: 1px;
+        padding-top: 4px;
+        padding-bottom: 0;
+    }
+
+    .sep-solid {
+        border-bottom: 1px solid #00000030;
+        height: 1px;
+        font-size: 1px;
+        padding-top: 4px;
+    }
+
+    .fiscal-label {
+        font-weight: bold;
+        line-height: 1.15;
+    }
+
+    .fiscal-value {
+        margin-bottom: 5px;
+        word-break: break-all;
+    }
+
+    .qr-wrap img {
+        display: block;
+        margin: 0 auto;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+    }
+
+    .qr-verify {
+        font-size: 10px;
+        margin-top: 4px;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .qr-host {
+        font-size: 10.5px;
+        font-weight: bold;
+        text-align: center;
+        line-height: 1.2;
+        word-break: break-all;
+    }
+
+    .fiscal-qr-table {
+        width: auto;
+        margin: 0 auto;
+        border-collapse: collapse;
+    }
+
+    .fiscal-qr-table td {
+        padding: 0;
+        vertical-align: top;
+    }
+
+    .fiscal-qr-table .fiscal-col {
+        font-size: 10px;
+        padding-right: 8px;
+        white-space: nowrap;
+    }
+</style>
+
+<table class="check-table" cellpadding="0" cellspacing="0">
+    <tbody>
+    <tr>
+        <td colspan="12" class="text-brand"></td>
+    </tr>
+
+    <tr>
+        <td colspan="12" class="text-org">ИП &quot;АЛЬБЕК&quot;</td>
+    </tr>
+
+    <tr>
+        <td colspan="12" class="text-org">БСН / БИН: 891001350325</td>
+    </tr>
+
+    
+    <tr>
+        <td colspan="12" class="text-org">
+                                                р-нБурлинский, г. Аксай, ул. Сырым Датулы, ст-е 6/4:
+                                    </td>
+    </tr>
+
+    <tr>
+        <td colspan="12" class="text-org">Касса: 1 · ЗНМ NRK025645</td>
+    </tr>
+
+    <tr><td colspan="12" class="sep">&nbsp;</td></tr>
+
+    <tr>
+        <td colspan="12" class="text-title">ФИСКАЛДЫҚ ЧЕК / ФИСКАЛЬНЫЙ ЧЕК</td>
+    </tr>
+    <tr>
+        <td colspan="12" class="text-operation">САТУ / ПРОДАЖА</td>
+    </tr>
+
+    <tr>
+        <td colspan="6">Ауысым / Смена: 135</td>
+        <td colspan="6" class="text-right">Чек: 451920563</td>
+    </tr>
+    <tr>
+        <td colspan="12">Кассир: Исмагамбетов Альбек Жумабаевич</td>
+    </tr>
+    <tr>
+        <td colspan="12">Күні / Дата: 17.07.2026 · Уақыты / Время: 20:22</td>
+    </tr>
+
+    <tr><td colspan="12" class="sep">&nbsp;</td></tr>
+
+            <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">1. &quot;Leffe Blonde 0.33 стекло&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">4 × 1 900,00</td>
+            <td colspan="5" class="text-right">7 600,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00463941660045</td>
+            </tr>
+        
+        
+                    <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">2. &quot;Пакет&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">1 × 30,00</td>
+            <td colspan="5" class="text-right">30,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00495150729688</td>
+            </tr>
+        
+        
+                    <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">3. &quot;Жигулевское 1969 свет.неф.0,45 ж/б&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">1 × 680,00</td>
+            <td colspan="5" class="text-right">680,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00421169081615</td>
+            </tr>
+        
+        
+                    <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">4. &quot;Fessla Helles свет.неф.0,45 ж/б&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">1 × 850,00</td>
+            <td colspan="5" class="text-right">850,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00484884890818</td>
+            </tr>
+        
+        
+                    <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">5. &quot;Рыба вакуум в ассортименте 40г&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">2 × 600,00</td>
+            <td colspan="5" class="text-right">1 200,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00499579401200</td>
+            </tr>
+        
+        
+                    <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">6. &quot;Fessla Pilsner свет.неф.0,45 ж/б&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">1 × 850,00</td>
+            <td colspan="5" class="text-right">850,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00411158981125</td>
+            </tr>
+        
+        
+                    <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">7. &quot;Fessla 44 пшенич.ж/б 0,45л&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">1 × 950,00</td>
+            <td colspan="5" class="text-right">950,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00426864148687</td>
+            </tr>
+        
+        
+                    <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">8. &quot;Fessla Hefeweissbier weizen ж/б 0.45л н/ф&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">1 × 850,00</td>
+            <td colspan="5" class="text-right">850,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00486339063143</td>
+            </tr>
+        
+        
+                    <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">9. &quot;Fessla Костанайское мягкое 0,45 ж/б&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">1 × 600,00</td>
+            <td colspan="5" class="text-right">600,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00452026711130</td>
+            </tr>
+        
+        
+                    <tr>
+            <td colspan="12" class="text-bold" style="padding-top: 4px">10. &quot;Fessla 11 свет.неф.0,45 ж/б&quot;</td>
+        </tr>
+        <tr>
+            <td colspan="7">1 × 950,00</td>
+            <td colspan="5" class="text-right">950,00 ₸</td>
+        </tr>
+
+        
+        
+        
+                    <tr>
+                <td colspan="12">XTIN: 00448988425086</td>
+            </tr>
+        
+        
+            
+    <tr><td colspan="12" class="sep">&nbsp;</td></tr>
+
+    <tr>
+        <td colspan="6" class="text-total">БАРЛЫҒЫ / ИТОГО:</td>
+        <td colspan="6" class="text-right text-total">14 560,00 ₸</td>
+    </tr>
+
+            <tr>
+            <td colspan="12">ҚҚС-сыз / Без НДС</td>
+        </tr>
+    
+            <tr>
+            <td colspan="6">Карта</td>
+            <td colspan="6" class="text-right">14 560,00 ₸</td>
+        </tr>
+    
+    
+    
+    <tr><td colspan="12" class="sep">&nbsp;</td></tr>
+
+    <tr>
+        <td colspan="12" style="padding-top: 15px;">
+            <table class="fiscal-qr-table" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="fiscal-col">
+                        <div class="fiscal-label">ФП</div>
+                        <div class="fiscal-value">2005534015</div>
+                        <div class="fiscal-label">ЗНМ</div>
+                        <div class="fiscal-value">NRK025645</div>
+                        <div class="fiscal-label">РНМ</div>
+                        <div class="fiscal-value">010101994981</div>
+                                                    <div class="fiscal-label">ОФД</div>
+                            <div class="fiscal-value">Wipon</div>
+                                            </td>
+                    <td class="qr-col">
+                                                    <div class="qr-wrap">
+                                <img src="data:image/png;base64,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" alt="qr">
+                            </div>
+                                            </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+                    <td colspan="12" class="text-title">
+                <div class="qr-verify">Чекті тексеру / Проверка</div>
+                                    <div class="qr-host">nurkassa.kz</div>
+                            </td>
+            </tr>
+
+    
+            <tr>
+            <td colspan="12" class="text-center">Телнұсқа / Дубликат</td>
+        </tr>
+    
+    <tr><td colspan="12" class="sep-solid">&nbsp;</td></tr>
+
+            <tr>
+            <td colspan="12" class="text-center" style="padding-top: 6px">Сатып алғаныңызға рақмет!</td>
+        </tr>
+        <tr>
+            <td colspan="12" class="text-center">Спасибо за покупку!</td>
+        </tr>
+    
+        </tbody>
+</table>
+                    </div>
+    </div>
+
+    <script>
+        (function () {
+            const form = document.getElementById('consumerForm');
+            const f = document.getElementById('field_f');
+            const i = document.getElementById('field_i');
+            const errF = document.getElementById('err_f');
+            const errI = document.getElementById('err_i');
+
+            function showErr(el, box, msg) {
+                if (msg) {
+                    el.classList.add('is-invalid');
+                    box.textContent = msg;
+                    box.style.display = '';
+                } else {
+                    el.classList.remove('is-invalid');
+                    box.textContent = '';
+                    box.style.display = 'none';
+                }
+            }
+
+            function digitsOnly(el) {
+                const cur = el.value;
+                const clean = cur.replace(/\D+/g, '');
+                if (cur !== clean) el.value = clean;
+            }
+
+            f.addEventListener('input', () => {
+                digitsOnly(f);
+                const ok = f.value.length >= 12;
+                showErr(f, errF, ok ? '' : 'Регистрационный номер ККМ (РНМ): минимум 12 цифр');
+            });
+            i.addEventListener('input', () => {
+                digitsOnly(i);
+                const ok = i.value.length >= 10;
+                showErr(i, errI, ok ? '' : 'Фискальный признак: минимум 10 цифр');
+            });
+
+            f.addEventListener('invalid', (e) => {
+                e.preventDefault();
+                let msg = '';
+                if (f.validity.valueMissing) msg = 'Регистрационный номер ККМ (РНМ): заполните поле';
+                else if (f.validity.tooShort || f.validity.patternMismatch) msg = 'Регистрационный номер ККМ (РНМ): минимум 12 цифр';
+                showErr(f, errF, msg);
+            });
+
+            i.addEventListener('invalid', (e) => {
+                e.preventDefault();
+                let msg = '';
+                if (i.validity.valueMissing) msg = 'Фискальный признак: заполните поле';
+                else if (i.validity.tooShort || i.validity.patternMismatch) msg = 'Фискальный признак: минимум 10 цифр';
+                showErr(i, errI, msg);
+            });
+
+            form.addEventListener('submit', function (e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    if (f.value.length < 12) showErr(f, errF, 'Регистрационный номер ККМ (РНМ): минимум 12 цифр');
+                    if (i.value.length < 10) showErr(i, errI, 'Фискальный признак: минимум 10 цифр');
+                }
+            });
+        })();
+    </script>
+
+</body>
+</html>
