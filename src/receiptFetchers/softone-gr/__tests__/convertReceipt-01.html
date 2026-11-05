@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/">
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#2b5797">
+<meta name="msapplication-TileColor" content="#2b5797">
+<meta name="theme-color" content="#ffffff">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="_content/Impact.Net.Common.Components/css/sparkle.css">
+    
+    <link rel="stylesheet" href="/css/theme.min.css">
+    
+    <link rel="stylesheet" href="/css/theme-custom.css">
+
+    <link rel="stylesheet" href="/css/tailwind.css">
+    <link href="/css/sideelise.css" rel="stylesheet">
+    <link href="Elise.fno9sqwg2b.styles.css" rel="stylesheet" />
+    <link href="Elise.Client.styles.css" rel="stylesheet">
+
+    <script defer src="https://unpkg.com/htmx.org@1.9.8"></script>
+    <script src="/libs/clipboard/clipboard.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.bubble.css" rel="stylesheet">
+
+    <script defer src="js/htmx-blazor.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.34.0/tabler-icons.min.css">
+
+    <style rel="stylesheet">
+        .fluent-toast-provider {
+            z-index: 1032 !important;
+        }
+
+        .invoice .inner .label {
+            padding-inline-end: 3px;
+            padding-block-start: 6px;
+        }
+
+        @media screen {
+            .elise-document-card {
+                font-size: .75rem;
+                border: 1px solid #f0f0f0;
+                position: relative;
+                width: fit-content;
+                max-width:100%;
+                min-height: 640px;
+                align-content: center;
+                padding: 0.75rem;
+                box-shadow: 0 .125rem .25rem rgba(22, 28, 45, .075);
+                /*max-width: fit-content;*/
+                margin-top:2rem;
+                margin-bottom:2rem;
+            }
+        }
+
+        @media print {
+            .elise-document-card {
+                width: 1024px;
+            }
+        }
+    </style>
+
+    <title>EL094352564_2026-06-04_10914506_16847</title></head>
+
+<body><script>
+
+        window.eliseCulture = {
+            get: () => window.localStorage['EliseCulture'],
+            set: (value) => window.localStorage['EliseCulture'] = value
+        };
+        window.sidebarStatus = {
+            get: () => window.localStorage['EliseSidebar'],
+            set: (value) => window.localStorage['EliseSidebar'] = value
+        }
+        window.getCookie = function(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return '';
+        }
+        window.removeCookie = function(name) {
+            document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        }
+        window.copyToClipboard = function(text) {
+            navigator.clipboard.writeText(text);
+        }
+
+        function previewImage(input) {
+            const previewImg = document.getElementById('previewImg');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+
+    <div class="container d-flex justify-content-between align-items-center py-4 mb-5 no-print"><a href="/" style="width: 350px;" class="mx-md-3 active" aria-current="page"><img src="/img/brands/ENTERSOFTONE-EINVOICING.svg" class="w-100" alt="Logo" /></a>
+    
+    <ul class="language-picker-tab" b-l1z77j4oh3><li class="tab-item" b-l1z77j4oh3><span class="tab-link active hover:tw-cursor-pointer" b-l1z77j4oh3><a href="/api/culture/set?lang=el" data-enhance-nav="false" b-l1z77j4oh3>EL</a></span></li><li class="tab-item" b-l1z77j4oh3><span class="tab-link  hover:tw-cursor-pointer" b-l1z77j4oh3><a href="/api/culture/set?lang=en" data-enhance-nav="false" b-l1z77j4oh3>EN</a></span></li></ul></div>
+
+<div class="d-flex flex-column align-items-center"><div class="invoice-display-selector-container"><div class="sparkle-tabs" b-pnrr88baxb><input type="radio" id="invoice-tabs-tab-0" name="invoice-tabs" class="sparkle-tab-input" checked b-pnrr88baxb /><input type="radio" id="invoice-tabs-tab-1" name="invoice-tabs" class="sparkle-tab-input" b-pnrr88baxb /><div class="sparkle-tabs-nav" role="tablist" b-pnrr88baxb><label for="invoice-tabs-tab-0" class="sparkle-tab " role="tab" aria-selected="false" aria-disabled="false" b-6vgzk0d93p><span class="sparkle-tab-label" b-6vgzk0d93p>Εμπορική Προβολή</span></label>
+            <label for="invoice-tabs-tab-1" class="sparkle-tab " role="tab" aria-selected="false" aria-disabled="false" b-6vgzk0d93p><span class="sparkle-tab-label" b-6vgzk0d93p>Φορολογική Προβολή</span></label></div>
+
+    <div class="sparkle-tabs-content" b-pnrr88baxb><div class="sparkle-tab-panel  " role="tabpanel" aria-hidden="false"><div id="aadeView" class="elise-document-card"><style>.invoice div.CounterParty div.title span.label {
+	background: none;
+	color: black !important;
+	border-bottom: none !important;
+	padding: 0;
+}
+
+.invoice .section-counterparties-leftcolumn .field-RegisteredName .label,
+.invoice .section-counterparties-leftcolumn .field-Street .label,
+.invoice .section-counterparties-leftcolumn .field-City .label,
+.invoice .section-counterparties-leftcolumn .field-Postal .label,
+.invoice .section-counterparties-leftcolumn .field-Region .label,
+.invoice .section-counterparties-leftcolumn .field-Country .label,
+.invoice .section-counterparties-rightcolumn .field-RegisteredName .label,
+.invoice .section-counterparties-rightcolumn .field-Street .label,
+.invoice .section-counterparties-rightcolumn .field-Postal .label,
+.invoice .section-counterparties-rightcolumn .field-Activities .label,
+.invoice .section-counterparties-rightcolumn .field-City .label {
+	display: none !important;
+}
+
+.invoice .section-counterparties-leftcolumn .field-EliseCore-PaymentDetails-PaymentMethods,
+.invoice .section-counterparties-rightcolumn .field-EliseCore-MiscellaneousData-PurchaseOrderNumber,
+.invoice .section-counterparties-rightcolumn .field-EliseCore-Header-Number {
+	font-weight: bold;
+	color: black !important;
+}
+
+.invoice .section-counterparties-rightcolumn .field-EliseCore-MiscellaneousData-PurchaseOrderNumber  span.label,
+.invoice .section-counterparties-leftcolumn .field-EliseCore-PaymentDetails-PaymentMethods span.label, 
+.invoice .section-counterparties-rightcolumn .field-EliseCore-Header-Number span.label {
+	color: black !important;
+}
+
+.invoice .section-counterparties-rightcolumn .field-Country {
+	display: none !important;
+}
+
+.invoice .section-counterparties-rightcolumn .InvoiceType {
+    font-weight:bold;
+    font-size: 1.75em;
+}
+
+.invoice span.field-Vat span.label,
+.invoice span.field-Number span.label,
+.invoice span.field-DateIssued span.label {
+	display: inline-block !important;
+}
+
+.invoice div.Issuer div.title {
+	display: none;
+}
+
+.invoice .section-details table caption {
+	display: none;
+}
+
+.invoice .section-details table thead tr {
+    background: none;
+}
+
+.invoice .section-details table thead tr th {
+	border-bottom: 1px solid black;
+}
+
+.invoice .section-details .field-LineNo,
+.invoice .section-details .field-MeasurementUnit,
+.invoice .section-details .field-NetTotal,
+.invoice .section-details .field-NetTotalAfterInlineALCs,
+.invoice .section-details .field-VATTotal {
+	display: none;
+}
+
+.invoice .section-details .detail-discounts {
+	justify-content: flex-end;
+	padding-right: 6.5%;
+}
+
+
+@media only screen and (max-width: 767px) {
+   .invoice .section-details .detail-discounts {
+               padding-right: 0;
+   }
+}
+
+@media only screen and (min-width: 768px) and (max-width:991px) {
+   .invoice .section-details .detail-discounts {
+               padding-right: 7.5%;
+   }
+}
+
+.invoice .section-details .detail-discount-inner {
+	display: flex;
+	flex-direction: column;	
+}
+
+.invoice .section-details .detail-discount-inner div {
+	diplay: flex !important;
+	justify-content: space-between;
+}
+
+.invoice .section-details .detail-discount-description {
+	font-weight: bold;
+	padding: 0.4em;
+}
+
+.invoice .section-details .detail-discount-value {
+	padding: 0.4em;
+	margin-left: 7em;
+}
+
+.invoice .section-taxes caption.title span.label,
+.invoice .section-summaries caption.title span.label {
+	color: black !important;
+	background: initial !important;
+	border-bottom: none !important;
+}
+
+.invoice .section-summaries .field-EliseCore-Summaries-TotalGrossValue td.label {
+         width: 70%;
+         color: #777;
+         background: #f1f0f0;
+        font-weight: bold;
+}
+
+.invoice #zaraqrcode img {
+	margin: auto;
+}</style>
+
+        
+
+<section>
+    <div class="container">
+        <div id="EL094352564" data-culture="" class="invoice series-10914506 pt-6">
+            
+            
+
+<div class="pb-4" id="invoiceHeader">
+    <div class="d-flex justify-content-center border-bottom pb-4 border-black">
+            <img class="img-fluid" src="https://eliseproductionstorage.blob.core.windows.net/el094352564/Media/Zara.jpg?sv=2020-04-08&amp;st=2021-05-26T12%3A09%3A32Z&amp;se=2121-05-27T12%3A09%3A00Z&amp;sr=b&amp;sp=r&amp;sig=TGFbKilKzeshpAORDtdsg3JsnHCFM1uWSQSCUhPd6s0%3D" alt="Company Logo" />
+    </div> 
+</div> 
+
+            
+            
+
+<div class="row section section-counterparties no-gutters">
+
+    <div class="col-md-7 col-12 section-counterparties-leftcolumn">
+
+        
+
+        <div class="CounterParty ">
+            <div class="title">
+                <span class="label">
+                              Στοιχεία Πελάτη
+                           </span>
+            </div>
+
+            <div class="value">
+<span class="field field-RegisteredName " style="order: 10;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Επωνυμία επιχείρησης
+                           </span>
+                                <span class="value">
+                                    Πελάτης Λιανικής
+                                </span>
+                            </span>
+                            
+                        </span>            </div>
+        </div>
+
+
+
+<span class="field field-EliseCore-PaymentDetails-PaymentMethods " style="order: 900;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Μέθοδοι πληρωμής:
+                           </span>
+                                <span class="value">
+                                    VISA ONLINE (Invoice.PaymentMethods.PaymentMethodTypeCode7)
+                                </span>
+                            </span>
+                            
+                        </span>
+    </div>
+
+    <div class="col-md-5 col-12 section-counterparties-rightcolumn">
+
+        <span class="InvoiceType" style="line-height: normal;">
+            ΑΠΟΔ. ΛΙΑΝ. ΠΩΛ. / ΑΠΟΔ. ΕΠΙΣΤΡ. / ΑΠΟΔ. ΠΑΡ. ΥΠΗΡ. / ΕΠΙΣΤΡ. ΠΑΡ. ΥΠΗΡ.
+        </span>
+
+        <span class="field field-EliseCore-Header-Number " style="order: 0;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Αριθμός Παραστατικού
+                           </span>
+                                <span class="value">
+                                    10914506 / 16847
+                                </span>
+                            </span>
+                            
+                        </span>
+
+        <span style="color: #bbb">
+            Ημερομηνία Έκδοσης
+        </span><span>04/06/2026 1:30 μ.μ.</span>
+       
+        <br />
+
+        
+
+        <div class="Issuer ">
+            <div class="title">
+                <span class="label">
+                              Εκδότης
+                           </span>
+            </div>
+
+            <div class="value">
+<span class="field field-EliseCore-Issuer-RegisteredName " style="order: 10;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Επωνυμία επιχείρησης
+                           </span>
+                                <span class="value">
+                                    ITX ΕΛΛΑΣ ΜΟΝΟΠΡΟΣΩΠΗ Α.Ε.
+                                </span>
+                            </span>
+                            
+                        </span><span class="field field-EliseCore-Issuer-Address-Street " style="order: 10;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Οδός
+                           </span>
+                                <span class="value">
+                                    28ΗΣ ΟΚΤΩΒΡΙΟΥ 13-17 ΤΚ
+                                </span>
+                            </span>
+                            
+                        </span><span class="field field-Number " style="order: 15;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Αριθμός
+                           </span>
+                                <span class="value">
+                                    13-17 ΤΚ
+                                </span>
+                            </span>
+                            
+                        </span><span class="field field-Country " style="order: 1000;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Χώρα
+                           </span>
+                                <span class="value">
+                                    Greece
+                                </span>
+                            </span>
+                            
+                        </span><span class="field field-EliseCore-Issuer-BranchAddress-Street " style="order: 10;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Υποκ/μα
+                           </span>
+                                <span class="value">
+                                    ΛΕΩΦΟΡΟΣ ΒΟΥΛΙΑΓΜΕΝΗΣ 276
+                                </span>
+                            </span>
+                            
+                        </span><span class="field field-Country " style="order: 1000;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Χώρα
+                           </span>
+                                <span class="value">
+                                    Greece
+                                </span>
+                            </span>
+                            
+                        </span><span class="field field-EliseCore-Issuer-Vat " style="order: 1000;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   ΑΦΜ
+                           </span>
+                                <span class="value">
+                                    EL094352564
+                                </span>
+                            </span>
+                            
+                        </span>            </div>
+        </div>
+
+        
+        <div class="py-6">
+            
+            
+        </div>
+
+    </div>
+</div>
+
+            
+
+
+        <div class="row section section-details pb-4 border-bottom border-black no-gutters">
+            <div class="col-12">
+                <table class="table ">
+                    <caption class="title"><span class="label">
+                              Ανάλυση
+                           </span></caption>
+                    <thead class="caption">
+                        <tr class="border-bottom border-black">
+<th class="field field-EliseCore-Details-InternalId " style="order: 10;">
+                                  <span class="label">
+                                      Κωδικός Προϊόντος
+                                  </span>
+                                </th><th class="field field-EliseCore-Details-Code text-left" style="order: 14;">
+                                  <span class="label">
+                                      K.E.
+                                  </span>
+                                </th><th class="field field-EliseCore-Details-Description1 text-left" style="order: 33;">
+                                  <span class="label">
+                                      Περιγραφή Προϊόντος
+                                  </span>
+                                </th><th class="field field-EliseCore-Details-VatCategory text-right" style="order: 35;">
+                                  <span class="label">
+                                      ΦΠΑ %
+                                  </span>
+                                </th><th class="field field-EliseCore-Details-CatalogUnitPrice text-right" style="order: 40;">
+                                  <span class="label">
+                                      Τιμή μονάδος
+                                  </span>
+                                </th><th class="field field-MeasurementUnit " style="order: 60;">
+                                  <span class="label">
+                                      M.M.
+                                  </span>
+                                </th><th class="field field-EliseCore-Details-Quantity text-right" style="order: 90;">
+                                  <span class="label">
+                                      Τεμάχια
+                                  </span>
+                                </th><th class="field field-EliseCore-Details-CatalogTotal text-right" style="order: 90;">
+                                  <span class="label">
+                                      Σύνολο
+                                  </span>
+                                </th><th class="field field-NetTotal text-right" style="order: 900;">
+                                  <span class="label">
+                                      Καθαρή Αξία
+                                  </span>
+                                </th><th class="field field-VATTotal text-right" style="order: 950;">
+                                  <span class="label">
+                                      Σύνολο Φ.Π.Α
+                                  </span>
+                                </th><th class="field field-Total text-right" style="order: 990;">
+                                  <span class="label">
+                                      Τελικό
+                                  </span>
+                                </th>                        </tr>
+                    </thead>
+
+                    <tbody>
+                            <tr>
+<td class=" field-EliseCore-Details-InternalId" data-header="Κωδικός Προϊόντος" style=""><span class="field field-EliseCore-Details-InternalId " style="order: 10;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    1240072170043
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-left field-EliseCore-Details-Code" data-header="K.E." style=""><span class="field field-EliseCore-Details-Code text-left" style="order: 14;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    10001406
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-left field-EliseCore-Details-Description1" data-header="Περιγραφή Προϊόντος" style=""><span class="field field-EliseCore-Details-Description1 text-left" style="order: 33;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    ΥΠΟΔΗΜΑΤΑ
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-Details-VatCategory" data-header="ΦΠΑ %" style=""><span class="field field-EliseCore-Details-VatCategory text-right" style="order: 35;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    ΦΠΑ 24,00%
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-Details-CatalogUnitPrice" data-header="Τιμή μονάδος" style=""><span class="field field-EliseCore-Details-CatalogUnitPrice text-right" style="order: 40;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    39,95
+                                </span>
+                            </span>
+                            
+                        </span></td><td class=" field-MeasurementUnit" data-header="M.M." style=""><span class="field field-MeasurementUnit " style="order: 60;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    TMX
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-Details-Quantity" data-header="Τεμάχια" style=""><span class="field field-EliseCore-Details-Quantity text-right" style="order: 90;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    1,00
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-Details-CatalogTotal" data-header="Σύνολο" style=""><span class="field field-EliseCore-Details-CatalogTotal text-right" style="order: 90;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    39,95
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-NetTotal" data-header="Καθαρή Αξία" style=""><span class="field field-NetTotal text-right" style="order: 900;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    32,22
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-VATTotal" data-header="Σύνολο Φ.Π.Α" style=""><span class="field field-VATTotal text-right" style="order: 950;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    7,73
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-Total" data-header="Τελικό" style=""><span class="field field-Total text-right" style="order: 990;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    39,95
+                                </span>
+                            </span>
+                            
+                        </span></td>                            </tr>
+                            <tr>
+<td class=" field-EliseCore-Details-InternalId" data-header="Κωδικός Προϊόντος" style=""><span class="field field-EliseCore-Details-InternalId " style="order: 10;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    K000010000003
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-left field-EliseCore-Details-Code" data-header="K.E." style=""><span class="field field-EliseCore-Details-Code text-left" style="order: 14;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    10002436
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-left field-EliseCore-Details-Description1" data-header="Περιγραφή Προϊόντος" style=""><span class="field field-EliseCore-Details-Description1 text-left" style="order: 33;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    Σακούλα Μ
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-Details-VatCategory" data-header="ΦΠΑ %" style=""><span class="field field-EliseCore-Details-VatCategory text-right" style="order: 35;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    ΦΠΑ 24,00%
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-Details-CatalogUnitPrice" data-header="Τιμή μονάδος" style=""><span class="field field-EliseCore-Details-CatalogUnitPrice text-right" style="order: 40;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    0,10
+                                </span>
+                            </span>
+                            
+                        </span></td><td class=" field-MeasurementUnit" data-header="M.M." style=""><span class="field field-MeasurementUnit " style="order: 60;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    TMX
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-Details-Quantity" data-header="Τεμάχια" style=""><span class="field field-EliseCore-Details-Quantity text-right" style="order: 90;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    1,00
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-Details-CatalogTotal" data-header="Σύνολο" style=""><span class="field field-EliseCore-Details-CatalogTotal text-right" style="order: 90;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    0,10
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-NetTotal" data-header="Καθαρή Αξία" style=""><span class="field field-NetTotal text-right" style="order: 900;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    0,08
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-VATTotal" data-header="Σύνολο Φ.Π.Α" style=""><span class="field field-VATTotal text-right" style="order: 950;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    0,02
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-Total" data-header="Τελικό" style=""><span class="field field-Total text-right" style="order: 990;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    0,10
+                                </span>
+                            </span>
+                            
+                        </span></td>                            </tr>
+                    </tbody>
+                </table>
+
+                <div class="detail-discounts pt-3 row">
+                    <div class="col-12 col-md-5 detail-discount-inner">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+            
+
+<div class="row section section-totals no-gutters">
+    <div class="col-12 col-md-6 col-lg-6 pl-6 py-10">
+        <div class="col-12 col-md-5 col-lg-5">
+            <div class="text-center">
+                www.zara.com
+                <br/>
+                contact@zara.com
+
+                <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" shape-rendering="crispEdges" viewBox="0 0 140 140" viewport-fill="rgb(255,255,255)" viewport-fill-opacity="1" fill="rgb(0,0,0)" fill-opacity="1" style="background-color:rgb(255,255,255);background-color:rgba(255, 255, 255, 1)" width="140" height="140"><rect x="8" y="8" width="3" height="21" /><rect x="8" y="32" width="15" height="3" /><rect x="8" y="38" width="3" height="12" /><rect x="8" y="56" width="3" height="9" /><rect x="8" y="71" width="3" height="6" /><rect x="8" y="86" width="3" height="21" /><rect x="8" y="110" width="3" height="21" /><rect x="11" y="8" width="18" height="3" /><rect x="11" y="26" width="18" height="3" /><rect x="11" y="35" width="3" height="3" /><rect x="11" y="50" width="3" height="3" /><rect x="11" y="62" width="3" height="3" /><rect x="11" y="92" width="18" height="3" /><rect x="11" y="110" width="18" height="3" /><rect x="11" y="128" width="18" height="3" /><rect x="14" y="14" width="9" height="9" /><rect x="14" y="38" width="3" height="12" /><rect x="14" y="53" width="12" height="3" /><rect x="14" y="59" width="3" height="3" /><rect x="14" y="65" width="3" height="9" /><rect x="14" y="77" width="3" height="3" /><rect x="14" y="83" width="12" height="3" /><rect x="14" y="104" width="3" height="3" /><rect x="14" y="116" width="9" height="9" /><rect x="17" y="38" width="6" height="6" /><rect x="17" y="50" width="3" height="6" /><rect x="17" y="62" width="3" height="3" /><rect x="17" y="68" width="3" height="9" /><rect x="17" y="80" width="3" height="21" /><rect x="20" y="56" width="6" height="6" /><rect x="20" y="71" width="6" height="3" /><rect x="20" y="98" width="3" height="9" /><rect x="23" y="47" width="3" height="3" /><rect x="23" y="62" width="3" height="12" /><rect x="23" y="77" width="3" height="9" /><rect x="23" y="98" width="6" height="3" /><rect x="26" y="11" width="3" height="18" /><rect x="26" y="32" width="12" height="3" /><rect x="26" y="38" width="9" height="3" /><rect x="26" y="44" width="9" height="3" /><rect x="26" y="50" width="3" height="3" /><rect x="26" y="56" width="15" height="3" /><rect x="26" y="62" width="3" height="3" /><rect x="26" y="68" width="3" height="3" /><rect x="26" y="74" width="3" height="3" /><rect x="26" y="80" width="3" height="3" /><rect x="26" y="86" width="12" height="3" /><rect x="26" y="104" width="6" height="3" /><rect x="26" y="113" width="3" height="18" /><rect x="29" y="35" width="6" height="6" /><rect x="29" y="47" width="6" height="3" /><rect x="29" y="53" width="3" height="9" /><rect x="29" y="71" width="3" height="3" /><rect x="29" y="77" width="3" height="3" /><rect x="29" y="83" width="6" height="6" /><rect x="29" y="95" width="3" height="3" /><rect x="29" y="101" width="3" height="6" /><rect x="32" y="11" width="15" height="3" /><rect x="32" y="17" width="6" height="3" /><rect x="32" y="23" width="3" height="6" /><rect x="32" y="50" width="3" height="9" /><rect x="32" y="68" width="6" height="3" /><rect x="32" y="89" width="18" height="3" /><rect x="32" y="107" width="3" height="6" /><rect x="32" y="116" width="3" height="15" /><rect x="35" y="8" width="6" height="6" /><rect x="35" y="20" width="3" height="3" /><rect x="35" y="41" width="15" height="3" /><rect x="35" y="65" width="3" height="6" /><rect x="35" y="74" width="3" height="9" /><rect x="35" y="92" width="3" height="9" /><rect x="35" y="104" width="3" height="6" /><rect x="35" y="128" width="3" height="3" /><rect x="38" y="14" width="3" height="3" /><rect x="38" y="26" width="3" height="3" /><rect x="38" y="35" width="3" height="24" /><rect x="38" y="62" width="3" height="6" /><rect x="38" y="80" width="6" height="6" /><rect x="38" y="104" width="3" height="3" /><rect x="38" y="113" width="3" height="9" /><rect x="38" y="125" width="6" height="3" /><rect x="41" y="17" width="3" height="9" /><rect x="41" y="32" width="9" height="6" /><rect x="41" y="44" width="3" height="3" /><rect x="41" y="74" width="3" height="12" /><rect x="41" y="113" width="3" height="3" /><rect x="41" y="122" width="3" height="9" /><rect x="44" y="8" width="3" height="6" /><rect x="44" y="26" width="3" height="3" /><rect x="44" y="47" width="3" height="3" /><rect x="44" y="53" width="3" height="6" /><rect x="44" y="62" width="3" height="3" /><rect x="44" y="68" width="3" height="3" /><rect x="44" y="74" width="3" height="3" /><rect x="44" y="83" width="6" height="9" /><rect x="44" y="95" width="3" height="3" /><rect x="44" y="101" width="3" height="6" /><rect x="44" y="116" width="3" height="3" /><rect x="44" y="122" width="3" height="3" /><rect x="47" y="23" width="3" height="3" /><rect x="47" y="38" width="3" height="6" /><rect x="47" y="56" width="3" height="3" /><rect x="47" y="98" width="3" height="3" /><rect x="47" y="104" width="3" height="3" /><rect x="47" y="128" width="3" height="3" /><rect x="50" y="8" width="3" height="3" /><rect x="50" y="14" width="6" height="3" /><rect x="50" y="20" width="9" height="3" /><rect x="50" y="26" width="3" height="6" /><rect x="50" y="35" width="3" height="6" /><rect x="50" y="44" width="6" height="3" /><rect x="50" y="59" width="9" height="3" /><rect x="50" y="65" width="6" height="3" /><rect x="50" y="71" width="3" height="3" /><rect x="50" y="77" width="6" height="6" /><rect x="50" y="86" width="9" height="3" /><rect x="50" y="92" width="9" height="3" /><rect x="50" y="101" width="6" height="3" /><rect x="50" y="107" width="9" height="3" /><rect x="50" y="113" width="9" height="3" /><rect x="50" y="119" width="3" height="9" /><rect x="53" y="11" width="3" height="6" /><rect x="53" y="38" width="3" height="33" /><rect x="53" y="74" width="3" height="9" /><rect x="53" y="89" width="3" height="6" /><rect x="53" y="98" width="3" height="21" /><rect x="53" y="122" width="6" height="9" /><rect x="56" y="11" width="6" height="3" /><rect x="56" y="26" width="3" height="9" /><rect x="56" y="41" width="3" height="3" /><rect x="56" y="50" width="3" height="3" /><rect x="56" y="62" width="3" height="3" /><rect x="56" y="68" width="3" height="3" /><rect x="56" y="80" width="9" height="3" /><rect x="56" y="110" width="3" height="9" /><rect x="59" y="23" width="6" height="3" /><rect x="59" y="32" width="12" height="3" /><rect x="59" y="56" width="6" height="3" /><rect x="59" y="71" width="9" height="3" /><rect x="59" y="95" width="6" height="3" /><rect x="59" y="104" width="6" height="3" /><rect x="59" y="110" width="6" height="3" /><rect x="59" y="128" width="6" height="3" /><rect x="62" y="20" width="3" height="9" /><rect x="62" y="38" width="3" height="3" /><rect x="62" y="47" width="3" height="15" /><rect x="62" y="98" width="3" height="3" /><rect x="62" y="119" width="3" height="6" /><rect x="65" y="8" width="3" height="3" /><rect x="65" y="14" width="12" height="3" /><rect x="65" y="20" width="3" height="3" /><rect x="65" y="35" width="3" height="3" /><rect x="65" y="41" width="3" height="3" /><rect x="65" y="47" width="3" height="3" /><rect x="65" y="59" width="3" height="3" /><rect x="65" y="68" width="3" height="6" /><rect x="65" y="83" width="3" height="3" /><rect x="65" y="107" width="3" height="3" /><rect x="65" y="116" width="3" height="3" /><rect x="65" y="125" width="9" height="3" /><rect x="68" y="11" width="3" height="9" /><rect x="68" y="26" width="3" height="3" /><rect x="68" y="44" width="3" height="3" /><rect x="68" y="56" width="3" height="3" /><rect x="68" y="62" width="6" height="3" /><rect x="68" y="68" width="3" height="3" /><rect x="68" y="74" width="9" height="3" /><rect x="68" y="80" width="3" height="3" /><rect x="68" y="95" width="6" height="6" /><rect x="68" y="104" width="3" height="3" /><rect x="68" y="110" width="3" height="3" /><rect x="68" y="119" width="6" height="3" /><rect x="68" y="128" width="3" height="3" /><rect x="71" y="8" width="12" height="3" /><rect x="71" y="20" width="6" height="3" /><rect x="71" y="29" width="3" height="3" /><rect x="71" y="35" width="15" height="3" /><rect x="71" y="41" width="12" height="3" /><rect x="71" y="47" width="3" height="9" /><rect x="71" y="65" width="6" height="3" /><rect x="71" y="77" width="6" height="3" /><rect x="71" y="86" width="3" height="18" /><rect x="71" y="107" width="12" height="3" /><rect x="71" y="113" width="3" height="9" /><rect x="74" y="23" width="3" height="6" /><rect x="74" y="47" width="3" height="6" /><rect x="74" y="71" width="3" height="9" /><rect x="74" y="83" width="9" height="3" /><rect x="74" y="89" width="3" height="6" /><rect x="74" y="101" width="3" height="3" /><rect x="74" y="110" width="3" height="3" /><rect x="74" y="116" width="3" height="3" /><rect x="77" y="47" width="6" height="3" /><rect x="77" y="59" width="6" height="3" /><rect x="77" y="71" width="12" height="3" /><rect x="77" y="89" width="6" height="3" /><rect x="77" y="104" width="3" height="6" /><rect x="77" y="119" width="12" height="3" /><rect x="80" y="17" width="6" height="3" /><rect x="80" y="23" width="3" height="6" /><rect x="80" y="38" width="3" height="6" /><rect x="80" y="50" width="3" height="6" /><rect x="80" y="77" width="3" height="3" /><rect x="80" y="92" width="6" height="3" /><rect x="80" y="101" width="3" height="3" /><rect x="80" y="110" width="12" height="3" /><rect x="83" y="11" width="3" height="3" /><rect x="83" y="20" width="9" height="6" /><rect x="83" y="44" width="3" height="3" /><rect x="83" y="68" width="3" height="6" /><rect x="83" y="80" width="3" height="3" /><rect x="83" y="86" width="12" height="3" /><rect x="83" y="104" width="3" height="3" /><rect x="83" y="116" width="3" height="6" /><rect x="83" y="128" width="3" height="3" /><rect x="86" y="14" width="3" height="3" /><rect x="86" y="26" width="3" height="9" /><rect x="86" y="47" width="6" height="12" /><rect x="86" y="62" width="3" height="6" /><rect x="86" y="74" width="15" height="3" /><rect x="86" y="83" width="3" height="6" /><rect x="86" y="95" width="3" height="3" /><rect x="86" y="107" width="3" height="6" /><rect x="86" y="125" width="6" height="3" /><rect x="89" y="11" width="3" height="3" /><rect x="89" y="17" width="3" height="9" /><rect x="89" y="29" width="6" height="6" /><rect x="89" y="38" width="6" height="3" /><rect x="89" y="62" width="3" height="3" /><rect x="89" y="68" width="6" height="3" /><rect x="89" y="80" width="9" height="3" /><rect x="89" y="92" width="6" height="3" /><rect x="89" y="98" width="6" height="6" /><rect x="89" y="122" width="3" height="6" /><rect x="92" y="14" width="3" height="3" /><rect x="92" y="20" width="3" height="3" /><rect x="92" y="26" width="3" height="18" /><rect x="92" y="47" width="3" height="6" /><rect x="92" y="77" width="3" height="18" /><rect x="92" y="107" width="3" height="3" /><rect x="92" y="113" width="3" height="3" /><rect x="92" y="122" width="9" height="3" /><rect x="95" y="11" width="6" height="3" /><rect x="95" y="17" width="6" height="3" /><rect x="95" y="32" width="3" height="3" /><rect x="95" y="44" width="9" height="3" /><rect x="95" y="56" width="3" height="3" /><rect x="95" y="95" width="3" height="6" /><rect x="95" y="104" width="3" height="3" /><rect x="95" y="116" width="6" height="3" /><rect x="95" y="128" width="6" height="3" /><rect x="98" y="23" width="3" height="6" /><rect x="98" y="35" width="24" height="3" /><rect x="98" y="41" width="6" height="6" /><rect x="98" y="59" width="3" height="6" /><rect x="98" y="71" width="3" height="6" /><rect x="98" y="83" width="21" height="3" /><rect x="98" y="95" width="6" height="3" /><rect x="98" y="113" width="3" height="6" /><rect x="101" y="8" width="3" height="3" /><rect x="101" y="14" width="3" height="3" /><rect x="101" y="20" width="3" height="3" /><rect x="101" y="29" width="3" height="3" /><rect x="101" y="56" width="3" height="6" /><rect x="101" y="71" width="3" height="3" /><rect x="101" y="80" width="3" height="6" /><rect x="101" y="89" width="3" height="3" /><rect x="101" y="101" width="3" height="3" /><rect x="101" y="110" width="6" height="6" /><rect x="101" y="119" width="3" height="3" /><rect x="101" y="125" width="6" height="3" /><rect x="104" y="11" width="3" height="3" /><rect x="104" y="17" width="3" height="3" /><rect x="104" y="26" width="3" height="3" /><rect x="104" y="32" width="6" height="6" /><rect x="104" y="41" width="6" height="3" /><rect x="104" y="47" width="6" height="3" /><rect x="104" y="62" width="3" height="9" /><rect x="104" y="86" width="3" height="3" /><rect x="104" y="92" width="3" height="3" /><rect x="104" y="104" width="3" height="15" /><rect x="104" y="122" width="3" height="6" /><rect x="107" y="53" width="6" height="3" /><rect x="107" y="62" width="3" height="3" /><rect x="107" y="68" width="3" height="3" /><rect x="107" y="77" width="6" height="3" /><rect x="107" y="95" width="3" height="3" /><rect x="107" y="104" width="18" height="3" /><rect x="107" y="116" width="12" height="3" /><rect x="107" y="122" width="6" height="3" /><rect x="107" y="128" width="9" height="3" /><rect x="110" y="8" width="3" height="21" /><rect x="110" y="50" width="3" height="6" /><rect x="110" y="59" width="9" height="3" /><rect x="110" y="71" width="9" height="3" /><rect x="110" y="89" width="6" height="3" /><rect x="110" y="98" width="3" height="9" /><rect x="110" y="110" width="3" height="3" /><rect x="113" y="8" width="18" height="3" /><rect x="113" y="26" width="18" height="3" /><rect x="113" y="32" width="3" height="9" /><rect x="113" y="44" width="3" height="3" /><rect x="113" y="62" width="6" height="6" /><rect x="113" y="74" width="6" height="3" /><rect x="113" y="86" width="3" height="9" /><rect x="113" y="101" width="6" height="6" /><rect x="113" y="125" width="3" height="6" /><rect x="116" y="14" width="9" height="9" /><rect x="116" y="38" width="3" height="3" /><rect x="116" y="47" width="6" height="3" /><rect x="116" y="53" width="3" height="3" /><rect x="116" y="68" width="3" height="9" /><rect x="116" y="95" width="6" height="3" /><rect x="116" y="107" width="3" height="12" /><rect x="116" y="122" width="3" height="3" /><rect x="119" y="32" width="3" height="6" /><rect x="119" y="41" width="3" height="12" /><rect x="119" y="56" width="6" height="3" /><rect x="119" y="65" width="3" height="6" /><rect x="119" y="80" width="12" height="3" /><rect x="119" y="86" width="9" height="3" /><rect x="119" y="92" width="3" height="6" /><rect x="119" y="125" width="3" height="3" /><rect x="122" y="44" width="6" height="3" /><rect x="122" y="68" width="3" height="3" /><rect x="122" y="92" width="3" height="3" /><rect x="122" y="98" width="3" height="3" /><rect x="122" y="107" width="3" height="6" /><rect x="122" y="116" width="3" height="3" /><rect x="122" y="122" width="3" height="3" /><rect x="125" y="32" width="3" height="3" /><rect x="125" y="38" width="3" height="9" /><rect x="125" y="53" width="3" height="3" /><rect x="125" y="59" width="3" height="3" /><rect x="125" y="77" width="3" height="6" /><rect x="125" y="95" width="6" height="3" /><rect x="125" y="101" width="3" height="3" /><rect x="125" y="110" width="3" height="6" /><rect x="125" y="125" width="3" height="3" /><rect x="128" y="11" width="3" height="18" /><rect x="128" y="35" width="3" height="3" /><rect x="128" y="41" width="3" height="3" /><rect x="128" y="47" width="3" height="3" /><rect x="128" y="71" width="3" height="3" /><rect x="128" y="83" width="3" height="3" /><rect x="128" y="89" width="3" height="3" /><rect x="128" y="104" width="3" height="6" /><rect x="128" y="113" width="3" height="3" /><rect x="128" y="119" width="3" height="3" /></svg>
+        </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-6 py-6">
+
+                <div class="section section-taxes">
+                    <table class="table table-condensed hidden-phone">
+                        <caption class="title"><span class="label">
+                              Ανάλυση ΦΠΑ
+                           </span></caption>
+                        <thead class="caption">
+                            <tr class="secondary-bg">
+<th class="field field-EliseCore-VatAnalysis-UnderlyingValue text-right" style="order: 10;">
+                                  <span class="label">
+                                      Καθαρό Ποσό ανά % ΦΠΑ
+                                  </span>
+                                </th><th class="field field-EliseCore-VatAnalysis-Percentage text-right" style="order: 20;">
+                                  <span class="label">
+                                      ΦΠΑ %
+                                  </span>
+                                </th><th class="field field-EliseCore-VatAnalysis-VatAmount text-right" style="order: 30;">
+                                  <span class="label">
+                                      Ποσό ΦΠΑ
+                                  </span>
+                                </th>                            </tr>
+                        </thead>
+                        <tbody>
+                                <tr>
+<td class="text-right field-EliseCore-VatAnalysis-UnderlyingValue" data-header="Καθαρό Ποσό ανά % ΦΠΑ" style=""><span class="field field-EliseCore-VatAnalysis-UnderlyingValue text-right" style="order: 10;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    32,30
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-VatAnalysis-Percentage" data-header="ΦΠΑ %" style=""><span class="field field-EliseCore-VatAnalysis-Percentage text-right" style="order: 20;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    24,00%
+                                </span>
+                            </span>
+                            
+                        </span></td><td class="text-right field-EliseCore-VatAnalysis-VatAmount" data-header="Ποσό ΦΠΑ" style=""><span class="field field-EliseCore-VatAnalysis-VatAmount text-right" style="order: 30;  ">
+                            <span class="inner">
+                                
+                                <span class="value">
+                                    7,75
+                                </span>
+                            </span>
+                            
+                        </span></td>                                </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="section section-summaries">
+                    <table class="table table-condensed hidden-phone">
+                        <caption class="title"><span class="label">
+                              Σύνολο
+                           </span></caption>
+                        <tbody>
+                        <tr class="field field-EliseCore-Summaries-TotalGrossValue text-right" style="order: 100; ">
+                                <td class="label">
+                                   Σύνολο για πληρωμή EUR (συμπεριλαμβανομένου ΦΠΑ)
+                           </td>
+                                <td class="value">
+                                    40,05
+                                </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+    </div>
+</div>
+            
+            
+
+<div class="row no-gutters sectionn-barcode-area pb-4">
+    <div class="col-12 pt-4 border-top border-black">
+        <div class="text-center">
+            <p class="field field-url">
+                www.zara.com
+            </p>
+
+
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" shape-rendering="crispEdges" viewBox="0 0 140 140" viewport-fill="rgb(255,255,255)" viewport-fill-opacity="1" fill="rgb(0,0,0)" fill-opacity="1" style="background-color:rgb(255,255,255);background-color:rgba(255, 255, 255, 1)" width="140" height="140"><rect x="14" y="14" width="3" height="21" /><rect x="14" y="38" width="3" height="6" /><rect x="14" y="59" width="6" height="3" /><rect x="14" y="68" width="15" height="3" /><rect x="14" y="74" width="6" height="3" /><rect x="14" y="86" width="3" height="15" /><rect x="14" y="104" width="3" height="21" /><rect x="17" y="14" width="18" height="3" /><rect x="17" y="32" width="18" height="3" /><rect x="17" y="38" width="12" height="3" /><rect x="17" y="44" width="6" height="3" /><rect x="17" y="50" width="3" height="12" /><rect x="17" y="71" width="3" height="21" /><rect x="17" y="104" width="18" height="3" /><rect x="17" y="122" width="18" height="3" /><rect x="20" y="20" width="9" height="9" /><rect x="20" y="41" width="3" height="6" /><rect x="20" y="53" width="3" height="3" /><rect x="20" y="62" width="3" height="9" /><rect x="20" y="77" width="3" height="12" /><rect x="20" y="98" width="3" height="3" /><rect x="20" y="110" width="9" height="9" /><rect x="23" y="56" width="3" height="6" /><rect x="23" y="74" width="3" height="12" /><rect x="23" y="92" width="9" height="6" /><rect x="26" y="41" width="6" height="3" /><rect x="26" y="50" width="3" height="9" /><rect x="26" y="65" width="3" height="12" /><rect x="26" y="83" width="3" height="15" /><rect x="29" y="47" width="3" height="9" /><rect x="29" y="59" width="3" height="6" /><rect x="29" y="74" width="3" height="12" /><rect x="29" y="98" width="6" height="3" /><rect x="32" y="17" width="3" height="18" /><rect x="32" y="38" width="12" height="3" /><rect x="32" y="44" width="3" height="3" /><rect x="32" y="50" width="3" height="3" /><rect x="32" y="56" width="9" height="3" /><rect x="32" y="62" width="6" height="3" /><rect x="32" y="68" width="12" height="3" /><rect x="32" y="74" width="6" height="3" /><rect x="32" y="80" width="6" height="3" /><rect x="32" y="86" width="3" height="3" /><rect x="32" y="92" width="9" height="3" /><rect x="32" y="107" width="3" height="18" /><rect x="35" y="41" width="3" height="3" /><rect x="35" y="53" width="3" height="6" /><rect x="35" y="71" width="3" height="6" /><rect x="35" y="89" width="3" height="9" /><rect x="38" y="17" width="3" height="3" /><rect x="38" y="23" width="9" height="3" /><rect x="38" y="29" width="3" height="6" /><rect x="38" y="47" width="3" height="3" /><rect x="38" y="59" width="6" height="3" /><rect x="38" y="65" width="6" height="6" /><rect x="38" y="83" width="3" height="12" /><rect x="38" y="101" width="3" height="6" /><rect x="38" y="110" width="3" height="15" /><rect x="41" y="26" width="3" height="6" /><rect x="41" y="35" width="3" height="12" /><rect x="41" y="50" width="3" height="3" /><rect x="41" y="62" width="3" height="9" /><rect x="41" y="80" width="3" height="9" /><rect x="41" y="95" width="3" height="6" /><rect x="41" y="110" width="9" height="3" /><rect x="41" y="116" width="3" height="6" /><rect x="44" y="14" width="3" height="6" /><rect x="44" y="32" width="3" height="6" /><rect x="44" y="41" width="3" height="6" /><rect x="44" y="56" width="3" height="3" /><rect x="44" y="77" width="9" height="3" /><rect x="44" y="83" width="3" height="3" /><rect x="44" y="92" width="3" height="3" /><rect x="44" y="98" width="3" height="3" /><rect x="44" y="113" width="3" height="6" /><rect x="47" y="29" width="6" height="3" /><rect x="47" y="35" width="3" height="6" /><rect x="47" y="47" width="3" height="3" /><rect x="47" y="53" width="6" height="3" /><rect x="47" y="65" width="6" height="3" /><rect x="47" y="89" width="12" height="3" /><rect x="47" y="101" width="12" height="3" /><rect x="47" y="113" width="6" height="3" /><rect x="50" y="14" width="3" height="3" /><rect x="50" y="20" width="3" height="6" /><rect x="50" y="32" width="3" height="3" /><rect x="50" y="38" width="3" height="9" /><rect x="50" y="56" width="3" height="6" /><rect x="50" y="80" width="3" height="3" /><rect x="50" y="95" width="3" height="3" /><rect x="50" y="107" width="3" height="3" /><rect x="50" y="116" width="3" height="6" /><rect x="53" y="17" width="3" height="3" /><rect x="53" y="23" width="3" height="6" /><rect x="53" y="38" width="3" height="3" /><rect x="53" y="50" width="18" height="3" /><rect x="53" y="56" width="3" height="3" /><rect x="53" y="62" width="3" height="3" /><rect x="53" y="74" width="3" height="3" /><rect x="53" y="86" width="3" height="9" /><rect x="53" y="98" width="3" height="9" /><rect x="53" y="110" width="3" height="3" /><rect x="53" y="122" width="3" height="3" /><rect x="56" y="26" width="3" height="3" /><rect x="56" y="32" width="3" height="3" /><rect x="56" y="41" width="3" height="6" /><rect x="56" y="65" width="3" height="3" /><rect x="56" y="77" width="3" height="3" /><rect x="56" y="95" width="3" height="3" /><rect x="56" y="107" width="9" height="3" /><rect x="56" y="113" width="3" height="3" /><rect x="56" y="119" width="3" height="3" /><rect x="59" y="17" width="3" height="3" /><rect x="59" y="23" width="9" height="3" /><rect x="59" y="29" width="6" height="3" /><rect x="59" y="35" width="3" height="6" /><rect x="59" y="44" width="12" height="3" /><rect x="59" y="56" width="6" height="3" /><rect x="59" y="62" width="12" height="3" /><rect x="59" y="68" width="3" height="3" /><rect x="59" y="74" width="12" height="3" /><rect x="59" y="80" width="3" height="6" /><rect x="59" y="92" width="3" height="3" /><rect x="59" y="98" width="12" height="3" /><rect x="59" y="104" width="3" height="9" /><rect x="59" y="116" width="3" height="3" /><rect x="59" y="122" width="18" height="3" /><rect x="62" y="14" width="3" height="3" /><rect x="62" y="20" width="3" height="6" /><rect x="62" y="32" width="3" height="3" /><rect x="62" y="41" width="3" height="12" /><rect x="62" y="71" width="3" height="6" /><rect x="62" y="80" width="9" height="3" /><rect x="62" y="86" width="9" height="3" /><rect x="62" y="110" width="6" height="3" /><rect x="62" y="119" width="3" height="6" /><rect x="65" y="17" width="3" height="3" /><rect x="65" y="38" width="6" height="3" /><rect x="65" y="89" width="3" height="3" /><rect x="68" y="14" width="21" height="3" /><rect x="68" y="20" width="18" height="3" /><rect x="68" y="26" width="6" height="3" /><rect x="68" y="32" width="3" height="9" /><rect x="68" y="56" width="3" height="3" /><rect x="68" y="71" width="3" height="6" /><rect x="68" y="83" width="3" height="6" /><rect x="68" y="92" width="3" height="3" /><rect x="68" y="104" width="3" height="3" /><rect x="68" y="113" width="3" height="6" /><rect x="71" y="35" width="3" height="3" /><rect x="71" y="41" width="3" height="3" /><rect x="71" y="47" width="9" height="3" /><rect x="71" y="53" width="3" height="3" /><rect x="71" y="65" width="3" height="3" /><rect x="71" y="77" width="3" height="3" /><rect x="71" y="83" width="18" height="3" /><rect x="71" y="89" width="6" height="3" /><rect x="71" y="95" width="9" height="3" /><rect x="71" y="101" width="3" height="3" /><rect x="71" y="107" width="9" height="3" /><rect x="71" y="113" width="3" height="3" /><rect x="71" y="119" width="3" height="6" /><rect x="74" y="23" width="3" height="3" /><rect x="74" y="29" width="3" height="6" /><rect x="74" y="38" width="3" height="3" /><rect x="74" y="44" width="3" height="9" /><rect x="74" y="56" width="3" height="3" /><rect x="74" y="62" width="3" height="3" /><rect x="74" y="68" width="3" height="9" /><rect x="74" y="98" width="3" height="3" /><rect x="74" y="104" width="3" height="9" /><rect x="74" y="116" width="6" height="3" /><rect x="77" y="29" width="3" height="3" /><rect x="77" y="35" width="3" height="3" /><rect x="77" y="41" width="3" height="9" /><rect x="77" y="59" width="12" height="3" /><rect x="77" y="65" width="3" height="9" /><rect x="77" y="77" width="15" height="3" /><rect x="77" y="101" width="3" height="9" /><rect x="77" y="113" width="3" height="9" /><rect x="80" y="17" width="3" height="6" /><rect x="80" y="26" width="9" height="3" /><rect x="80" y="32" width="3" height="3" /><rect x="80" y="41" width="3" height="6" /><rect x="80" y="65" width="9" height="3" /><rect x="80" y="89" width="9" height="3" /><rect x="80" y="101" width="9" height="3" /><rect x="80" y="113" width="9" height="3" /><rect x="83" y="23" width="6" height="6" /><rect x="83" y="41" width="9" height="3" /><rect x="83" y="53" width="6" height="3" /><rect x="83" y="62" width="3" height="6" /><rect x="83" y="95" width="3" height="9" /><rect x="83" y="107" width="6" height="3" /><rect x="86" y="17" width="6" height="3" /><rect x="86" y="32" width="3" height="6" /><rect x="86" y="47" width="3" height="3" /><rect x="86" y="56" width="3" height="6" /><rect x="86" y="68" width="3" height="6" /><rect x="86" y="92" width="3" height="6" /><rect x="86" y="119" width="3" height="3" /><rect x="89" y="23" width="3" height="3" /><rect x="89" y="29" width="9" height="3" /><rect x="89" y="38" width="3" height="6" /><rect x="89" y="50" width="3" height="3" /><rect x="89" y="62" width="3" height="3" /><rect x="89" y="68" width="9" height="3" /><rect x="89" y="74" width="3" height="6" /><rect x="89" y="86" width="3" height="3" /><rect x="89" y="98" width="3" height="3" /><rect x="89" y="122" width="3" height="3" /><rect x="92" y="14" width="3" height="3" /><rect x="92" y="26" width="3" height="9" /><rect x="92" y="44" width="3" height="6" /><rect x="92" y="53" width="3" height="3" /><rect x="92" y="65" width="3" height="6" /><rect x="92" y="80" width="6" height="6" /><rect x="92" y="89" width="3" height="3" /><rect x="92" y="101" width="3" height="6" /><rect x="92" y="110" width="6" height="9" /><rect x="95" y="17" width="3" height="9" /><rect x="95" y="38" width="9" height="3" /><rect x="95" y="44" width="6" height="3" /><rect x="95" y="56" width="3" height="9" /><rect x="95" y="71" width="3" height="6" /><rect x="95" y="86" width="6" height="3" /><rect x="95" y="92" width="3" height="9" /><rect x="95" y="107" width="3" height="12" /><rect x="95" y="122" width="3" height="3" /><rect x="98" y="23" width="3" height="3" /><rect x="98" y="32" width="3" height="3" /><rect x="98" y="50" width="3" height="3" /><rect x="98" y="56" width="12" height="3" /><rect x="98" y="62" width="3" height="3" /><rect x="98" y="74" width="3" height="3" /><rect x="98" y="98" width="3" height="15" /><rect x="98" y="119" width="3" height="3" /><rect x="101" y="41" width="3" height="3" /><rect x="101" y="53" width="3" height="9" /><rect x="101" y="65" width="3" height="3" /><rect x="101" y="71" width="3" height="3" /><rect x="101" y="77" width="3" height="3" /><rect x="101" y="89" width="3" height="3" /><rect x="101" y="95" width="3" height="6" /><rect x="101" y="110" width="12" height="3" /><rect x="101" y="116" width="3" height="3" /><rect x="101" y="122" width="3" height="3" /><rect x="104" y="14" width="3" height="21" /><rect x="104" y="44" width="3" height="3" /><rect x="104" y="50" width="9" height="3" /><rect x="104" y="62" width="9" height="3" /><rect x="104" y="68" width="9" height="3" /><rect x="104" y="74" width="9" height="3" /><rect x="104" y="80" width="3" height="3" /><rect x="104" y="86" width="9" height="3" /><rect x="104" y="98" width="9" height="3" /><rect x="104" y="104" width="3" height="3" /><rect x="104" y="113" width="12" height="3" /><rect x="104" y="119" width="3" height="3" /><rect x="107" y="14" width="18" height="3" /><rect x="107" y="32" width="18" height="3" /><rect x="107" y="38" width="3" height="3" /><rect x="107" y="59" width="3" height="6" /><rect x="107" y="71" width="3" height="6" /><rect x="107" y="83" width="3" height="6" /><rect x="107" y="122" width="3" height="3" /><rect x="110" y="20" width="9" height="9" /><rect x="110" y="44" width="3" height="3" /><rect x="110" y="95" width="3" height="21" /><rect x="110" y="119" width="6" height="3" /><rect x="113" y="38" width="3" height="6" /><rect x="113" y="47" width="3" height="3" /><rect x="113" y="56" width="3" height="6" /><rect x="113" y="71" width="3" height="3" /><rect x="113" y="77" width="3" height="9" /><rect x="113" y="92" width="3" height="6" /><rect x="113" y="101" width="3" height="9" /><rect x="116" y="50" width="3" height="3" /><rect x="116" y="62" width="3" height="3" /><rect x="116" y="74" width="3" height="3" /><rect x="116" y="86" width="9" height="3" /><rect x="116" y="92" width="3" height="3" /><rect x="116" y="98" width="9" height="3" /><rect x="116" y="110" width="9" height="3" /><rect x="116" y="122" width="9" height="3" /><rect x="119" y="38" width="3" height="6" /><rect x="119" y="47" width="6" height="3" /><rect x="119" y="53" width="3" height="3" /><rect x="119" y="65" width="3" height="3" /><rect x="119" y="77" width="3" height="3" /><rect x="119" y="83" width="3" height="9" /><rect x="119" y="101" width="3" height="3" /><rect x="119" y="116" width="6" height="3" /><rect x="122" y="17" width="3" height="18" /><rect x="122" y="44" width="3" height="6" /><rect x="122" y="56" width="3" height="9" /><rect x="122" y="68" width="3" height="9" /><rect x="122" y="80" width="3" height="3" /><rect x="122" y="92" width="3" height="3" /><rect x="122" y="104" width="3" height="3" /><rect x="122" y="119" width="3" height="6" /></svg>                    <p class="pt-3">
+                        9145 016847 06 Συναλλ.: 522732
+                    </p>
+
+        </div>
+    </div>
+</div>
+
+            
+            
+
+            
+            
+<div class="row section section-certification pb-0">
+    <div class="col-12 text-center">
+<span class="field field-Mark " style="order: 0;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Μ.Αρ.Κ.
+                           </span>
+                                <span class="value">
+                                    400013823404135
+                                </span>
+                            </span>
+                            
+                        </span>
+        
+
+        <span class="field field-Authentication Code " style="order: 0;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Υπογραφή
+                           </span>
+                                <span class="value">
+                                    915A1D9301C57B4F75B5062F9B4A7F288B341ED9
+                                </span>
+                            </span>
+                            
+                        </span>
+
+<span class="field field-Uid " style="order: 0;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Αναγν.
+                           </span>
+                                <span class="value">
+                                    5C90FCFB2743CC800E1DAE5EF3AD92DF76F73B27
+                                </span>
+                            </span>
+                            
+                        </span>
+<span class="field field-ServiceSupplier " style="order: 0;  ">
+                            <span class="inner">
+                                <span class="label">
+                                   Υ.ΠΑ.Η.Ε.Σ
+                           </span>
+                                <span class="value">
+                                    ENTERSOFTONE SA https://www.einvoicing.gr
+                                </span>
+                            </span>
+                            
+                        </span>            <span class="field field-ServiceSupplier" style="order: 0;">
+                <span class="inner">
+                    <span class="label">
+                        Αριθμός Αδειοδότησης
+                    </span>
+                    <span class="value">
+                        2020_07_101Softone_001_EINVOICΙNG_V1_31072020
+                    </span>
+                </span>
+            </span>
+    </div>
+</div>
+
+
+        </div>
+    </div>
+</section>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.3/dist/JsBarcode.all.min.js"></script>
+<style>@media print {
+        body {
+            margin: 0 !important;
+        }
+
+        .no-gutters {
+            margin-right: 0px !important;
+            margin-left: 0px !important;
+        }
+
+        .no-gutters > .col, .no-gutters > [class*="col-"] {
+            padding-right: 0px !important;
+            padding-left: 0px !important;
+        }
+        /* Force md breakpoints to be kept on print */
+        .col-md {
+            flex: 1 0 0 !important;
+            max-width: 100% !important;
+        }
+        
+        .col-md-1 {
+            flex: 0 0 8.333333% !important;
+            max-width: 8.333333% !important;
+        }
+
+        .col-md-2 {
+            flex: 0 0 16.666667% !important;
+            max-width: 16.666667% !important;
+        }
+
+        .col-md-3 {
+            flex: 0 0 25% !important;
+            max-width: 25% !important;
+        }
+
+        .col-md-4 {
+            flex: 0 0 33.333333% !important;
+            max-width: 33.333333% !important;
+        }
+        
+        .col-md-5 {
+            flex: 0 0 41.666667% !important;
+            max-width: 41.666667% !important;
+        }
+
+        .col-md-6 {
+            flex: 0 0 50% !important;
+            max-width: 50% !important;
+        }
+
+        .col-md-7 {
+            flex: 0 0 58.333333% !important;
+            max-width: 58.333333% !important;
+        }
+
+        .col-md-8 {
+            flex: 0 0 66.666667% !important;
+            max-width: 66.666667% !important;
+        }
+
+        .col-md-9 {
+            flex: 0 0 75% !important;
+            max-width: 75% !important;
+        }
+
+        .col-md-10 {
+            flex: 0 0 83.333333% !important;
+            max-width: 83.333333% !important;
+        }
+
+        .col-md-11 {
+            flex: 0 0 91.666667% !important;
+            max-width: 91.666667% !important;
+        }
+
+        .col-md-12 {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+        }
+
+        .d-md-flex {
+            display: flex !important;
+        }
+        .d-md-block {
+            display: block !important;
+        }
+
+        .row {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            margin-left: -0.75rem !important;
+            margin-right: -0.75rem !important;
+        }
+
+        [class*="col-"] {
+            position: relative !important;
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+    }
+</style></div></div><div class="sparkle-tab-panel no-print " role="tabpanel" aria-hidden="true"><div class="InvoicesDocDetailed" b-te8l07339s><table class="table InvoiceLineTable" style="width:100%" b-te8l07339s><tbody b-te8l07339s><tr b-te8l07339s><td colspan="3" b-te8l07339s><div class="InvoiceHeader" b-makelw10ic><table class="table table-striped InvoiceLineTable" b-makelw10ic><tbody b-makelw10ic><tr b-makelw10ic><td colspan="3" b-makelw10ic><h3 b-makelw10ic>Γενικά Στοιχεία</h3>
+                    <br b-makelw10ic></td></tr>
+            
+            <tr b-makelw10ic><td b-makelw10ic>Σειρά Παραστατικού</td>
+                <td b-makelw10ic>10914506</td></tr>
+            
+            <tr b-makelw10ic><td b-makelw10ic>ΑΑ Παραστατικού</td>
+                <td b-makelw10ic>16847</td></tr>
+            
+
+            <tr b-makelw10ic><td b-makelw10ic>Ημερομηνία Έκδοσης</td>
+                <td b-makelw10ic>4/6/2026</td></tr><tr b-makelw10ic><td b-makelw10ic>Είδος Παραστατικού</td>
+                    <td b-makelw10ic>11.1</td></tr><tr b-makelw10ic><td b-makelw10ic>Νόμισμα</td>
+                    <td b-makelw10ic>EUR</td></tr><tr b-makelw10ic><td b-makelw10ic>Ένδειξη Αυτοτιμολόγησης</td>
+                <td b-makelw10ic>Όχι</td></tr></tbody></table></div></td></tr><tr b-te8l07339s><td colspan="3" b-te8l07339s><div b-7voqf0ophd><table class="table table-striped Party" b-7voqf0ophd><tbody b-7voqf0ophd><tr b-7voqf0ophd><td colspan="3" b-7voqf0ophd><br b-7voqf0ophd>
+                    <h3 b-7voqf0ophd>Στοιχεία Εκδότη</h3></td></tr><tr b-7voqf0ophd><td b-7voqf0ophd>ΑΦΜ</td>
+                    <td b-7voqf0ophd>094352564</td></tr><tr b-7voqf0ophd><td class="widthLabel" b-7voqf0ophd>Κωδ. Χώρας</td>
+                    <td b-7voqf0ophd>GR</td></tr><tr b-7voqf0ophd><td b-7voqf0ophd>Αρ. Εγκατάστασης</td>
+                    <td b-7voqf0ophd>92</td></tr></tbody></table></div></td></tr><tr b-te8l07339s><td colspan="3" b-te8l07339s><table class="table table-striped InvoiceSummary"><tbody><tr><td colspan="3"><br>
+                <h3>Συγκεντρωτικά Στοιχεία</h3></td></tr>
+        <tr><td>Σύνολο Καθαρής Αξίας</td>
+            <td class="alnright">32,30</td></tr>
+        <tr><td>Σύνολο ΦΠΑ</td>
+            <td class="alnright">7,75</td></tr>
+        <tr><td>Σύνολο Παρ. Φόρων</td>
+            <td class="alnright">0,00</td></tr>
+        <tr><td>Σύνολο Τελών</td>
+            <td class="alnright">0,00</td></tr>
+        <tr><td>Σύνολο Ψηφιακού Τέλους συναλλαγής </td>
+            <td class="alnright">0,00</td></tr>
+        <tr><td>Σύνολο Λοιπών Φόρων</td>
+            <td class="alnright">0,00</td></tr>
+        <tr><td>Σύνολο Κρατήσεων</td>
+            <td class="alnright">0,00</td></tr>
+        <tr><td>Συνολική Αξία</td>
+            <td class="alnright">40,05</td></tr></tbody></table>
+<style>
+    .alnright {
+        text-align: right;
+    }
+</style></td></tr><tr b-te8l07339s><td colspan="3" b-te8l07339s><h3 b-te8l07339s>Πληρωμές</h3>
+                        <br b-te8l07339s></td></tr><tr b-te8l07339s><td colspan="3" b-te8l07339s><table class="table table-striped PaymentMethodType"><tbody><tr><td>Τύπος Πληρωμής</td>
+                <td class="alnright">7</td></tr><tr><td>Αναλογούν Ποσό</td>
+                <td class="alnright">40,05</td></tr><tr><td>Φιλοδώρημα</td>
+                <td class="alnright">0,00</td></tr><tr><td>Μοναδική Ταυτότητα Πληρωμής</td>
+                <td>014;000521;521021;071308</td></tr><tr><td>ID Τερματικού POS</td>
+                <td>71101081</td></tr><tr><td>Provider’s Id</td>
+                <td></td></tr><tr><td>Υπογραφή</td>
+                <td>MEYCIQDG3p9DrC5MAmRrUffVSMO9VhwneLxMytCfGUVKvUXj0gIhAJTpMWzauiR7jDNF42LxqYapb/fszKJ1ebpboS7k8LHv</td></tr></tbody></table>
+<style>
+    .alnright {
+        text-align: right;
+    }
+</style></td></tr><tr b-te8l07339s><td b-te8l07339s>Μοναδικός Αριθμός Καταχώρησης Παραστατικού</td>
+                    <td b-te8l07339s>400013823404135</td></tr><tr b-te8l07339s><td b-te8l07339s>Αναγνωριστικό Παραστατικού</td>
+                    <td b-te8l07339s>5C90FCFB2743CC800E1DAE5EF3AD92DF76F73B27</td></tr><tr b-te8l07339s><td b-te8l07339s>Συμβολοσειρά Αυθεντικοποίησης Παρόχου</td>
+                    <td b-te8l07339s>915A1D9301C57B4F75B5062F9B4A7F288B341ED9</td></tr><tr b-te8l07339s><td b-te8l07339s>Url με το οποίο ο λήπτης του παραστατικού θα μπορεί να το λαμβάνει</td>
+                    <td b-te8l07339s>https://einvoice.s1ecos.gr/p/EL094352564/5C90FCFB2743CC800E1DAE5EF3AD92DF76F73B27/71DC856659A04C399FFAA087AEECE001</td></tr><tr b-te8l07339s><td b-te8l07339s>Αδυναμία Επικοινωνίας Παρόχου ή Αδυναμία διαβίβασης ERP ή διαβίβαση μέσω Παρόχου για τις οντότητες άρθρου 5, 2η παράγραφος της περ. 1γ</td>
+                <td b-te8l07339s>0</td></tr><tr b-te8l07339s><td b-te8l07339s>Μοναδικός Αριθμός Καταχώρησης Ακυρωτικού</td>
+                    <td b-te8l07339s>0</td></tr><tr b-te8l07339s><td colspan="3" b-te8l07339s><h3 b-te8l07339s>Λεπτομέρειες Παραστατικού</h3>
+                        <br b-te8l07339s></td></tr><tr b-te8l07339s><td colspan="3" b-te8l07339s><div class="InvoiceLines" b-a2eovsz6vx><table class="table table-striped InvoiceLineTable" b-a2eovsz6vx><tbody b-a2eovsz6vx><tr b-a2eovsz6vx><td b-a2eovsz6vx>ΑΑ Γραμμής</td>
+                    <td b-a2eovsz6vx>1</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Είδος Γραμμής</td>
+                <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κωδικός Είδους</td>
+                    <td b-a2eovsz6vx>10001406</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Περιγραφή Είδους</td>
+                    <td b-a2eovsz6vx>ΥΠΟΔΗΜΑΤΑ</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσότητα</td>
+                    <td b-a2eovsz6vx>1</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Είδος Ποσότητας</td>
+                    <td b-a2eovsz6vx>1</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Επισήμανση</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Καθαρή Αξία</td>
+                <td b-a2eovsz6vx>32,22</td></tr>
+            <tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία ΦΠΑ</td>
+                <td b-a2eovsz6vx>1</td></tr>
+            <tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό ΦΠΑ</td>
+                <td b-a2eovsz6vx>7,73</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Αιτίας Εξαίρεσης ΦΠΑ</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Δικαίωμα Έκπτωσης</td>
+                    <td b-a2eovsz6vx>Όχι</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Παρ. Φόρου</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Συντελεστή  Παρ. Φόρου</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Ψηφιακού Τέλους συναλλαγής</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Συντελεστή Ψηφιακού Τέλους συναλλαγής</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Τελών</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Συντελεστή Τελών</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Συντελεστή Λοιπών Φόρων</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Φόρου Διαμονής</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Κρατήσεων</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Σχόλια Γραμμής</td>
+                    <td b-a2eovsz6vx></td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ένδειξη μη συμμετοχής στο ΦΠΑ (έσοδα – εκροές)</td>
+                <td b-a2eovsz6vx>Όχι</td></tr></tbody></table></div></td></tr><tr b-te8l07339s><td colspan="3" b-te8l07339s><div class="InvoiceLines" b-a2eovsz6vx><table class="table table-striped InvoiceLineTable" b-a2eovsz6vx><tbody b-a2eovsz6vx><tr b-a2eovsz6vx><td b-a2eovsz6vx>ΑΑ Γραμμής</td>
+                    <td b-a2eovsz6vx>2</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Είδος Γραμμής</td>
+                <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κωδικός Είδους</td>
+                    <td b-a2eovsz6vx>10002436</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Περιγραφή Είδους</td>
+                    <td b-a2eovsz6vx>Σακούλα&#xA0;Μ</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσότητα</td>
+                    <td b-a2eovsz6vx>1</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Είδος Ποσότητας</td>
+                    <td b-a2eovsz6vx>1</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Επισήμανση</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Καθαρή Αξία</td>
+                <td b-a2eovsz6vx>0,08</td></tr>
+            <tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία ΦΠΑ</td>
+                <td b-a2eovsz6vx>1</td></tr>
+            <tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό ΦΠΑ</td>
+                <td b-a2eovsz6vx>0,02</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Αιτίας Εξαίρεσης ΦΠΑ</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Δικαίωμα Έκπτωσης</td>
+                    <td b-a2eovsz6vx>Όχι</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Παρ. Φόρου</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Συντελεστή  Παρ. Φόρου</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Ψηφιακού Τέλους συναλλαγής</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Συντελεστή Ψηφιακού Τέλους συναλλαγής</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Τελών</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Συντελεστή Τελών</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Κατηγορία Συντελεστή Λοιπών Φόρων</td>
+                    <td b-a2eovsz6vx>0</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Φόρου Διαμονής</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ποσό Κρατήσεων</td>
+                    <td b-a2eovsz6vx>0,00</td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Σχόλια Γραμμής</td>
+                    <td b-a2eovsz6vx></td></tr><tr b-a2eovsz6vx><td b-a2eovsz6vx>Ένδειξη μη συμμετοχής στο ΦΠΑ (έσοδα – εκροές)</td>
+                <td b-a2eovsz6vx>Όχι</td></tr></tbody></table></div></td></tr></tbody></table></div></div></div></div></div>
+
+<style>
+    .invoice-display-selector-container {
+        width: 100%;
+        max-width: 960px;
+        margin-right: 2rem;
+        margin-left: 2rem;
+    }
+
+    .pdf-frame-host {
+        width: 100%;
+    }
+
+    .pdf-frame-host .customFrame {
+        width: 100%;
+        max-width: 100%;
+        height: 1000px;
+        display: block;
+        border: 0;
+    }
+   
+    @media (max-width: 992px) {
+        .invoice-display-selector-container {
+            max-width: 100%;
+            margin-right: 0;
+            margin-left: 0;
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+        }
+
+        .pdf-frame-host .customFrame {
+            height: calc(100dvh - 220px);
+            min-height: 560px;
+        }
+    }
+
+    @supports not (height: 100dvh) {
+        @media (max-width: 992px) {
+            .pdf-frame-host .customFrame {
+                height: calc(100vh - 220px);
+            }
+        }
+    }
+</style><div class="my-4"><fluent-card class="no-print" b-6epdlk0xtt><div class="stack-horizontal" style="justify-content: center; align-items: start; column-gap: 8px; row-gap: 8px; width: 100%; flex-wrap: wrap;" b-0nr62qx0mz><fluent-anchor href="javascript:window.print()" appearance="outline" Title="Εκτύπωση" b-acyx52swce><svg slot="start" style="width: 20px; fill: var(--accent-fill-rest);" focusable="false" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4.5C5 3.67 5.67 3 6.5 3h7c.83 0 1.5.67 1.5 1.5V5h.5A2.5 2.5 0 0 1 18 7.5v5c0 .83-.67 1.5-1.5 1.5H15v1.5c0 .83-.67 1.5-1.5 1.5h-7A1.5 1.5 0 0 1 5 15.5V14H3.5A1.5 1.5 0 0 1 2 12.5v-5A2.5 2.5 0 0 1 4.5 5H5v-.5ZM6 5h8v-.5a.5.5 0 0 0-.5-.5h-7a.5.5 0 0 0-.5.5V5Zm-1 8v-1.5c0-.83.67-1.5 1.5-1.5h7c.83 0 1.5.67 1.5 1.5V13h1.5a.5.5 0 0 0 .5-.5v-5c0-.83-.67-1.5-1.5-1.5h-11C3.67 6 3 6.67 3 7.5v5c0 .28.22.5.5.5H5Zm1.5-2a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h7a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-.5-.5h-7Z"/></svg>
+                    Εκτύπωση</fluent-anchor><fluent-anchor id="erpQrBtn" href="https://mydatapi.aade.gr/myDATA/TimologioQR/QRInfo?q=tGOD2bat9lSThRcpupa%2fzlPRB1El1WuFkchGyiN9MITQlpz7uX%2f%2fONTWR173PooEbyg%2f6Py1QLg1j55iR%2fzArMFLToAkMapWUWJuEm5qYZ8%3d" target="_blank" appearance="outline" Title="Εγγραφή στο MyData" b-acyx52swce><img src="/img/MyData/mydataLogo.png" alt="Εγγραφή στο MyData" style="height: 20px; margin-right: 8px;" /></fluent-anchor></div></fluent-card></div></div>
+
+<style>@media screen {
+        html {
+            font-size: calc(1rem + 0.15vw);
+        }
+    }
+</style>
+
+    <script src="_framework/blazor.web.js"></script>
+    <script src="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js" type="module" async></script>
+
+    <link rel="stylesheet" href="/libs/fontawesome5/css/all.css">
+
+    <script src="/libs/jquery/dist/jquery.min.js"></script>
+    <script src="/utils/file-utils.js"></script>
+    <script src="/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="/libs/toastr/toastr.min.js"></script>
+    <script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
+    <link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css">
+
+    <script src="/libs/quill/quill.min.js"></script>
+
+    
+
+    <script src="_content/Blazored.TextEditor/quill-blot-formatter.min.js"></script>
+    <script src="_content/Blazored.TextEditor/Blazored-BlazorQuill.js"></script></body></html><!--Blazor-Web-Initializers:WwogICJfY29udGVudC9NaWNyb3NvZnQuRmx1ZW50VUkuQXNwTmV0Q29yZS5Db21wb25lbnRzL01pY3Jvc29mdC5GbHVlbnRVSS5Bc3BOZXRDb3JlLkNvbXBvbmVudHMubGliLm1vZHVsZS5qcyIKXQ==--><!--Blazor-WebAssembly-Component-State:eyJNaWNyb3NvZnQuQXNwTmV0Q29yZS5Db21wb25lbnRzLkluZnJhc3RydWN0dXJlLlBlcnNpc3RlbnRTZXJ2aWNlc1JlZ2lzdHJ5IjoiVzNzaVlYTnpaVzFpYkhraU9pSk5hV055YjNOdlpuUXVRWE53VG1WMFEyOXlaUzVEYjIxd2IyNWxiblJ6TGtWdVpIQnZhVzUwY3lJc0ltWjFiR3hVZVhCbFRtRnRaU0k2SWsxcFkzSnZjMjltZEM1QmMzQk9aWFJEYjNKbExrTnZiWEJ2Ym1WdWRITXVVbVZ6YjNWeVkyVkRiMnhzWldOMGFXOXVVSEp2ZG1sa1pYSWlmU3g3SW1GemMyVnRZbXg1SWpvaVRXbGpjbTl6YjJaMExrRnpjRTVsZEVOdmNtVXVRMjl0Y0c5dVpXNTBjeTVYWldJaUxDSm1kV3hzVkhsd1pVNWhiV1VpT2lKTmFXTnliM052Wm5RdVFYTndUbVYwUTI5eVpTNURiMjF3YjI1bGJuUnpMa1p2Y20xekxrRnVkR2xtYjNKblpYSjVVM1JoZEdWUWNtOTJhV1JsY2lKOVhRPT0iLCJLU3p0VDg0Z0FpVjBJTy9VQlJScE9tOEs0anFFZlx1MDAyQjFKenZWT0NNQmxzaVU9IjoiZXlKMllXeDFaU0k2SWtObVJFbzRRazFpUjJWNFl6aG5PVVJyWlROUlpWZHNiakpDVlV3NE5FWk1TVEIwTkhSbGEwbzFNM2wzUjE5T09UbDVWbEI1ZW05NmFtNXZkMlowVTFScllYcGFORUl0WlVReGFEaDNOSGhMYkdwQlZtb3pZWEphYlhOdFNTMWFkV2t5Vm1wa2FVVjFMVzh3VlRoNExWZGtRblJKT0VKMWFIbFhXVzVxWVdkdVNHZHVWVWw0UkZoVlVqaFdZVzluYWtScVNUa3RNVVJWYmtWSklpd2labTl5YlVacFpXeGtUbUZ0WlNJNklsOWZVbVZ4ZFdWemRGWmxjbWxtYVdOaGRHbHZibFJ2YTJWdUluMD0iLCJLOVRlM0xEYlx1MDAyQjZ4ZkpDLzBSVDBCR0xRT3ZwWGlQNEtJU2dBa096RG5za0E9IjoiSWk0dlgyWnlZVzFsZDI5eWF5OXlaWE52ZFhKalpTMWpiMnhzWldOMGFXOXVMbU5sVEV4d0xtcHpJZz09In0=-->
