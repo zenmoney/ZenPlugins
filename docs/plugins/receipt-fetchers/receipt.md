@@ -4,9 +4,11 @@ Scope: the version 1 `Receipt`/`ReceiptPreview` contract. [TypeScript](../../../
 
 ## Scope and common values
 
-`Receipt` is a retrieved document with a nonempty item list, known quantities, final item amounts, currency and issue date. An empty or unparsed item list MUST fail validation; do not invent a product or return a partial receipt as full. `ReceiptPreview` contains only locally available code data and may omit currency, date and total. Plugin/build metadata and lookup input stay outside both values.
+`Receipt` is a retrieved document with a nonempty item list, quantities, final item amounts, currency and issue date. An empty or unparsed item list MUST fail validation; do not invent a product or return a partial receipt as full. `ReceiptPreview` contains only locally available code data and may omit currency, date and total. Plugin/build metadata and lookup input stay outside both values.
 
-All monetary fields use the one known ISO receipt currency. Never default it from the application or transaction, copy foreign terminal/settlement amounts into it, or guess an exchange rate.
+When the source does not report an item's quantity, ask the developer how to handle it. The usual proposal is quantity `1`, but it MUST NOT be applied without an explicit developer decision. Record the confirmed decision beside the integration; do not silently guess a quantity or invent an item.
+
+All monetary fields use the one known receipt currency. Use ISO currency codes; represent the Transnistrian ruble as `PRB` consistently across all integrations. Never default currency from the application or transaction, copy foreign terminal/settlement amounts into it, or guess an exchange rate.
 
 Money, quantities, point counts and percentages MUST be finite base-10 decimal strings without exponents, locale grouping or binary floating-point artifacts. Use explicit safe conversion and exact arithmetic/scaling; there is no universal two-decimal limit. Point counts are not money. Omit unknown optional values rather than using null, empty strings or guesses; retain explicit zero.
 
@@ -58,7 +60,11 @@ A unit price can exclude tax applied only at document scope. Tax inclusion at or
 
 ## Merchant identifiers
 
-`merchant.identifiers` preserves source strings with optional known country/scheme, for example INN, BIN, UEN or GST. These are examples, not a closed enum. Preserve leading zeros and letters. Multiple identifiers or no identifiers are valid; manifest country preference does not establish jurisdiction.
+`merchant.identifiers` preserves source strings with optional known country/scheme. Preserve leading zeros and letters; do not transliterate the identifier value. Multiple identifiers or no identifiers are valid; manifest country preference does not establish jurisdiction.
+
+`scheme` MUST use a stable code with uppercase Latin letters and ASCII digits/separators where needed, for example `INN`, `UNP`, `VAT`, `TIN`, `UEN` or `GST`. These are examples, not a closed enum. Equivalent source labels for the same identifier scheme within a jurisdiction MUST map to the same code across integrations, regardless of the receipt language.
+
+For Kazakhstan's individual/business identification numbers, use `countryCode: 'KZ'`. When the source explicitly identifies an individual number, use `scheme: 'IIN'`; for an explicit business number, use `scheme: 'BIN'`. Use `scheme: 'IIN/BIN'` only when the source establishes the identification-number family without distinguishing the subtype, such as a combined label or field. Do not discard an explicit subtype or infer one from the merchant name or number alone. Other identifiers from Kazakhstan do not inherit these schemes merely from their country.
 
 Register, terminal and receipt numbers are not merchant identifiers. Equal bare values across schemes do not prove the same merchant. A Russian INN lookup requires confirmed RU/INN metadata, not the first identifier in a list.
 

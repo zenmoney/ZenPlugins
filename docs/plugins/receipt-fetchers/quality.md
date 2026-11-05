@@ -53,7 +53,8 @@ Requirement: preserve source meaning under [prices and adjustments](receipt.md#p
 | Confirmed refund | `operation: 'refund'`, source-consistent signs; no blanket absolute values |
 | Sales and positive-only return lines mixed | Root operation cannot distinguish each line; retain signed lines when available |
 | Multiple intermediate prices | Preserve consistent selected source snapshots; no invented history |
-| Missing quantity/final line contribution | Fail; no quantity 1 or whole-receipt-total fallback |
+| Missing quantity | Follow the [developer decision rule](receipt.md#scope-and-common-values); no automatic quantity fallback |
+| Missing final line contribution | Fail; no whole-receipt-total fallback |
 | Separate foreign terminal amount | Keep receipt fields in the one declared currency |
 
 Verification: [receipt validation](../../../src/common/receiptFetcher/receipt.test.ts), [decimal tests](../../../src/common/decimal.test.ts) and fixtures/tests beside the affected provider. These test locations do not imply coverage of every row.
@@ -69,6 +70,8 @@ Requirement: apply [common values](receipt.md#scope-and-common-values), [merchan
 | Explicit offset crosses UTC midnight | Preserve source calendar day/time/offset, independent of machine time zone |
 | Date only, minute precision or unknown offset | No invented midnight, seconds, UTC or device offset |
 | Foreign identifier with leading zeros | Preserve string and known country/scheme; no automatic INN lookup |
+| Same identifier scheme under different provider/language labels | Use the same canonical country/scheme code under [merchant identifiers](receipt.md#merchant-identifiers); preserve the identifier value |
+| Explicit identifier subtype versus an undifferentiated combined field | Preserve the explicit subtype; use a combined scheme only when the source does not distinguish it |
 | Unknown scheme or missing merchant ID | Omit unknown data; no country-based scheme guess or register/receipt-number substitute |
 | Sequence/order reference without document uniqueness | Omit `id`; no random value, amount/date hash or QR replacement |
 | Repeated receipt versus distinct advance/supply documents | Stable identity for repeated retrieval; different document IDs for different receipts |
