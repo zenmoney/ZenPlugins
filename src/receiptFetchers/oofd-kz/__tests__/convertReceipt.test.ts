@@ -2,9 +2,9 @@ import { cloneDeep, set } from 'lodash'
 import fixture1 from './convertReceipt-01.json'
 import { convertReceipt } from '../converters'
 
-// TODO: extract the source discount of 3844 and card payment of 5766.
-// This expectation currently omits both; goods total 9610 while the document total is 5766.
-test('converts source case 01', () => {
+// Complete existing OOFD response: ticket 531282_10602, foundDate 2021-05-06.
+// The separate discount row and its modifiers repeat one document-level effect.
+test('preserves the document discount once and the applied card payment', () => {
   expect(convertReceipt(fixture1)).toEqual({
     completeness: 'full',
     issuedAt: {
@@ -19,7 +19,8 @@ test('converts source case 01', () => {
       identifiers: [
         {
           value: '140340008559',
-          countryCode: 'KZ'
+          countryCode: 'KZ',
+          scheme: 'IIN/BIN'
         }
       ]
     },
@@ -31,6 +32,8 @@ test('converts source case 01', () => {
         totalAmount: '9610'
       }
     ],
+    adjustments: [{ kind: 'discount', name: 'Скидка', amount: '-3844' }],
+    payments: [{ method: 'card', amount: '5766' }],
     operation: 'unknown'
   })
 })
