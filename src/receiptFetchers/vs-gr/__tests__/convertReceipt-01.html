@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      lang="el">
+<head>
+    <title>Ηλεκτρονική Τιμολόγηση</title>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+
+    <link rel="stylesheet"
+          href="/resources/common/assets/css/invoice_print-efa31eda91b304de65542aa64ba02a35.css"/>
+
+    <link rel="stylesheet"
+          href="/resources/common/vendor/gentelella_template/css/bootstrap.min-a15c2ac3234aa8f6064ef9c1f7383c37.css"/>
+    <link rel="stylesheet"
+          href="/resources/common/vendor/kendo/css/kendo.common.min-7c482cf193cab928dd56860d933c62b5.css"/>
+    <link rel="stylesheet"
+          href="/resources/common/vendor/kendo/css/kendo.office365.min-86d5c0205560d70658308081bfd7b95e.css"/>
+    <style>
+        :root {
+            --invoice-header-bg: #ff8300a8;
+        }
+
+        @media print {
+            .pdf-nowrap {
+                flex-wrap: nowrap !important;
+            }
+        }
+
+    </style>
+
+    
+        <script src="/resources/common/vendor/jquery/jquery-3.2.1.min-c9f5aeeca3ad37bf2aa006139b935f0a.js"></script>
+        <script src="/resources/common/vendor/bootstrap-3.3.4/js/bootstrap.min-21622d4d35c71d4d08c3f8ffa4565de1.js"></script>
+    
+
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+</head>
+<body style="font-size: 12px">
+<div class="container">
+    <div id="content">
+
+        
+        <div class="row no-print">
+            <div class="col-md-12" style="border-bottom: 1px solid black">
+                <div id="invoice_back_button" style="float:left">
+                    <a class='k-button k-grid-invoice_html a_hover'
+                       style='border:none; background-color:white; padding: 0; margin-top: 3px'
+                       href="#"
+                       onclick="return openPeppolVisualization();"
+                       title="Οπτικοποίηση PEPPOL">
+                        <button type="button" class="k-button">
+                            <span class="k-icon k-i-globe-outline"></span>
+                            <span>&nbsp;Εμφάνιση Οπτικοποίησης PEPPOL</span>
+                        </button>
+                    </a>
+                </div>
+                
+                <div id="invoice_html_print_html" style="float:right">
+                    <a id="invoice_html_print_button" class='k-button k-grid-invoice_html a_hover'
+                       style='border:none; background-color:white; padding: 0;'
+                       href=''
+
+                       title="Εκτύπωση">
+                        <span class='k-icon k-i-print' style=' font-size:40px'></span>
+                    </a>
+                </div>
+                <script>
+                    $("#invoice_html_print_button").off().on('click', function (e) {
+                        e.preventDefault();
+                        window.print();
+                    });
+                    function openPeppolVisualization() {
+                        var url = new URL(window.location.href);
+                        url.searchParams.set('peppol', 'true');
+                        window.location.href = url.toString();
+                        return false;
+                    }
+                </script>
+            </div>
+        </div>
+        
+
+        <div class="row">
+    <div class="col-md-2 logo-placeholder" style="margin: auto;">
+    
+    
+        <h4><span>ΣΤΑΘΟΠΟΥΛΟΣ ΑΝΤΩΝΗΣ </span>
+        </h4>
+    
+    </div>
+    <div class="col-md-8 text-center" style="margin: auto;">
+        <p>
+            <b><span>ΣΤΑΘΟΠΟΥΛΟΣ ΑΝΤΩΝΗΣ </span></b>
+            <span class="inline-block">
+                    <span class="gray-text">ΑΦΜ </span><b><span>110896150</span></b>
+                  </span>
+            
+            
+            
+            
+                
+                        <span class="inline-block">
+                      <span class="gray-text">Οδός </span> <b><span>ΠΛΑΤΑΝΟΣ 17</span></b>
+                      </span>
+                    <b><span>17</span></b>
+                    <b><span>ΚΙΣΣΑΜΟΣ</span></b>
+                
+                
+                      <span class="inline-block">
+                      <span class="gray-text">Τ.Κ. </span> <b><span>734 00    </span></b>
+                      </span>
+                
+            
+        </p>
+    </div>
+    <div class="col-md-2 text-center">
+        <img src="data:image/jpeg;charset=utf-8;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQAAAACFI5MzAAAChElEQVR4Xu2XPc6jMBCGB7mggwtY8jXc+UpwAUguAFei8zUs+QKhc2Ex+zrKLk60W3zDlrEiRPxIjJmfdwbify363PizvuRLyvqSFyFq88h6Ij5atW/UXCKGPTVJk9N9Mqvn/RLRjY+4nWzuk1o9jVeJ2pkaH2bP9/9AQkf8IHNQbq4S+ECtKcJUv0X+8M6PCeKjR//79xG5HxOs3Fk8ngan59eOmFBTnh0fhFOHycb1GiHLN5sHp+DUm9X1+/yc6H4zO4cm0ZhKfPpLxCwujFvoGVFSx8sNYhLmTd2cbjbc5zlVPpAQ3dnIW1wckpFvLlc5KiCEfBlaTURTa+5bPn0gIbynUigzx8MiPpVHJUQPrUK1TQQScK3URUBicSQKzj9zx1W5IyFhahUnGgjKRx2F89QSYvaUqVWLMw+rFkvzJVKqbXCwQ53LRObMHQnRIyPIfGe1INpc15yIeIP6gB4PFveq7MkJVAplh+tT+Wo7EhIGgh7E21PjB6rsiAhZ6GjufVxa9J9c2REQvm96clDQ3KQwuCp3JCTMCZIQiOBU2EHxXSE0e+psCc6cAiJfdTMBUSv+FQul5jBT3C+RPHoEp+Tj0YYxmbInJ3zYuPvQbJpavEGtfAKS0X9uhA3DG5eCvkQiqg1NG/FZNwPxOzVeQnj3aLaYxUp7nN6ySkBC84STg0phjKprTkCKtKwJp6Y5lZo7tUpCsNSjhR6U3IE/ztyREMximCZUObilN62SEMyJ/LBIZzQfBKqeNgQEbRZJXZR++tR4GaGiVSkemCnaqv8ISdEqsqVvP79RrhD4QHdU5HP38X1KExDEB++Nb6aS2pgFTh9IyF/Xl3xJWV8iI78A6ADFPwsP36sAAAAASUVORK5CYII=" alt="QRCODE" class="img-fluid" />
+    </div>
+</div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <table class="table table-bordered table-sm table-with-borders">
+                    <tbody>
+                    <thead>
+                    <tr>
+                        <th class="text-center">Είδος Παραστατικού</th>
+                        <th class="text-center">Αριθμός</th>
+                        <th class="text-center">Ημερομηνία Έκδοσης</th>
+                        
+                    </tr>
+                    </thead>
+                    <tr>
+                        
+                            <td class="text-center"><span>ΑΛΠ</span>
+                                <span></span>
+                                
+                            </td>
+                        
+                        <td class="text-center"><span>0</span>-<span>203074</span></td>
+                        <td class="text-center"><span>24/09/2026 18:02</span>
+                        </td>
+                        
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-md-6">
+                
+
+                
+            </div>
+
+            
+                <div class="col-md-6">
+                    <table class="table table-bordered table-sm">
+                        <tbody>
+                        <thead>
+                        <tr>
+                            <th colspan="2" style="background-color: rgba(0, 0, 0, .05)">Στοιχεία Παράδοσης</th>
+                        </tr>
+                        </thead>
+                        
+                            <tr>
+                                <td class=""><b>Όνομα παραλαμβάνοντος μέρους</b></td>
+                                <td class="name_column"><span>: </span>
+                                    <span>ΠΕΛΑΤΗΣ ΛΙΑΝΙΚΗΣ</span>
+                                </td>
+                            </tr>
+                        
+                        
+                        
+                        
+                        
+                        </tbody>
+                    </table>
+                    
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                            <tr>
+                                <th colspan="2" style="background-color: rgba(0, 0, 0, .05)">Δ/νση Παράδοσης</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            
+                            
+                            
+                            
+                            
+                            </tbody>
+                        </table>
+                    
+                </div>
+            
+
+            
+            
+            
+                <div class="col-md-12">
+    <table class="table table-bordered table-sm">
+        <colgroup>
+            <col class="col-6" />
+            <col class="col-21" />
+            <col class="col-6" />
+            
+            <col class="col-6" />
+            <col class="col-6" />
+            <col class="col-6" />
+            <col class="col-6" />
+            <col class="col-6" />
+            <col class="col-6" />
+            <col class="col-6" />
+            <col class="col-6" />
+            <col class="col-6" />
+        </colgroup>
+        <thead>
+        <tr>
+            <th colspan="12">Ανάλυση</th>
+        </tr>
+        <tr style="background-color: rgba(0, 0, 0, .03)">
+            <th>Κωδικός</th>
+            <th>Περιγραφή</th>
+            <th>Ποσότητα</th>
+            
+            <th>Μ.Μ. EN</th>
+            <th>Τιμή Μον.</th>
+            <th>Καθαρό (Προ εκπτ.)</th>
+            <th>Επιβαρ.</th>
+            <th>Εκπτ.</th>
+            <th>Καθαρό</th>
+            <th>ΦΠΑ</th>
+            <th>Τελικό</th>
+            <th>Φ.Π.Α. %</th>
+        </tr>
+        </thead>
+        <tbody>
+        
+            <tr class="avoid-page-break">
+                <td class="">
+                    <span>-</span>
+                </td>
+                <td class="">
+                    <span>TRAVOCORT CREAM (1+0,1)% TUBx30G</span>
+                    <div class="line-sub-text">
+                        
+                        
+                        
+                    </div>
+                </td>
+                <td class="">
+                    <span>1.00</span>
+                </td>
+                
+                <td class="">
+                    <span>EA</span>
+                </td>
+                <td class="">
+                    <span>8.29</span>
+                </td>
+                <td class="">
+                    <span>8.29</span>
+                </td>
+                <td class="">
+                    <span>0</span>
+                </td>
+                <td class="">
+                    <span>0</span>
+                </td>
+                <td class="">
+                    <span>8.29</span>
+                </td>
+                <td class="">
+                    <span>0.50</span>
+                </td>
+                <td class="">
+                    <span>8.79</span>
+                </td>
+                <td class="">
+                    <span>6.00</span>
+                </td>
+
+            </tr>
+        
+        </tbody>
+    </table>
+</div>
+            
+
+            <div class="col-md-6 avoid-page-break">
+                
+
+                
+                    <div class="avoid-page-break">
+    <table class="table table-bordered table-sm">
+        <thead>
+        <tr>
+            <th colspan="3" style="background-color: rgba(0, 0, 0, .05)">Ανάλυση Φ.Π.Α.</th>
+        </tr>
+        <tr style="background-color: rgba(0, 0, 0, .03)">
+            <th>Φ.Π.Α. %</th>
+            <th>Καθαρό Ποσό ανά % Φ.Π.Α.</th>
+            <th>Ποσό Φ.Π.Α.</th>
+        </tr>
+        </thead>
+        <tbody>
+        
+            <tr>
+                <td class="">
+                    <span>6.00</span>
+                </td>
+                <td class="">
+                    <span>8.29</span>
+                </td>
+                <td class="">
+                    <span>0.50</span>
+                </td>
+            </tr>
+        
+        </tbody>
+    </table>
+</div>
+                
+            </div>
+
+            
+                <div class="col-md-6 avoid-page-break">
+    <table class="table table-bordered table-sm">
+        <tbody>
+        <thead>
+        <tr>
+            <th colspan="2" style="background-color: rgba(0, 0, 0, .05)">Ανάλυση Συγκεντρωτικών Ποσών
+            </th>
+        </tr>
+        </thead>
+        <tr>
+            <td class="text-right">Νόμισμα</td>
+            <th class="text-right">
+                            <span>EUR</span>
+            </th>
+        </tr>
+        
+        
+        
+        
+            <tr>
+                <td class="text-right" style="width: 50%">Σύνολο Καθαρού Ποσού</td>
+                <th class="text-right" style="width: 50%">
+                            <span>8.29</span>
+                </th>
+            </tr>
+        
+        
+            <tr>
+                <td class="text-right" style="width: 50%">Σύνολο Φ.Π.Α</td>
+                <th class="text-right" style="width: 50%">
+                            <span>0.50</span>
+                </th>
+            </tr>
+        
+        
+            <tr>
+                <td class="text-right" style="width: 50%">ΠΛΗΡΩΤΕΟ ΠΟΣΟ ΠΕΛΑΤΗ</td>
+                <th class="text-right" style="width: 50%">
+                            <span>8.79</span>
+                </th>
+            </tr>
+        
+        </tbody>
+    </table>
+</div>
+            
+
+            
+                <div class="col-md-12 avoid-page-break">
+    <table class="table table-bordered table-sm">
+        <colgroup>
+            <col class="col-10"/>
+            <col class="col-10"/>
+            <col class="col-11"/>
+            <col class="col-12"/>
+            <col class="col-24"/>
+            <col class="col-10"/>
+            <!--                  <col class="col-10"/> -->
+            <col class="col-23"/>
+        </colgroup>
+        <thead>
+        <tr>
+            <th colspan="8" style="background-color: rgba(0, 0, 0, .05)">Στοιχεία Πληρωμής</th>
+        </tr>
+        <tr style="background-color: rgba(0, 0, 0, .03)">
+            <th>Τύπος</th>
+            <th>Ποσό Πληρωμής</th>
+            <th>Περιγραφή</th>
+            <th>Φιλοδώρημα</th>
+            <th>Μοναδική Ταυτότητα Πληρωμής</th>
+            <th>Τερματικό</th>
+            <!--              <th>ΜΑΡΚ</th>-->
+            <th>Υπογραφή Πληρωμής Παρόχoυ</th>
+        </tr>
+        </thead>
+        <tbody>
+        
+            <tr>
+                
+                    <td class="">
+                                            <span>Μετρητά</span>
+                    </td>
+                
+                
+                <td class="">
+                                    <span>8.79</span>
+                </td>
+                <td class="">
+                                    <span>-</span>
+                </td>
+                <td class="">
+                                    <span>-</span>
+                </td>
+                <td class="">
+                                        <span>-</span>
+                </td>
+                <td class="">
+                                        <span>-</span>
+                </td>
+                <!--                <td class="">-->
+                <!--                                    <span th:text="${-->
+                <!--                                    paymentMethod.getPaymentMethodMark()!=null-->
+                <!--                                    ? paymentMethod.getPaymentMethodMark() :'-'}">-->
+                <!--                                    </span>-->
+                <!--                </td>-->
+                <td class="">
+                                        <span>-</span>
+                </td>
+            </tr>
+        
+        </tbody>
+    </table>
+</div>
+            
+            
+            
+            
+
+            
+        </div>
+        <div class="row pdf-nowrap">
+
+    
+    <div class="col-md-2 text-center">
+    <img src="data:image/jpeg;charset=utf-8;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQAAAACFI5MzAAAC2klEQVR4Xu2XPY7jMAyFGahwF19AgK7hTleyL+CfC9hXUqdrCNAF7E6FEO5jBmNnFrtFJGCxRQTDSPQVSvjIR4r4b4t+3zjXh3yIrH9JHN0ckY1bCjcfJk/UVBDPR8ITD59bb+bGYKeC0OAipzh3YUpqbfStknj1sGZtDOBo6wnPTdyJxi63XEn4wDvRwNT6cOMf0XmbQB+vh+v5odzbRFa4N2phNXdqtV87pcSpw8VHF4hoSnFJ+YxBCUk0WrN36kGIa56S2WqIN4fTd6tbp/gZ1IkrSDKMX8rmYD02uadMtoI4tUDkhNzBl9w3aq8hXk9Sc7mVA3m2YThjUEBcGJyaiR8NQsuL/xK8lHgIYuSXesOMM9WV8QWEMwIAndskgm+eWtksJmbt8p2gT753NFIYakhSO+URFsWht3rA+7vmSgjn0cbFx7VBnagliUOUE/iK+DHKTiMMcOhTnyKSUR+bQ/kGspJBdeRpTo5ngoOaleiKaAFhdDBNHWKJ5oPPqL8KAu90+PfPQzoUsb5/61NCnJ6cHi3cHZkIofKpdglJmSjunUh9MDxVKq+cIAZMPZSB01uaXNxks5R4seTVwkrhCkZCUkUQxbj5uFuSJGKzX7F+n4hXoXzF/EbSvUhUQXAO5ogUWoTWamTl5XwFBB4vDQ3bNMCeJTFrCG8JT1wJGR1Xq2TEKCae+iZjHFs8UjuyDCkVxIXWwz4RUbUSQ6WX/vM+EZ3zM6jPyaJBC6ogMCf06iYM0jEieuNVcyWE5w6HwEpRu2hE8WFriGKH4ZoPr1AumwtnJpYQJDWmfsZMoR4Nw54vryogWDIRm4XNljR8tIpghk24mmTM7OzVJmNsBXneSx4dihhVgptEPqeAIoINBED3RJI+dPloIfHIRFxKoDasNLyeU0TQXeEuKD66v2RiEeHDyXuV4U5PzMt5TgGBPg5dEVOAQc31VsqunPx5fciHyPqfyS/SIUlP891saAAAAABJRU5ErkJggg==" alt="QRCODE" class="img-fluid" />
+    </div>
+    <div class="col-md-10 text-center" style="margin: auto;">
+        <p>
+            <span class="gray-text">Σήμανση </span> <b><span>616B5D708D1FD0B089D37D04ABCCD8279579029F</span></b>
+            <span class="gray-text">UNIQUE ID </span> <b><span>7F8F481E7EED2FF7002CEF7014939A1AE495A4FA</span></b>
+            <span class="inline-block"><span class="gray-text">ΜΑΡΚ </span> <b><span>400015401089747</span></b></span>
+            <span class="gray-text">Υ.ΠΑ.Η.Ε.Σ </span> <b><span>ILYDA S.A. https://vs.gr</span></b>
+            <span class="gray-text">Αρ. Άδειας Καταλληλότητας </span> <b><span>2021_09_108ILYDA_001_ Meg myData_V1_08092021</span></b>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+                <span class="gray-text">Ημ/νία Διαβίβασης myData</span>
+                <b>
+                <span>24/09/2026 18:02:12</span>
+                    
+                </b>
+            
+        </p>
+    </div>
+</div>
+    </div>
+
+</div>
+<div class="footer row no-print">
+    <div class="col-md-10 footer-details-div">
+        <span class="footer-details">Copyright © 2026 | v20261027.0.0 | ΙΛΥΔΑ Α.Ε. | Συστήματα Πληροφορικής | Πιστοποιημένος πάροχος ηλεκτρονικής τιμολόγησης</span>
+    </div>
+    <div class="col-md-2 powered-by-ilyda">
+        <span style="vertical-align: middle;">
+            <a href="https://www.ilyda.com" target="_blank">
+                <img src="/resources/assets/img/ILYDA_logo.png" class="img-responsive" style="width:100px;"
+                     alt="Ilyda" />
+            </a>
+        </span>
+    </div>
+</div>
+
+</body>
+</html>
