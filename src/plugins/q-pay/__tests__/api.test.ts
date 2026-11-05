@@ -1,91 +1,250 @@
-const mockLogin = jest.fn()
-const mockFetchCurrentUser = jest.fn()
-const mockFetchCards = jest.fn()
-const mockFetchCardBalance = jest.fn()
-const mockFetchWalletTransactions = jest.fn()
-const mockFetchCardTransactions = jest.fn()
+import { UserInteractionError, ZPAPIError } from '../../../errors'
+import type { Authorization, Session } from '../models'
 
-jest.mock('../fetchApi', () => {
-  const actual = jest.requireActual('../fetchApi')
-  return {
-    ...actual,
-    login: mockLogin,
-    fetchCurrentUser: mockFetchCurrentUser,
-    fetchCards: mockFetchCards,
-    fetchCardBalance: mockFetchCardBalance,
-    fetchWalletTransactions: mockFetchWalletTransactions,
-    fetchCardTransactions: mockFetchCardTransactions
+const mockRefresh = jest.fn()
+const mockTenant = jest.fn()
+const mockSendEmail = jest.fn()
+const mockVerifyEmail = jest.fn()
+const mockVerifyPin = jest.fn()
+const mockSendMfa = jest.fn()
+const mockVerifyMfa = jest.fn()
+jest.mock('../fetchApi', () => ({
+  ...jest.requireActual('../fetchApi'),
+  refreshAuthorization: mockRefresh,
+  resolveTenant: mockTenant,
+  sendEmailCode: mockSendEmail,
+  verifyEmailCode: mockVerifyEmail,
+  verifyPin: mockVerifyPin,
+  sendMfaCode: mockSendMfa,
+  verifyMfaCode: mockVerifyMfa
+}))
+
+// These are internal authorization/page objects, after the provider validation
+// boundary. They test recovery, interaction and persistence, not bank parsing.
+describe('[model] Q-Pay authentication lifecycle', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { authenticate, createClient, collectPages } = require('../api') as typeof import('../api')
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { SessionExpiredError, QPayApiError } = require('../fetchApi') as typeof import('../fetchApi')
+  const now = Date.parse('2026-01-01T00:00:00Z')
+  const tokens: Authorization = {
+    accessToken: 'model-access',
+    refreshToken: 'model-refresh',
+    expiresAt: now + 60000,
+    stage: 'active',
+    methods: [],
+    pinReset: false
   }
-})
-
-describe('Q-Pay scrape orchestration', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { scrapeQPay } = require('../api') as typeof import('../api')
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { SessionExpiredError } = require('../fetchApi') as typeof import('../fetchApi')
-  const fromDate = new Date('2026-01-01T00:00:00Z')
-  const toDate = new Date('2026-12-31T23:59:59Z')
+  const stored: Session = {
+    version: 2,
+    email: 'saved@example.com',
+    tenantId: 'model-tenant',
+    device: { id: 'model-device', fingerprint: 'model-fingerprint' },
+    ...tokens
+  }
+  const saveSession = jest.fn()
+  const saveDevice = jest.fn()
+  const readLine = jest.fn()
+  const options = { isInBackground: false, saveSession, saveDevice }
+  const preferences = { email: 'current@example.com' }
+  let clock: jest.SpyInstance
+  const originalZenMoney = global.ZenMoney
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockFetchCurrentUser.mockResolvedValue({
-      wallets: [{ address: '0x-example', network: 'evm:1', balances: [{ asset: 'USDT', value: '10' }] }]
+    readLine.mockReset()
+    clock = jest.spyOn(Date, 'now').mockReturnValue(now)
+    global.ZenMoney = { readLine } as unknown as typeof ZenMoney
+    mockTenant.mockResolvedValue('model-tenant')
+    mockSendEmail.mockResolvedValue(undefined)
+    mockVerifyEmail.mockResolvedValue(tokens)
+    mockVerifyPin.mockResolvedValue(tokens)
+    mockVerifyMfa.mockResolvedValue(tokens)
+    mockRefresh.mockResolvedValue(tokens)
+  })
+  afterEach(() => { clock.mockRestore(); global.ZenMoney = originalZenMoney })
+
+  it('preserves a working session when preferences change and never sends a login email', async () => {
+    await expect(authenticate(preferences, stored, undefined, options)).resolves.toBe(stored)
+    expect(mockRefresh).not.toHaveBeenCalled()
+    expect(mockSendEmail).not.toHaveBeenCalled()
+    expect(saveSession).not.toHaveBeenCalled()
+  })
+
+  it('propagates a transient refresh failure without replacing the stored authorization', async () => {
+    const failure = new Error('model network failure')
+    mockRefresh.mockRejectedValue(failure)
+    await expect(authenticate(preferences, { ...stored, expiresAt: now - 1 }, undefined, options)).rejects.toBe(failure)
+    expect(mockSendEmail).not.toHaveBeenCalled()
+    expect(saveSession).not.toHaveBeenCalled()
+  })
+
+  it('reuses the rotated session on a separate subsequent run without asking for any code', async () => {
+    const rotated: Authorization = { ...tokens, accessToken: 'model-new-access', refreshToken: 'model-new-refresh' }
+    mockRefresh.mockResolvedValue(rotated)
+    let persisted: Session | undefined
+    const checkpoint = { ...options, saveSession: (session: Session) => { persisted = session } }
+    const first = await authenticate(preferences, { ...stored, expiresAt: now - 1 }, undefined, checkpoint)
+    expect(persisted).toEqual({ ...stored, ...rotated })
+    const second = await authenticate(preferences, persisted, undefined, checkpoint)
+    expect(second).toBe(first)
+    expect(mockRefresh).toHaveBeenCalledTimes(1)
+    expect(mockSendEmail).not.toHaveBeenCalled()
+    expect(readLine).not.toHaveBeenCalled()
+  })
+
+  it('resumes a saved PIN stage without sending another email challenge', async () => {
+    readLine.mockResolvedValueOnce('1234')
+    const pending: Session = { ...stored, stage: 'pending_pin' }
+    await expect(authenticate(preferences, pending, undefined, options)).resolves.toEqual({ ...pending, ...tokens })
+    expect(mockSendEmail).not.toHaveBeenCalled()
+    expect(mockVerifyPin).toHaveBeenCalledWith(pending, '1234')
+    expect(saveSession).toHaveBeenCalledWith({ ...pending, ...tokens })
+  })
+
+  it('completes email authentication without PIN when the server grants an active session', async () => {
+    readLine.mockResolvedValueOnce('123456')
+    const session = await authenticate(preferences, undefined, undefined, options)
+    expect(session.stage).toBe('active')
+    expect(readLine).toHaveBeenCalledTimes(1)
+    expect(mockVerifyEmail).toHaveBeenCalledTimes(1)
+    expect(mockVerifyPin).not.toHaveBeenCalled()
+    expect(mockVerifyMfa).not.toHaveBeenCalled()
+    expect(saveSession).toHaveBeenCalledWith(session)
+  })
+
+  it('completes MFA without PIN when MFA grants an active session', async () => {
+    readLine.mockResolvedValueOnce('123456')
+    const pending: Session = { ...stored, stage: 'pending_mfa', methods: ['totp'] }
+    await expect(authenticate(preferences, pending, undefined, options)).resolves.toEqual({ ...pending, ...tokens })
+    expect(mockVerifyMfa).toHaveBeenCalledWith(pending, 'totp', '123456')
+    expect(mockVerifyPin).not.toHaveBeenCalled()
+    expect(mockSendEmail).not.toHaveBeenCalled()
+    expect(readLine).toHaveBeenCalledTimes(1)
+  })
+
+  it('allows normal PIN verification when the server also offers PIN recovery', async () => {
+    // Current official UI uses next_step.pin_reset to offer a Forgot PIN action;
+    // it still permits normal PIN verification on the same pending session.
+    readLine.mockResolvedValueOnce('1234')
+    const pending: Session = { ...stored, stage: 'pending_pin', pinReset: true }
+    await expect(authenticate(preferences, pending, undefined, options)).resolves.toEqual({ ...pending, ...tokens })
+    expect(mockVerifyPin).toHaveBeenCalledWith(pending, '1234')
+    expect(mockSendEmail).not.toHaveBeenCalled()
+    expect(saveSession).toHaveBeenCalledWith({ ...pending, ...tokens })
+  })
+
+  it('stops a background cold login before sending an external challenge', async () => {
+    await expect(authenticate(preferences, undefined, undefined, { ...options, isInBackground: true }))
+      .rejects.toBeInstanceOf(UserInteractionError)
+    expect(mockTenant).not.toHaveBeenCalled()
+    expect(mockSendEmail).not.toHaveBeenCalled()
+    expect(readLine).not.toHaveBeenCalled()
+  })
+
+  it('uses current preferences for cold recovery after a confirmed refresh rejection', async () => {
+    mockRefresh.mockRejectedValue(new SessionExpiredError())
+    readLine.mockResolvedValue('123456')
+    const session = await authenticate(preferences, { ...stored, expiresAt: now - 1 }, undefined, options)
+    expect(mockSendEmail).toHaveBeenCalledWith('model-tenant', 'current@example.com')
+    expect(mockVerifyEmail).toHaveBeenCalledWith('model-tenant', 'current@example.com', '123456', stored.device)
+    expect(saveSession).toHaveBeenCalledWith(session)
+  })
+
+  it('rejects absent required input before attempting code verification', async () => {
+    readLine.mockResolvedValue(null)
+    const error = await authenticate(preferences, undefined, undefined, options).catch((error: unknown) => error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(mockVerifyEmail).not.toHaveBeenCalled()
+    expect(saveSession).not.toHaveBeenCalled()
+  })
+
+  it('persists each confirmed stage before asking the server to complete the next stage', async () => {
+    const pending: Authorization = { ...tokens, stage: 'pending_pin' }
+    mockVerifyEmail.mockResolvedValue(pending)
+    readLine.mockResolvedValueOnce('123456').mockResolvedValueOnce('1234')
+    mockVerifyPin.mockImplementation(async () => {
+      expect(saveSession).toHaveBeenLastCalledWith(expect.objectContaining({ stage: 'pending_pin' }))
+      return tokens
     })
-    mockFetchCards.mockResolvedValue([
-      { id: 'open-card', status: 'ACTIVE', is_revoked: false },
-      { id: 'closed-card', status: 'CLOSED', is_revoked: false },
-      { id: 'revoked-card', status: 'ACTIVE', is_revoked: true }
-    ])
-    mockFetchCardBalance.mockResolvedValue({ available_balance: '20', card_currency: 'USD' })
-    mockFetchWalletTransactions.mockResolvedValue([])
-    mockFetchCardTransactions.mockResolvedValue([])
+    const result = await authenticate(preferences, undefined, undefined, options)
+    expect(result.stage).toBe('active')
+    expect(saveSession).toHaveBeenCalledTimes(2)
+    expect(saveSession).toHaveBeenLastCalledWith(result)
   })
 
-  it('reuses a valid stored session and fetches balances and history only for open cards', async () => {
-    const stored = { email: 'user@example.com', accessToken: 'stored-token' }
-    const result = await scrapeQPay({ email: 'USER@example.com', password: 'password' }, stored, fromDate, toDate)
-
-    expect(mockLogin).not.toHaveBeenCalled()
-    expect(mockFetchCardBalance).toHaveBeenCalledTimes(1)
-    expect(mockFetchCardBalance).toHaveBeenCalledWith(stored, 'open-card')
-    expect(mockFetchWalletTransactions).toHaveBeenCalledWith(stored, fromDate, toDate)
-    expect(mockFetchCardTransactions).toHaveBeenCalledTimes(1)
-    expect(mockFetchCardTransactions).toHaveBeenCalledWith(stored, 'open-card', fromDate, toDate)
-    expect(result.accounts.map(account => account.id)).toEqual([
-      'q-pay:wallet:evm:1:0x-example:USDT',
-      'q-pay:card:open-card'
-    ])
-    expect(result.transactions).toEqual([])
+  it('blocks pending MFA delivery in background before sending SMS or email', async () => {
+    await expect(authenticate(preferences, { ...stored, stage: 'pending_mfa', methods: ['sms'] }, undefined,
+      { ...options, isInBackground: true })).rejects.toBeInstanceOf(UserInteractionError)
+    expect(mockSendMfa).not.toHaveBeenCalled()
+    expect(readLine).not.toHaveBeenCalled()
   })
 
-  it('logs in once more when the stored bearer session expired', async () => {
-    const stored = { email: 'user@example.com', accessToken: 'expired-token' }
-    const fresh = { email: 'user@example.com', accessToken: 'fresh-token' }
-    mockFetchCurrentUser
+  it('persists rotated authorization before retrying a data request and preserves a later failure', async () => {
+    const rotated: Authorization = { ...tokens, accessToken: 'model-rotated-access', refreshToken: 'model-rotated-refresh' }
+    mockRefresh.mockResolvedValue(rotated)
+    const client = await createClient(preferences, stored, undefined, options)
+    const failure = new Error('model history failure')
+    const action = jest.fn()
       .mockRejectedValueOnce(new SessionExpiredError())
-      .mockResolvedValueOnce({ wallets: [] })
-    mockLogin.mockResolvedValue(fresh)
-
-    const result = await scrapeQPay({ email: 'user@example.com', password: 'password' }, stored, fromDate, toDate)
-
-    expect(mockLogin).toHaveBeenCalledTimes(1)
-    expect(mockFetchCurrentUser).toHaveBeenLastCalledWith(fresh)
-    expect(result.session).toBe(fresh)
+      .mockImplementationOnce(async () => {
+        expect(saveSession).toHaveBeenLastCalledWith({ ...stored, ...rotated })
+        throw failure
+      })
+    await expect(client.run(action)).rejects.toBe(failure)
+    expect(mockRefresh).toHaveBeenCalledTimes(1)
+    expect(mockSendEmail).not.toHaveBeenCalled()
   })
 
-  it('does not reuse a session belonging to another login', async () => {
-    const fresh = { email: 'new@example.com', accessToken: 'fresh-token' }
-    mockLogin.mockResolvedValue(fresh)
-    mockFetchCards.mockResolvedValue([])
+  it('does not interpret an unrelated HTTP rejection as an expired session', async () => {
+    const client = await createClient(preferences, stored, undefined, options)
+    const failure = new QPayApiError(403, 'ACCOUNT_RESTRICTED')
+    await expect(client.run(async () => { throw failure })).rejects.toBe(failure)
+    expect(mockRefresh).not.toHaveBeenCalled()
+    expect(mockSendEmail).not.toHaveBeenCalled()
+  })
 
-    await scrapeQPay(
-      { email: 'new@example.com', password: 'password' },
-      { email: 'old@example.com', accessToken: 'old-token' },
-      fromDate,
-      toDate
-    )
+  it('follows a cursor after a short page and deduplicates overlapping records', async () => {
+    const load = jest.fn()
+      .mockResolvedValueOnce({ items: [{ id: 'model-a' }], nextCursor: 'model-next' })
+      .mockResolvedValueOnce({ items: [{ id: 'model-a' }, { id: 'model-b' }], nextCursor: null })
+    await expect(collectPages(load)).resolves.toEqual([{ id: 'model-a' }, { id: 'model-b' }])
+    expect(load).toHaveBeenLastCalledWith('model-next')
+  })
 
-    expect(mockLogin).toHaveBeenCalledTimes(1)
-    expect(mockFetchCurrentUser).toHaveBeenCalledWith(fresh)
+  it('rejects repeated cursors rather than accepting incomplete history', async () => {
+    const load = jest.fn().mockResolvedValue({ items: [], nextCursor: 'model-repeat' })
+    const error = await collectPages(load).catch((error: unknown) => error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(load).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('Q-Pay card history interval', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { fetchHistory } = require('../api') as typeof import('../api')
+
+  it('includes both interval boundaries and keeps a null upper bound unbounded', async () => {
+    // Reduced from the selected complete card rows in converters.test.ts:
+    // current app 1.5.770, capture 2026-11-02. Only IDs/dates affect filtering.
+    const rows = [
+      { id: '00000000-0000-4000-8000-000000000010', authorized_at: '2025-12-30T07:40:26.721Z' },
+      { id: '00000000-0000-4000-8000-000000000013', authorized_at: '2025-12-28T04:12:28.633Z' },
+      { id: '00000000-0000-4000-8000-000000000020', authorized_at: '2025-12-20T07:29:44.400Z' }
+    ]
+    const client = { run: jest.fn().mockResolvedValue({ items: rows, nextCursor: null }) }
+    const params = { kind: 'card' as const, cardId: '00000000-0000-4000-8000-000000000003' }
+    const from = new Date('2025-12-28T04:12:28.633Z')
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(from.getTime())
+    try {
+      await expect(fetchHistory(client, params, from, from)).resolves.toEqual({
+        cards: [{ cardId: params.cardId, transactions: [rows[1]] }]
+      })
+      await expect(fetchHistory(client, params, from, null)).resolves.toEqual({
+        cards: [{ cardId: params.cardId, transactions: [rows[0], rows[1]] }]
+      })
+    } finally { clock.mockRestore() }
   })
 })

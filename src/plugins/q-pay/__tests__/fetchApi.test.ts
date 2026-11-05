@@ -1,130 +1,168 @@
-import { InvalidLoginOrPasswordError, TemporaryError } from '../../../errors'
+import fetchMock from 'fetch-mock'
+import { ZPAPIError } from '../../../errors'
+import { fetchCards, fetchCardTransactionsPage, fetchWallet, refreshAuthorization, SessionExpiredError, verifyEmailCode } from '../fetchApi'
+import { Session } from '../models'
 
-const mockFetchJson = jest.fn()
+const session: Session = {
+  version: 2,
+  email: 'model@example.invalid',
+  tenantId: 'model-tenant',
+  device: { id: 'model-device', fingerprint: 'secret-fingerprint' },
+  accessToken: 'secret-access',
+  refreshToken: 'secret-refresh',
+  expiresAt: Date.parse('2026-12-01T00:00:00Z'),
+  stage: 'active',
+  methods: [],
+  pinReset: false
+}
 
-jest.mock('../../../common/network', () => ({ fetchJson: mockFetchJson }))
+describe('Q-Pay current HTTP transport', () => {
+  let debug: jest.SpyInstance
+  beforeEach(() => { debug = jest.spyOn(console, 'debug').mockImplementation(() => {}) })
+  afterEach(() => { fetchMock.restore(); debug.mockRestore() })
 
-const response = (status: number, body: unknown): unknown => ({
-  status,
-  url: 'https://pay.quantera.pro/api/test',
-  headers: {},
-  body
-})
-
-describe('Q-Pay API', () => {
-  // Require after jest.mock: esbuild does not hoist the mock ahead of static imports.
-  /* eslint-disable @typescript-eslint/no-var-requires */
-  const {
-    fetchCards,
-    fetchCardTransactions,
-    fetchCurrentUser,
-    fetchWalletTransactions,
-    login,
-    SessionExpiredError
-  } = require('../fetchApi') as typeof import('../fetchApi')
-  /* eslint-enable @typescript-eslint/no-var-requires */
-
-  beforeEach(() => {
-    mockFetchJson.mockReset()
-  })
-
-  it('uses the observed multipart login contract and redacts secrets', async () => {
-    mockFetchJson.mockResolvedValue(response(200, { access_token: 'secret', intercom_jwt_token: 'other-secret' }))
-
-    await expect(login({ email: ' User@Example.com ', password: 'Password!1' })).resolves.toEqual({
-      email: 'User@Example.com',
-      accessToken: 'secret'
+  it('recognizes the observed public UNAUTHORIZED response and keeps diagnostics visible', async () => {
+    // Public unauthenticated GET /api/v1/cards, 2026-11-02, app 1.5.770.
+    fetchMock.get('https://pay.quantera.pro/api/v1/cards', {
+      status: 401, body: { error: { code: 'UNAUTHORIZED', message: 'MISSING_TOKEN' } }
     })
-
-    const [url, options] = mockFetchJson.mock.calls[0]
-    expect(url).toBe('https://pay.quantera.pro/api/v1/web/auth/login')
-    expect(options.method).toBe('POST')
-    expect(options.headers['Content-Type']).toMatch(/^multipart\/form-data; boundary=/)
-    expect(options.body).toContain('name="username"\r\n\r\nUser@Example.com')
-    expect(options.body).toContain('name="password"\r\n\r\nPassword!1')
-    expect(options.body).toContain('name="utm_last"\r\n\r\n{}')
-    expect(options.sanitizeRequestLog).toEqual({ headers: { Authorization: true }, body: true })
-    expect(options.sanitizeResponseLog).toEqual({ body: true })
+    await expect(fetchCards(session)).rejects.toBeInstanceOf(SessionExpiredError)
+    const logs = JSON.stringify(debug.mock.calls)
+    expect(debug.mock.calls.map(call => call[0])).toEqual(['request', 'response'])
+    expect(logs).toContain('UNAUTHORIZED')
+    expect(logs).toContain('MISSING_TOKEN')
+    expect(logs).not.toContain(session.accessToken)
+    expect(logs).not.toContain(session.device.fingerprint)
   })
 
-  it('rejects values that could break the observed form contract before making a request', async () => {
-    await expect(login({ email: 'user@example.com\r\nX-Evil: 1', password: 'Password!1' }))
-      .rejects.toBeInstanceOf(InvalidLoginOrPasswordError)
-    expect(mockFetchJson).not.toHaveBeenCalled()
+  it('unwraps the captured card-list envelope without requiring a card number', async () => {
+    // Reduced from user-selected Q-Pay tab GET /cards 200, 2026-11-02,
+    // app 1.5.770. Only fields needed for envelope/card-number regression retained.
+    const card = {
+      id: '00000000-0000-4000-8000-000000000003',
+      status: 'active',
+      masked_pan: null,
+      first4: null,
+      last4: null,
+      expiry: null
+    }
+    fetchMock.get('https://pay.quantera.pro/api/v1/cards', { data: { items: [card] } })
+    await expect(fetchCards(session)).resolves.toEqual([card])
   })
 
-  it('maps rejected credentials to a settings error', async () => {
-    mockFetchJson.mockResolvedValue(response(422, { detail: 'rejected' }))
-    await expect(login({ email: 'user@example.com', password: 'wrong-pass' }))
-      .rejects.toBeInstanceOf(InvalidLoginOrPasswordError)
+  it('accepts the observed rotating refresh response and masks both replacement tokens', async () => {
+    // Authorized hot refresh, current app 1.5.770, 2026-11-02: HTTP 200,
+    // followed by wallet HTTP 200 without OTP. Secrets replaced, lifetime retained.
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(1767225600000)
+    try {
+      fetchMock.post('https://pay.quantera.pro/api/v1/auth/refresh', {
+        user_id: '00000000-0000-4000-8000-000000000001',
+        access_token: 'replacement-access-secret',
+        refresh_token: 'replacement-refresh-secret',
+        expires_in: 900,
+        auth_stage: 'active'
+      })
+      await expect(refreshAuthorization(session)).resolves.toEqual({
+        accessToken: 'replacement-access-secret',
+        refreshToken: 'replacement-refresh-secret',
+        expiresAt: 1767226500000,
+        stage: 'active',
+        methods: [],
+        pinReset: false
+      })
+      expect(JSON.parse(String(fetchMock.lastOptions()?.body))).toEqual({
+        refresh_token: session.refreshToken, device_fingerprint: session.device.fingerprint
+      })
+      const logs = JSON.stringify(debug.mock.calls)
+      for (const secret of [session.refreshToken, session.device.fingerprint, 'replacement-access-secret', 'replacement-refresh-secret']) {
+        expect(logs).not.toContain(secret)
+      }
+      expect(logs).toContain('900')
+      expect(logs).toContain('active')
+    } finally { clock.mockRestore() }
   })
 
-  it('distinguishes an expired data session from invalid credentials', async () => {
-    mockFetchJson.mockResolvedValue(response(401, { detail: 'expired' }))
-    await expect(fetchCards({ email: 'user@example.com', accessToken: 'old' }))
-      .rejects.toBeInstanceOf(SessionExpiredError)
+  it('preserves the observed PIN continuation returned after email-code verification', async () => {
+    // User-provided Network Preview screenshot, 2026-11-02, POST
+    // /auth/email-otp/verify. Authentication secrets and user ID replaced.
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(1767225600000)
+    try {
+      fetchMock.post('https://pay.quantera.pro/api/v1/auth/email-otp/verify', {
+        user_id: '00000000-0000-4000-8000-000000000001',
+        access_token: 'pending-access-secret',
+        auth_stage: 'pending_pin',
+        expires_in: 600,
+        is_new_user: false,
+        next_step: { type: 'pin' },
+        refresh_token: 'pending-refresh-secret'
+      })
+      await expect(verifyEmailCode('model-tenant', session.email, '123456', session.device)).resolves.toEqual({
+        accessToken: 'pending-access-secret',
+        refreshToken: 'pending-refresh-secret',
+        expiresAt: 1767226200000,
+        stage: 'pending_pin',
+        methods: [],
+        pinReset: false
+      })
+    } finally { clock.mockRestore() }
   })
 
-  it('treats outages as temporary and never exposes the response body in logs', async () => {
-    mockFetchJson.mockResolvedValue(response(503, { access_token: 'must-not-be-logged' }))
-    await expect(fetchCurrentUser({ email: 'user@example.com', accessToken: 'token' }))
-      .rejects.toBeInstanceOf(TemporaryError)
-    expect(mockFetchJson.mock.calls[0][1].sanitizeResponseLog).toEqual({ body: true })
-    expect(mockFetchJson.mock.calls[0][1].sanitizeRequestLog).toEqual({
-      headers: { Authorization: true },
-      body: true
+  it('[model] transmits JSON email verification and masks the code in emitted request logs', async () => {
+    // A transport failure exercises serialization/redaction without fabricating
+    // a provider authorization response. Request fields match auth-B0BQPmou.js.
+    const failure = new Error('model transport failure')
+    fetchMock.post('https://pay.quantera.pro/api/v1/auth/email-otp/verify', { throws: failure })
+    await expect(verifyEmailCode('model-tenant', 'secret-email@example.invalid', '765432', session.device)).rejects.toBe(failure)
+    expect(JSON.parse(String(fetchMock.lastOptions()?.body))).toEqual({
+      tenant_id: 'model-tenant',
+      email: 'secret-email@example.invalid',
+      code: '765432',
+      device_id: 'model-device',
+      device_fingerprint: 'secret-fingerprint'
     })
+    const logs = JSON.stringify(debug.mock.calls)
+    expect(logs).not.toContain('secret-email@example.invalid')
+    expect(logs).not.toContain('765432')
+    expect(logs).not.toContain('secret-fingerprint')
+    expect(logs).toContain('/auth/email-otp/verify')
   })
 
-  it('paginates wallet history and keeps only the requested date interval', async () => {
-    const firstPage = Array.from({ length: 100 }, (_, index) => ({
-      id: `wallet-${index}`,
-      created_at: index === 0 ? 1735689599 : 1767225600
-    }))
-    mockFetchJson
-      .mockResolvedValueOnce(response(200, { total: 101, items: firstPage }))
-      .mockResolvedValueOnce(response(200, {
-        total: 101,
-        items: [{ id: 'wallet-100', created_at: 1798761600 }]
-      }))
-
-    const session = { email: 'user@example.com', accessToken: 'token' }
-    const transactions = await fetchWalletTransactions(
-      session,
-      new Date('2026-01-01T00:00:00Z'),
-      new Date('2026-12-31T23:59:59Z')
-    )
-
-    expect(transactions).toHaveLength(99)
-    expect(mockFetchJson.mock.calls.map(call => call[0])).toEqual([
-      'https://pay.quantera.pro/api/v1/miniapp/transactions?limit=100&offset=0',
-      'https://pay.quantera.pro/api/v1/miniapp/transactions?limit=100&offset=100'
-    ])
+  it('[model] masks response secrets and personal identity while retaining source diagnostics', async () => {
+    // Synthetic secret sentinels surround a captured reduced card envelope;
+    // this verifies the actual HTTP log path, not provider interpretation.
+    fetchMock.get('https://pay.quantera.pro/api/v1/cards', {
+      headers: { 'Set-Cookie': 'secret-cookie', Authorization: 'secret-response-token' },
+      body: {
+        access_token: 'secret-response-access',
+        refresh_token: 'secret-response-refresh',
+        delivery_target: 'secret-email@example.invalid',
+        data: { items: [{ id: 'diagnostic-card', owner_display_name: 'Private Model Person', merchant_name: 'Visible Merchant' }] }
+      }
+    })
+    await fetchCards(session)
+    const logs = JSON.stringify(debug.mock.calls)
+    for (const secret of ['secret-cookie', 'secret-response-token', 'secret-response-access', 'secret-response-refresh',
+      'secret-email@example.invalid', 'Private Model Person', session.accessToken, session.device.fingerprint]) {
+      expect(logs).not.toContain(secret)
+    }
+    expect(logs).toContain('diagnostic-card')
+    expect(logs).toContain('Visible Merchant')
   })
 
-  it('uses the observed card transaction endpoint and encodes the card id', async () => {
-    mockFetchJson.mockResolvedValue(response(200, {
-      total: 1,
-      items: [{ id: 'card-transaction', created_at: 1767225600 }]
-    }))
-
-    await expect(fetchCardTransactions(
-      { email: 'user@example.com', accessToken: 'token' },
-      'card/id',
-      new Date('2026-01-01T00:00:00Z'),
-      new Date('2026-12-31T23:59:59Z')
-    )).resolves.toHaveLength(1)
-    expect(mockFetchJson.mock.calls[0][0]).toBe(
-      'https://pay.quantera.pro/api/v1/miniapp/cards/card%2Fid/transactions?limit=100&offset=0'
-    )
+  it('[model] propagates transport failures unchanged as reportable errors', async () => {
+    const failure = new Error('model network failure')
+    fetchMock.get('https://pay.quantera.pro/api/v1/wallet', { throws: failure })
+    const error = await fetchWallet(session).catch((error: unknown) => error)
+    expect(error).toBe(failure)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
   })
 
-  it('rejects a malformed transaction page instead of silently returning no history', async () => {
-    mockFetchJson.mockResolvedValue(response(200, { total: 1, results: [] }))
-    await expect(fetchWalletTransactions(
-      { email: 'user@example.com', accessToken: 'token' },
-      new Date('2026-01-01T00:00:00Z'),
-      new Date('2026-12-31T23:59:59Z')
-    )).rejects.toBeInstanceOf(TemporaryError)
+  it('[model] requests card transactions with the supplied continuation cursor', async () => {
+    // Request shape follows the current official client's card transaction API.
+    // A transport failure checks serialization without inventing provider records.
+    const failure = new Error('model history transport failure')
+    fetchMock.get('https://pay.quantera.pro/api/v1/cards/00000000-0000-4000-8000-000000000003/transactions?limit=50&cursor=model-next', { throws: failure })
+    await expect(fetchCardTransactionsPage(session, '00000000-0000-4000-8000-000000000003', 'model-next')).rejects.toBe(failure)
+    expect(fetchMock.done()).toBe(true)
   })
 })

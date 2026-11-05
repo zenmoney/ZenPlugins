@@ -1,12 +1,15 @@
-import { Account, AccountOrCard, AccountType, Merchant, Transaction } from '../../types/zenmoney'
-import {
-  QPayCard,
-  QPayCardTransaction,
-  QPayCardTransactions,
-  QPayCardWithBalance,
-  QPayWallet,
-  QPayWalletTransaction
-} from './models'
+import get, { getOptArray, getOptString } from '../../types/get'
+import { Account, AccountOrCard, AccountType, Merchant, Movement, Transaction } from '../../types/zenmoney'
+import { QPayAccountPlan } from './models'
+
+export interface QPayAccountGraph {
+  wallet: unknown
+  cards: Array<{ card: unknown, balance: unknown }>
+}
+
+export interface QPayHistory {
+  cards: Array<{ cardId: string, transactions: unknown[] }>
+}
 
 const ASSET_INSTRUMENTS: Record<string, string> = {
   USDT: 'USDT',
@@ -16,502 +19,253 @@ const ASSET_INSTRUMENTS: Record<string, string> = {
   USDQ: 'USD',
   EURR: 'EUR',
   EURQ: 'EUR',
-  // One XAUT represents one troy ounce; the shared adapter handles native grams.
   XAUT: 'XAU'
 }
 
-const NETWORK_TITLES: Record<string, string> = {
-  'evm:1': 'Ethereum',
-  'evm:56': 'BNB Smart Chain',
-  'tron:mainnet': 'TRON'
-}
-
-function finiteNumberOrNull (value: string | number | null | undefined): number | null {
-  if (value == null || value === '') return null
-  const parsed = typeof value === 'number' ? value : Number(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
-
-/** Preserve native token instruments, with underlying units for unsupported tokens. */
 export function normalizeInstrument (asset: string): string {
   const normalized = asset.trim().toUpperCase()
   return ASSET_INSTRUMENTS[normalized] ?? normalized
 }
 
-export function walletAccountId (network: string, address: string, asset: string): string {
-  return `q-pay:wallet:${network}:${address}:${asset}`
+function requiredString (value: unknown, field: string): string {
+  const result = getOptString(value, field)
+  if (result == null || result.trim() === '') throw new Error(`Q-Pay requires a nonempty ${field}`)
+  return result.trim()
 }
 
-/** Convert every opened Q-Pay network/asset balance into a distinct ZenMoney account. */
-export function convertWallets (wallets: QPayWallet[]): Account[] {
-  const accounts = new Map<string, AccountOrCard>()
+function optionalString (value: unknown, field: string): string | null {
+  const result = getOptString(value, field)?.trim()
+  return result == null || result === '' ? null : result
+}
 
-  for (const wallet of wallets) {
-    const network = wallet.network?.trim().toLowerCase()
-    const address = wallet.address?.trim()
-    // A network can gain more than one wallet. Its address is therefore part of the
-    // persistent identity; without it two genuine open wallets would overwrite each other.
-    if (network == null || network === '' || address == null || address === '' || !Array.isArray(wallet.balances)) {
+function numberValue (value: unknown, field: string): number {
+  const raw = get(value, field)
+  if ((typeof raw !== 'string' && typeof raw !== 'number') || (typeof raw === 'string' && raw.trim() === '')) {
+    throw new Error(`Q-Pay requires a numeric ${field}`)
+  }
+  const result = Number(raw)
+  if (!Number.isFinite(result)) throw new Error(`Q-Pay has an invalid ${field}`)
+  return result
+}
+
+function optionalNumber (value: unknown, field: string): number | null {
+  return get(value, field) == null ? null : numberValue(value, field)
+}
+
+function arrayValue (value: unknown, field: string): unknown[] {
+  const result = getOptArray(value, field)
+  if (result == null) throw new Error(`Q-Pay requires an array ${field}`)
+  return result
+}
+
+function dateValue (value: unknown, field: string): Date {
+  const date = new Date(requiredString(value, field))
+  if (!Number.isFinite(date.getTime())) throw new Error(`Q-Pay has an invalid ${field}`)
+  return date
+}
+
+function walletId (asset: string): string {
+  return `q-pay:wallet:${asset}`
+}
+
+function cardId (id: string): string {
+  return `q-pay:card:${id}`
+}
+
+/** One asset balance covers all its deposit networks; network rows are not accounts. */
+export function convertAccounts (graph: QPayAccountGraph): QPayAccountPlan[] {
+  const wallets: Account[] = []
+  const ids = new Set<string>()
+  for (const asset of arrayValue(graph.wallet, 'assets')) {
+    const key = requiredString(asset, 'asset')
+    const balance = optionalNumber(asset, 'available') ?? numberValue(asset, 'amount')
+    if (key === 'CASHBACK' && getOptString(asset, 'type') === 'bonus') {
+      // The observed zero reward counter has no monetary denomination or wallet rail.
+      if (balance !== 0 || numberValue(asset, 'balance') !== 0 || numberValue(asset, 'amount') !== 0) {
+        throw new Error('Q-Pay has an unsupported nonzero cashback reward balance')
+      }
       continue
     }
-
-    for (const walletBalance of wallet.balances) {
-      const asset = walletBalance.asset?.trim().toUpperCase()
-      if (asset == null || asset === '') {
-        continue
-      }
-      const id = walletAccountId(network, address, asset)
-      const networkTitle = NETWORK_TITLES[network] ?? network
-      accounts.set(id, {
-        id,
-        type: AccountType.checking,
-        title: `Q-Pay ${asset} · ${networkTitle}`,
-        instrument: normalizeInstrument(asset),
-        balance: finiteNumberOrNull(walletBalance.value),
-        syncIds: [id],
-        savings: false
-      })
+    const id = walletId(key)
+    if (ids.has(id)) throw new Error('Q-Pay returned a duplicate wallet asset')
+    ids.add(id)
+    wallets.push({
+      id,
+      type: AccountType.checking,
+      title: `Q-Pay ${optionalString(asset, 'symbol') ?? key}`,
+      instrument: normalizeInstrument(optionalString(asset, 'symbol') ?? key),
+      balance,
+      syncIds: [id],
+      savings: false
+    })
+  }
+  // Wallets have no independent history source; card records can describe funding.
+  const plans: QPayAccountPlan[] = wallets.length === 0 ? [] : [{ accounts: wallets, fetchParams: null }]
+  for (const { card, balance } of graph.cards) {
+    const sourceId = requiredString(card, 'id')
+    const id = cardId(sourceId)
+    if (ids.has(id)) throw new Error('Q-Pay returned a duplicate card')
+    ids.add(id)
+    const status = requiredString(card, 'status')
+    if (!['issuing', 'inactive', 'active', 'frozen', 'blocked', 'closed', 'failed', 'maintenance'].includes(status)) {
+      throw new Error('Q-Pay returned an unknown card lifecycle state')
     }
+    const currency = optionalString(balance, 'currency') ?? requiredString(card, 'currency')
+    const available = optionalNumber(balance, 'available')
+    const account: AccountOrCard = {
+      id,
+      type: AccountType.ccard,
+      title: requiredString(card, 'display_name'),
+      instrument: normalizeInstrument(currency),
+      balance: available,
+      available,
+      syncIds: [id, sourceId],
+      savings: false,
+      ...(status === 'closed' || optionalString(card, 'archive.reason') != null ? { archived: true } : {})
+    }
+    plans.push({ account, fetchParams: { kind: 'card', cardId: sourceId } })
   }
-
-  return [...accounts.values()]
+  return plans
 }
 
-/** True only for cards that Q-Pay explicitly reports as currently active and not revoked. */
-export function isOpenCard (card: QPayCard): card is QPayCard & { id: string } {
-  return typeof card.id === 'string' && card.id.trim() !== '' &&
-    card.status?.trim().toUpperCase() === 'ACTIVE' &&
-    card.is_revoked === false
+function accountMap (graph: QPayAccountGraph): Map<string, Account> {
+  return new Map(convertAccounts(graph).flatMap(plan => 'accounts' in plan ? plan.accounts : [plan.account]).map(account => [account.id, account]))
 }
 
-/** Convert an active Q-Pay card and its available balance into a ZenMoney card account. */
-export function convertCard ({ card, balance }: QPayCardWithBalance): AccountOrCard | null {
-  const cardId = card.id?.trim()
-  if (cardId == null || cardId === '') {
-    return null
-  }
-  const instrument = normalizeInstrument(balance.card_currency ?? 'USD')
-  const available = finiteNumberOrNull(balance.available_balance)
-  const id = `q-pay:card:${cardId}`
-
-  return {
-    id,
-    type: AccountType.ccard,
-    title: 'Q-Pay Card',
-    instrument,
-    balance: available,
-    available,
-    creditLimit: 0,
-    syncIds: [id, cardId],
-    savings: false
-  }
+function accountFor (accounts: Map<string, Account>, id: string): Account {
+  const account = accounts.get(id)
+  if (account == null) throw new Error('Q-Pay operation does not identify a fetched account')
+  return account
 }
 
-/** Convert active Q-Pay cards, dropping malformed entries without a stable card id. */
-export function convertCards (cards: QPayCardWithBalance[]): Account[] {
-  return cards.map(convertCard).filter((account): account is AccountOrCard => account != null)
+function holdValue (status: string): boolean {
+  if (status === 'success' || status === 'settled') return false
+  if (status === 'pending' || status === 'authorized') return true
+  throw new Error('Q-Pay operation has an unsupported financial status')
 }
 
-const WALLET_INCOME_TYPES = new Set([
-  'DP_DEPOSIT',
-  'AK_DEPOSIT',
-  'ALTYN_DEPOSIT',
-  'BLOCKCHAIN_DEPOSIT',
-  'DEPOSIT',
-  'BONUS_CARD_PURCHASE',
-  'BONUS_CARD_DEPOSIT',
-  'TIER_BONUS_CARD_PURCHASE',
-  'TIER_BONUS_CARD_DEPOSIT',
-  'PAYMENT_GATEWAY_DEPOSIT',
-  'PAYMENT_SYSTEM_DEPOSIT',
-  'QR_PAYMENT',
-  'ADMIN_TOPUP',
-  'TIER_BONUS_QR_PAYMENT',
-  'EXCHANGE_ORDER_DEPOSIT'
-])
-
-const WALLET_OUTCOME_TYPES = new Set([
-  'WITHDRAW',
-  'CARD_PURCHASE',
-  'CARD_DEPOSIT',
-  'PHONE_NUMBER_PURCHASE',
-  'PAYMENT_GATEWAY_WITHDRAW',
-  'EXCHANGE_WITHDRAWAL',
-  'STEAM_WITHDRAWAL',
-  'PHONE_WITHDRAWAL',
-  'CARD_WITHDRAWAL'
-])
-
-const CARD_INCOME_TYPES = new Set(['TOP_UP', 'REFUND', 'REVERSAL', 'CASHBACK', 'CREDIT'])
-const CARD_OUTCOME_TYPES = new Set(['CHARGE', 'WITHDRAWAL', 'FEE'])
-const CARD_TOP_UP_MATCH_WINDOW_MS = 10 * 60 * 1000
-
-const WALLET_TYPE_TITLES: Record<string, string> = {
-  CARD_PURCHASE: 'Покупка карты Q-Pay',
-  CARD_DEPOSIT: 'Пополнение карты Q-Pay',
-  PHONE_NUMBER_PURCHASE: 'Покупка номера Q-Pay',
-  PAYMENT_GATEWAY_WITHDRAW: 'Вывод из Q-Pay',
-  PAYMENT_GATEWAY_DEPOSIT: 'Пополнение Q-Pay',
-  PAYMENT_SYSTEM_DEPOSIT: 'Пополнение Q-Pay',
-  QR_PAYMENT: 'QR-платёж Q-Pay',
-  EXCHANGE_WITHDRAWAL: 'Обмен Q-Pay',
-  EXCHANGE_ORDER_DEPOSIT: 'Обмен Q-Pay',
-  STEAM_WITHDRAWAL: 'Пополнение Steam',
-  PHONE_WITHDRAWAL: 'Пополнение телефона',
-  CARD_WITHDRAWAL: 'Вывод с карты Q-Pay'
+function amountEqual (left: number, right: number): boolean {
+  return Math.abs(left - right) <= 1e-8
 }
 
-function normalizedString (value: string | null | undefined): string | null {
-  const normalized = value?.trim()
-  return normalized == null || normalized === '' ? null : normalized
+const CARD_CREDITS = new Set(['topup', 'load', 'refund', 'reversal', 'chargeback', 'credit', 'deposit', 'card_recharge', 'card_topup'])
+const CARD_DEBITS = new Set(['purchase', 'atm_withdrawal', 'withdrawal', 'fee', 'card_withdrawal'])
+
+function cardSign (transaction: unknown): 1 | -1 {
+  const type = requiredString(transaction, 'type').toLowerCase()
+  if (CARD_CREDITS.has(type)) return 1
+  if (CARD_DEBITS.has(type)) return -1
+  throw new Error('Q-Pay card operation has an unknown financial type')
 }
 
-function epochDate (value: string | number | null | undefined): Date | null {
-  if (typeof value === 'number') {
-    const date = new Date(value * 1000)
-    return Number.isNaN(date.getTime()) ? null : date
-  }
-  if (typeof value === 'string' && value !== '') {
-    const date = new Date(value)
-    return Number.isNaN(date.getTime()) ? null : date
-  }
-  return null
-}
-
-function walletTransactionAccountId (
-  transaction: QPayWalletTransaction,
-  wallets: QPayWallet[]
-): string | null {
-  const network = transaction.network?.trim().toLowerCase()
-  const asset = transaction.asset?.trim().toUpperCase()
-  if (network == null || network === '' || asset == null || asset === '') {
-    return null
-  }
-
-  const candidates = wallets.flatMap(wallet => {
-    const address = normalizedString(wallet.address)
-    const walletNetwork = wallet.network?.trim().toLowerCase()
-    const hasAsset = wallet.balances?.some(balance => balance.asset?.trim().toUpperCase() === asset) === true
-    return address != null && walletNetwork === network && hasAsset
-      ? [{ address, id: walletAccountId(network, address, asset) }]
-      : []
-  })
-  const transactionAddresses = [transaction.in_wallet_address, transaction.out_wallet_address]
-    .map(normalizedString)
-    .filter((value): value is string => value != null)
-  const exact = candidates.filter(candidate => transactionAddresses.includes(candidate.address))
-  if (exact.length === 1) {
-    return exact[0].id
-  }
-  return candidates.length === 1 ? candidates[0].id : null
-}
-
-function walletMovementId (transaction: QPayWalletTransaction): string | null {
-  const id = normalizedString(transaction.id)
-  return id == null ? null : `q-pay:wallet-tx:${id}`
-}
-
-function cardMovementId (transaction: QPayCardTransaction): string | null {
-  const id = normalizedString(transaction.x_id) ?? normalizedString(transaction.id)
-  return id == null ? null : `q-pay:card-tx:${id}`
-}
-
-function isPostedCardTransaction (transaction: QPayCardTransaction): boolean {
-  return ['POSTED', 'SUCCESS'].includes(transaction.status?.trim().toUpperCase() ?? '')
-}
-
-function cardTransactionSign (transaction: QPayCardTransaction): 1 | -1 | null {
-  const type = transaction.type?.trim().toUpperCase() ?? ''
-  if (CARD_INCOME_TYPES.has(type)) return 1
-  if (CARD_OUTCOME_TYPES.has(type)) return -1
-  return null
-}
-
-function cardMerchant (transaction: QPayCardTransaction): Merchant | null {
-  const title = normalizedString(transaction.merchant?.name)
+function cardMerchant (transaction: unknown): Merchant | null {
+  const title = optionalString(transaction, 'merchant_name')
   if (title == null) return null
-  const mcc = finiteNumberOrNull(transaction.merchant?.mcc)
+  const mcc = optionalNumber(transaction, 'mcc_code')
   return {
     title,
-    mcc: mcc == null ? null : Math.trunc(mcc),
-    city: normalizedString(transaction.merchant?.city),
-    country: normalizedString(transaction.merchant?.country),
-    location: null
+    mcc,
+    city: optionalString(transaction, 'merchant_city'),
+    country: optionalString(transaction, 'merchant_country'),
+    location: null,
+    ...(mcc == null && optionalString(transaction, 'merchant_category') != null
+      ? { category: requiredString(transaction, 'merchant_category') }
+      : {})
   }
 }
 
-function convertCardTransaction (
-  transaction: QPayCardTransaction,
-  cardId: string,
-  cardInstrument: string
-): Transaction | null {
-  if (!isPostedCardTransaction(transaction)) return null
-  const sign = cardTransactionSign(transaction)
-  const amount = finiteNumberOrNull(transaction.amount)
-  const date = epochDate(transaction.created_at)
-  if (sign == null || amount == null || amount === 0 || date == null) return null
-
-  const currency = normalizeInstrument(transaction.currency ?? cardInstrument)
-  const originalAmount = finiteNumberOrNull(transaction.original_amount)
-  const originalCurrency = normalizedString(transaction.original_currency)
-  const signedAmount = sign * Math.abs(amount)
-  const fee = finiteNumberOrNull(transaction.fee) ?? 0
-  const description = normalizedString(transaction.description)
-  const invoice = originalAmount != null && originalCurrency != null && normalizeInstrument(originalCurrency) !== cardInstrument
-    ? { sum: sign * Math.abs(originalAmount), instrument: normalizeInstrument(originalCurrency) }
-    : currency !== cardInstrument
-      ? { sum: signedAmount, instrument: currency }
-      : null
-
+function cardTransaction (transaction: unknown, sourceCardId: string, accounts: Map<string, Account>): Transaction | null {
+  const account = accountFor(accounts, cardId(sourceCardId))
+  const sign = cardSign(transaction)
+  const status = requiredString(transaction, 'status')
+  const total = optionalNumber(transaction, 'total_debited')
+  const fees = getOptArray(transaction, 'debit_fees') ?? []
+  const debitFee = fees.reduce<number>((sum, fee) => sum + Math.abs(numberValue(fee, 'amount')), 0)
+  const rawAmount = Math.abs(numberValue(transaction, 'amount'))
+  const currency = normalizeInstrument(requiredString(transaction, 'currency'))
+  const totalCurrency = optionalString(transaction, 'total_debited_currency')
+  const accountTotal = total != null && totalCurrency != null && normalizeInstrument(totalCurrency) === account.instrument ? Math.abs(total) : null
+  const rejected = status === 'declined' || status === 'reversed'
+  let principal: number | null
+  let fee = 0
+  if (rejected) {
+    if (accountTotal === 0 && debitFee === 0) return null
+    if (accountTotal == null || !amountEqual(accountTotal, debitFee)) {
+      throw new Error('Q-Pay rejected card operation has an unresolved charged amount')
+    }
+    principal = 0
+    fee = debitFee === 0 ? 0 : -debitFee
+  } else if (sign < 0 && accountTotal != null) {
+    principal = optionalNumber(transaction, 'debit_principal')
+    if (principal == null) principal = accountTotal - debitFee
+    if (principal < 0 || !amountEqual(principal + debitFee, accountTotal)) {
+      throw new Error('Q-Pay card principal and fees do not reconcile with the debit total')
+    }
+    fee = debitFee === 0 ? 0 : -debitFee
+  } else {
+    const billingCurrency = optionalString(transaction, 'billing_currency')
+    const billing = optionalNumber(transaction, 'billing_amount')
+    principal = billing != null && billingCurrency != null && normalizeInstrument(billingCurrency) === account.instrument
+      ? Math.abs(billing)
+      : currency === account.instrument ? rawAmount : null
+    // Top-up fee fields do not reduce the card's credited amount.
+    if (sign < 0 && debitFee !== 0) throw new Error('Q-Pay card fees have no confirmed account-currency total')
+  }
+  const movement: Movement = {
+    id: `q-pay:card-tx:${requiredString(transaction, 'id')}`,
+    account: { id: account.id },
+    sum: principal == null ? null : principal === 0 ? 0 : sign * principal,
+    fee,
+    invoice: rejected || currency === account.instrument ? null : { sum: sign * rawAmount, instrument: currency }
+  }
+  if (movement.sum == null && movement.invoice == null) throw new Error('Q-Pay card operation has no account or invoice amount')
   return {
-    hold: transaction.lifecycle_stage?.trim().toUpperCase() === 'AUTHORIZATION',
-    date,
-    movements: [{
-      id: cardMovementId(transaction),
-      account: { id: `q-pay:card:${cardId}` },
-      sum: currency === cardInstrument ? signedAmount : null,
-      fee: sign < 0 ? -Math.abs(fee) : 0,
-      invoice
-    }],
+    hold: rejected ? false : holdValue(status),
+    date: optionalString(transaction, 'authorized_at') != null
+      ? dateValue(transaction, 'authorized_at')
+      : dateValue(transaction, 'settled_at'),
+    movements: [movement],
     merchant: cardMerchant(transaction),
-    comment: description
+    comment: null
   }
 }
 
-interface CardTransactionEntry {
-  cardId: string
-  transaction: QPayCardTransaction
-}
-
-function cardEntries (groups: QPayCardTransactions[]): CardTransactionEntry[] {
-  return groups.flatMap(group => group.transactions.map(transaction => ({
-    cardId: group.cardId,
-    transaction
-  })))
-}
-
-function cardTransferDenomination (asset: string): string {
-  // Observed USDT wallet debits and USD card top-ups use equal nominal amounts.
-  // This comparison is only for matching; accounts retain their native instruments.
-  const instrument = normalizeInstrument(asset)
-  return instrument === 'USDT' ? 'USD' : instrument
-}
-
-function matchCardTopUp (
-  walletTransaction: QPayWalletTransaction,
-  entries: CardTransactionEntry[],
-  usedCardTransactions: Set<QPayCardTransaction>
-): CardTransactionEntry | null {
-  const walletAmount = finiteNumberOrNull(walletTransaction.amount)
-  const walletDate = epochDate(walletTransaction.created_at)
-  const walletInstrument = normalizedString(walletTransaction.asset)
-  if (walletAmount == null || walletDate == null || walletInstrument == null) return null
-
-  let closest: CardTransactionEntry | null = null
-  let closestDistance = Number.POSITIVE_INFINITY
-  for (const entry of entries) {
-    const transaction = entry.transaction
-    if (usedCardTransactions.has(transaction) || !isPostedCardTransaction(transaction) || transaction.type?.trim().toUpperCase() !== 'TOP_UP') {
-      continue
-    }
-    const cardAmount = finiteNumberOrNull(transaction.amount)
-    const cardDate = epochDate(transaction.created_at)
-    const cardInstrument = normalizedString(transaction.currency)
-    if (cardAmount == null || cardDate == null || cardInstrument == null ||
-      cardTransferDenomination(cardInstrument) !== cardTransferDenomination(walletInstrument) ||
-      Math.abs(cardAmount - walletAmount) > 0.000001) {
-      continue
-    }
-    const distance = Math.abs(cardDate.getTime() - walletDate.getTime())
-    if (distance <= CARD_TOP_UP_MATCH_WINDOW_MS && distance < closestDistance) {
-      closest = entry
-      closestDistance = distance
-    }
-  }
-  return closest
-}
-
-function matchCardPurchaseTopUp (
-  walletTransaction: QPayWalletTransaction,
-  entries: CardTransactionEntry[],
-  usedCardTransactions: Set<QPayCardTransaction>
-): CardTransactionEntry | null {
-  const purchasedCardId = normalizedString(walletTransaction.id)
-  const walletCost = finiteNumberOrNull(walletTransaction.full_amount) ?? finiteNumberOrNull(walletTransaction.amount)
-  const walletDate = epochDate(walletTransaction.created_at)
-  const walletInstrument = normalizedString(walletTransaction.asset)
-  if (purchasedCardId == null || walletCost == null || walletDate == null || walletInstrument == null) return null
-
-  let closest: CardTransactionEntry | null = null
-  let closestDistance = Number.POSITIVE_INFINITY
-  for (const entry of entries) {
-    const transaction = entry.transaction
-    const cardAmount = finiteNumberOrNull(transaction.amount)
-    const cardDate = epochDate(transaction.created_at)
-    const cardInstrument = normalizedString(transaction.currency)
-    if (entry.cardId !== purchasedCardId || usedCardTransactions.has(transaction) ||
-      !isPostedCardTransaction(transaction) || transaction.type?.trim().toUpperCase() !== 'TOP_UP' ||
-      cardAmount == null || cardAmount <= 0 || cardAmount > walletCost || cardDate == null || cardInstrument == null ||
-      cardTransferDenomination(cardInstrument) !== cardTransferDenomination(walletInstrument)) {
-      continue
-    }
-    const distance = Math.abs(cardDate.getTime() - walletDate.getTime())
-    if (distance <= CARD_TOP_UP_MATCH_WINDOW_MS && distance < closestDistance) {
-      closest = entry
-      closestDistance = distance
-    }
-  }
-  return closest
-}
-
-function convertWalletTransaction (
-  transaction: QPayWalletTransaction,
-  wallets: QPayWallet[]
-): Transaction | null {
-  if (transaction.status?.trim().toUpperCase() !== 'CONFIRMED') return null
-  const type = transaction.type?.trim().toUpperCase() ?? ''
-  const sign = WALLET_INCOME_TYPES.has(type) ? 1 : WALLET_OUTCOME_TYPES.has(type) ? -1 : null
-  const amount = finiteNumberOrNull(transaction.amount)
-  const fee = finiteNumberOrNull(transaction.system_fee) ?? 0
-  const date = epochDate(transaction.created_at)
-  const accountId = walletTransactionAccountId(transaction, wallets)
-  if (sign == null || amount == null || amount === 0 || date == null || accountId == null) return null
-
+function linkWalletFunding (source: unknown, converted: Transaction, accounts: Map<string, Account>): Transaction {
+  const credit = converted.movements[0]
+  if (getOptString(source, 'type')?.toLowerCase() !== 'topup' ||
+    getOptString(source, 'status') !== 'settled' ||
+    optionalString(source, 'funded_by') != null || credit.sum == null || credit.sum <= 0) return converted
+  const asset = optionalString(source, 'wallet_asset')
+  const amount = optionalNumber(source, 'amount_in_wallet')
+  if (asset == null || amount == null) return converted
+  if (amount <= 0) throw new Error('Q-Pay card funding has a nonpositive wallet amount')
+  const wallet = accountFor(accounts, walletId(asset))
+  // Both native account effects are explicit; do not infer an FX rate or another fee.
+  // The wallet-side ID is derived from the card record, not an independent ledger ID.
   return {
-    hold: false,
-    date,
+    ...converted,
     movements: [{
-      id: walletMovementId(transaction),
-      account: { id: accountId },
-      sum: sign * Math.abs(amount),
-      fee: sign < 0 ? -Math.abs(fee) : 0,
+      id: `q-pay:card-tx:${requiredString(source, 'id')}:wallet`,
+      account: { id: wallet.id },
+      sum: -amount,
+      fee: 0,
       invoice: null
-    }],
-    merchant: null,
-    comment: WALLET_TYPE_TITLES[type] ?? `Q-Pay: ${type}`
+    }, credit],
+    merchant: null
   }
 }
 
-function convertCardDepositTransfer (
-  walletTransaction: QPayWalletTransaction,
-  cardEntry: CardTransactionEntry,
-  wallets: QPayWallet[]
-): Transaction | null {
-  const accountId = walletTransactionAccountId(walletTransaction, wallets)
-  const amount = finiteNumberOrNull(walletTransaction.amount)
-  const fee = finiteNumberOrNull(walletTransaction.system_fee) ?? 0
-  const date = epochDate(walletTransaction.created_at)
-  if (accountId == null || amount == null || amount === 0 || date == null) return null
-
-  return {
-    hold: false,
-    date,
-    movements: [
-      {
-        id: walletMovementId(walletTransaction),
-        account: { id: accountId },
-        sum: -Math.abs(amount),
-        fee: -Math.abs(fee),
-        invoice: null
-      },
-      {
-        id: cardMovementId(cardEntry.transaction),
-        account: { id: `q-pay:card:${cardEntry.cardId}` },
-        sum: Math.abs(amount),
-        fee: 0,
-        invoice: null
-      }
-    ],
-    merchant: null,
-    comment: WALLET_TYPE_TITLES.CARD_DEPOSIT
-  }
-}
-
-function convertCardPurchaseTransfer (
-  walletTransaction: QPayWalletTransaction,
-  cardEntry: CardTransactionEntry,
-  wallets: QPayWallet[]
-): Transaction | null {
-  const accountId = walletTransactionAccountId(walletTransaction, wallets)
-  const walletCost = finiteNumberOrNull(walletTransaction.full_amount) ?? finiteNumberOrNull(walletTransaction.amount)
-  const cardAmount = finiteNumberOrNull(cardEntry.transaction.amount)
-  const date = epochDate(walletTransaction.created_at)
-  if (accountId == null || walletCost == null || cardAmount == null || cardAmount <= 0 || walletCost < cardAmount || date == null) {
-    return null
-  }
-
-  return {
-    hold: false,
-    date,
-    movements: [
-      {
-        id: walletMovementId(walletTransaction),
-        account: { id: accountId },
-        sum: -cardAmount,
-        fee: -(walletCost - cardAmount),
-        invoice: null
-      },
-      {
-        id: cardMovementId(cardEntry.transaction),
-        account: { id: `q-pay:card:${cardEntry.cardId}` },
-        sum: cardAmount,
-        fee: 0,
-        invoice: null
-      }
-    ],
-    merchant: null,
-    comment: WALLET_TYPE_TITLES.CARD_PURCHASE
-  }
-}
-
-/** Convert and reconcile wallet/card histories, merging duplicate card top-up records. */
-export function convertTransactions (
-  walletTransactions: QPayWalletTransaction[],
-  cardTransactions: QPayCardTransactions[],
-  wallets: QPayWallet[],
-  cardAccounts: Account[]
-): Transaction[] {
-  const entries = cardEntries(cardTransactions)
-  const usedCardTransactions = new Set<QPayCardTransaction>()
-  const transactions: Transaction[] = []
-
-  for (const walletTransaction of walletTransactions) {
-    const walletType = walletTransaction.type?.trim().toUpperCase()
-    if (walletTransaction.status?.trim().toUpperCase() === 'CONFIRMED' && walletType === 'CARD_DEPOSIT') {
-      const match = matchCardTopUp(walletTransaction, entries, usedCardTransactions)
-      if (match != null) {
-        const transfer = convertCardDepositTransfer(walletTransaction, match, wallets)
-        if (transfer != null) {
-          transactions.push(transfer)
-          usedCardTransactions.add(match.transaction)
-          continue
-        }
-      }
+/** Import card history, including wallet funding explicitly confirmed by a top-up. */
+export function convertTransactions (graph: QPayAccountGraph, history: QPayHistory): Transaction[] {
+  const accounts = accountMap(graph)
+  const ownedCards = new Set(graph.cards.filter(({ card }) => getOptString(card, 'access') === 'owner')
+    .map(({ card }) => requiredString(card, 'id')))
+  const result: Transaction[] = []
+  for (const group of history.cards) {
+    for (const source of group.transactions) {
+      const converted = cardTransaction(source, group.cardId, accounts)
+      if (converted != null) result.push(ownedCards.has(group.cardId) ? linkWalletFunding(source, converted, accounts) : converted)
     }
-    if (walletTransaction.status?.trim().toUpperCase() === 'CONFIRMED' && walletType === 'CARD_PURCHASE') {
-      const match = matchCardPurchaseTopUp(walletTransaction, entries, usedCardTransactions)
-      if (match != null) {
-        const transfer = convertCardPurchaseTransfer(walletTransaction, match, wallets)
-        if (transfer != null) {
-          transactions.push(transfer)
-          usedCardTransactions.add(match.transaction)
-          continue
-        }
-      }
-    }
-    const converted = convertWalletTransaction(walletTransaction, wallets)
-    if (converted != null) transactions.push(converted)
   }
-
-  const instruments = new Map(cardAccounts.map(account => [account.id, account.instrument]))
-  for (const entry of entries) {
-    if (usedCardTransactions.has(entry.transaction)) continue
-    const accountId = `q-pay:card:${entry.cardId}`
-    const instrument = instruments.get(accountId)
-    if (instrument == null) continue
-    const converted = convertCardTransaction(entry.transaction, entry.cardId, instrument)
-    if (converted != null) transactions.push(converted)
-  }
-
-  return transactions.sort((left, right) => left.date.getTime() - right.date.getTime())
+  return result.sort((left, right) => left.date.getTime() - right.date.getTime())
 }
