@@ -588,6 +588,6 @@ describe('convertToZenMoneyTransaction', () => {
       }
     ]
   ])('converts %s', (_, accountRecord, expectedTransaction) => {
-    expect(convertToZenMoneyTransaction(accountRecord as AccountRecord, [accountRecord as AccountRecord])).toEqual(expectedTransaction)
+    expect(convertToZenMoneyTransaction(accountRecord as AccountRecord)).toEqual(expectedTransaction)
   })
 })

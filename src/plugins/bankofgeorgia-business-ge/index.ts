@@ -28,7 +28,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
 
   const zenTransactions: ZenMoneyTransaction[] = []
   for (const record of records) {
-    zenTransactions.push(convertToZenMoneyTransaction(record, records))
+    zenTransactions.push(convertToZenMoneyTransaction(record))
   }
 
   return {
