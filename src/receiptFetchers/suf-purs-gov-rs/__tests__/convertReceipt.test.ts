@@ -1,3 +1,4 @@
+import shortReceipt from './convertReceipt-02.html'
 import fixture1 from './convertReceipt-01.html'
 import { convertReceipt } from '../converters'
 
@@ -118,4 +119,24 @@ test('converts source case 01', () => {
 
 test('malformed source remains a conversion failure', () => {
   expect(() => convertReceipt(null)).toThrow()
+})
+
+// Complete page reached from the observed 128.pl redirect, 2026-11-05, receipts.csv row 7.
+// Cash tender is 4000, not the applied settlement; no change evidence is available here.
+test('converts the receipt reached through the short link', () => {
+  expect(convertReceipt(shortReceipt)).toEqual({
+    completeness: 'full',
+    currency: 'RSD',
+    operation: 'unknown',
+    issuedAt: { date: '2025-06-01', time: '18:56:54' },
+    totalAmount: '3411.97',
+    merchant: { name: 'DELHAIZE SERBIA DOO BEOGRAD', address: 'СЕНТАНДРЕЈСКИ ПУТ 11 Нови Сад' },
+    items: [
+      { name: 'Vino crv.Mackov p.Portug.0.75l/KOM (Ђ)', quantity: '1', unitPrice: '1099', totalAmount: '1099' },
+      { name: 'Cips pekarski deb.rezan 150g/KOM (Ђ)', quantity: '1', unitPrice: '189.99', totalAmount: '189.99' },
+      { name: 'Min.voda spo.cap Vodavoda 1l/KOM (Ђ)', quantity: '1', unitPrice: '75.99', totalAmount: '75.99' },
+      { name: 'Liker Jager. 0,5l+2x shot casa/KOM (Ђ)', quantity: '1', unitPrice: '1957', totalAmount: '1957' },
+      { name: 'Fanta orange zero 0,5l PCT/KOM (Ђ)', quantity: '1', unitPrice: '89.99', totalAmount: '89.99' }
+    ]
+  })
 })
