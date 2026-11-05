@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>|Entersoft</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <link rel="canonical" href="https://www.entersoft.gr/electronic-invoicing/" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="/css/style.min.css?v=sto1HWvdFbaJFflTw6cB4fsTzp5JqGJ5OGzsZ02nvmk" />
+    <link rel="stylesheet" href="/css/site.min.css?v=rjj5yjuR4tytqtC9LCsH4tuxYwwmlwcS4wQRpHhcFdw" />
+    <!-- Allow partial views to inject their own CSS -->
+    
+    <link rel="stylesheet" href="/css/Pages/ViewInvoice.css?v=PaYw-QH8Hf3cVEB9gN-fze5_P52To02fMQSEViaypSg" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body class="body-small pace-done white-bg no-margins">
+    <div class="Page__ViewInvoice">
+        <div class="gray-bg page-wrapper-shaddow">
+
+            <div class="navbar-wrapper">
+                <nav class="navbar navbar-fixed-top navbar-expand-lg navbar-default navbar-light" role="navigation">
+                    <div class="container container_navig" style="min-height:64px;">
+                        <div class="navbar-header page-scroll">
+							<img src="/Images/ENTERSOFTONE.svg" class="entersoftLogo" alt="Entersoft" />
+                            
+        <div class="attachmentsContainer">
+
+            <div id="attachmentsList">
+                <a href="https://mydatapi.aade.gr/myDATA/TimologioQR/QRInfo?q=mVHpTFUe4Qh2kj8ZB5Iwic3gKyIIP%2fx%2fpEnS%2bTfoLTMQ2JjhcEl1FOmtKyBQMlUOpfG3j2n8m66P%2bpxjayQdDT53cw%2frM49LSafnDL%2fhR90%3d" target="_blank" rel="noopener noreferrer">
+                    <span class="myMenuBtn btn btn-navbar ">
+                        Παραστατικό (ΑΑΔΕ)
+                    </span>
+                </a>
+            </div>
+        </div>
+
+                       </div>
+                    </div>
+                </nav>
+            </div>
+
+
+        </div>
+        <!-- Main view  -->
+        
+
+
+
+<div class="container doc-container-ViewInvoice">
+    <div class="h_iframe_container">
+
+        <div id="loadingMessage">
+            <h2>Loading...</h2>
+            <div>
+                <i class="fa fa-spinner fa-spin fa-lg" aria-hidden="true"></i>
+            </div>
+        </div>
+
+        <div class="h_iframe">
+            <iframe id="iframeContent"
+                    src="/api/GetInvoice?contentType=PEPPOL&amp;intRefDocID=71435717-020d-4b12-bf40-e6455d768d5e&amp;hashToken=42e8l826&amp;ofenm=-1&amp;isPreview=True"
+                    data-auto-download="false"
+                    data-download-token="8d06ab9c-da62-42b0-a19d-3972cdbad769"
+                    frameborder="0"
+                    allowfullscreen
+                    title="Invoice Viewer">
+            </iframe>
+        </div>
+    </div>
+</div>
+
+
+    </div>
+
+
+    
+    <script src="/js/Pages/ViewInvoice.js?v=glFYIiqwwMJYRfnaD9OD8qLq45UBCp4vd9e8gYrIoUE"></script>
+
+</body>
+</html>

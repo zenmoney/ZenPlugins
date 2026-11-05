@@ -1,0 +1,1034 @@
+<!DOCTYPE html><html>
+  <head>
+    <META http-equiv="Content-Type" content="text/html; charset=utf-16">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+					.cf th, .cf tr, .cf td{
+					border:0!important;
+					}
+
+
+					@media print {
+					.printingButton {
+					display: none;
+					}
+
+					.backgrey{
+					background-color:white
+					}
+
+					.fontSize12pt{font-size: 18px!important;}
+					.fontSize8pt{font-size: 13px!important;}
+					.fonSize10pt{font-size: 15px!important;}
+					.fontSize6pt{font-size: 12px!important;}
+					}
+
+					@media only screen and (max-width: 767px) {
+					/* Force table to not be like tables anymore */
+					#no-more-tables table,
+					#no-more-tables thead,
+					#no-more-tables tbody,
+					#no-more-tables th,
+					#no-more-tables td,
+					#no-more-tables tr {
+					display: block;
+					}
+
+
+
+					/* Hide table headers (but not display: none;, for accessibility) */
+					#no-more-tables thead tr {
+					position: absolute;
+					top: -9999px;
+					left: -9999px;
+					}
+
+
+					#no-more-tables td {
+					/* Behave like a "row" */
+					border: none;
+					
+					position: relative;
+					padding-left: 50%;
+					white-space: normal;
+					text-align:right;
+					}
+
+					#no-more-tables td:before {
+					/* Now like a table header */
+					position: absolute;
+					/* Top/left values mimic padding */
+					top: 6px;
+					left: 6px;
+					width: 45%;
+					padding-right: 10px;
+					white-space: nowrap;
+					text-align:left;
+					
+					}
+
+					/*
+					Label the data
+					*/
+					#no-more-tables td:before { content: attr(data-title); }
+					#no-more-tables tr { border-top: 1px solid #ccc!important; }
+					#no-more-tables tr.comments{ border-top: 0px!important; }
+					#no-more-tables tr.comments td:before{ content: null!important; }
+					#no-more-tables tr.comments td{padding-left: 5px!important;text-align:left;}
+					#no-more-tables table{border-bottom: 1px solid #ccc!important;}
+
+					#signclass {
+					max-width:none!important;
+					}
+					}
+
+
+
+
+
+					tr.comments td{
+					color:#999;
+					background-color:#fff!important;
+					padding-top:0px;
+					padding-bottom:7px;
+					}
+
+					.row::after {
+					content: "";
+					clear: both;
+					display: table;
+					}
+
+					.BoldBlueHeader{
+					font-weight:bold; color:#006bc2
+					}
+
+					.fontSize12pt{font-size: 16px;}
+					.fontSize8pt{font-size: 11px;}
+					.fonSize10pt{font-size: 13px;}
+					.fontSize6pt{font-size: 10px;}
+
+					.wrap {
+					white-space: normal;
+
+					word-wrap: break-word;
+					overflow-wrap: break-word;
+					}
+
+					.row-flex {
+					display: flex;
+					flex-wrap: wrap;
+					}
+
+					.watermark {
+					color: Maroon;
+					top: 20px;
+					right: 0px;
+					font-size:22px;
+					text-align:center;
+					border:2px solid Maroon;
+					font-weight:bold;
+					}
+					.watermark .sub{
+					font-size:16px!important;
+					font-weight:normal;
+					}
+
+					.page-wrapper-shaddow {
+					box-shadow: 0 1px 1px 0 rgb(0 0 0 / 20%), 0 0.5px 20px 0 rgb(0 0 0 / 19%);
+					}
+
+					.gray-bg, .bg-muted {
+					background-color: #fff;
+					}
+
+					.buttonPrint{
+					font-size: 0.7rem;
+					padding: .1rem .75rem;
+					}
+
+				</style>
+  </head>
+  <body>
+    <div class="container  mt-3  Retail-Stylesheet-Billing-CSS" style="font-family: Segoe UI;">
+      <div class="row">
+        <div class="col-sm-8 col-md-10">
+          <div class="row">
+            <div id="divLogo" class="col-sm-2"><img src="/CustomerLogo/logo_093683423.png" style="width:100%;max-width:100px;" alt="LIDL" onerror="document.getElementById('divLogo').style.display='none'"></div>
+            <div class="col-sm-10">
+              <div class="BoldBlueHeader fontSize12pt">LIDL</div>
+              <div class="fontSize8pt"></div>
+              <div class="fontSize8pt"></div>
+              <div class="fontSize8pt">Ε.Ο. ΚΑΣΣΑΝΔΡΕΙΑΣ ΦΟΥΡΚΑΣ, -, 63077, ΚΑΣΣΑΝΔΡΕΙΑ</div>
+              <div class="fontSize8pt">Α.Φ.Μ: 093683423</div>
+              <div class="fontSize8pt"></div>
+              <div class="fontSize8pt"></div>
+            </div>
+          </div>
+          <div class="mb-3"></div>
+          <div class="BoldBlueHeader fonSize10pt">Απόδειξη Λιανικής Πώλησης</div>
+          <div class="fontSize8pt">Αρ. Παραστατικού: 014907-239614</div>
+          <div class="fontSize8pt">Ημ/νία έκδοσης: 19-08-2026</div>
+        </div>
+        <div class="col-sm-4 col-md-2"><img src="https://e-invoicing.gr/api/CreateBarcode?barcode=https://e-invoicing.gr/edocuments/ViewInvoice/-1/71435717-020d-4b12-bf40-e6455d768d5e_42e8l826" width="100" height="100" class="rounded float-right"></div>
+      </div>
+      <div class="mb-3"></div>
+      <div class="row row-flex">
+        <div class="col-md-6 pr-md-0 mb-3 " style=" display: table;">
+          <div style="padding:2px 5px;background-color:#f2f2f2;display: table-cell;" class="backgrey">
+            <div class="row BoldBlueHeader fontSize8pt">
+              <div class="col">ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ</div>
+            </div>
+            <div class="row">
+              <div class="col fontSize8pt">
+										Επωνυμία:
+									</div>
+              <div class="col-8 fontSize8pt">
+												ΠΕΛΑΤΗΣ ΛΙΑΝΙΚΗΣ
+											</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 pl-md-0 mb-3 " style=" display: table;">
+          <div style="padding:2px 5px;background-color:#f2f2f2;display: table-cell;" class="backgrey">
+            <div class="row BoldBlueHeader fontSize8pt">
+              <div class="col">ΣΤΟΙΧΕΙΑ ΔΙΑΚΙΝΗΣΗΣ</div>
+            </div>
+            <div class="row">
+              <div class="col fontSize8pt">
+										Τρόπος πληρωμής:
+									</div>
+              <div class="col-md-7 col-8 col-lg-8 fontSize8pt">
+														POS / e-POS
+													</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div id="no-more-tables" class="table-responsive">
+            <table class="table table-sm table-hover table-condensed cf fontSize6pt">
+              <thead class="cf">
+                <tr>
+                  <th>
+														ΚΩΔΙΚΟΣ
+													</th>
+                  <th>
+														ΠΕΡΙΓΡΑΦΗ
+													</th>
+                  <th>
+														ΜΜ
+													</th>
+                  <th class="text-right">
+														ΠΟΣΟΤΗΤΑ
+													</th>
+                  <th class="text-right">
+														ΤΙΜΗ ΜΟΝ.
+													</th>
+                  <th class="text-right">
+														ΑΞΙΑ ΠΡΟ ΕΚΠΤ.
+													</th>
+                  <th class="text-right">
+														ΕΚΠΤ.
+													</th>
+                  <th class="text-right">
+														ΦΠΑ%
+													</th>
+                  <th class="text-right">
+														ΣΥΝΟΛΙΚΗ ΑΞΙΑ
+													</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td data-title="Κωδικός">7204719</td>
+                  <td data-title="Περιγραφή">ΗΛΙΕΛΑΙΟ 1L</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,85</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,85</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,85</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6401928</td>
+                  <td data-title="Περιγραφή">HELL CLASSIC 250ML</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">2,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,59</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,18</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,18</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">1000907</td>
+                  <td data-title="Περιγραφή">ΑΛΟΥΜ.30x30CM 11Μ.1Τ</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,99</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,99</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">24%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,99</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0094282</td>
+                  <td data-title="Περιγραφή">ΕΠΙΔ.ΓΙΑΟΥ.ΡΟΔ.250G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">2,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,89</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,78</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,78</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6208463</td>
+                  <td data-title="Περιγραφή">ΓΑΡIΔ.VANNAM AΠΟ300G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">3,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">3,15</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">9,45</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">9,45</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0094282</td>
+                  <td data-title="Περιγραφή">ΕΠΙΔ.ΓΙΑΟΥ.ΦΡΑΟ.250G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,89</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,89</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,89</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6205337</td>
+                  <td data-title="Περιγραφή">ΠΑΠΑΔ.ΓΕΜ.ΣΟΚ.3X200G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,97</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,97</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,97</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0002539</td>
+                  <td data-title="Περιγραφή">FLAKERS CHOCO 500G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,29</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,29</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,29</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0001804</td>
+                  <td data-title="Περιγραφή">Χ.ΓΛ.ΣΟΛ.Κ.ΝΟΡ.200G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">6,45</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">6,45</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">6,45</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">1007515</td>
+                  <td data-title="Περιγραφή">ΤΣ.Π.ΧΡ.ΜΕΓ.38Λ.1ΤΕΜ</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">2,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,80</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,60</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">24%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,60</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0001884</td>
+                  <td data-title="Περιγραφή">ΠΕΡΙΒΑΝ.ΤΕΛΟΣ</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">2,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,09</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,18</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">24%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,18</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0095750</td>
+                  <td data-title="Περιγραφή">ΣΑΛΤΣΑ ΤΣΙΛΙ 290ML</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,49</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,49</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,49</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">1022470</td>
+                  <td data-title="Περιγραφή">ALFA ΜΠΥΡ.5% 6X330ML</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">2,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">5,59</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">11,18</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">24%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">11,18</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0131708</td>
+                  <td data-title="Περιγραφή">ΣΤΙΓ.ΚΑΦ.ΝΤΕΚΑΦ.100G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">3,25</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">3,25</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">3,25</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6206307</td>
+                  <td data-title="Περιγραφή">ΟΛΥΜ.ΦΥΣ.9 ΦΡΟΥΤΑ 1L</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,66</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,66</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,66</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6212613</td>
+                  <td data-title="Περιγραφή">ΒΙΚ.ΦΥ.ΜΕ.ΝΕΡ.6PA 9L</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,77</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,77</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,77</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6203871</td>
+                  <td data-title="Περιγραφή">ΛΕΥΚ.ΟΙΝΟΣ ΞΗΡ.500ML</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,59</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,59</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">24%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,59</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0002584</td>
+                  <td data-title="Περιγραφή">ΙΩΔIOΥXO ΑΛΑΤΙ 1000G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,29</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,29</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,29</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6212521</td>
+                  <td data-title="Περιγραφή">ΕΛΙΕΣ ΠΡΑΣ.ΓΕΜ.400G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">3,09</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">3,09</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">3,09</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6204144</td>
+                  <td data-title="Περιγραφή">ΑΠΑΚΙ ΚΡΗΤ.ΚΑΠΝ.250G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">3,49</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">3,49</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">3,49</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0003125</td>
+                  <td data-title="Περιγραφή">ΝΕΜΕΑ Π.Ο.Π. 0,75L</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,11</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,11</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">24%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,11</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0082706</td>
+                  <td data-title="Περιγραφή">ΣΚΟΡΔΑ 1ΤΕΜ.</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">2,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,50</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,00</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,00</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6206514</td>
+                  <td data-title="Περιγραφή">ΦΥΣ.ΧΥΜ.9 ΦΡΟΥΤΩΝ 1L</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,79</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,79</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,79</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">1004128</td>
+                  <td data-title="Περιγραφή">LAYS ΤΥΡΙ ΚΡΕΜΜ120G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,45</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,45</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,45</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6206036</td>
+                  <td data-title="Περιγραφή">ΡΟΖΕ ΟΙΝ.ΞΗΡΟΣ 500ML</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,59</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,59</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">24%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,59</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0008900</td>
+                  <td data-title="Περιγραφή">ΧΟΙΡ.ΚΙΜΑΣ.FR.500G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,89</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,89</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,89</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0040932</td>
+                  <td data-title="Περιγραφή">ΣΥΜΠΥΚΝ.ΓΑΛΑ 10Χ15G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,79</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,79</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,79</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6200349</td>
+                  <td data-title="Περιγραφή">ΨΩΜ.ΤΟΣΤ ΜΙ.ΣΤΑΡ340G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,69</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,69</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,69</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6206888</td>
+                  <td data-title="Περιγραφή">MELIS.ΤΟΡΤ.ΤΡΙΚ.250G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">2,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,76</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">3,52</td>
+                  <td data-title="Έκπτωση" class="text-right">0,18</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">3,34</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0055200</td>
+                  <td data-title="Περιγραφή">ΡΟΦΗΜ.ΓΙΑΟΥΡ.ΦΡ1KG</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,79</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,79</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,79</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0009068</td>
+                  <td data-title="Περιγραφή">ΨΩΜΙ ΤΟΣΤ ΣΙΚΑΛ.340G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,69</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,69</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,69</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0083325</td>
+                  <td data-title="Περιγραφή">ΑΣΠΡΑ ΚΡΕΜΜΥΔΙΑ</td>
+                  <td data-title="Μ.Μ.">ΚΙΛΑ</td>
+                  <td class="text-right" data-title="Ποσότητα">0,51 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,72</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,37</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,37</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0055200</td>
+                  <td data-title="Περιγραφή">ΡΟΦΗΜΑ ΓΙΑΟΥΡ.ΡΟ1KG</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,79</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,79</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,79</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0082586</td>
+                  <td data-title="Περιγραφή">ΠΙΠΕΡ.MIΞ 500G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,85</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,85</td>
+                  <td data-title="Έκπτωση" class="text-right">0,10</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,75</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6207861</td>
+                  <td data-title="Περιγραφή">LIF.ΦΥΣ.ΧΥ.ΠΟΡΤ.1,5L</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">3,74</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">3,74</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">3,74</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6206307</td>
+                  <td data-title="Περιγραφή">ΟΛΥΜ.ΦΥ.ΡΟΔ-ΜΗ-ΣΤ.1L</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,66</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,66</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,66</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0083223</td>
+                  <td data-title="Περιγραφή">ΠΑΤΑΤΕΣ ΠΛΥΜ. 1,5KG</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,45</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,45</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,45</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0080160</td>
+                  <td data-title="Περιγραφή">ΛΕΜΟΝΙΑ</td>
+                  <td data-title="Μ.Μ.">ΚΙΛΑ</td>
+                  <td class="text-right" data-title="Ποσότητα">0,192 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,45</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,47</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,47</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0080475</td>
+                  <td data-title="Περιγραφή">ΣΤΑΦΥΛΙΑ ΜΙΧ 500G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,09</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,09</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,09</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0150478</td>
+                  <td data-title="Περιγραφή">ΠΙΠΕΡ ΜΑΥΡ ΤΡΙΜ 100G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,19</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,19</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,19</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0082465</td>
+                  <td data-title="Περιγραφή">ΤΣΑΜΠΙ ΤΟΜΑΤΕΣ</td>
+                  <td data-title="Μ.Μ.">ΚΙΛΑ</td>
+                  <td class="text-right" data-title="Ποσότητα">0,888 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,89</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,68</td>
+                  <td data-title="Έκπτωση" class="text-right">0,53</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,15</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6205395</td>
+                  <td data-title="Περιγραφή">ΑΥΓΑ ΑΧΥΡ.Μ 10ΤΕΜ</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">2,69</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">2,69</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">2,69</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0150480</td>
+                  <td data-title="Περιγραφή">ΠΑΠΡΙΚΑ ΓΛΥΚΙΑ 100G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,15</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,15</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,15</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0082243</td>
+                  <td data-title="Περιγραφή">ΚΝΩΣΟΥ ΑΓΓΟΥΡΙΑ ΤΥΠ.</td>
+                  <td data-title="Μ.Μ.">ΚΙΛΑ</td>
+                  <td class="text-right" data-title="Ποσότητα">0,644 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,29</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,83</td>
+                  <td data-title="Έκπτωση" class="text-right">0,26</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,57</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">1007504</td>
+                  <td data-title="Περιγραφή">ΣΑΚΟΥΛ.ΒΙΟΔ.25Μ1ΤΕΜ</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,10</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,10</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">24%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,10</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6200881</td>
+                  <td data-title="Περιγραφή">ΣΝΙΤΣΕΛ ΚΟΤΟΠ. 470G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">4,15</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">4,15</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">4,15</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6204055</td>
+                  <td data-title="Περιγραφή">Χ.ΓΛ.ΠΑΡΙΖ.ΦΕΤΕΣ300G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,35</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,35</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,35</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">0029787</td>
+                  <td data-title="Περιγραφή">Χ.ΓΛ.ΙΤ.ΣTOM.CU400ML</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">1,99</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">1,99</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">1,99</td>
+                </tr>
+                <tr>
+                  <td data-title="Κωδικός">6201301</td>
+                  <td data-title="Περιγραφή">MELIS.ΣΠΑΓΓ.ΝO6 500G</td>
+                  <td data-title="Μ.Μ.">TEMAXIO</td>
+                  <td class="text-right" data-title="Ποσότητα">1,00 
+															</td>
+                  <td data-title="Τιμή μονάδας" class="text-right">0,72</td>
+                  <td data-title="Αξία προ έκπτωσης" class="text-right">0,72</td>
+                  <td data-title="Έκπτωση" class="text-right">0,00</td>
+                  <td class="text-right" data-title="ΦΠΑ%">13%
+															</td>
+                  <td data-title="Συνολική Αξία" class="text-right">0,72</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mb-3"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-7 col-md-6 order-md-12 mb-4 ">
+          <div class="row">
+            <div class="col-md-8 col-6 fontSize8pt text-md-right text-left">
+											Αξία προ έκπτωσης
+										</div>
+            <div class="col-md-4 col-6 fontSize8pt" style="text-align:right;">110,02EUR</div>
+          </div>
+          <div class="row">
+            <div class="col-md-8 col-6 fontSize8pt text-md-right text-left" style="text-align:right;">
+											Έκπτωση
+										</div>
+            <div class="col-md-4 col-6 fontSize8pt" style="text-align:right;">1,07EUR</div>
+          </div>
+          <div class="row">
+            <div class="col-md-8 col-6 fontSize8pt text-md-right text-left" style="font-weight: bold;text-align:right;">
+											ΤΕΛΙΚΗ ΑΞΙΑ
+										</div>
+            <div class="col-md-4 col-6 fontSize8pt" style="text-align:right;font-weight: bold;">
+              <div style="background-color:#f2f2f2;" class="backgrey">108,95EUR</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-8 col-6 fontSize6pt text-md-right text-left" style="text-align:right;">
+											Καθαρή Αξία
+										</div>
+            <div class="col-md-4 col-6 fontSize6pt" style="text-align:right;">94,74EUR</div>
+          </div>
+          <div class="row">
+            <div class="col-md-8 col-6 fontSize6pt text-md-right text-left" style="text-align:right;">
+											Φ.Π.Α
+										</div>
+            <div class="col-md-4 col-6 fontSize6pt" style="text-align:right;">14,21EUR</div>
+          </div>
+        </div>
+        <div class="col-lg-5 col-md-6  order-md-1 mb-4">
+          <div style="background-color:#f2f2f2;padding:2px 5px 0px 5px" class="backgrey">
+            <div class="row BoldBlueHeader fontSize8pt">
+              <div class="col">
+										ΑΝΑΛΥΣΗ ΦΠΑ
+									</div>
+            </div>
+            <div class="row pb-1">
+              <div class=" col-3 fontSize8pt" style="text-align:right;font-weight: bold;">
+										ΦΠΑ%
+									</div>
+              <div class=" col-6 fontSize8pt" style="text-align:right;font-weight: bold;">
+										ΚΑΘΑΡΟ ΠΟΣΟ ΑΝΑ ΦΠΑ
+									</div>
+              <div class=" col-3 fontSize8pt" style="text-align:right;font-weight: bold;">
+										ΑΞΙΑ ΦΠΑ
+									</div>
+            </div>
+            <div class="row" style="background-color:white;">
+              <div class=" col-3 fontSize6pt" style="text-align:right;">13%
+										</div>
+              <div class=" col-6 fontSize6pt" style="text-align:right">77,53EUR</div>
+              <div class=" col-3 fontSize6pt" style="text-align:right">10,08EUR</div>
+            </div>
+            <div class="row" style="background-color:white;">
+              <div class=" col-3 fontSize6pt" style="text-align:right;">24%
+										</div>
+              <div class=" col-6 fontSize6pt" style="text-align:right">17,21EUR</div>
+              <div class=" col-3 fontSize6pt" style="text-align:right">4,13EUR</div>
+            </div>
+          </div>
+          <div class="mb-3"></div>
+          <div style="background-color:#f2f2f2; padding:2px 5px 0px 5px" class="backgrey">
+            <div class="row BoldBlueHeader fontSize8pt">
+              <div class="col">ΣΤΟΙΧΕΙΑ ΠΛΗΡΩΜΗΣ</div>
+            </div>
+            <div class="row pb-1">
+              <div class=" col-6 fontSize8pt" style="text-align:right;font-weight: bold;">
+											Τρόπος Πληρωμής
+										</div>
+              <div class=" col-6 fontSize8pt" style="text-align:right;font-weight: bold;">
+											Ποσό Πληρωμής
+										</div>
+            </div>
+            <div class="row">
+              <div class="col-6 fontSize6pt" style="text-align:right;background-color:white;">
+																POS / e-POS
+															</div>
+              <div class="col-6 fontSize6pt" style="text-align:right;background-color:white;">108,95EUR</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mb-3"></div>
+      <div class="fontSize8pt  Notes-CSS"><b>ΠΑΡΑΤΗΡΗΣΕΙΣ</b><div class="mb-0"></div>
+      </div>
+      <div class="mb-3"></div>
+      <div class="row fontSize6pt" style="font-family: Segoe UI;">
+        <div class="col-md-6 mb-3">
+          <div class="row">
+            <div class="col fontSize8pt mr-0 pr-0">
+									Πάροχος:
+								</div>
+            <div class="col-8 fontSize8pt ml-0 pl-0">ENTERSOFTONE Α.Ε.</div>
+          </div>
+          <div class="row">
+            <div class="col fontSize8pt mr-0 pr-0">Url πάροχου: </div>
+            <div class="col-8 fontSize8pt ml-0 pl-0"><a href="https://www.entersoft.gr" target="_blank" style="color:black">https://www.entersoft.gr</a></div>
+          </div>
+          <div class="row">
+            <div class="col fontSize8pt mr-0 pr-0">Άδεια καταλληλότητας (ΥΠΑΗΕΣ): </div>
+            <div class="col-8 fontSize8pt ml-0 pl-0">2020_07_102Entersoft_001_Paperless e-Invoicing_V1_31072020</div>
+          </div>
+          <div class="row">
+            <div class="col fontSize8pt mr-0 pr-0">UID: </div>
+            <div class="col-8 fontSize8pt ml-0 pl-0">3883B8F669F6518CA377BD9F253BCDFB3FBD5C6D</div>
+          </div>
+          <div class="row">
+            <div class="col fontSize8pt mr-0 pr-0">M.AR.K: </div>
+            <div class="col-8 fontSize8pt ml-0 pl-0">400014913663191</div>
+          </div>
+          <div class="row">
+            <div class="col fontSize8pt mr-0 pr-0">AuthenticationCode: </div>
+            <div class="col-8 fontSize8pt  ml-0 pl-0">9CBAD229B3FA2E998729A38F491D9DDD063B8382</div>
+          </div>
+          <div class="row">
+            <div class="col fontSize8pt mr-0 pr-0">Ημ/νία διαβίβασης: </div>
+            <div class="col-8 fontSize8pt  ml-0 pl-0">19-08-2026 15:28:28</div>
+          </div>
+        </div>
+        <div class="col-md-6" align="right"><span><p></p></span></div>
+      </div>
+      <div class="row printingButton mt-3">
+        <div class="col text-center"><a class="btn btn-primary buttonPrint" title="Εκτύπωση" href="#" onclick="window.print();return false;" id="btnPrint"><i class="fas fa-print"></i> Εκτύπωση
+
+							</a></div>
+      </div>
+    </div><script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha512-Ua/7Woz9L5O0cwB/aYexmgoaD7lw3dWe9FvXejVdgqu71gRog3oJgjSWQR55fwWx+WKuk8cl7UwA1RS6QCadFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script><script>
+					jQuery(document).ready(function ($) {
+
+
+					if (
+					navigator.userAgent.match(/Android/i) ||
+					navigator.userAgent.match(/iPhone/i)
+					) {
+					$(".printingButton").hide();
+					}
+
+					});
+				</script></body>
+</html>
