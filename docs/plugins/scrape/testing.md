@@ -34,6 +34,18 @@ Generalize optimistically within the observed bank format. A real `PYATEROCHKA /
 
 Use the shared [model boundary](../../project/testing.md#model-tests) for provider-independent invariants, including generic grouping over domain objects.
 
+## Cashback payloads
+
+Tests for cashback-producing converters MUST call [assertCashbackPayload](../../../src/common/cashback/validate.ts) on the actual returned snapshot and compare its complete contents with the expected payload. For a scrape result, pass `result.cashbacks`, not the whole result or the inner array. Do not validate only the expected fixture or skip validation when an expected snapshot is missing.
+
+Import the validator only in tests; it is not part of production synchronization. It throws an ordinary error with failing field paths and schema rules, without converting values, adding defaults, or removing fields. Shared contract cases belong beside the validator; plugin tests cover source-backed conversion behavior.
+
+Shared contract tests MUST preserve raw reward and scope text, reject raw content, periods and bindings, and reject the unsupported `expired` status and empty structured titles.
+
+After editing the [schema](../../../src/common/cashback/payload.schema.json), run `yarn generate:cashback-types` and commit the regenerated declarations with the schema. Do not edit generated types by hand. TypeScript describes the structure; date formats, decimal patterns, and the ban on MCC exclusions inside an MCC scope are enforced by the validator.
+
+Keep shared descriptions in `$defs` and use plain `$ref` objects at reference sites so the generator reuses declarations instead of creating numbered copies.
+
 ## Test placement
 
 New or changed account/transaction converter cases MUST be grouped in files by account or operation type, such as `card`, `loan`, `purchase`, `income`, `expense`, `innerTransfer`, `outerTransfer`, `cashDeposit`, `cashWithdrawal`, or `refund`. Extend the existing file for that type when available. Cases for unrelated types MUST NOT be collected in a generic `quality`, `review`, or `regressions` file, or grouped by the investigation that found them.

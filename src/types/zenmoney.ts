@@ -1,3 +1,5 @@
+import type { PluginCashbacksPayload } from './cashback'
+
 export enum AccountType {
   cash = 'cash',
   ccard = 'ccard',
@@ -132,4 +134,5 @@ export type ScrapeFunc<T> = (args: {
 }) => Promise<{
   accounts: Account[]
   transactions: Transaction[]
+  cashbacks?: PluginCashbacksPayload
 }>

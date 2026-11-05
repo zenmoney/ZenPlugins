@@ -33,6 +33,7 @@ Run from the repository root. Clone the public repository with `git clone git@gi
 | `yarn lint:fix <PLUGIN_ID>` | Final formatting/lint fixes |
 | `yarn lint <PLUGIN_ID>` | Check plugin style without modifying files |
 | `yarn tsc --noEmit` | Repository TypeScript checking |
+| `yarn generate:cashback-types` | Regenerate cashback declarations after changing the payload schema |
 | `yarn test` | Full lint, type-check, and Jest suite |
 | `yarn test:playwright` | Separate Playwright Test suite in Chromium and WebKit; see [browser test setup](testing.md#browser-tests) |
 | `yarn test <PLUGIN_ID>` | Filter the final Jest command; lint and TypeScript checking still cover the repository |

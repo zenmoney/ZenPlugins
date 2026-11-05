@@ -1,0 +1,699 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zenmoney.app/schemas/plugin-cashbacks.schema.json",
+  "title": "PluginCashbacksPayload",
+  "description": "Bank plugin response with cashback rules. Contains no ZenMoney connectionId/accountId. Bindings use account externalIds from the same plugin scrape, not ZenMoney account ids. Card-specific cashback is bound to the corresponding account. Raw bank text is allowed only in reward and scope for later client-side parsing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cashbacks"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "enum": [
+        1
+      ],
+      "description": "Schema version. Current version is 1."
+    },
+    "scrapedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when the plugin scraped this data."
+    },
+    "cashbacks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Cashback"
+      },
+      "description": "Flat list of cashback rules, categories, and offers from the bank. content contains a structured title and an optional description; period and bindings must also be structured. The raw variant is allowed only for reward and scope."
+    }
+  },
+  "$defs": {
+    "Cashback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content",
+        "reward",
+        "period",
+        "status",
+        "bindings",
+        "scope"
+      ],
+      "properties": {
+        "externalId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Stable cashback/category/offer id from the bank, if available."
+        },
+        "content": {
+          "$ref": "#/$defs/CashbackContent"
+        },
+        "imageUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "description": "Bank-provided icon or image URL for this cashback."
+        },
+        "reward": {
+          "$ref": "#/$defs/Reward"
+        },
+        "period": {
+          "$ref": "#/$defs/Period"
+        },
+        "status": {
+          "$ref": "#/$defs/CashbackStatus"
+        },
+        "bindings": {
+          "$ref": "#/$defs/Bindings"
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        }
+      },
+      "description": "One cashback rule from a bank: a category, merchant offer, all-purchases cashback, or another earning condition. content contains a parsed non-empty title and an optional description. bindings is a required non-empty array of bindings. scope is required and must not be null. Only reward and scope may contain raw text."
+    },
+    "CashbackContent": {
+      "$ref": "#/$defs/StructuredCashbackContent",
+      "description": "Structured cashback content with a required non-empty title and an optional description. The raw variant is not supported.",
+      "examples": [
+        {
+          "type": "structured",
+          "title": "Super cashback!",
+          "description": "100% on everything, but only for members of parliament!"
+        }
+      ]
+    },
+    "StructuredCashbackContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "title"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "structured"
+          ],
+          "description": "Parsed content discriminator."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Parsed user-visible cashback title from the bank."
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Parsed bank-provided explanation, restrictions, or conditions. Omit it when unavailable, or use null when explicitly known to be absent."
+        }
+      },
+      "description": "Parsed cashback content with a required non-empty title and an optional description.",
+      "examples": [
+        {
+          "type": "structured",
+          "title": "Super cashback!",
+          "description": "100% on everything, but only for members of parliament!"
+        },
+        {
+          "type": "structured",
+          "title": "Cashback on taxi rides",
+          "description": null
+        }
+      ]
+    },
+    "Reward": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/PercentReward"
+        },
+        {
+          "$ref": "#/$defs/RawReward"
+        }
+      ],
+      "description": "Polymorphic reward value. Use PercentReward for parsed percent rewards; use RawReward with only type and text when the bank exposes raw reward text such as \"7% in bonus points\".",
+      "examples": [
+        {
+          "type": "percent",
+          "value": "5",
+          "unit": "PERCENT"
+        },
+        {
+          "type": "raw",
+          "text": "7% in bonus points"
+        }
+      ]
+    },
+    "PercentReward": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "percent"
+          ],
+          "description": "Percent reward discriminator."
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)?$",
+          "description": "Decimal value encoded as string to avoid floating-point precision issues."
+        },
+        "unit": {
+          "type": "string",
+          "enum": [
+            "PERCENT"
+          ],
+          "description": "Reward unit. For percent rewards this must be PERCENT."
+        }
+      },
+      "description": "Parsed percent reward."
+    },
+    "RawReward": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "text"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "raw"
+          ],
+          "description": "Raw reward discriminator."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Raw bank-provided reward text, for example \"7% in bonus points\"."
+        }
+      },
+      "description": "Raw bank-provided reward text when the reward cannot be safely parsed or represented as a structured percent reward, for example \"7% in bonus points\". Uses text as the only payload field besides the type discriminator.",
+      "examples": [
+        {
+          "type": "raw",
+          "text": "7% in bonus points"
+        }
+      ]
+    },
+    "Period": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/DatedPeriod"
+        },
+        {
+          "$ref": "#/$defs/PermanentPeriod"
+        }
+      ],
+      "description": "Cashback validity period. DatedPeriod defines a parsed month, quarter, year, or custom interval with from/to dates; PermanentPeriod is used for cashback without known dates. The raw variant is not supported.",
+      "examples": [
+        {
+          "type": "month",
+          "from": "2026-07-01",
+          "to": "2026-07-31"
+        },
+        {
+          "type": "permanent",
+          "from": null,
+          "to": null
+        }
+      ]
+    },
+    "DatedPeriod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "month",
+            "quarter",
+            "year",
+            "custom"
+          ],
+          "description": "Period granularity."
+        },
+        "from": {
+          "type": "string",
+          "format": "date",
+          "description": "Inclusive period start date."
+        },
+        "to": {
+          "type": "string",
+          "format": "date",
+          "description": "Inclusive period end date."
+        }
+      },
+      "description": "Dated cashback period such as month, quarter, year, or custom promo interval."
+    },
+    "PermanentPeriod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "permanent"
+          ],
+          "description": "Permanent period marker."
+        },
+        "from": {
+          "type": "null",
+          "description": "Permanent periods have no known start date. Use null when keeping a stable period object shape."
+        },
+        "to": {
+          "type": "null",
+          "description": "Permanent periods have no known end date. Use null when keeping a stable period object shape."
+        }
+      },
+      "description": "Cashback without known dates, such as a permanent base rate. from/to may be omitted or set to null."
+    },
+    "CashbackStatus": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "active",
+        "selected",
+        "available",
+        "future",
+        null
+      ],
+      "description": "Cashback state: active applies automatically; selected was chosen by the user; available can be selected; future starts later. Use null when the bank did not provide the state or the plugin could not parse it. The expired status is not supported."
+    },
+    "Bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Binding"
+      },
+      "description": "Required non-empty array of Binding elements. Null and raw bindings are not allowed. { \"type\": \"all\" } means all plugin accounts and is normally the only element. An account binding externalId identifies an account from the same plugin scrape, not a ZenMoney account. Card-specific cashback is bound to the corresponding account.",
+      "examples": [
+        [
+          {
+            "type": "all"
+          }
+        ],
+        [
+          {
+            "type": "account",
+            "externalId": "account-salary-001"
+          }
+        ]
+      ]
+    },
+    "Binding": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/AllBinding"
+        },
+        {
+          "$ref": "#/$defs/AccountBinding"
+        }
+      ],
+      "description": "Binding discriminated by type: all for every plugin account or account for one account identified by externalId. Card-specific cashback uses an account binding for the corresponding account. The raw variant is not supported.",
+      "examples": [
+        {
+          "type": "all"
+        },
+        {
+          "type": "account",
+          "externalId": "account-salary-001"
+        }
+      ]
+    },
+    "AllBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "all"
+          ],
+          "description": "All plugin accounts binding discriminator."
+        }
+      },
+      "description": "All accounts returned by the plugin are eligible for this cashback. Normally use { \"type\": \"all\" } as the only element in a non-null bindings array.",
+      "examples": [
+        {
+          "type": "all"
+        }
+      ]
+    },
+    "AccountBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "externalId"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "account"
+          ],
+          "description": "Single plugin account binding discriminator."
+        },
+        "externalId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plugin account externalId returned by the same plugin scrape. This is not a ZenMoney account id."
+        }
+      },
+      "description": "Exactly one plugin account is eligible for this cashback, identified by its externalId returned by the same plugin scrape. Use this binding for card-specific cashback by referencing the corresponding plugin account.",
+      "examples": [
+        {
+          "type": "account",
+          "externalId": "account-salary-001"
+        }
+      ]
+    },
+    "Scope": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/AllPurchasesScope"
+        },
+        {
+          "$ref": "#/$defs/MccScope"
+        },
+        {
+          "$ref": "#/$defs/MerchantScope"
+        },
+        {
+          "$ref": "#/$defs/CategoryScope"
+        },
+        {
+          "$ref": "#/$defs/RawScope"
+        }
+      ],
+      "description": "Required non-null purchase scope for matching transactions. Use parsed scopes when available: all purchases, MCC list, merchant, or bank category. Use RawScope with only type and text when the bank exposes raw scope text for later client-side parsing.",
+      "examples": [
+        {
+          "type": "all_purchases"
+        },
+        {
+          "type": "raw",
+          "text": "Gas stations and car repair shops"
+        }
+      ]
+    },
+    "AllPurchasesScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "all_purchases"
+          ],
+          "description": "All-purchases scope discriminator."
+        },
+        "exclude": {
+          "$ref": "#/$defs/ScopeExclusions"
+        }
+      },
+      "description": "Cashback applies to all purchases unless excluded."
+    },
+    "MccScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "mcc"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "mcc"
+          ],
+          "description": "MCC scope discriminator."
+        },
+        "mcc": {
+          "$ref": "#/$defs/MccList"
+        },
+        "exclude": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/ScopeExclusions"
+            },
+            {
+              "type": "array",
+              "not": {
+                "type": "array",
+                "contains": {
+                  "$ref": "#/$defs/MccExclusion"
+                }
+              }
+            }
+          ],
+          "description": "Optional non-MCC exclusions from this scope. MCC exclusions are invalid because mcc already defines the final eligible MCC list."
+        }
+      },
+      "description": "Cashback applies to transactions with listed MCC codes."
+    },
+    "MerchantScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "merchant"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "merchant"
+          ],
+          "description": "Merchant scope discriminator."
+        },
+        "merchant": {
+          "$ref": "#/$defs/Merchant"
+        },
+        "exclude": {
+          "$ref": "#/$defs/ScopeExclusions"
+        }
+      },
+      "description": "Cashback applies to one bank-provided merchant/brand."
+    },
+    "CategoryScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "category"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "category"
+          ],
+          "description": "Bank-category scope discriminator."
+        },
+        "category": {
+          "$ref": "#/$defs/Category"
+        },
+        "exclude": {
+          "$ref": "#/$defs/ScopeExclusions"
+        }
+      },
+      "description": "Cashback applies to a bank category when MCCs/merchants are not exposed or are intentionally abstracted."
+    },
+    "RawScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "text"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "raw"
+          ],
+          "description": "Raw purchase scope discriminator."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Raw bank-provided purchase scope text for later client-side parsing."
+        }
+      },
+      "description": "Raw bank-provided purchase scope text when the plugin could scrape a scope but could not parse MCCs, merchants, or categories. This raw fallback uses text as the only payload field besides the type discriminator.",
+      "examples": [
+        {
+          "type": "raw",
+          "text": "Gas stations and car repair shops"
+        }
+      ]
+    },
+    "ScopeExclusions": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/MccExclusion"
+          },
+          {
+            "$ref": "#/$defs/MerchantExclusion"
+          },
+          {
+            "$ref": "#/$defs/TextExclusion"
+          }
+        ]
+      },
+      "description": "List of exclusions from a scope. Empty list means the bank explicitly returned no exclusions; omitted means the plugin did not receive or parse exclusions."
+    },
+    "MccExclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "mcc"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "mcc"
+          ],
+          "description": "MCC exclusion discriminator."
+        },
+        "mcc": {
+          "$ref": "#/$defs/MccList"
+        }
+      },
+      "description": "Exclude listed MCC codes."
+    },
+    "MerchantExclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "merchant"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "merchant"
+          ],
+          "description": "Merchant exclusion discriminator."
+        },
+        "merchant": {
+          "$ref": "#/$defs/Merchant"
+        }
+      },
+      "description": "Exclude one merchant/brand."
+    },
+    "TextExclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "text"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "text"
+          ],
+          "description": "Text exclusion discriminator."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Bank-provided exclusion text."
+        }
+      },
+      "description": "Free-text exclusion that cannot be safely structured."
+    },
+    "MccList": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 9999
+      },
+      "description": "Non-empty list of 1-9999 Merchant Category Codes. Consumer constraint: client requires integer lexical encoding such as 5411; mathematically integral JSON numbers encoded as 5411.0 or 5411e0 cause invalid_request for the entire snapshot."
+    },
+    "Merchant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "externalId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Merchant id from the bank, if available."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "User-visible merchant title."
+        }
+      },
+      "description": "Bank-provided merchant/brand reference."
+    },
+    "Category": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "externalId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Category id from the bank, if available."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "User-visible category title."
+        }
+      },
+      "description": "Bank-provided category reference."
+    }
+  }
+}
