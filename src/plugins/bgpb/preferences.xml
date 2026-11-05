@@ -21,17 +21,6 @@
         summary="||***********"
     />
     <EditTextPreference
-        key="appPin"
-        obligatory="false"
-        inputType="textPassword"
-        title="PIN прежней активации"
-        dialogTitle="Прежний PIN токена BGPB"
-        dialogMessage="Для новых подключений PIN создается автоматически. Заполняйте это поле только для переноса ранее активированного токена. Это не PIN банковской карты."
-        positiveButtonText="ОК"
-        negativeButtonText="Отмена"
-        summary="||***********"
-    />
-    <EditTextPreference
         key="startDate"
         obligatory="true"
         inputType="date"

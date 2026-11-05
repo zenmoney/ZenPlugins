@@ -14,10 +14,12 @@ import {
   parseTransactionsAndOverdraft,
   registerDeviceToken
 } from './api'
-import { addOverdraftInfo, convertAccount, convertLastTransaction, convertTransaction, mergeStatementAndLastTransactions } from './converters'
+import { addOverdraftInfo, convertAccount, convertLastTransaction, convertTransaction, mergeStatementAndLastTransactions, shouldFetchFullStatement } from './converters'
+import { DEVICE_TOKEN_RECOVERY_MESSAGE } from './messages'
 import {
   buildActivationDescriptor,
   createDeviceIdentity,
+  createDeviceAuthorizationProvider,
   createDeviceState,
   generateDevicePin,
   generateDeviceOtp,
@@ -31,20 +33,9 @@ const DEVICE_TOKEN_DATA_KEY = 'deviceOtp/v1'
 const DEVICE_PIN_DATA_KEY = 'deviceOtp/pin/v1'
 const DEVICE_PIN_DATA_VERSION = 1
 const ACTIVATION_CODE_TIMEOUT_MS = 180000
-const DEVICE_OTP_PERIOD_MS = 30000
-const DEVICE_OTP_BOUNDARY_GRACE_MS = 250
-const DEVICE_OTP_MAX_WAITS = 2
-const LEGACY_PIN_RECOVERY_ERROR = 'Не удалось открыть сохраненную активацию BGPB. Укажите прежний PIN токена в настройках для переноса.'
-
-/**
- * Full mailbox statements provide complete history when device authorization is
- * available. History API is merged separately for recent and pending operations.
- */
-export function shouldFetchFullStatement (account, deviceBound) {
-  return Boolean(deviceBound && account.transactionsAccId)
-}
 
 export async function scrape ({ preferences, fromDate, toDate }) {
+  ZenMoney.locale = 'ru'
   const session = await initializeDeviceSession(preferences)
   const token = session.sid
 
@@ -129,6 +120,7 @@ async function initializeDeviceSession (preferences) {
     ? readStoredPinEntry(storedPinData.pending)
     : null
   const pendingPinForCurrentAccount = pendingPinEntry?.accountHash === expectedAccountHash
+  // Migrate already saved legacy preferences without offering a manual PIN setting.
   const legacyPin = String(preferences.appPin || '').trim()
   const pinCandidates = []
   if (activePinEntry) {
@@ -165,7 +157,7 @@ async function initializeDeviceSession (preferences) {
       openedDifferentAccount = true
     }
     if (!state && !openedDifferentAccount) {
-      throw new InvalidPreferencesError(LEGACY_PIN_RECOVERY_ERROR)
+      throw new InvalidPreferencesError(DEVICE_TOKEN_RECOVERY_MESSAGE)
     }
     if (state && (activePinEntry?.accountHash !== expectedAccountHash || activePinEntry.pin !== pin)) {
       ZenMoney.setData(DEVICE_PIN_DATA_KEY, {
@@ -235,60 +227,6 @@ async function initializeDeviceSession (preferences) {
   }
 
   return await openDeviceSession(state, pin, false)
-}
-
-async function waitForNextDeviceOtpPeriod () {
-  const now = Date.now()
-  const nextPeriod = (Math.floor(now / DEVICE_OTP_PERIOD_MS) + 1) * DEVICE_OTP_PERIOD_MS
-  await new Promise(resolve => setTimeout(resolve, nextPeriod - now + DEVICE_OTP_BOUNDARY_GRACE_MS))
-}
-
-/**
- * Provides one fresh OTP for protected actions without reusing the code that
- * opened the device session.
- */
-export function createDeviceAuthorizationProvider (state, pin, initialOtp, options = {}) {
-  const generateOtp = options.generateOtp || generateDeviceOtp
-  const waitForNextOtpPeriod = options.waitForNextOtpPeriod || waitForNextDeviceOtpPeriod
-  let cachedAuthorization = null
-  let authorizationPromise = null
-
-  return () => {
-    if (authorizationPromise) {
-      return authorizationPromise
-    }
-
-    const currentOtp = generateOtp(state, pin)
-    if (cachedAuthorization && cachedAuthorization.otp === currentOtp) {
-      return Promise.resolve(cachedAuthorization)
-    }
-
-    const nextAuthorizationPromise = (async () => {
-      let otp = currentOtp
-      let waits = 0
-      while (otp === initialOtp) {
-        if (waits >= DEVICE_OTP_MAX_WAITS) {
-          throw new InvalidPreferencesError('Не удалось получить свежий PIN-код BGPB. Проверьте время на устройстве.')
-        }
-        await waitForNextOtpPeriod()
-        waits += 1
-        otp = generateOtp(state, pin)
-      }
-      cachedAuthorization = { deviceNo: state.deviceNo, otp }
-      return cachedAuthorization
-    })()
-
-    authorizationPromise = nextAuthorizationPromise
-    nextAuthorizationPromise.then(
-      () => {
-        if (authorizationPromise === nextAuthorizationPromise) authorizationPromise = null
-      },
-      () => {
-        if (authorizationPromise === nextAuthorizationPromise) authorizationPromise = null
-      }
-    )
-    return nextAuthorizationPromise
-  }
 }
 
 async function openDeviceSession (state, pin, activated) {

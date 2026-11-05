@@ -15,10 +15,10 @@ const PUSH_HISTORY_ENDPOINT = `push-history/api/android_${APP_VERSION}/v2/getHis
 const HISTORY_BASE_PATH = 'history/client/2/1/'
 const HISTORY_CONFIG_ENDPOINT = `${HISTORY_BASE_PATH}getConfig`
 const HISTORY_EXT_OPERATIONS_ENDPOINT = `${HISTORY_BASE_PATH}ext-operations`
-const EXTRA_AUTH_REQUIRED_ERROR = 'Для выполнения действия требуется дополнительная аутентификация'
 
 const SOU_ADMIN_ENDPOINT = 'sou2/xml_online.admin'
 const SOU_REQUEST_ENDPOINT = 'sou2/xml_online.request'
+const statementAuthorizationQueues = new WeakMap()
 const TERMINAL_CAPABILITIES_XML =
   '   <TerminalCapabilities>\r\n' +
   '       <LongParameter>Y</LongParameter>\r\n' +
@@ -72,6 +72,14 @@ function sanitizeBgpbRequestLogBody (body) {
       .replace(/(<Parameter\s+Id="(?:Login|Password)"[^>]*>)([^<]*)(<\/Parameter>)/gi, (_match, openTag, value, closeTag) => {
         return `${openTag}${sanitize(value, true)}${closeTag}`
       })
+      .replace(/<Parameter\b[^>]*>/gi, parameter => {
+        if (!/\sId\s*=\s*"(?:PhoneInfo|EmailInfo)"/.test(parameter)) {
+          return parameter
+        }
+        return parameter.replace(/(\sHint\s*=\s*")([^"]*)(")/g, (_match, prefix, value, suffix) => {
+          return `${prefix}${sanitize(value, true)}${suffix}`
+        })
+      })
       .replace(/(<(?:xfad|ActivationPwd|DerivationOTP|DerivationSign)>)([^<]*)(<\/(?:xfad|ActivationPwd|DerivationOTP|DerivationSign)>)/gi, (_match, openTag, value, closeTag) => {
         return `${openTag}${sanitize(value, true)}${closeTag}`
       })
@@ -96,23 +104,32 @@ function mergeSanitizeLogMask (defaults, mask) {
     return mask
   }
   if (mask && typeof mask === 'object') {
-    return {
+    const mergedMask = {
       ...defaults,
       ...mask
     }
+    if (defaults.headers && mask.headers && typeof mask.headers === 'object') {
+      const headerMask = Object.fromEntries(Object.entries(mask.headers).map(([name, value]) => [name.toLowerCase(), value]))
+      mergedMask.headers = { ...headerMask, ...defaults.headers }
+    }
+    return mergedMask
   }
   return mask
 }
 
 function withDefaultSanitizeLogMasks (options) {
+  const defaults = {
+    headers: {
+      authorization: true,
+      cookie: true,
+      'set-cookie': true
+    },
+    body: sanitizeBgpbRequestLogBody
+  }
   return {
     ...options,
-    sanitizeRequestLog: mergeSanitizeLogMask({
-      body: sanitizeBgpbRequestLogBody
-    }, options.sanitizeRequestLog),
-    sanitizeResponseLog: mergeSanitizeLogMask({
-      body: sanitizeBgpbRequestLogBody
-    }, options.sanitizeResponseLog)
+    sanitizeRequestLog: mergeSanitizeLogMask(defaults, options.sanitizeRequestLog),
+    sanitizeResponseLog: mergeSanitizeLogMask(defaults, options.sanitizeResponseLog)
   }
 }
 
@@ -132,7 +149,21 @@ async function fetchMailAttachment (sid, mailId) {
     buildMailAttachmentRequest(sid, mailId),
     {},
     response => true,
-    message => new InvalidPreferencesError(message))
+    createDeviceTokenError)
+}
+
+class DeviceAuthorizationRejectedError extends Error {
+  constructor () {
+    super('BGPB rejected device-token authorization')
+    this.name = 'DeviceAuthorizationRejectedError'
+  }
+}
+
+function createDeviceTokenError (message) {
+  if (message === 'Ответ банка: Ошибка проверки пароля') {
+    return new DeviceAuthorizationRejectedError()
+  }
+  return new Error('Unexpected BGPB device-token authorization error')
 }
 
 async function fetchApi (url, xml, options, predicate = () => true, errorFactory = message => new BankMessageError(message)) {
@@ -453,11 +484,10 @@ export async function loginDeviceToken (deviceNo, otp) {
     '   <RequestType>Login</RequestType>\r\n' +
     buildTerminalInfoXml() +
     '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-    '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, message => new InvalidPreferencesError('Банк отклонил PIN-токен BGPB'))
-  if (res.BS_Response.Login && res.BS_Response.Login.SID) {
-    return res.BS_Response.Login.SID
-  }
-  throw new InvalidPreferencesError('Банк не открыл сессию PIN-токена BGPB')
+    '</BS_Request>\r\n', { sanitizeRequestLog: { body: true } }, response => true, createDeviceTokenError)
+  const sid = res.BS_Response.Login?.SID
+  console.assert(typeof sid === 'string' && sid.length > 0, 'BGPB device-token login did not return a session')
+  return sid
 }
 
 /**
@@ -716,6 +746,36 @@ async function fetchCardLastTransactions (sid, account, fromDate, toDate, histor
   }))
 }
 
+async function executeWithStatementAuthorization (getDeviceAuthorization, execute) {
+  if (!getDeviceAuthorization) {
+    return await execute(null)
+  }
+
+  const previous = statementAuthorizationQueues.get(getDeviceAuthorization) || Promise.resolve()
+  const result = previous.then(async () => {
+    const authorization = await getDeviceAuthorization()
+    try {
+      return await execute(authorization)
+    } catch (error) {
+      if (!(error instanceof DeviceAuthorizationRejectedError)) {
+        throw error
+      }
+      const nextAuthorization = await getDeviceAuthorization({ afterOtp: authorization.otp })
+      console.assert(nextAuthorization.otp !== authorization.otp, 'BGPB statement retry requires a different device authorization code')
+      return await execute(nextAuthorization)
+    }
+  })
+  const completed = result.then(() => {}, () => {})
+  statementAuthorizationQueues.set(getDeviceAuthorization, completed)
+  try {
+    return await result
+  } finally {
+    if (statementAuthorizationQueues.get(getDeviceAuthorization) === completed) {
+      statementAuthorizationQueues.delete(getDeviceAuthorization)
+    }
+  }
+}
+
 export async function fetchFullTransactions (sid, account, fromDate, toDate = new Date(), getDeviceAuthorization = null) {
   console.log('>>> Загрузка списка транзакций...')
 
@@ -725,46 +785,27 @@ export async function fetchFullTransactions (sid, account, fromDate, toDate = ne
   const mailIDs = []
 
   for (const date of dates) {
-    try {
-      const deviceAuthorization = getDeviceAuthorization ? await getDeviceAuthorization() : null
-      const response = await fetchApi(SOU_ADMIN_ENDPOINT,
-        '<BS_Request>\r\n' +
-        '   <ExecuteAction Id="' + account.transactionsAccId + '" Button="OK">\r\n' +
-        '      <Parameter Id="DateFrom">' + transactionDate(date[0]) + '</Parameter>\r\n' +
-        '      <Parameter Id="DateTill">' + transactionDate(date[1]) + '</Parameter>\r\n' +
-        '   </ExecuteAction>\r\n' +
-        '   <RequestType>ExecuteAction</RequestType>\r\n' +
-        buildSessionXml(sid, deviceAuthorization) +
-        buildTerminalInfoXml() +
-        '   <Subsystem>ClientAuth</Subsystem>\r\n' +
-        '</BS_Request>\r\n', {}, response => true, message => new InvalidPreferencesError(message))
+    const response = await executeWithStatementAuthorization(getDeviceAuthorization, async deviceAuthorization => await fetchApi(SOU_ADMIN_ENDPOINT,
+      '<BS_Request>\r\n' +
+      '   <ExecuteAction Id="' + account.transactionsAccId + '" Button="OK">\r\n' +
+      '      <Parameter Id="DateFrom">' + transactionDate(date[0]) + '</Parameter>\r\n' +
+      '      <Parameter Id="DateTill">' + transactionDate(date[1]) + '</Parameter>\r\n' +
+      '   </ExecuteAction>\r\n' +
+      '   <RequestType>ExecuteAction</RequestType>\r\n' +
+      buildSessionXml(sid, deviceAuthorization) +
+      buildTerminalInfoXml() +
+      '   <Subsystem>ClientAuth</Subsystem>\r\n' +
+      '</BS_Request>\r\n', {}, response => true, createDeviceTokenError))
 
-      const mailId = response?.BS_Response?.ExecuteAction?.MailId
-      if (mailId) {
-        mailIDs.push(mailId)
-      }
-    } catch (error) {
-      if (error.message && error.message.includes(EXTRA_AUTH_REQUIRED_ERROR)) {
-        throw new InvalidPreferencesError('Банк запросил дополнительную авторизацию выписки BGPB, но PIN-токен не был принят.')
-      }
-      if (error instanceof TemporaryError) {
-        console.log(`>>> Не удалось запросить выписку для "${account.title}" за ${transactionDate(date[0])}-${transactionDate(date[1])}, пропускаем интервал.`)
-        continue
-      }
-      throw error
+    const mailId = response?.BS_Response?.ExecuteAction?.MailId
+    if (mailId) {
+      mailIDs.push(mailId)
     }
   }
 
   const mails = []
   for (const mailId of mailIDs) {
-    try {
-      mails.push(await fetchMailAttachment(sid, mailId))
-    } catch (error) {
-      if (!(error instanceof TemporaryError)) {
-        throw error
-      }
-      console.log(`>>> Не удалось загрузить вложение выписки для "${account.title}", пропускаем один интервал.`)
-    }
+    mails.push(await fetchMailAttachment(sid, mailId))
   }
 
   return mails
@@ -812,22 +853,10 @@ export async function fetchLastTransactions (sid, accounts = [], fromDate = new 
     return transactions
   }
 
-  try {
-    const historyConfig = await fetchHistoryConfig()
-    const transactions = flatMap(await Promise.all(cardAccounts.map(async account => {
-      try {
-        return await fetchCardLastTransactions(sid, account, fromDate, toDate, historyConfig)
-      } catch (error) {
-        console.log(`>>> Не удалось загрузить последние операции по карте "${account.title}", пропускаем.`)
-        return []
-      }
-    })), item => item)
-    console.log(`>>> Загружено ${transactions.length} последних операций через HistoryApi.`)
-    return transactions
-  } catch (error) {
-    console.log('>>> Не удалось получить карточную историю через HistoryApi, пробуем push-history.')
-    const transactions = await fetchPushHistoryTransactions(sid)
-    console.log(`>>> Загружено ${transactions.length} последних операций.`)
-    return transactions
-  }
+  const historyConfig = await fetchHistoryConfig()
+  const transactions = flatMap(await Promise.all(cardAccounts.map(async account => {
+    return await fetchCardLastTransactions(sid, account, fromDate, toDate, historyConfig)
+  })), item => item)
+  console.log(`>>> Загружено ${transactions.length} последних операций через HistoryApi.`)
+  return transactions
 }

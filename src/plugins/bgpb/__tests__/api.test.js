@@ -1,5 +1,6 @@
+import fetchMock from 'fetch-mock'
 import { parseXml } from '../../../common/xmlUtils'
-import { InvalidLoginOrPasswordError, InvalidPreferencesError } from '../../../errors'
+import { InvalidLoginOrPasswordError, ZPAPIError } from '../../../errors'
 import {
   activateDeviceToken,
   createDateIntervals,
@@ -39,6 +40,7 @@ describe('request logging', () => {
   })
 
   afterEach(() => {
+    fetchMock.restore()
     debug.mockRestore()
   })
 
@@ -140,13 +142,46 @@ describe('request logging', () => {
     expect(error.message).toBe('Неверный логин или пароль')
   })
 
-  it('maps bank device-token rejections to the saved-token preferences error', async () => {
+  it('keeps a bank device-token rejection reportable without suggesting state recreation', async () => {
     global.fetch = jest.fn()
       .mockResolvedValueOnce(makeNetworkResponse('<BS_Response><Error><ErrorLine>Ошибка проверки пароля</ErrorLine></Error></BS_Response>'))
 
     const error = await loginDeviceToken('123456', '654321').catch(error => error)
-    expect(error).toBeInstanceOf(InvalidPreferencesError)
-    expect(error.message).toBe('Банк отклонил PIN-токен BGPB')
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(error.message).toBe('BGPB rejected device-token authorization')
+  })
+
+  // [model] An existing unrelated authorization response must not be called a PIN rejection.
+  it('[model] keeps an unclassified device-token error reportable', async () => {
+    fetchMock.postOnce('https://mobapp-frontend.bgpb.by/sou2/xml_online.admin', {
+      body: '<BS_Response><Error Count="1" Class="2"><ErrorLine Idx="1">Ошибка авторизации</ErrorLine></Error></BS_Response>'
+    })
+
+    const error = await loginDeviceToken('123456', '654321').catch(error => error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(error.message).toBe('Unexpected BGPB device-token authorization error')
+  })
+
+  // [model] Transport errors retain their identity without suggesting token recreation.
+  it('[model] preserves a device-token transport failure unchanged', async () => {
+    const error = new Error('model transport failure')
+    fetchMock.postOnce('https://mobapp-frontend.bgpb.by/sou2/xml_online.admin', { throws: error })
+
+    await expect(loginDeviceToken('123456', '654321')).rejects.toBe(error)
+  })
+
+  // [model] The existing Logoff response is an unexpected login result, not a rejected PIN.
+  it('[model] rejects a device-token response without a session as an ordinary error', async () => {
+    fetchMock.postOnce('https://mobapp-frontend.bgpb.by/sou2/xml_online.admin', {
+      body: '<BS_Response><Logoff/></BS_Response>'
+    })
+
+    const error = await loginDeviceToken('123456', '654321').catch(error => error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(error.message).toBe('BGPB device-token login did not return a session')
   })
 })
 
@@ -179,8 +214,9 @@ describe('fetchFullTransactions', () => {
       transactionsAccId: 'statement-action'
     }, new Date('2026-05-01T00:00:00+0300'), new Date('2026-05-21T00:00:00+0300')).catch(error => error)
 
-    expect(error).toBeInstanceOf(InvalidPreferencesError)
-    expect(error.message).toBe('Ответ банка: Ошибка проверки пароля')
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(error.message).toBe('BGPB rejected device-token authorization')
     expect(global.fetch).toHaveBeenCalledTimes(1)
   })
 
@@ -194,8 +230,9 @@ describe('fetchFullTransactions', () => {
       transactionsAccId: 'statement-action'
     }, new Date('2026-05-01T00:00:00+0300'), new Date('2026-05-21T00:00:00+0300')).catch(error => error)
 
-    expect(error).toBeInstanceOf(InvalidPreferencesError)
-    expect(error.message).toBe('Ответ банка: Ошибка авторизации')
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(error.message).toBe('Unexpected BGPB device-token authorization error')
   })
 })
 

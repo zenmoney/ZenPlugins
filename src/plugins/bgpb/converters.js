@@ -603,32 +603,51 @@ function getDateJSON (str) {
   return (`20${year}-${month}-${day}`)
 }
 
+function transactionPayloadKey (transaction) {
+  return JSON.stringify(transaction, (_key, value) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return value
+    }
+    const ordered = Object.create(null)
+    for (const key of Object.keys(value).sort()) {
+      ordered[key] = value[key]
+    }
+    return ordered
+  })
+}
+
 export function transactionsUnique (array) {
   const uniqueTransactions = []
-  const seen = new Set()
+  const seenIds = new Map()
+  const seenPayloads = new Set()
   for (const transaction of array) {
-    const firstMovement = transaction.movements[0]
-    const key = firstMovement.id || joinIdParts([
-      transaction.date.getTime(),
-      transaction.movements.length,
-      firstMovement.account.id,
-      firstMovement.sum,
-      firstMovement.invoice?.instrument,
-      firstMovement.invoice?.sum,
-      transaction.comment,
-      transaction.merchant?.fullTitle,
-      transaction.merchant?.title,
-      transaction.merchant?.city,
-      transaction.merchant?.country,
-      transaction.merchant?.mcc
-    ])
-    if (seen.has(key)) {
-      continue
+    const id = transaction.movements[0].id
+    const payload = transactionPayloadKey(transaction)
+    if (id) {
+      if (seenIds.has(id)) {
+        console.assert(seenIds.get(id) === payload, 'Conflicting BGPB transactions share a movement ID')
+        continue
+      }
+      seenIds.set(id, payload)
+    } else {
+      if (seenPayloads.has(payload)) {
+        continue
+      }
+      seenPayloads.add(payload)
     }
-    seen.add(key)
     uniqueTransactions.push(transaction)
   }
   return uniqueTransactions
+}
+
+function compareTransactions (left, right) {
+  const dateDifference = left.date.getTime() - right.date.getTime()
+  if (dateDifference !== 0) {
+    return dateDifference
+  }
+  const leftKey = transactionPayloadKey(left)
+  const rightKey = transactionPayloadKey(right)
+  return leftKey < rightKey ? -1 : leftKey > rightKey ? 1 : 0
 }
 
 function transactionSourceKind (transaction) {
@@ -659,6 +678,30 @@ function amountsMatch (left, right) {
   return Math.round(left * 100) === Math.round(right * 100)
 }
 
+function knownAmountsDiffer (left, right) {
+  return Number.isFinite(left) && Number.isFinite(right) && left !== right
+}
+
+function movementsContradict (left, right) {
+  const leftAccount = left.account
+  const rightAccount = right.account
+  if ((leftAccount.id && rightAccount.id && leftAccount.id !== rightAccount.id) ||
+    (leftAccount.type && rightAccount.type && leftAccount.type !== rightAccount.type) ||
+    (leftAccount.instrument && rightAccount.instrument && leftAccount.instrument !== rightAccount.instrument)) {
+    return true
+  }
+  const sameAccount = leftAccount.id && leftAccount.id === rightAccount.id
+  const sameCurrency = leftAccount.instrument && leftAccount.instrument === rightAccount.instrument
+  if ((sameAccount || sameCurrency) &&
+    (knownAmountsDiffer(left.sum, right.sum) || knownAmountsDiffer(left.fee, right.fee))) {
+    return true
+  }
+  if (left.invoice && right.invoice && left.invoice.instrument && right.invoice.instrument) {
+    return left.invoice.instrument !== right.invoice.instrument || knownAmountsDiffer(left.invoice.sum, right.invoice.sum)
+  }
+  return false
+}
+
 function isSamePostedOperation (statement, recent) {
   if (recent.hold) {
     return false
@@ -667,7 +710,9 @@ function isSamePostedOperation (statement, recent) {
   const recentMovement = recent.movements[0]
   if (statementMovement.account.id !== recentMovement.account.id ||
     !amountsMatch(statementMovement.sum, recentMovement.sum) ||
-    Math.abs(statement.date.getTime() - recent.date.getTime()) > 2 * 60 * 1000) {
+    Math.abs(statement.date.getTime() - recent.date.getTime()) > 2 * 60 * 1000 ||
+    statement.movements.length !== recent.movements.length ||
+    statement.movements.some((movement, index) => movementsContradict(movement, recent.movements[index]))) {
     return false
   }
 
@@ -681,8 +726,8 @@ function isSamePostedOperation (statement, recent) {
  * Matching is one-to-one so repeated same-value operations remain separate.
  */
 export function mergeStatementAndLastTransactions (statementTransactions, lastTransactions) {
-  const statements = transactionsUnique(statementTransactions)
-  const recent = transactionsUnique(lastTransactions)
+  const statements = transactionsUnique(statementTransactions).sort(compareTransactions)
+  const recent = transactionsUnique(lastTransactions).sort(compareTransactions)
   const availableStatementIndexes = new Set(statements.map((_transaction, index) => index))
   const unmatchedRecent = []
 
@@ -708,4 +753,12 @@ export function mergeStatementAndLastTransactions (statementTransactions, lastTr
   }
 
   return transactionsUnique(statements.concat(unmatchedRecent))
+}
+
+/**
+ * Full mailbox statements provide complete history when device authorization is
+ * available. History API is merged separately for recent and pending operations.
+ */
+export function shouldFetchFullStatement (account, deviceBound) {
+  return Boolean(deviceBound && account.transactionsAccId)
 }

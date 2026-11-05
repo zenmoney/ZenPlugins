@@ -33,6 +33,7 @@ jest.mock('../api', () => ({
 }))
 
 jest.mock('../deviceOtp', () => ({
+  createDeviceAuthorizationProvider: jest.requireActual('../deviceOtp').createDeviceAuthorizationProvider,
   buildActivationDescriptor: mockBuildActivationDescriptor,
   createDeviceIdentity: mockCreateDeviceIdentity,
   createDeviceState: mockCreateDeviceState,
@@ -44,7 +45,9 @@ jest.mock('../deviceOtp', () => ({
   validateDevicePin: mockValidateDevicePin
 }))
 
-const { createDeviceAuthorizationProvider, scrape, shouldFetchFullStatement } = require('../index')
+const { scrape } = require('../index')
+const { createDeviceAuthorizationProvider } = jest.requireActual('../deviceOtp')
+const { shouldFetchFullStatement } = jest.requireActual('../converters')
 
 const LOGIN = 'user@example.com'
 const GENERATED_PIN = '582041'
@@ -133,6 +136,8 @@ beforeEach(() => {
 })
 
 describe('statement source selection', () => {
+  afterEach(() => { jest.useRealTimers() })
+
   it('uses protected mailbox statements for complete deposit and card history', () => {
     expect(shouldFetchFullStatement({
       type: 'deposit',
@@ -157,13 +162,14 @@ describe('statement source selection', () => {
     }, true)).toBe(false)
   })
 
-  it('shares one fresh post-login OTP between protected actions', async () => {
-    const generateOtp = jest.fn()
-      .mockReturnValueOnce('login-otp')
-      .mockReturnValueOnce('action-otp')
-      .mockReturnValue('action-otp')
-    const waitForNextOtpPeriod = jest.fn(async () => {})
-    const getDeviceAuthorization = createDeviceAuthorizationProvider(DEVICE_STATE, GENERATED_PIN, 'login-otp', {
+  // These clock models verify refresh and bounded waits without assuming bank OTP acceptance rules.
+  it('[model] rechecks the current period for concurrent protected actions', async () => {
+    jest.useFakeTimers({ now: 1000, doNotFake: ['performance'] })
+    const generateOtp = jest.fn(() => `otp-${Math.floor(Date.now() / 30000)}`)
+    const waitForNextOtpPeriod = jest.fn(async () => {
+      jest.setSystemTime((Math.floor(Date.now() / 30000) + 1) * 30000 + 250)
+    })
+    const getDeviceAuthorization = createDeviceAuthorizationProvider(DEVICE_STATE, GENERATED_PIN, 'otp-0', {
       generateOtp,
       waitForNextOtpPeriod
     })
@@ -172,42 +178,43 @@ describe('statement source selection', () => {
       getDeviceAuthorization(),
       getDeviceAuthorization()
     ])).resolves.toEqual([
-      { deviceNo: DEVICE_STATE.deviceNo, otp: 'action-otp' },
-      { deviceNo: DEVICE_STATE.deviceNo, otp: 'action-otp' }
+      { deviceNo: DEVICE_STATE.deviceNo, otp: 'otp-1' },
+      { deviceNo: DEVICE_STATE.deviceNo, otp: 'otp-1' }
     ])
     expect(waitForNextOtpPeriod).toHaveBeenCalledTimes(1)
-    expect(generateOtp).toHaveBeenCalledTimes(2)
+    expect(generateOtp).toHaveBeenCalledTimes(3)
   })
 
-  it('refreshes the shared authorization after the OTP period changes', async () => {
-    const generateOtp = jest.fn()
-      .mockReturnValueOnce('login-otp')
-      .mockReturnValueOnce('action-otp-1')
-      .mockReturnValueOnce('action-otp-1')
-      .mockReturnValueOnce('action-otp-2')
-    const waitForNextOtpPeriod = jest.fn(async () => {})
-    const getDeviceAuthorization = createDeviceAuthorizationProvider(DEVICE_STATE, GENERATED_PIN, 'login-otp', {
+  it('[model] refreshes authorization after the real OTP period changes', async () => {
+    jest.useFakeTimers({ now: 1000, doNotFake: ['performance'] })
+    const generateOtp = jest.fn(() => `otp-${Math.floor(Date.now() / 30000)}`)
+    const waitForNextOtpPeriod = jest.fn(async () => {
+      jest.setSystemTime((Math.floor(Date.now() / 30000) + 1) * 30000 + 250)
+    })
+    const getDeviceAuthorization = createDeviceAuthorizationProvider(DEVICE_STATE, GENERATED_PIN, 'otp-0', {
       generateOtp,
       waitForNextOtpPeriod
     })
 
     await expect(getDeviceAuthorization()).resolves.toEqual({
       deviceNo: DEVICE_STATE.deviceNo,
-      otp: 'action-otp-1'
+      otp: 'otp-1'
     })
     await expect(getDeviceAuthorization()).resolves.toEqual({
       deviceNo: DEVICE_STATE.deviceNo,
-      otp: 'action-otp-1'
+      otp: 'otp-1'
     })
+    jest.setSystemTime(60250)
     await expect(getDeviceAuthorization()).resolves.toEqual({
       deviceNo: DEVICE_STATE.deviceNo,
-      otp: 'action-otp-2'
+      otp: 'otp-2'
     })
     expect(waitForNextOtpPeriod).toHaveBeenCalledTimes(1)
     expect(generateOtp).toHaveBeenCalledTimes(4)
   })
 
-  it('fails after two unchanged OTP periods instead of waiting forever', async () => {
+  it('[model] fails after two unchanged OTP periods instead of waiting forever', async () => {
+    jest.useFakeTimers({ now: 1000, doNotFake: ['performance'] })
     const generateOtp = jest.fn(() => 'login-otp')
     const waitForNextOtpPeriod = jest.fn(async () => {})
     const getDeviceAuthorization = createDeviceAuthorizationProvider(DEVICE_STATE, GENERATED_PIN, 'login-otp', {
@@ -216,7 +223,7 @@ describe('statement source selection', () => {
     })
 
     await expect(getDeviceAuthorization()).rejects.toMatchObject({
-      message: expect.stringContaining('Проверьте время')
+      message: 'Не удалось получить новый код авторизации BGPB. Проверьте дату и время на устройстве и повторите синхронизацию.'
     })
     expect(waitForNextOtpPeriod).toHaveBeenCalledTimes(2)
     expect(generateOtp).toHaveBeenCalledTimes(3)
@@ -224,6 +231,42 @@ describe('statement source selection', () => {
 })
 
 describe('device PIN lifecycle', () => {
+  // [model] A user activation code is requested only for a new registration, not a stored session.
+  it('[model] asks for activation only during creation and reuses the saved connection', async () => {
+    mockRegisterDeviceToken.mockResolvedValueOnce({
+      activationPassword: '', deviceNo: DEVICE_STATE.deviceNo, xfad: 'xfad'
+    })
+    ZenMoney.readLine.mockResolvedValueOnce('A1B2C3D4')
+    mockOpenDeviceState.mockReturnValue(DEVICE_STATE)
+
+    await expect(scrapeWithoutAccounts()).resolves.toEqual({ accounts: [], transactions: [] })
+    await expect(scrapeWithoutAccounts()).resolves.toEqual({ accounts: [], transactions: [] })
+
+    expect(ZenMoney.readLine).toHaveBeenCalledTimes(1)
+    expect(mockRegisterDeviceToken).toHaveBeenCalledTimes(1)
+    expect(mockLoginDeviceToken).toHaveBeenCalledTimes(2)
+    expect(pluginStorage['deviceOtp/pin/v1']).toEqual(ACTIVE_PIN_DATA)
+    expect(pluginStorage['deviceOtp/v1']).toEqual(SEALED_ENVELOPE)
+  })
+
+  // [model] Failure of a stored connection cannot start a new interactive activation.
+  it('[model] preserves a stored-session failure without requesting another activation code', async () => {
+    pluginStorage['deviceOtp/v1'] = SEALED_ENVELOPE
+    pluginStorage['deviceOtp/pin/v1'] = ACTIVE_PIN_DATA
+    mockOpenDeviceState.mockReturnValue(DEVICE_STATE)
+    const failure = new Error('Model stored-session authorization failure')
+    mockLoginDeviceToken.mockRejectedValueOnce(failure)
+
+    await expect(scrapeWithoutAccounts()).rejects.toBe(failure)
+
+    expect(ZenMoney.readLine).not.toHaveBeenCalled()
+    expect(mockLogin).not.toHaveBeenCalled()
+    expect(mockRegisterDeviceToken).not.toHaveBeenCalled()
+    expect(ZenMoney.setData).not.toHaveBeenCalled()
+    expect(ZenMoney.saveData).not.toHaveBeenCalled()
+    expect(pluginStorage).toEqual({ 'deviceOtp/v1': SEALED_ENVELOPE, 'deviceOtp/pin/v1': ACTIVE_PIN_DATA })
+  })
+
   it('generates and persists its own PIN during first registration', async () => {
     await expect(scrapeWithoutAccounts()).resolves.toEqual({ accounts: [], transactions: [] })
 
@@ -238,6 +281,7 @@ describe('device PIN lifecycle', () => {
     expect(ZenMoney.readLine).not.toHaveBeenCalled()
     expect(mockLoginDeviceToken).toHaveBeenCalledWith(DEVICE_STATE.deviceNo, 'device-otp')
     expect(mockGenerateDeviceOtp).toHaveBeenCalledTimes(1)
+    expect(ZenMoney.locale).toBe('ru')
   })
 
   it('reuses the generated PIN from plugin data without registering again', async () => {
@@ -318,7 +362,7 @@ describe('device PIN lifecycle', () => {
     pluginStorage['deviceOtp/v1'] = SEALED_ENVELOPE
 
     await expect(scrapeWithoutAccounts()).rejects.toMatchObject({
-      message: expect.stringContaining('Укажите прежний PIN токена')
+      message: 'Не удалось подтвердить сохраненную активацию BGPB. Пересоздайте подключение к плагину Белгазпромбанка с нуля. PIN вводить не нужно: он создается автоматически.'
     })
 
     expect(mockGenerateDevicePin).not.toHaveBeenCalled()
@@ -333,6 +377,25 @@ describe('device PIN lifecycle', () => {
     expect(mockGenerateDevicePin).toHaveBeenCalledTimes(1)
     expect(mockBuildActivationDescriptor).toHaveBeenCalledWith(expect.objectContaining({ pin: GENERATED_PIN }))
     expect(mockBuildActivationDescriptor).not.toHaveBeenCalledWith(expect.objectContaining({ pin: LEGACY_PIN }))
+  })
+
+  // [model] An unusable saved PIN must not replace a connection or expose a manual PIN workflow.
+  it('[model] asks to recreate an unusable activation while preserving saved state', async () => {
+    pluginStorage['deviceOtp/v1'] = SEALED_ENVELOPE
+    pluginStorage['deviceOtp/pin/v1'] = ACTIVE_PIN_DATA
+    mockOpenDeviceState.mockImplementation(() => { throw new InvalidPreferencesError('model wrong PIN') })
+
+    await expect(scrapeWithoutAccounts()).rejects.toMatchObject({
+      message: 'Не удалось подтвердить сохраненную активацию BGPB. Пересоздайте подключение к плагину Белгазпромбанка с нуля. PIN вводить не нужно: он создается автоматически.'
+    })
+
+    expect(pluginStorage).toEqual({ 'deviceOtp/v1': SEALED_ENVELOPE, 'deviceOtp/pin/v1': ACTIVE_PIN_DATA })
+    expect(ZenMoney.setData).not.toHaveBeenCalled()
+    expect(ZenMoney.saveData).not.toHaveBeenCalled()
+    expect(mockLogin).not.toHaveBeenCalled()
+    expect(mockLoginDeviceToken).not.toHaveBeenCalled()
+    expect(mockRegisterDeviceToken).not.toHaveBeenCalled()
+    expect(ZenMoney.readLine).not.toHaveBeenCalled()
   })
 
   it('keeps the active PIN while retrying a failed registration for another account', async () => {

@@ -1,5 +1,12 @@
 import crypto from 'crypto-js'
 import { generateRandomString } from '../../common/utils'
+import { TemporaryError } from '../../errors'
+
+const DEVICE_OTP_PERIOD_MS = 30000
+const DEVICE_OTP_BOUNDARY_GRACE_MS = 250
+const DEVICE_OTP_MAX_WAITS = 2
+const DEVICE_OTP_MIN_VALIDITY_MS = 2000
+const DEVICE_OTP_MAX_GENERATIONS = 5
 
 const TOKEN_STATE_VERSION = 1
 const ENVELOPE_VERSION = 1
@@ -319,4 +326,40 @@ export function createDeviceState ({ login, deviceNo, otpKey, identity }) {
       model: identity.model
     }
   })
+}
+
+async function waitForNextDeviceOtpPeriod () {
+  const now = Date.now()
+  const nextPeriod = (Math.floor(now / DEVICE_OTP_PERIOD_MS) + 1) * DEVICE_OTP_PERIOD_MS
+  await new Promise(resolve => setTimeout(resolve, nextPeriod - now + DEVICE_OTP_BOUNDARY_GRACE_MS))
+}
+
+/**
+ * Checks the real period for every protected action. An explicitly rejected
+ * code is refreshed without changing activation state or requesting user input.
+ */
+export function createDeviceAuthorizationProvider (state, pin, initialOtp, options = {}) {
+  const generateOtp = options.generateOtp || generateDeviceOtp
+  const waitForNextOtpPeriod = options.waitForNextOtpPeriod || waitForNextDeviceOtpPeriod
+  return async ({ afterOtp = null } = {}) => {
+    let waits = 0
+    for (let generation = 0; generation < DEVICE_OTP_MAX_GENERATIONS; generation++) {
+      const generatedAt = Date.now()
+      const otp = generateOtp(state, pin, generatedAt)
+      const checkedAt = Date.now()
+      if (Math.floor(generatedAt / DEVICE_OTP_PERIOD_MS) !== Math.floor(checkedAt / DEVICE_OTP_PERIOD_MS)) {
+        continue
+      }
+      const remainingMs = DEVICE_OTP_PERIOD_MS - (checkedAt % DEVICE_OTP_PERIOD_MS)
+      if (otp !== initialOtp && otp !== afterOtp && remainingMs >= DEVICE_OTP_MIN_VALIDITY_MS) {
+        return { deviceNo: state.deviceNo, otp }
+      }
+      if (waits >= DEVICE_OTP_MAX_WAITS) {
+        throw new TemporaryError('Не удалось получить новый код авторизации BGPB. Проверьте дату и время на устройстве и повторите синхронизацию.')
+      }
+      await waitForNextOtpPeriod()
+      waits += 1
+    }
+    throw new Error('BGPB device authorization clock changed repeatedly during generation')
+  }
 }
