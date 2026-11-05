@@ -25,5 +25,10 @@ export interface Session extends Auth {
 
 export interface AccountPlan {
   account: Account
-  fetchParams: { accountId: string }
+  fetchParams: { accountId: string, historyAvailable?: boolean }
+}
+
+export interface BankProducts {
+  accounts: unknown[]
+  deposits: unknown[]
 }

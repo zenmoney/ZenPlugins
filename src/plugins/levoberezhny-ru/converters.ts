@@ -1,6 +1,6 @@
 import get, { getOptArray, getOptBoolean, getOptNumber, getOptString } from '../../types/get'
-import { Account, AccountType, ExtendedTransaction } from '../../types/zenmoney'
-import { AccountPlan } from './models'
+import { Account, AccountType, DepositOrLoan, ExtendedTransaction } from '../../types/zenmoney'
+import { AccountPlan, BankProducts } from './models'
 
 function text (value: unknown, path: string): string {
   const result = getOptString(value, path)
@@ -14,12 +14,94 @@ function identifier (value: unknown, path: string): string {
   return String(id)
 }
 
-export function convertAccounts (items: unknown[]): AccountPlan[] {
+function depositTerms (deposit: unknown, contract: unknown): Omit<DepositOrLoan, 'id' | 'title' | 'instrument' | 'syncIds' | 'balance' | 'archived'> | null {
+  if (getOptString(deposit, 'term.typeCode') !== 'time') return null
+  const period = getOptString(deposit, 'term.capitalizationPeriod')
+  const product = getOptString(deposit, 'productName')
+  let payoffInterval: 'month' | null = 'month'
+  let payoffStep: number
+  if (period === 'В последний день месяца') {
+    // Accepted approximation: month-end anchoring and the first short period are lost.
+    payoffStep = 1
+  } else if (product === 'Снежинка' && period === 'В конце договора') {
+    payoffInterval = null
+    payoffStep = 0
+  } else if (product === 'Копилка' && period === 'Каждые 90 дн.') {
+    // Accepted approximation of 90 days as three calendar months, not a term conversion.
+    payoffStep = 3
+  } else {
+    // Kapital has stepped rates and changing periods; keep its savings representation.
+    return null
+  }
+  const opening = getOptNumber(deposit, 'openDate')
+  const maturity = getOptNumber(deposit, 'term.expiryDate')
+  const days = getOptNumber(deposit, 'term.contractPeriod')
+  const principal = getOptNumber(contract, 'amount')
+  const rate = getOptNumber(contract, 'interestRate')
+  console.assert(opening != null && Number.isFinite(opening) && maturity != null && Number.isFinite(maturity), 'Missing deposit contract dates')
+  console.assert(days != null && Number.isInteger(days) && days > 0 && maturity != null && opening != null && maturity - opening === days * 86400000, 'Invalid deposit contract term')
+  console.assert(principal != null && Number.isFinite(principal) && principal > 0, 'Missing deposit original principal')
+  console.assert(rate != null && Number.isFinite(rate) && rate >= 0 && rate < 100, 'Missing or invalid deposit rate')
+  const interestAccount = text(contract, 'interestAccountNumber').replace(/\s/g, '')
+  return {
+    type: AccountType.deposit,
+    startDate: new Date(opening ?? NaN),
+    startBalance: principal ?? NaN,
+    // This is the bank's quoted rate, not a calculated yield or an assumed bonus.
+    percent: rate ?? NaN,
+    capitalization: interestAccount === text(contract, 'account.number').replace(/\s/g, ''),
+    endDateOffsetInterval: 'day',
+    endDateOffset: days ?? NaN,
+    // Actual interest transactions come only from bank history.
+    payoffInterval,
+    payoffStep
+  }
+}
+
+export function convertAccounts (source: unknown[] | BankProducts, syncedDepositIds: string[] = []): AccountPlan[] {
+  const items = Array.isArray(source) ? source : source.accounts
+  const deposits = Array.isArray(source) ? [] : source.deposits
+  const depositPlans: AccountPlan[] = []
+  const depositIds = new Set<string>()
+  for (const deposit of deposits) {
+    const contracts = getOptArray(deposit, 'contractAccounts')
+    console.assert(contracts != null && contracts.length > 0, 'Missing deposit accounts')
+    for (const contract of contracts ?? []) {
+      const id = identifier(contract, 'account.id')
+      console.assert(!depositIds.has(id), 'Duplicate deposit account')
+      depositIds.add(id)
+      const number = text(contract, 'account.number').replace(/\s/g, '')
+      const currency = text(contract, 'account.currency.code')
+      const linked = items.filter(item => identifier(item, 'id') === id)
+      console.assert(linked.length <= 1, 'Duplicate linked deposit account')
+      if (linked.length === 1) {
+        console.assert(text(linked[0], 'number').replace(/\s/g, '') === number && text(linked[0], 'currency.code') === currency, 'Conflicting deposit account identity')
+      }
+      const archived = (getOptString(deposit, 'closeDateS') ?? '') !== '' || getOptBoolean(deposit, 'archive') === true
+      // Never introduce an already closed deposit, even when history is available.
+      // Keep known IDs so a deposit first seen open can finish its lifecycle.
+      if (archived && !syncedDepositIds.includes(id)) continue
+      const current = getOptNumber(contract, 'currentAmount')
+      const balance = current ?? getOptNumber(linked[0], 'availableWhenPay') ?? null
+      console.assert(balance == null || Number.isFinite(balance), 'Invalid deposit balance')
+      // The observed old closed contracts are absent from accounts.accounts and
+      // explicitly have no history in the web client. Known ones still return
+      // their metadata. Never query their AC filter:
+      // the server returns unrelated accounts instead of a missing-account error.
+      const historyAvailable = !(archived && linked.length === 0 && getOptBoolean(contract, 'actions.canDoStatement') === false)
+      const terms = depositTerms(deposit, contract)
+      depositPlans.push({
+        account: { id, ...(terms ?? { type: AccountType.checking, savings: true }), title: text(deposit, 'productName'), instrument: currency, syncIds: [number], balance, archived },
+        fetchParams: { accountId: id, historyAvailable }
+      })
+    }
+  }
   const seen = new Set<string>()
-  return items.flatMap(item => {
+  const regularPlans: AccountPlan[] = items.flatMap(item => {
     const id = identifier(item, 'id')
     console.assert(!seen.has(id), 'Duplicate bank account')
     seen.add(id)
+    if (depositIds.has(id)) return []
     const limits = getOptArray(item, 'limits')
     console.assert(limits != null, 'Missing account card relationships')
     const bankCards = (limits ?? [])
@@ -50,18 +132,20 @@ export function convertAccounts (items: unknown[]): AccountPlan[] {
       fetchParams: { accountId: id }
     }]
   })
+  return [...regularPlans, ...depositPlans]
 }
 
 export function operationDate (operation: unknown): Date {
   const time = getOptString(operation, 'operDateTime')
   const dated = time == null ? null : /^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2})(?::(\d{2}))?(?: мск)?$/.exec(time)
   const day = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(text(operation, 'operDate'))
+  const dateOnly = time == null ? null : /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(time)
   // Tagged times are Moscow time. For untagged card times, comparison of 16
   // source/PDF pairs established the same UTC+03 instant (PDF uses UTC+07).
   // Never use the device zone or replace the supplied time with midnight.
-  console.assert(time == null || dated != null, 'Unsupported operation time format')
+  console.assert(time == null || dated != null || dateOnly != null, 'Unsupported operation time format')
   console.assert(day != null, 'Unsupported operation date format')
-  const parts = dated ?? day
+  const parts = dated ?? dateOnly ?? day
   const date = new Date(`${parts?.[3] ?? ''}-${parts?.[2] ?? ''}-${parts?.[1] ?? ''}T${dated?.[4] ?? '00'}:${dated?.[5] ?? '00'}:${dated?.[6] ?? '00'}+03:00`)
   console.assert(Number.isFinite(date.getTime()), 'Invalid operation date')
   return date
@@ -87,9 +171,54 @@ function ownTransferKey (item: unknown, account: Account, accounts: Account[], a
   return JSON.stringify(['own', payer.id, payee.id, account.instrument, Math.abs(amount), date.toISOString()])
 }
 
-export function convertTransactions (items: unknown[], account: Account, fromDate: Date, toDate?: Date, accounts: Account[] = [account]): ExtendedTransaction[] {
-  return items.map((item): ExtendedTransaction => {
+function depositTransferKey (item: unknown, accounts: Account[], history: unknown[]): string | undefined {
+  const amount = getOptNumber(item, 'amount')
+  if (amount == null || amount === 0) return undefined
+  const account = accounts.find(account => account.id === String(get(item, 'accountId')))
+  if (account == null) return undefined
+  const number = (record: unknown, path: string): string | undefined => getOptString(record, path)?.replace(/\s/g, '')
+  const outgoing = (record: unknown): boolean => {
+    const form = getOptString(record, 'orderFormType')
+    return getOptString(record, 'categoryCode') === 'BETWEEN.MY.ACC' && (form == null || form === 'DEPOSIT_WITHDRAWAL' || form === 'TRANSFER_OWN_INSIDE_BANK')
+  }
+  if (amount < 0 ? !outgoing(item) : getOptString(item, 'categoryCode') !== 'OTHER.INCOME') return undefined
+  const matches: string[] = []
+  for (const other of history) {
+    if (getOptNumber(other, 'amount') !== -amount) continue
+    const debit = amount < 0 ? item : other
+    const credit = amount > 0 ? item : other
+    if (!outgoing(debit) || getOptString(credit, 'categoryCode') !== 'OTHER.INCOME') continue
+    const payer = accounts.find(account => account.id === String(get(debit, 'accountId')))
+    const payee = accounts.find(account => account.id === String(get(credit, 'accountId')))
+    const depositAccount = (account: Account): boolean => account.type === AccountType.deposit || ('savings' in account && account.savings === true)
+    if (payer == null || payee == null || payer.id === payee.id || (!depositAccount(payer) && !depositAccount(payee))) continue
+    if (payer.instrument !== payee.instrument || getOptString(debit, 'currency.code') !== payer.instrument || getOptString(credit, 'currency.code') !== payee.instrument) continue
+    const payerNumber = number(credit, 'payerAccount')
+    const payeeNumber = number(credit, 'payeeAccountNumber')
+    if (payerNumber == null || payeeNumber == null || !payer.syncIds.includes(payerNumber) || !payee.syncIds.includes(payeeNumber)) continue
+    if (number(debit, 'payerAccount') !== payerNumber) continue
+    const debitPayee = number(debit, 'payeeAccountNumber')
+    if (debitPayee != null && debitPayee !== payeeNumber) continue
+    const debitDate = operationDate(debit)
+    const creditDate = operationDate(credit)
+    const precise = [debit, credit].every(record => (getOptString(record, 'operDateTime') ?? '').includes(':'))
+    const bankDate = (date: Date): string => new Date(date.getTime() + 3 * 3600000).toISOString().slice(0, 10)
+    if (precise ? debitDate.getTime() !== creditDate.getTime() : bankDate(debitDate) !== bankDate(creditDate)) continue
+    // Both movements are real. The bank supplies the full pair on the credit;
+    // use a day fallback only when one source record has no time precision.
+    matches.push(JSON.stringify(['deposit-own', payer.id, payee.id, payer.instrument, Math.abs(amount), precise ? debitDate.toISOString() : bankDate(debitDate)]))
+  }
+  const keys = Array.from(new Set(matches))
+  return keys.length === 1 ? keys[0] : undefined
+}
+
+export function convertTransactions (items: unknown[], account: Account, fromDate: Date, toDate?: Date, accounts: Account[] = [account], history: unknown[] = items): ExtendedTransaction[] {
+  return items.filter(item => {
     console.assert(identifier(item, 'accountId') === account.id, 'History belongs to a different account')
+    // Observed bank-declined phone transfer (daily limit): no posted movement.
+    // Other failed/unknown states remain reportable, not successful omissions.
+    return !(getOptString(item, 'state.code') === 'failed' && getOptString(item, 'state.name') === 'Отклонён' && getOptString(item, 'orderFormType') === 'TRANSFER_OTHER_OTHER_BANK_PHONE' && getOptBoolean(item, 'hold') === false)
+  }).map((item): ExtendedTransaction => {
     console.assert(text(item, 'currency.code') === account.instrument, 'Unsupported operation currency')
     const state = getOptString(item, 'state.code')
     console.assert(state == null || state === 'successes', 'Unsupported operation state', { state })
@@ -119,7 +248,7 @@ export function convertTransactions (items: unknown[], account: Account, fromDat
     }
     const comment = Array.from(new Set([details, purpose].filter(value => value !== ''))).join('\n')
     const date = operationDate(item)
-    const key = ownTransferKey(item, account, accounts, amount, date)
+    const key = depositTransferKey(item, accounts, history) ?? ownTransferKey(item, account, accounts, amount, date)
     return {
       ...(key == null ? {} : { groupKeys: [key] }),
       date,

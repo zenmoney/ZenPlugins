@@ -3,7 +3,7 @@ import { InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesErr
 import { generateUUID } from '../../common/utils'
 import { FetchResponse } from '../../common/network'
 import { bankUrl, describeLoginForms, readJson, readLoginForm, readOtpForm, request, requestJson } from './fetchApi'
-import { Auth, Preferences, Session } from './models'
+import { AccountPlan, Auth, BankProducts, Preferences, Session } from './models'
 
 function confirm (session: Session): void {
   session.persist({ cookieHeader: session.cookieHeader, cookies: session.cookies, fingerprint: session.fingerprint })
@@ -126,21 +126,18 @@ export async function login (preferences: Preferences, saved: unknown, backgroun
   return session
 }
 
-export async function fetchAccounts (session: Session): Promise<unknown[]> {
+export async function fetchAccounts (session: Session): Promise<BankProducts> {
   const data = object(await requestJson(session, 'getMyFinancesPage', { bankId: '29300' }))
   confirm(session)
   const accounts = getOptArray(data, 'accounts.accounts')
-  console.assert(accounts != null && accounts.length > 0, 'Missing bank accounts')
-  // This plugin's declared scope is bank-issued cards and their underlying accounts.
-  // Contractual loans/deposits need separate, source-backed conversion and are
-  // explicitly excluded in the manifest rather than filled with guessed terms.
+  console.assert(accounts != null, 'Missing bank accounts')
+  const deposits = getOptArray(data, 'depositList.deposits') ?? []
   console.debug('Levoberezhny excluded product families', {
-    loans: (getOptArray(data, 'loanList.loans') ?? []).length,
-    deposits: (getOptArray(data, 'depositList.deposits') ?? []).length
+    loans: (getOptArray(data, 'loanList.loans') ?? []).length
   })
   // b2pCards are saved payment cards/payees (tokens, aliases, no currency/balance),
   // not another fetched bank balance. The account graph contains bank-issued cards.
-  return accounts ?? []
+  return { accounts: accounts ?? [], deposits }
 }
 
 export function bankDay (date: Date): string {
@@ -149,7 +146,13 @@ export function bankDay (date: Date): string {
   return `${String(moscow.getUTCDate()).padStart(2, '0')}.${String(moscow.getUTCMonth() + 1).padStart(2, '0')}.${moscow.getUTCFullYear()}`
 }
 
-export async function fetchTransactions (session: Session, params: { accountId: string }, fromDate: Date, toDate?: Date): Promise<unknown[]> {
+export async function fetchTransactions (session: Session, params: AccountPlan['fetchParams'], fromDate: Date, toDate?: Date): Promise<unknown[]> {
+  // Previously synced closed contracts without history only update archive metadata.
+  // The web client disables their history; pfmTape ignores their unknown filter.
+  if (params.historyAvailable === false) {
+    console.info('Levoberezhny closed deposit history unavailable', { accountId: params.accountId })
+    return []
+  }
   if (toDate != null && fromDate > toDate) return []
   const operations: unknown[] = []
   const seen = new Set<string>()
@@ -169,6 +172,9 @@ export async function fetchTransactions (session: Session, params: { accountId: 
     console.assert(items != null, 'Missing history operations')
     let added = 0
     for (const item of items ?? []) {
+      if (params.historyAvailable === true) {
+        console.assert(String(get(item, 'accountId')) === params.accountId, 'History belongs to a different account', { accountId: params.accountId })
+      }
       const rawId = get(item, 'id')
       console.assert(typeof rawId === 'string' || (typeof rawId === 'number' && Number.isSafeInteger(rawId)), 'Missing stable operation ID')
       const id = String(rawId)
