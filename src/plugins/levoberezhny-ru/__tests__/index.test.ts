@@ -2,14 +2,14 @@ import { AccountType } from '../../../types/zenmoney'
 
 jest.mock('../api', () => ({ login: jest.fn(), fetchAccounts: jest.fn(), fetchTransactions: jest.fn() }))
 jest.mock('../certs', () => ({ trustBankCertificates: jest.fn() }))
-jest.mock('../converters', () => ({ convertAccounts: jest.fn(), convertTransactions: jest.fn() }))
+jest.mock('../converters', () => ({ convertAccounts: jest.fn(), convertTransactions: jest.fn(), convertLoanTransactions: jest.fn() }))
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { scrape } = require('../index') as typeof import('../index')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fetchAccounts, fetchTransactions, login } = require('../api') as typeof import('../api')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { convertAccounts, convertTransactions } = require('../converters') as typeof import('../converters')
+const { convertAccounts, convertTransactions, convertLoanTransactions } = require('../converters') as typeof import('../converters')
 
 // [model] Confirmed authorization must survive a later scrape failure.
 it('[model] persists confirmed auth before propagating the original account failure', async () => {
@@ -47,6 +47,9 @@ it('[model] includes a checking account and its fetch plan without requiring a c
   await expect(scrape({ preferences: { login: 'model', password: 'model' }, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [account], transactions: [] })
   expect(fetchTransactions).toHaveBeenCalledTimes(1)
   expect(fetchTransactions).toHaveBeenCalledWith(expect.objectContaining(auth), params, fromDate, undefined)
+  expect(fetchAccounts).toHaveBeenCalledWith(expect.objectContaining(auth), false)
+  await scrape({ preferences: { syncLoans: true }, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })
+  expect(fetchAccounts).toHaveBeenLastCalledWith(expect.objectContaining(auth), true)
 })
 
 it('[model] preserves savings metadata, fetches selected histories once and excludes skipped history from matching', async () => {
@@ -138,4 +141,64 @@ it('[model] loads deposit history without generating planned interest transactio
   await expect(scrape({ preferences: {}, fromDate: from, toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [account], transactions: [] })
   expect(fetchTransactions).toHaveBeenCalledWith(expect.objectContaining({ cookieHeader: 'model-cookie' }), params, from, undefined)
   expect(host.setData).toHaveBeenCalledWith('syncedDepositIds', ['model-native-deposit'])
+})
+
+it('[model] loads a closed loan schedule from opening even when the app requests a recent period', async () => {
+  jest.clearAllMocks()
+  Object.assign(global, { ZenMoney: { getData: jest.fn(), setData: jest.fn(), saveData: jest.fn(), isAccountSkipped: jest.fn().mockReturnValue(false), locale: '' } })
+  jest.mocked(login).mockImplementation(async (_preferences, _saved, _background, persist) => ({ cookieHeader: 'model-cookie', fingerprint: 'model-device', persist }))
+  jest.mocked(fetchAccounts).mockResolvedValue({ accounts: [], deposits: [], loans: [] })
+  const account = {
+    id: 'LN_model',
+    type: AccountType.loan as const,
+    title: 'Model loan',
+    instrument: 'RUB',
+    syncIds: ['model-contract'],
+    balance: 0,
+    archived: true,
+    startDate: new Date('2018-04-09T17:00:00Z'),
+    startBalance: 500000,
+    percent: 12.9,
+    capitalization: true,
+    endDateOffsetInterval: 'year' as const,
+    endDateOffset: 5,
+    payoffInterval: 'month' as const,
+    payoffStep: 1
+  }
+  const schedule = { schedules: [] }
+  jest.mocked(convertAccounts).mockReturnValue([{ account, fetchParams: { accountId: 'model', historyAvailable: false }, loanSchedule: schedule }])
+  jest.mocked(convertLoanTransactions).mockReturnValue([])
+  const fromDate = new Date('2026-10-21T17:00:00Z')
+  await expect(scrape({ preferences: { syncLoans: true }, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [account], transactions: [] })
+  expect(fetchTransactions).not.toHaveBeenCalled()
+  expect(convertLoanTransactions).toHaveBeenCalledWith(schedule, account, account.startDate, undefined)
+})
+
+it('[model] does not convert a skipped loan schedule', async () => {
+  jest.clearAllMocks()
+  Object.assign(global, { ZenMoney: { getData: jest.fn(), setData: jest.fn(), saveData: jest.fn(), isAccountSkipped: jest.fn().mockReturnValue(true), locale: '' } })
+  jest.mocked(login).mockImplementation(async (_preferences, _saved, _background, persist) => ({ cookieHeader: 'model-cookie', fingerprint: 'model-device', persist }))
+  jest.mocked(fetchAccounts).mockResolvedValue({ accounts: [], deposits: [], loans: [] })
+  const account = {
+    id: 'LN_skipped',
+    type: AccountType.loan as const,
+    title: 'Model skipped loan',
+    instrument: 'RUB',
+    syncIds: ['model-skipped-contract'],
+    balance: 0,
+    archived: true,
+    startDate: new Date('2018-04-09T17:00:00Z'),
+    startBalance: 500000,
+    percent: 12.9,
+    capitalization: true,
+    endDateOffsetInterval: 'year' as const,
+    endDateOffset: 5,
+    payoffInterval: 'month' as const,
+    payoffStep: 1
+  }
+  jest.mocked(convertAccounts).mockReturnValue([{ account, fetchParams: { accountId: 'model-skipped', historyAvailable: false }, loanSchedule: { schedules: [] } }])
+  const fromDate = new Date('2026-10-21T17:00:00Z')
+  await expect(scrape({ preferences: { syncLoans: true }, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [account], transactions: [] })
+  expect(fetchTransactions).not.toHaveBeenCalled()
+  expect(convertLoanTransactions).not.toHaveBeenCalled()
 })

@@ -143,7 +143,7 @@ export async function request (auth: Auth, url: string, method = 'GET', params?:
   return response
 }
 
-export async function requestJson (auth: Auth, endpoint: 'loginInfo' | 'getMyFinancesPage' | 'pfmTape', params: Record<string, string> = {}): Promise<FetchResponse> {
+export async function requestJson (auth: Auth, endpoint: 'loginInfo' | 'getMyFinancesPage' | 'getCreditSchedule' | 'pfmTape', params: Record<string, string> = {}): Promise<FetchResponse> {
   const extraHeaders: Record<string, string> = endpoint === 'loginInfo' ? { 'X-Login-Script-Request': 'true' } : {}
   return await request(auth, bankOrigin + jsonPath + endpoint, 'POST', {
     locale: 'ru',

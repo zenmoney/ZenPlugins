@@ -4,6 +4,7 @@ export interface Preferences {
   login?: string
   password?: string
   startDate?: string
+  syncLoans?: boolean
 }
 
 export interface StoredCookie {
@@ -26,9 +27,11 @@ export interface Session extends Auth {
 export interface AccountPlan {
   account: Account
   fetchParams: { accountId: string, historyAvailable?: boolean }
+  loanSchedule?: unknown
 }
 
 export interface BankProducts {
   accounts: unknown[]
   deposits: unknown[]
+  loans?: Array<{ loan: unknown, schedule: unknown }>
 }

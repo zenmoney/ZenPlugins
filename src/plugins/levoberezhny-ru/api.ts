@@ -3,6 +3,7 @@ import { InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesErr
 import { generateUUID } from '../../common/utils'
 import { FetchResponse } from '../../common/network'
 import { bankUrl, describeLoginForms, readJson, readLoginForm, readOtpForm, request, requestJson } from './fetchApi'
+import { isActiveMortgageLoan, isClosedConsumerLoan } from './loans'
 import { AccountPlan, Auth, BankProducts, Preferences, Session } from './models'
 
 function confirm (session: Session): void {
@@ -126,18 +127,33 @@ export async function login (preferences: Preferences, saved: unknown, backgroun
   return session
 }
 
-export async function fetchAccounts (session: Session): Promise<BankProducts> {
+export async function fetchAccounts (session: Session, syncLoans = false): Promise<BankProducts> {
   const data = object(await requestJson(session, 'getMyFinancesPage', { bankId: '29300' }))
   confirm(session)
   const accounts = getOptArray(data, 'accounts.accounts')
   console.assert(accounts != null, 'Missing bank accounts')
   const deposits = getOptArray(data, 'depositList.deposits') ?? []
-  console.debug('Levoberezhny excluded product families', {
-    loans: (getOptArray(data, 'loanList.loans') ?? []).length
-  })
+  const loanItems = getOptArray(data, 'loanList.loans') ?? []
+  const loans = []
+  let unsupportedLoans = 0
+  for (const loan of loanItems) {
+    if (!syncLoans) continue
+    const supportedClosedConsumer = isClosedConsumerLoan(loan)
+    const supportedActiveMortgage = isActiveMortgageLoan(loan)
+    if (!supportedClosedConsumer && !supportedActiveMortgage) {
+      unsupportedLoans++
+      continue
+    }
+    const id = get(loan, 'id')
+    console.assert(typeof id === 'number' && Number.isSafeInteger(id), 'Invalid loan ID')
+    const schedule = object(await requestJson(session, 'getCreditSchedule', { loanId: String(id) }))
+    confirm(session)
+    loans.push({ loan, schedule })
+  }
+  if (unsupportedLoans > 0) console.info('Levoberezhny loan products outside verified scope', { count: unsupportedLoans })
   // b2pCards are saved payment cards/payees (tokens, aliases, no currency/balance),
   // not another fetched bank balance. The account graph contains bank-issued cards.
-  return { accounts: accounts ?? [], deposits }
+  return { accounts: accounts ?? [], deposits, loans }
 }
 
 export function bankDay (date: Date): string {

@@ -1,6 +1,83 @@
 import get, { getOptArray, getOptBoolean, getOptNumber, getOptString } from '../../types/get'
 import { Account, AccountType, DepositOrLoan, ExtendedTransaction } from '../../types/zenmoney'
+import { isActiveMortgageLoan, isClosedConsumerLoan } from './loans'
 import { AccountPlan, BankProducts } from './models'
+
+function loanRows (schedule: unknown): unknown[] {
+  const rows = getOptArray(schedule, 'schedules')
+  console.assert(rows != null, 'Missing loan schedule')
+  return rows ?? []
+}
+
+function loanPlan (source: { loan: unknown, schedule: unknown }, bankAccounts: unknown[]): AccountPlan {
+  const { loan, schedule } = source
+  const id = identifier(loan, 'id')
+  const rows = loanRows(schedule)
+  const principal = getOptNumber(loan, 'amount')
+  const opening = getOptNumber(loan, 'openDate')
+  const maturity = getOptNumber(loan, 'maturityDate')
+  const outstanding = getOptNumber(loan, 'outstandingDebt.principalAmount')
+  const rate = getOptNumber(loan, 'interestRate')
+  const currency = text(loan, 'currency.code')
+  const contract = text(loan, 'displayNumber')
+  const closed = (getOptString(loan, 'closeDateS') ?? '') !== ''
+  const closedConsumer = isClosedConsumerLoan(loan) && outstanding === 0
+  const activeMortgage = isActiveMortgageLoan(loan) && outstanding != null && outstanding > 0
+  console.assert(closedConsumer || activeMortgage, 'Unsupported loan state or purpose', { loanId: id })
+  console.assert(!activeMortgage || getOptBoolean(loan, 'archive') === false, 'Active mortgage is unexpectedly archived', { loanId: id })
+  if (activeMortgage) {
+    const repaymentId = identifier(loan, 'repayAccountId')
+    const linked = bankAccounts.filter(item => identifier(item, 'id') === repaymentId)
+    const repaymentBalance = getOptNumber(loan, 'outstandingDebt.repayAccountBalance')
+    console.assert(linked.length === 1, 'Missing active mortgage repayment account', { loanId: id })
+    console.assert(text(linked[0], 'number').replace(/\s/g, '') === text(loan, 'repayAccount').replace(/\s/g, '') && text(linked[0], 'currency.code') === currency, 'Conflicting active mortgage repayment account', { loanId: id })
+    const linkedBalance = getOptNumber(linked[0], 'availableWhenPay')
+    console.assert(repaymentBalance != null && linkedBalance != null && Math.abs(linkedBalance - repaymentBalance) < 0.005, 'Active mortgage repayment balance disagrees', { loanId: id })
+  }
+  console.assert(principal != null && principal > 0 && Number.isFinite(principal), 'Invalid original loan principal')
+  console.assert(opening != null && maturity != null && Number.isFinite(opening) && Number.isFinite(maturity) && maturity > opening && (maturity - opening) % 86400000 === 0, 'Invalid loan term')
+  const openLabel = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(text(loan, 'openDateS'))
+  const maturityLabel = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(text(loan, 'maturityDateS'))
+  const termYears = Number(maturityLabel?.[3]) - Number(openLabel?.[3])
+  console.assert(openLabel != null && maturityLabel != null && openLabel[1] === maturityLabel[1] && openLabel[2] === maturityLabel[2] && Number.isInteger(termYears) && termYears > 0, 'Unsupported loan term')
+  console.assert(rate != null && Number.isFinite(rate) && rate >= 0, 'Invalid loan rate')
+  const actualRows = rows.filter(row => getOptBoolean(row, 'actual') === true)
+  const futureRows = rows.filter(row => getOptBoolean(row, 'actual') === false)
+  console.assert(rows.length > 0 && actualRows.length + futureRows.length === rows.length, 'Loan schedule contains an unknown state')
+  console.assert(closedConsumer ? futureRows.length === 0 : futureRows.length > 0, 'Loan schedule does not match its state', { loanId: id })
+  const lastActualBalance = getOptNumber(actualRows[actualRows.length - 1], 'finalBalance')
+  console.assert(actualRows.length > 0 && lastActualBalance != null && outstanding != null && Math.abs(lastActualBalance - outstanding) < 0.005, 'Loan outstanding principal does not match completed schedule', { loanId: id })
+  const methodRows = (activeMortgage ? futureRows : actualRows).filter(row => getOptNumber(row, 'earlyRepaymentAmount') == null && getOptNumber(row, 'principalAmount') != null && (getOptNumber(row, 'principalAmount') ?? 0) > 0)
+  const amountCounts = new Map<number, number>()
+  for (const row of methodRows) {
+    const amount = getOptNumber(row, 'amount')
+    if (amount != null) amountCounts.set(amount, (amountCounts.get(amount) ?? 0) + 1)
+  }
+  const repeatedAmount = Array.from(amountCounts).sort((left, right) => right[1] - left[1])[0]
+  const repeatedRows = repeatedAmount == null ? [] : methodRows.filter(row => getOptNumber(row, 'amount') === repeatedAmount[0])
+  const portions = new Set(repeatedRows.map(row => getOptNumber(row, 'principalAmount')))
+  console.assert(repeatedRows.length >= 3 && portions.size > 1, 'Loan repayment method not confirmed by bank schedule', { loanId: id })
+  const account: DepositOrLoan = {
+    id: `LN_${id}`,
+    type: AccountType.loan,
+    title: text(loan, 'productName'),
+    instrument: currency,
+    syncIds: [contract.replace(/\s/g, '')],
+    balance: outstanding === 0 ? 0 : -(outstanding ?? NaN),
+    archived: closed,
+    startDate: new Date(opening ?? NaN),
+    startBalance: principal ?? NaN,
+    percent: rate ?? null,
+    // Equal ordinary installments with a changing principal portion are
+    // observed in this completed bank schedule; other methods fail above.
+    capitalization: true,
+    endDateOffsetInterval: 'year',
+    endDateOffset: termYears,
+    payoffInterval: 'month',
+    payoffStep: 1
+  }
+  return { account, fetchParams: { accountId: id, historyAvailable: false }, loanSchedule: schedule }
+}
 
 function text (value: unknown, path: string): string {
   const result = getOptString(value, path)
@@ -61,6 +138,7 @@ function depositTerms (deposit: unknown, contract: unknown): Omit<DepositOrLoan,
 export function convertAccounts (source: unknown[] | BankProducts, syncedDepositIds: string[] = []): AccountPlan[] {
   const items = Array.isArray(source) ? source : source.accounts
   const deposits = Array.isArray(source) ? [] : source.deposits
+  const loans = Array.isArray(source) ? [] : source.loans ?? []
   const depositPlans: AccountPlan[] = []
   const depositIds = new Set<string>()
   for (const deposit of deposits) {
@@ -132,7 +210,91 @@ export function convertAccounts (source: unknown[] | BankProducts, syncedDeposit
       fetchParams: { accountId: id }
     }]
   })
-  return [...regularPlans, ...depositPlans]
+  const loanPlans = loans.map(loan => loanPlan(loan, items))
+  const accountIds = [...regularPlans, ...depositPlans, ...loanPlans].map(plan => plan.account.id)
+  console.assert(new Set(accountIds).size === accountIds.length, 'Duplicate account identity')
+  return [...regularPlans, ...depositPlans, ...loanPlans]
+}
+
+export function convertLoanTransactions (schedule: unknown, account: Account, fromDate: Date, toDate?: Date): ExtendedTransaction[] {
+  console.assert(account.type === AccountType.loan, 'Expected loan account')
+  const rows = loanRows(schedule)
+  const result: ExtendedTransaction[] = []
+  const ids = new Set<string>()
+  let previous = account.type === AccountType.loan ? account.startBalance : NaN
+  let futureSeen = false
+  if (account.type === AccountType.loan && account.startDate >= fromDate && (toDate == null || account.startDate <= toDate)) {
+    result.push({
+      date: account.startDate,
+      hold: false,
+      merchant: null,
+      comment: 'Выдача кредита',
+      movements: [{ id: `${account.id}:opening:principal`, account: { id: account.id }, sum: -account.startBalance, fee: 0, invoice: null }]
+    })
+  }
+  for (const row of rows) {
+    const actual = getOptBoolean(row, 'actual')
+    console.assert(actual != null, 'Unsupported loan schedule state')
+    if (actual === false) {
+      futureSeen = true
+      continue
+    }
+    console.assert(!futureSeen && getOptBoolean(row, 'overdue') === false, 'Unsupported completed loan schedule state')
+    const dateValue = getOptNumber(row, 'date')
+    const principal = getOptNumber(row, 'principalAmount')
+    const interest = getOptNumber(row, 'interestAmount')
+    const charges = getOptNumber(row, 'chargesAmount')
+    const early = getOptNumber(row, 'earlyRepaymentAmount')
+    const total = getOptNumber(row, 'amount')
+    const finalBalance = getOptNumber(row, 'finalBalance')
+    console.assert(dateValue != null && Number.isFinite(dateValue), 'Invalid loan payment date')
+    console.assert(principal != null && principal >= 0 && Number.isFinite(principal) && interest != null && interest >= 0 && Number.isFinite(interest) && charges != null && charges >= 0 && Number.isFinite(charges) && (principal > 0 || interest > 0 || charges > 0) && total != null && finalBalance != null, 'Unsupported loan payment amounts')
+    console.assert((early == null || (early > 0 && principal != null && early <= principal)) && Math.abs((principal ?? NaN) + (interest ?? NaN) + (charges ?? NaN) - (total ?? NaN)) < 0.005 && Math.abs(previous - (principal ?? NaN) - (finalBalance ?? NaN)) < 0.005, 'Loan schedule does not reconcile')
+    previous = finalBalance ?? NaN
+    const dateText = text(row, 'dateS')
+    const dateMatch = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(dateText)
+    console.assert(dateMatch != null, 'Invalid loan payment date label')
+    const day = `${dateMatch?.[3] ?? ''}-${dateMatch?.[2] ?? ''}-${dateMatch?.[1] ?? ''}`
+    const rawDay = new Date((dateValue ?? NaN) + 7 * 3600000).toISOString().slice(0, 10)
+    console.assert(rawDay === day, 'Loan payment dates disagree')
+    const date = new Date(`${day}T00:00:00+03:00`)
+    const rowId = [account.id, day].join(':')
+    console.assert(!ids.has(rowId), 'Duplicate completed loan payment')
+    ids.add(rowId)
+    if (date < fromDate || (toDate != null && date > toDate)) continue
+    const movement = (suffix: string, sum: number, key?: string): ExtendedTransaction => ({
+      ...(key == null ? {} : { groupKeys: [key] }),
+      date,
+      hold: false,
+      merchant: null,
+      comment: suffix === 'principal' ? 'Погашение основного долга' : suffix.startsWith('interest') ? 'Проценты по кредиту' : 'Комиссия по кредиту',
+      movements: [{ id: `${rowId}:${suffix}`, account: { id: account.id }, sum, fee: 0, invoice: null }]
+    })
+    if ((principal ?? 0) > 0) result.push(movement('principal', principal ?? NaN, JSON.stringify(['loan', account.id, 'principal', principal, day])))
+    if ((interest ?? 0) > 0) {
+      result.push(movement('interest-payment', interest ?? NaN, JSON.stringify(['loan', account.id, 'interest', interest, day])))
+      result.push(movement('interest-expense', -(interest ?? NaN)))
+    }
+    if ((charges ?? 0) > 0) {
+      result.push(movement('charges-payment', charges ?? NaN))
+      result.push(movement('charges-expense', -(charges ?? NaN)))
+    }
+  }
+  console.assert(account.type === AccountType.loan && account.balance != null && Math.abs(previous + account.balance) < 0.005, 'Loan principal does not reconcile')
+  return result
+}
+
+function loanTransferKey (item: unknown, accounts: Account[], amount: number, date: Date): string | undefined {
+  if (amount >= 0) return undefined
+  const details = getOptString(item, 'details') ?? ''
+  const principal = /Погашение кредита по договору N ([^ ]+) от /.exec(details)
+  const interest = /Погашение процентов за кредит по договору номер ([^ ]+) от /.exec(details)
+  if ((principal != null) === (interest != null)) return undefined
+  const contract = principal?.[1] ?? interest?.[1]
+  const matches = accounts.filter(account => account.type === AccountType.loan && account.syncIds.includes(contract ?? ''))
+  if (matches.length !== 1) return undefined
+  const day = new Date(date.getTime() + 3 * 3600000).toISOString().slice(0, 10)
+  return JSON.stringify(['loan', matches[0].id, principal == null ? 'interest' : 'principal', Math.abs(amount), day])
 }
 
 export function operationDate (operation: unknown): Date {
@@ -248,7 +410,7 @@ export function convertTransactions (items: unknown[], account: Account, fromDat
     }
     const comment = Array.from(new Set([details, purpose].filter(value => value !== ''))).join('\n')
     const date = operationDate(item)
-    const key = depositTransferKey(item, accounts, history) ?? ownTransferKey(item, account, accounts, amount, date)
+    const key = depositTransferKey(item, accounts, history) ?? loanTransferKey(item, accounts, amount, date) ?? ownTransferKey(item, account, accounts, amount, date)
     return {
       ...(key == null ? {} : { groupKeys: [key] }),
       date,

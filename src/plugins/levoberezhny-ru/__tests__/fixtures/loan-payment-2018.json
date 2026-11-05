@@ -1,0 +1,92 @@
+[
+  {
+    "id": 880002,
+    "amount": -5301.37,
+    "categoryCode": "OTHERS",
+    "pfmCategoryTO": {
+      "code": "OTHERS",
+      "kind": "-",
+      "name": "Не распределено",
+      "enName": "Others",
+      "icon": "pfm-other",
+      "color": "B5BCD1"
+    },
+    "currency": {
+      "shortName": "р.",
+      "code": "RUB",
+      "name": "Российский рубль",
+      "roundDecimals": -2
+    },
+    "details": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)//Погашение процентов за кредит по договору номер 000010000001/1150 от 10.04.2018. НДС не предусмотрен.",
+    "payerAccount": "40817810000000000001",
+    "operDate": "10.05.2018",
+    "pfmIcon": "pfm-other",
+    "pfmIconObject": {
+      "icon": "pfm-other",
+      "iconColor": "FFFFFF",
+      "backgroundColor": "B5BCD1"
+    },
+    "pfmOperationId": 880002,
+    "payerName": "Иванов Иван Иванович",
+    "payerBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+    "payerBankBic": "045004850",
+    "canSendPrintedForm": false,
+    "printedFormInfo": {
+      "paymentAvailable": false,
+      "chequeAvailable": false,
+      "payDocumentAvailable": true
+    },
+    "canChangeCategory": true,
+    "hold": false,
+    "operDateTime": "10.05.2018",
+    "accountId": 900002,
+    "mccCodeAndCategory": "",
+    "canSaveTemplate": false,
+    "dpTransferChina": false
+  },
+  {
+    "id": 880001,
+    "amount": -6049.63,
+    "categoryCode": "OTHERS",
+    "pfmCategoryTO": {
+      "code": "OTHERS",
+      "kind": "-",
+      "name": "Не распределено",
+      "enName": "Others",
+      "icon": "pfm-other",
+      "color": "B5BCD1"
+    },
+    "currency": {
+      "shortName": "р.",
+      "code": "RUB",
+      "name": "Российский рубль",
+      "roundDecimals": -2
+    },
+    "details": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)//Погашение кредита по договору N 000010000001/1150 от 10.04.2018.",
+    "payerAccount": "40817810000000000001",
+    "operDate": "10.05.2018",
+    "pfmIcon": "pfm-other",
+    "pfmIconObject": {
+      "icon": "pfm-other",
+      "iconColor": "FFFFFF",
+      "backgroundColor": "B5BCD1"
+    },
+    "pfmOperationId": 880001,
+    "payerName": "Иванов Иван Иванович",
+    "payerBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+    "payerBankBic": "045004850",
+    "canSendPrintedForm": false,
+    "printedFormInfo": {
+      "paymentAvailable": false,
+      "chequeAvailable": false,
+      "payDocumentAvailable": true
+    },
+    "canChangeCategory": true,
+    "hold": false,
+    "operDateTime": "10.05.2018",
+    "accountId": 900002,
+    "mccCodeAndCategory": "",
+    "canSaveTemplate": false,
+    "dpTransferChina": false
+  }
+]
