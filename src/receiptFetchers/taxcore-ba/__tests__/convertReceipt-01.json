@@ -1,0 +1,374 @@
+{
+  "invoiceRequest": {
+    "posTime": null,
+    "taxId": "4209253453134",
+    "businessName": "\u0022BINGO\u0022 d.o.o. export-import Tuzla, \u041F\u041E\u0421\u041B\u041E\u0412\u041D\u0410 \u0408\u0415\u0414\u0418\u041D\u0418\u0426\u0410 \u0431\u0440\u043E\u0458 150 \u0022\u0425\u0438\u043F\u0435\u0440\u043C\u0430\u0440\u043A\u0435\u0442\u0022 \u0422\u0440\u0435\u0431\u0438\u045A\u0435",
+    "locationName": "11074209253450001-\u0022BINGO\u0022 d.o.o. export-import Tuzla, \u041F\u041E\u0421\u041B\u041E\u0412\u041D\u0410 \u0408\u0415\u0414\u0418\u041D\u0418\u0426\u0410 \u0431\u0440\u043E\u0458 150 \u0022\u0425\u0438\u043F\u0435\u0440\u043C\u0430\u0440\u043A\u0435\u0442\u0022 \u0422\u0440\u0435\u0431\u0438\u045A\u0435",
+    "address": "\u0422\u0438\u043D\u0438 \u0431\u0431",
+    "city": "\u0422\u0420\u0415\u0411\u0418\u040A\u0415",
+    "administrativeUnit": "Trebinje",
+    "buyer": null,
+    "buyerCostCenter": null,
+    "cashier": "25 Zlata Saric",
+    "requestedBy": "KPU4VX53",
+    "referentDocumentNumber": null,
+    "invoiceType": 0,
+    "transactionType": 0,
+    "payments": [
+      {
+        "paymentType": 2,
+        "amount": 300.8700
+      }
+    ],
+    "items": [
+      {
+        "name": "\u010CAJ 30G SLIM AHMAD / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 6.2500,
+        "totalPrice": 6.2500,
+        "gtin": "054881020350"
+      },
+      {
+        "name": "\u010CAJ 30G SLEEP AHMAD / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 6.2500,
+        "totalPrice": 6.2500,
+        "gtin": "054881020381"
+      },
+      {
+        "name": "\u010CAJ 30G ENERGY AHMAD / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 6.2500,
+        "totalPrice": 6.2500,
+        "gtin": "054881020367"
+      },
+      {
+        "name": "KREKERI 150G SCHAR FETTE CROCCANTI SPEC.BEZ GLUTENA / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 4.5000,
+        "totalPrice": 4.5000,
+        "gtin": "8008698007303"
+      },
+      {
+        "name": "VINO CRVENO 750ML KVALITETNO PLAVAC DINGA\u010C / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 11.4500,
+        "totalPrice": 11.4500,
+        "gtin": "3859888108042"
+      },
+      {
+        "name": "VINO CRVENO 187ML KUPINOVO \u010COKA / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 3.5000,
+        "totalPrice": 3.5000,
+        "gtin": "8606106842036"
+      },
+      {
+        "name": "VODA MINERALNA 500ML KNJAZ MILO\u0160 / KOM",
+        "quantity": 4.0000,
+        "unitPrice": 0.7500,
+        "totalPrice": 3.0000,
+        "gtin": "8600037000312"
+      },
+      {
+        "name": "KREKERI 140G PIZZA MARETTI / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 1.8500,
+        "totalPrice": 1.8500,
+        "gtin": "3800205877554"
+      },
+      {
+        "name": "NAPITAK PROTEIN 500ML ZBREGOV JAGODA / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 3.9500,
+        "totalPrice": 3.9500,
+        "gtin": "3850108023725"
+      },
+      {
+        "name": "SOK 750ML MRKVA-NARAND\u017DA 100% NATURAL ST. / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 5.5500,
+        "totalPrice": 5.5500,
+        "gtin": "5304000433673"
+      },
+      {
+        "name": "NAPITAK PROTEIN 500ML ZBREGOV PISTACIJA / KOM",
+        "quantity": 2.0000,
+        "unitPrice": 3.9500,
+        "totalPrice": 7.9000,
+        "gtin": "3850108023794"
+      },
+      {
+        "name": "\u010COKOLADNO JAJE 20G KINDER SA IGRA\u010CKOM FERRERO ROZA / KOM",
+        "quantity": 2.0000,
+        "unitPrice": 2.4500,
+        "totalPrice": 4.9000,
+        "gtin": "54088191"
+      },
+      {
+        "name": "SVJE\u017DA NEKTARINA / KG",
+        "quantity": 0.7500,
+        "unitPrice": 2.9000,
+        "totalPrice": 2.1800,
+        "gtin": "280023007501"
+      },
+      {
+        "name": "NAPITAK PROTEIN 500ML ZBREGOV BIJELA \u010COKOLADA MALINA / KOM",
+        "quantity": 2.0000,
+        "unitPrice": 3.9500,
+        "totalPrice": 7.9000,
+        "gtin": "3850108023732"
+      },
+      {
+        "name": "TOALETNI PAPIR 4SL 10KOM SOFTLY DELUXE / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 8.9500,
+        "totalPrice": 8.9500,
+        "gtin": "3873508782153"
+      },
+      {
+        "name": "SIR TILSIT PALADIN / KG",
+        "quantity": 0.4260,
+        "unitPrice": 13.2500,
+        "totalPrice": 5.6400,
+        "gtin": "281594004265"
+      },
+      {
+        "name": "GR\u010CKI TIP JOGURTA 400G GREKOS / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 2.6000,
+        "totalPrice": 2.6000,
+        "gtin": "8601500122159"
+      },
+      {
+        "name": "JOGURT VO\u0106NI 400G ZOTT JOGOBELA MAXI CLASSIC / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 3.3000,
+        "totalPrice": 3.3000,
+        "gtin": "4014500506159"
+      },
+      {
+        "name": "MASLINE 400G ZELENE 4XL SA KO\u0160PICOM MARMARABIRLIK STAKLO / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 6.9500,
+        "totalPrice": 6.9500,
+        "gtin": "8690103800021"
+      },
+      {
+        "name": "DVOPEK 280G INTEGRALNI MB GRANETI BARILLA / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 4.8500,
+        "totalPrice": 4.8500,
+        "gtin": "8076809527033"
+      },
+      {
+        "name": "KAFA ESPRESSO 55G CLASSICO TCHIBO NESPRESSO / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 8.2000,
+        "totalPrice": 8.2000,
+        "gtin": "4061445240099"
+      },
+      {
+        "name": "DVOPEK 205G ORIGINAL WASA / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 4.5000,
+        "totalPrice": 4.5000,
+        "gtin": "7300400118118"
+      },
+      {
+        "name": "MARAMICE 15KOM ZA BIJELI VE\u0160 AKTIVNE DR.BECMAN / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 6.8000,
+        "totalPrice": 6.8000,
+        "gtin": "4008455049816"
+      },
+      {
+        "name": "MARAMICE VLA\u017DNE 60KOM SEPTONA ANTIBAKT.JABUKA / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 4.6000,
+        "totalPrice": 4.6000,
+        "gtin": "5201410072778"
+      },
+      {
+        "name": "PASTA ZA ZUBE 50ML COLGATE SMILES 6\u002B / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 4.1500,
+        "totalPrice": 4.1500,
+        "gtin": "8718951610613"
+      },
+      {
+        "name": "ULO\u0160CI DNEVNI 58KOM COSMEA COMFORT ALOE VERA / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 4.4000,
+        "totalPrice": 4.4000,
+        "gtin": "4000576022969"
+      },
+      {
+        "name": "MARAMICE 40KOM LOVAC NA BOJE K2R / KOM",
+        "quantity": 2.0000,
+        "unitPrice": 7.9500,
+        "totalPrice": 15.9000,
+        "gtin": "9000101548211"
+      },
+      {
+        "name": "BOMBONJERA 204G GRIOTTE KRA\u0160 / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 7.7500,
+        "totalPrice": 7.7500,
+        "gtin": "3850102125821"
+      },
+      {
+        "name": "SAPUN TE\u010CNI 1L GENERA NEUTRO BEZ \u0160PRICE  / KOM",
+        "quantity": 2.0000,
+        "unitPrice": 3.7500,
+        "totalPrice": 7.5000,
+        "gtin": "8003693400470"
+      },
+      {
+        "name": "SAPUN TE\u010CNI 500ML GENERA MO\u0160US SA \u0160PRICOM / KOM",
+        "quantity": 2.0000,
+        "unitPrice": 3.1000,
+        "totalPrice": 6.2000,
+        "gtin": "8003693401859"
+      },
+      {
+        "name": "SAPUN 250G VANISH / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 14.4500,
+        "totalPrice": 14.4500,
+        "gtin": "5997321747231"
+      },
+      {
+        "name": "D\u017DEM 375G SMOKVA BAKINA TAJNA / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 6.2000,
+        "totalPrice": 6.2000,
+        "gtin": "8600103131551"
+      },
+      {
+        "name": "D\u017DEM 375G DOMA\u0106A NARAND\u017DA 80% VO\u0106A FOODLAND / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 5.6500,
+        "totalPrice": 5.6500,
+        "gtin": "8606011030498"
+      },
+      {
+        "name": "PASTA ZA ZUBE 50ML COLGATE MAX WHITE ULTRA INSTANT / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 10.4500,
+        "totalPrice": 10.4500,
+        "gtin": "8718951772557"
+      },
+      {
+        "name": "KAFA ESPRESSO 57G LAVAZZA QUALITA ROSSA NESPRESSO / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 8.8500,
+        "totalPrice": 8.8500,
+        "gtin": "8000070053526"
+      },
+      {
+        "name": "KAFA ESPRESSO 50G LUNGO BORBONE NESPRESSO / KOM",
+        "quantity": 2.0000,
+        "unitPrice": 7.4500,
+        "totalPrice": 14.9000,
+        "gtin": "8055176430092"
+      },
+      {
+        "name": "KA\u0160IKA ZA OBU\u0106U / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 1.5000,
+        "totalPrice": 1.5000,
+        "gtin": "3875001610209"
+      },
+      {
+        "name": "PIRE 200G FRUCTAL TRIPLE TWIST / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 2.9500,
+        "totalPrice": 2.9500,
+        "gtin": "3838945042635"
+      },
+      {
+        "name": "PUDING U \u010CA\u0160I 125G MOJA KRAVICA \u010COKOLADA / KOM",
+        "quantity": 4.0000,
+        "unitPrice": 0.8500,
+        "totalPrice": 3.4000,
+        "gtin": "8601500136682"
+      },
+      {
+        "name": "KOMPOT 4X118G MANDARINA BINGO / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 3.9500,
+        "totalPrice": 3.9500,
+        "gtin": "3873508629410"
+      },
+      {
+        "name": "PUDING U \u010CA\u0160I 125G MOJA KRAVICA VANILIJA / KOM",
+        "quantity": 4.0000,
+        "unitPrice": 0.8500,
+        "totalPrice": 3.4000,
+        "gtin": "8601500136699"
+      },
+      {
+        "name": "UBRUS PAPIRNI 3SL 1KOM PERFEX PROFESSIONAL / KOM",
+        "quantity": 2.0000,
+        "unitPrice": 3.4500,
+        "totalPrice": 6.9000,
+        "gtin": "8606110850287"
+      },
+      {
+        "name": "VRAT SUHI 200G \u0160MEK REZANI / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 6.9500,
+        "totalPrice": 6.9500,
+        "gtin": "3873508913847"
+      },
+      {
+        "name": "GR\u010CKI TIP JOGURTA 150G DUKATOS BADEM I PISTACIJA / KOM",
+        "quantity": 4.0000,
+        "unitPrice": 1.5000,
+        "totalPrice": 6.0000,
+        "gtin": "3850354009764"
+      },
+      {
+        "name": "GR\u010CKI TIP JOGURTA 150G DUKATOS RIBIZ I CIMET / KOM",
+        "quantity": 4.0000,
+        "unitPrice": 1.5000,
+        "totalPrice": 6.0000,
+        "gtin": "3850354010920"
+      },
+      {
+        "name": "MARAMICE VLA\u017DNE 120KOM PAPILION ORIENT / KOM",
+        "quantity": 2.0000,
+        "unitPrice": 2.6000,
+        "totalPrice": 5.2000,
+        "gtin": "8697653080538"
+      },
+      {
+        "name": "PASTA ZA ZUBE 75ML LACALUT WHITE\u002BKONAC ZA ZUBE GRATIS / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 7.9500,
+        "totalPrice": 7.9500,
+        "gtin": "4016369546017"
+      },
+      {
+        "name": "MARAMICE VLA\u017DNE 100KOM UNIVERZALNE SLEEPY GREEN / KOM",
+        "quantity": 1.0000,
+        "unitPrice": 8.4500,
+        "totalPrice": 8.4500,
+        "gtin": "8682241212590"
+      }
+    ]
+  },
+  "invoiceResult": {
+    "totalAmount": 300.87,
+    "transactionTypeCounter": 28625,
+    "totalCounter": 28706,
+    "invoiceCounterExtension": "\u041F\u041F",
+    "invoiceNumber": "KPU4VX53-KPU4VX53-28706",
+    "signedBy": "KPU4VX53",
+    "sdcTime": "2026-09-26T18:47:36.14Z"
+  },
+  "journal": "============ \u0424\u0418\u0421\u041A\u0410\u041B\u041D\u0418 \u0420\u0410\u0427\u0423\u041D ============\r\n             4209253453134              \r\n  \u0022BINGO\u0022 d.o.o. export-import Tuzla,   \n\u041F\u041E\u0421\u041B\u041E\u0412\u041D\u0410 \u0408\u0415\u0414\u0418\u041D\u0418\u0426\u0410 \u0431\u0440\u043E\u0458 150 \u0022\u0425\u0438\u043F\u0435\u0440\u043C\u0430\u0440\u043A\u0435\u0442\u0022\n                \u0422\u0440\u0435\u0431\u0438\u045A\u0435                 \r\n    11074209253450001-\u0022BINGO\u0022 d.o.o.    \n export-import Tuzla, \u041F\u041E\u0421\u041B\u041E\u0412\u041D\u0410 \u0408\u0415\u0414\u0418\u041D\u0418\u0426\u0410 \n     \u0431\u0440\u043E\u0458 150 \u0022\u0425\u0438\u043F\u0435\u0440\u043C\u0430\u0440\u043A\u0435\u0442\u0022 \u0422\u0440\u0435\u0431\u0438\u045A\u0435     \r\n                \u0422\u0438\u043D\u0438 \u0431\u0431                 \r\n                Trebinje                \r\n\u041A\u0430\u0441\u0438\u0440:                    25 Zlata Saric\r\n\u0415\u0421\u0418\u0420 \u0431\u0440\u043E\u0458:                        77/4.0\r\n-------------\u041F\u0420\u041E\u041C\u0415\u0422 \u041F\u0420\u041E\u0414\u0410\u0408\u0410-------------\r\n\u0410\u0440\u0442\u0438\u043A\u043B\u0438\r\n========================================\r\n\u041D\u0430\u0437\u0438\u0432   \u0426\u0438\u0458\u0435\u043D\u0430       \u041A\u043E\u043B.         \u0423\u043A\u0443\u043F\u043D\u043E\r\n\u010CAJ 30G SLIM AHMAD / KOM (\u0415)            \r\n         6,25          1            6,25\r\n\u010CAJ 30G SLEEP AHMAD / KOM (\u0415)           \r\n         6,25          1            6,25\r\n\u010CAJ 30G ENERGY AHMAD / KOM (\u0415)          \r\n         6,25          1            6,25\r\nKREKERI 150G SCHAR FETTE CROCCANTI SPEC.\r\nBEZ GLUTENA / KOM (\u0415)                   \r\n         4,50          1            4,50\r\nVINO CRVENO 750ML KVALITETNO PLAVAC DING\r\nA\u010C / KOM (\u0415)                            \r\n        11,45          1           11,45\r\nVINO CRVENO 187ML KUPINOVO \u010COKA / KOM (\u0415\r\n)                                       \r\n         3,50          1            3,50\r\nVODA MINERALNA 500ML KNJAZ MILO\u0160 / KOM (\r\n\u0415)                                      \r\n         0,75          4            3,00\r\nKREKERI 140G PIZZA MARETTI / KOM (\u0415)    \r\n         1,85          1            1,85\r\nNAPITAK PROTEIN 500ML ZBREGOV JAGODA / K\r\nOM (\u0415)                                  \r\n         3,95          1            3,95\r\nSOK 750ML MRKVA-NARAND\u017DA 100% NATURAL ST\r\n. / KOM (\u0415)                             \r\n         5,55          1            5,55\r\nNAPITAK PROTEIN 500ML ZBREGOV PISTACIJA \r\n/ KOM (\u0415)                               \r\n         3,95          2            7,90\r\n\u010COKOLADNO JAJE 20G KINDER SA IGRA\u010CKOM FE\r\nRRERO ROZA / KOM (\u0415)                    \r\n         2,45          2            4,90\r\nSVJE\u017DA NEKTARINA / KG (\u0415)               \r\n         2,90      0,750            2,18\r\nNAPITAK PROTEIN 500ML ZBREGOV BIJELA \u010COK\r\nOLADA MALINA / KOM (\u0415)                  \r\n         3,95          2            7,90\r\nTOALETNI PAPIR 4SL 10KOM SOFTLY DELUXE /\r\n KOM (\u0415)                                \r\n         8,95          1            8,95\r\nSIR TILSIT PALADIN / KG (\u0415)             \r\n        13,25      0,426            5,64\r\nGR\u010CKI TIP JOGURTA 400G GREKOS / KOM (\u0415) \r\n         2,60          1            2,60\r\nJOGURT VO\u0106NI 400G ZOTT JOGOBELA MAXI CLA\r\nSSIC / KOM (\u0415)                          \r\n         3,30          1            3,30\r\nMASLINE 400G ZELENE 4XL SA KO\u0160PICOM MARM\r\nARABIRLIK STAKLO / KOM (\u0415)              \r\n         6,95          1            6,95\r\nDVOPEK 280G INTEGRALNI MB GRANETI BARILL\r\nA / KOM (\u0415)                             \r\n         4,85          1            4,85\r\nKAFA ESPRESSO 55G CLASSICO TCHIBO NESPRE\r\nSSO / KOM (\u0415)                           \r\n         8,20          1            8,20\r\nDVOPEK 205G ORIGINAL WASA / KOM (\u0415)     \r\n         4,50          1            4,50\r\nMARAMICE 15KOM ZA BIJELI VE\u0160 AKTIVNE DR.\r\nBECMAN / KOM (\u0415)                        \r\n         6,80          1            6,80\r\nMARAMICE VLA\u017DNE 60KOM SEPTONA ANTIBAKT.J\r\nABUKA / KOM (\u0415)                         \r\n         4,60          1            4,60\r\nPASTA ZA ZUBE 50ML COLGATE SMILES 6\u002B / K\r\nOM (\u0415)                                  \r\n         4,15          1            4,15\r\nULO\u0160CI DNEVNI 58KOM COSMEA COMFORT ALOE \r\nVERA / KOM (\u0415)                          \r\n         4,40          1            4,40\r\nMARAMICE 40KOM LOVAC NA BOJE K2R / KOM (\r\n\u0415)                                      \r\n         7,95          2           15,90\r\nBOMBONJERA 204G GRIOTTE KRA\u0160 / KOM (\u0415)  \r\n         7,75          1            7,75\r\nSAPUN TE\u010CNI 1L GENERA NEUTRO BEZ \u0160PRICE \r\n / KOM (\u0415)                              \r\n         3,75          2            7,50\r\nSAPUN TE\u010CNI 500ML GENERA MO\u0160US SA \u0160PRICO\r\nM / KOM (\u0415)                             \r\n         3,10          2            6,20\r\nSAPUN 250G VANISH / KOM (\u0415)             \r\n        14,45          1           14,45\r\nD\u017DEM 375G SMOKVA BAKINA TAJNA / KOM (\u0415) \r\n         6,20          1            6,20\r\nD\u017DEM 375G DOMA\u0106A NARAND\u017DA 80% VO\u0106A FOODL\r\nAND / KOM (\u0415)                           \r\n         5,65          1            5,65\r\nPASTA ZA ZUBE 50ML COLGATE MAX WHITE ULT\r\nRA INSTANT / KOM (\u0415)                    \r\n        10,45          1           10,45\r\nKAFA ESPRESSO 57G LAVAZZA QUALITA ROSSA \r\nNESPRESSO / KOM (\u0415)                     \r\n         8,85          1            8,85\r\nKAFA ESPRESSO 50G LUNGO BORBONE NESPRESS\r\nO / KOM (\u0415)                             \r\n         7,45          2           14,90\r\nKA\u0160IKA ZA OBU\u0106U / KOM (\u0415)               \r\n         1,50          1            1,50\r\nPIRE 200G FRUCTAL TRIPLE TWIST / KOM (\u0415)\r\n         2,95          1            2,95\r\nPUDING U \u010CA\u0160I 125G MOJA KRAVICA \u010COKOLADA\r\n / KOM (\u0415)                              \r\n         0,85          4            3,40\r\nKOMPOT 4X118G MANDARINA BINGO / KOM (\u0415) \r\n         3,95          1            3,95\r\nPUDING U \u010CA\u0160I 125G MOJA KRAVICA VANILIJA\r\n / KOM (\u0415)                              \r\n         0,85          4            3,40\r\nUBRUS PAPIRNI 3SL 1KOM PERFEX PROFESSION\r\nAL / KOM (\u0415)                            \r\n         3,45          2            6,90\r\nVRAT SUHI 200G \u0160MEK REZANI / KOM (\u0415)    \r\n         6,95          1            6,95\r\nGR\u010CKI TIP JOGURTA 150G DUKATOS BADEM I P\r\nISTACIJA / KOM (\u0415)                      \r\n         1,50          4            6,00\r\nGR\u010CKI TIP JOGURTA 150G DUKATOS RIBIZ I C\r\nIMET / KOM (\u0415)                          \r\n         1,50          4            6,00\r\nMARAMICE VLA\u017DNE 120KOM PAPILION ORIENT /\r\n KOM (\u0415)                                \r\n         2,60          2            5,20\r\nPASTA ZA ZUBE 75ML LACALUT WHITE\u002BKONAC Z\r\nA ZUBE GRATIS / KOM (\u0415)                 \r\n         7,95          1            7,95\r\nMARAMICE VLA\u017DNE 100KOM UNIVERZALNE SLEEP\r\nY GREEN / KOM (\u0415)                       \r\n         8,45          1            8,45\r\n----------------------------------------\r\n\u0423\u043A\u0443\u043F\u0430\u043D \u0438\u0437\u043D\u043E\u0441:                     300,87\r\n\u041F\u043B\u0430\u0442\u043D\u0430 \u043A\u0430\u0440\u0442\u0438\u0446\u0430:                   300,87\r\n========================================\r\n\u041E\u0437\u043D\u0430\u043A\u0430       \u0418\u043C\u0435      \u0421\u0442\u043E\u043F\u0430        \u041F\u043E\u0440\u0435\u0437\r\n\u0415             \u041F\u0414\u0412   17,00%         43,72\r\n----------------------------------------\r\n\u0423\u043A\u0443\u043F\u0430\u043D \u0438\u0437\u043D\u043E\u0441 \u043F\u043E\u0440\u0435\u0437\u0430:               43,72\r\n========================================\r\n\u041F\u0424\u0420 \u0432\u0440\u0438\u0458\u0435\u043C\u0435:         26.9.2026. 20:47:36\r\n\u041F\u0424\u0420 \u0431\u0440\u043E\u0458 \u0440\u0430\u0447\u0443\u043D\u0430: KPU4VX53-KPU4VX53-28706\r\n\u0411\u0440\u043E\u0458\u0430\u0447 \u0440\u0430\u0447\u0443\u043D\u0430:             28625/28706\u041F\u041F\r\n========================================\r\n======== \u041A\u0420\u0410\u0408 \u0424\u0418\u0421\u041A\u0410\u041B\u041D\u041E\u0413 \u0420\u0410\u0427\u0423\u041D\u0410 =========",
+  "isValid": true,
+  "refundStatus": null
+}
