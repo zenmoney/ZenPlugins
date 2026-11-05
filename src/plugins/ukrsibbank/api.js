@@ -14,7 +14,8 @@ import {
 const API_URL = 'https://online.ukrsibbank.com/clientendpoint'
 const APP_VERSION = '2.264.0'
 const AUTH_SCHEMA_VERSION = 1
-const PAGE_SIZE = 50
+// Android 2.261.0 SyncServiceImpl.loadOperHistory requests and terminates at 300 records.
+const PAGE_SIZE = 300
 const authUpdateCallbacks = new WeakMap()
 const SUSPENDED_ACCESS_MESSAGE = "Внаслідок тривалої відсутності входу в систему доступ був заблокований. Для відновлення доступу скористайтеся, будь ласка, сервісом відновлення паролю (кнопка «Я не пам'ятаю пароль») або зверніться на інформаційну лінію по номеру 729 (безкоштовно з мобільного)."
 const INVALID_LOGIN_CODES = new Set(['2071'])

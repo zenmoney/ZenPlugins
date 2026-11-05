@@ -97,7 +97,7 @@ describe('UKRSIB network log sanitization', () => {
     const transactionRequests = global.fetch.mock.calls.filter(([url]) => url.endsWith('/product/transactions'))
     expect(transactionRequests).toHaveLength(2)
     for (const [, options] of transactionRequests) {
-      expect(JSON.parse(options.body)).toMatchObject({ count: 50 })
+      expect(JSON.parse(options.body)).toMatchObject({ count: 300 })
     }
 
     const logs = JSON.stringify(debugSpy.mock.calls)
