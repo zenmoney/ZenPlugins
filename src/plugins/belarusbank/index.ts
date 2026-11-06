@@ -2,7 +2,7 @@ import md5 from 'crypto-js/md5'
 import { adjustTransactions } from '../../common/transactionGroupHandler'
 import type { ExtendedTransaction, ScrapeFunc } from '../../types/zenmoney'
 import { authenticate, getGeneralPaymentHistory, getProducts, getStatementTransactions } from './api'
-import { AUTH_DATA_KEY, type AuthState, type PreferenceInput } from './models'
+import { AUTH_DATA_KEY, DEVICE_UID_DATA_KEY, type AuthState, type PreferenceInput } from './models'
 
 const PAYMENT_DUPLICATE_WINDOW_MS = 0
 const LEGACY_TRANSACTION_ID_STATE_KEY = 'belarusbankTransactionIds'
@@ -133,7 +133,7 @@ const mergeStatementAndPaymentHistory = (
   return [...statementTransactions, ...unmatchedPayments]
 }
 
-export const scrape: ScrapeFunc<PreferenceInput> = async ({ fromDate, toDate, isInBackground }) => {
+export const scrape: ScrapeFunc<PreferenceInput> = async ({ preferences, fromDate, toDate, isInBackground }) => {
   ZenMoney.locale = 'ru'
   clearLegacyTransactionIdState()
 
@@ -143,7 +143,14 @@ export const scrape: ScrapeFunc<PreferenceInput> = async ({ fromDate, toDate, is
     ZenMoney.saveData()
     persistedAuth = auth
   }
-  const auth = await authenticate(ZenMoney.getData(AUTH_DATA_KEY, null), isInBackground, persistAuth)
+  const auth = await authenticate(ZenMoney.getData(AUTH_DATA_KEY, null), isInBackground, persistAuth, {
+    preferences,
+    deviceUid: ZenMoney.getData(DEVICE_UID_DATA_KEY, null),
+    onDeviceUid: (deviceUid) => {
+      ZenMoney.setData(DEVICE_UID_DATA_KEY, deviceUid)
+      ZenMoney.saveData()
+    }
+  })
   if (auth !== persistedAuth) persistAuth(auth)
 
   const products = await getProducts(auth)

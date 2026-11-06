@@ -2,6 +2,9 @@ import type { Account } from '../../types/zenmoney'
 
 export const BASE_API_URL = 'https://mb.asb.by/ibanking/'
 export const AUTH_DATA_KEY = 'belarusbankAuth'
+export const DEVICE_UID_DATA_KEY = 'belarusbankDeviceUid'
+// Official Android APK 2026.6.0 (1315), see the auth test provenance.
+export const APP_VERSION = '2026.6.0'
 
 export interface PreferenceInput {
   login?: string
@@ -27,6 +30,12 @@ export interface LoginRequest {
   osVersion: string
   password: string
   token?: string
+}
+
+export interface NativeAuthInput {
+  preferences: PreferenceInput
+  deviceUid: unknown
+  onDeviceUid: (deviceUid: string) => void
 }
 
 export type ProductKind = 'card' | 'account' | 'deposit' | 'credit'

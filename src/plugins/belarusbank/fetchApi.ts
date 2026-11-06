@@ -78,6 +78,7 @@ const makeUrl = (path: string, query: RequestOptions['query']): string => {
 export const fetchApi = async <T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> => {
   const headers: Record<string, string> = {
     Accept: options.accept ?? 'application/json, text/plain, */*',
+    'Accept-Language': 'ru',
     'Content-Type': 'application/json;',
     'Platform-Type': options.platformType ?? 'mobile',
     'X-Timezone': 'Europe/Minsk'

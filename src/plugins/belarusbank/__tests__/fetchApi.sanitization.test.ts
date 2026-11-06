@@ -19,6 +19,16 @@ describe('[model] Belarusbank network log sanitization', () => {
     debug.mockRestore()
   })
 
+  it('explicitly sends the official default language on mobile API requests', async () => {
+    // Official Android 2026.6.0 main-ASLV23YQ.js: su$2 sets Accept-Language;
+    // SC_APP_DEFAULT_LANGUAGE_TOKEN and the app provider both default to ru.
+    const url = `${BASE_API_URL}cards`
+    // HTTP header boundary model; the response body is irrelevant to this guarantee.
+    fetchMock.once(url, { body: {} })
+    await fetchApi('cards', { retry: false })
+    expect(fetchMock.lastCall(url)?.[1]?.headers).toMatchObject({ 'Accept-Language': 'ru', 'Platform-Type': 'mobile' })
+  })
+
   it('masks nested credentials, query secrets, tokens, cookies and identity fields in actual logs', async () => {
     const path = 'users/auth/login/challenge-id'
     const query = {
