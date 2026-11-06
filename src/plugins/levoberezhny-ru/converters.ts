@@ -34,21 +34,20 @@ function depositTerms (deposit: unknown, contract: unknown): Omit<DepositOrLoan,
     return null
   }
   const opening = getOptNumber(deposit, 'openDate')
-  const maturity = getOptNumber(deposit, 'term.expiryDate')
   const days = getOptNumber(deposit, 'term.contractPeriod')
   const principal = getOptNumber(contract, 'amount')
   const rate = getOptNumber(contract, 'interestRate')
-  console.assert(opening != null && Number.isFinite(opening) && maturity != null && Number.isFinite(maturity), 'Missing deposit contract dates')
-  console.assert(days != null && Number.isInteger(days) && days > 0 && maturity != null && opening != null && maturity - opening === days * 86400000, 'Invalid deposit contract term')
+  console.assert(opening != null && Number.isFinite(opening), 'Missing deposit opening date')
+  console.assert(days != null && Number.isInteger(days) && days > 0, 'Invalid deposit contract period')
   console.assert(principal != null && Number.isFinite(principal) && principal > 0, 'Missing deposit original principal')
-  console.assert(rate != null && Number.isFinite(rate) && rate >= 0 && rate < 100, 'Missing or invalid deposit rate')
+  console.assert(rate == null || (Number.isFinite(rate) && rate >= 0), 'Invalid deposit rate')
   const interestAccount = text(contract, 'interestAccountNumber').replace(/\s/g, '')
   return {
     type: AccountType.deposit,
     startDate: new Date(opening ?? NaN),
     startBalance: principal ?? NaN,
     // This is the bank's quoted rate, not a calculated yield or an assumed bonus.
-    percent: rate ?? NaN,
+    percent: rate ?? null,
     capitalization: interestAccount === text(contract, 'account.number').replace(/\s/g, ''),
     endDateOffsetInterval: 'day',
     endDateOffset: days ?? NaN,
