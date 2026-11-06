@@ -1,0 +1,107 @@
+[
+  {
+    "id": 880003,
+    "amount": -40000,
+    "categoryCode": "TRANSFER",
+    "pfmCategoryTO": {
+      "code": "TRANSFER",
+      "kind": "-",
+      "name": "Переводы",
+      "enName": "Transfers",
+      "icon": "pfm-finance",
+      "color": "4DBE74"
+    },
+    "currency": {
+      "shortName": "р.",
+      "code": "RUB",
+      "name": "Российский рубль",
+      "roundDecimals": -2
+    },
+    "details": "Перевод по номеру телефона +7 (900) 000-0001.\nБез налога (НДС)",
+    "payeeName": "Петрова Мария П.",
+    "payerAccount": "40817810000000000001",
+    "state": {
+      "name": "Исполнен",
+      "color": "009900",
+      "date": 1565407509000,
+      "dateS": "10.08.2019 10:25",
+      "code": "successes",
+      "comment": "Документ проведён"
+    },
+    "operDate": "10.08.2019",
+    "pfmIcon": "pfm-finance",
+    "pfmIconObject": {
+      "icon": "pfm-finance",
+      "iconColor": "FFFFFF",
+      "backgroundColor": "4DBE74"
+    },
+    "pfmOperationId": 880003,
+    "payeeAccountNumber": "**** 0001",
+    "payeeBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+    "payeeBankBic": "045004850",
+    "payerName": "Иванов Иван Иванович",
+    "payerBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+    "payerBankBic": "045004850",
+    "canSendPrintedForm": true,
+    "printedFormInfo": {
+      "paymentAvailable": true,
+      "chequeAvailable": true
+    },
+    "canChangeCategory": true,
+    "orderId": 67017234636,
+    "orderFormType": "TRANSFER_OTHER_PHONE_INSIDE_BANK",
+    "hold": false,
+    "operDateTime": "10.08.2019 06:24 мск",
+    "accountId": 900002,
+    "mccCodeAndCategory": "",
+    "canSaveTemplate": true,
+    "sbpOperDateTime": "10.08.2019 10:25",
+    "showUpCommission": false,
+    "dpTransferChina": false
+  },
+  {
+    "id": 880004,
+    "amount": -8714.02,
+    "categoryCode": "OTHERS",
+    "pfmCategoryTO": {
+      "code": "OTHERS",
+      "kind": "-",
+      "name": "Не распределено",
+      "enName": "Others",
+      "icon": "pfm-other",
+      "color": "B5BCD1"
+    },
+    "currency": {
+      "shortName": "р.",
+      "code": "RUB",
+      "name": "Российский рубль",
+      "roundDecimals": -2
+    },
+    "details": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)//Погашение кредита по договору N 000010000001/1150 от 10.04.2018.",
+    "payerAccount": "40817810000000000001",
+    "operDate": "10.08.2019",
+    "pfmIcon": "pfm-other",
+    "pfmIconObject": {
+      "icon": "pfm-other",
+      "iconColor": "FFFFFF",
+      "backgroundColor": "B5BCD1"
+    },
+    "pfmOperationId": 880004,
+    "payerName": "Иванов Иван Иванович",
+    "payerBankName": "БАНК \"ЛЕВОБЕРЕЖНЫЙ\" (ПАО)",
+    "payerBankBic": "045004850",
+    "canSendPrintedForm": false,
+    "printedFormInfo": {
+      "paymentAvailable": false,
+      "chequeAvailable": false,
+      "payDocumentAvailable": true
+    },
+    "canChangeCategory": true,
+    "hold": false,
+    "operDateTime": "10.08.2019",
+    "accountId": 900002,
+    "mccCodeAndCategory": "",
+    "canSaveTemplate": false,
+    "dpTransferChina": false
+  }
+]

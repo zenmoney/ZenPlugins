@@ -1,9 +1,9 @@
-import get, { getOptArray, getOptNumber, getOptString } from '../../types/get'
+import get, { getOptArray, getOptBoolean, getOptNumber, getOptString } from '../../types/get'
 import { InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesError, UserInteractionError } from '../../errors'
 import { generateUUID } from '../../common/utils'
 import { FetchResponse } from '../../common/network'
 import { bankUrl, describeLoginForms, readJson, readLoginForm, readOtpForm, request, requestJson } from './fetchApi'
-import { AccountPlan, Auth, BankProducts, Preferences, Session } from './models'
+import { AccountPlan, Auth, BankProducts, LoanSyncOptions, Preferences, Session } from './models'
 
 function confirm (session: Session): void {
   session.persist({ cookieHeader: session.cookieHeader, cookies: session.cookies, fingerprint: session.fingerprint })
@@ -126,18 +126,49 @@ export async function login (preferences: Preferences, saved: unknown, backgroun
   return session
 }
 
-export async function fetchAccounts (session: Session): Promise<BankProducts> {
+export async function fetchAccounts (session: Session, loanSync: LoanSyncOptions): Promise<BankProducts> {
   const data = object(await requestJson(session, 'getMyFinancesPage', { bankId: '29300' }))
   confirm(session)
   const accounts = getOptArray(data, 'accounts.accounts')
   console.assert(accounts != null, 'Missing bank accounts')
   const deposits = getOptArray(data, 'depositList.deposits') ?? []
-  console.debug('Levoberezhny excluded product families', {
-    loans: (getOptArray(data, 'loanList.loans') ?? []).length
-  })
+  const loanItems = getOptArray(data, 'loanList.loans') ?? []
+  const loans = []
+  let unsupportedLoans = 0
+  let closedLoansBeforeStartDate = 0
+  console.assert(Number.isFinite(loanSync.fromDate.getTime()), 'Invalid loan synchronization start date')
+  for (const loan of loanItems) {
+    const id = getOptNumber(loan, 'id')
+    if (id == null || !Number.isSafeInteger(id)) {
+      unsupportedLoans++
+      continue
+    }
+    const accountId = `LN_${String(id)}`
+    const previouslySynced = loanSync.syncedLoanIds.includes(accountId)
+    const closed = (getOptString(loan, 'closeDateS') ?? '') !== ''
+    if (closed && !previouslySynced && !loanSync.includeClosedBeforeStartDate) {
+      const closeDate = getOptNumber(loan, 'closeDate')
+      if (closeDate == null || !Number.isFinite(closeDate)) {
+        unsupportedLoans++
+        continue
+      }
+      if (closeDate < loanSync.fromDate.getTime()) {
+        closedLoansBeforeStartDate++
+        continue
+      }
+    }
+    let schedule: unknown = null
+    if (getOptBoolean(loan, 'hasSchedule') === true) {
+      schedule = object(await requestJson(session, 'getCreditSchedule', { loanId: String(id) }))
+      confirm(session)
+    }
+    loans.push({ loan, schedule })
+  }
+  if (unsupportedLoans > 0) console.info('Levoberezhny loan products outside verified scope', { count: unsupportedLoans })
+  if (closedLoansBeforeStartDate > 0) console.info('Levoberezhny closed loans before synchronization period omitted', { count: closedLoansBeforeStartDate })
   // b2pCards are saved payment cards/payees (tokens, aliases, no currency/balance),
   // not another fetched bank balance. The account graph contains bank-issued cards.
-  return { accounts: accounts ?? [], deposits }
+  return { accounts: accounts ?? [], deposits, loans }
 }
 
 export function bankDay (date: Date): string {

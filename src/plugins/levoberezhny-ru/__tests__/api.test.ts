@@ -229,22 +229,113 @@ describe('[model] history completeness', () => {
   })
 })
 
-it('[model] keeps declared current-account scope when opaque loan products are present', async () => {
-  // The loanList.loans presence was observed on Android. Its records are opaque
-  // here: this model tests scope, not loan parsing or financial interpretation.
+it('fetches schedules for closed consumer loans and active mortgage products', async () => {
+  // Complete loanList loan objects and schedule responses from 2026-11-03,
+  // sanitized in fixtures/loans.json. Account graph came from the same capture.
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const source = require('./fixtures/accounts.json') as { accounts: unknown[] }
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const loans = require('./fixtures/loans.json') as Array<{ loan: unknown, schedule: unknown }>
+  // Full sanitized loan object and schedule captured 2026-11-05.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mortgage = require('./fixtures/active-mortgage.json') as { loan: unknown, schedule: unknown }
+  const mortgageProduct = {
+    ...(mortgage.loan as Record<string, unknown>),
+    productName: 'ЛББ_Ипотечный стандарт',
+    loanPurpose: 'Кредит на приобретение жилья'
+  }
+  const compatibleActiveConsumer = {
+    ...(mortgage.loan as Record<string, unknown>),
+    id: 830001,
+    productName: 'ЛББ. Действующий потребительский кредит',
+    loanPurpose: 'Потребительский кредит'
+  }
+  const activeMortgage = { loan: mortgageProduct, schedule: mortgage.schedule }
+  const activeConsumer = { loan: compatibleActiveConsumer, schedule: mortgage.schedule }
+  const activeLoans = [activeMortgage, activeConsumer]
+  const supported = [...loans, ...activeLoans]
   fetchMock.post(base + '/mobileService/3.0/json/getMyFinancesPage', ok({
     accounts: { accounts: source.accounts, savingAccounts: [] },
-    loanList: { loans: [{ opaqueModelProduct: true }] },
+    loanList: { loans: supported.map(item => item.loan) },
     depositList: { deposits: [] }
   }))
-  const persist = jest.fn()
-  expect(await fetchAccounts({ ...saved, persist })).toEqual({ accounts: source.accounts, deposits: [] })
-  expect(persist).toHaveBeenCalledWith({
-    ...saved,
-    cookies: [{ name: 'SESSION', value: 'cookie-secret', path: '/', expires: null }]
+  const endpoint = base + '/mobileService/3.0/json/getCreditSchedule'
+  fetchMock.post(endpoint, (url, options) => {
+    const id = new URLSearchParams(String(options?.body)).get('loanId')
+    return ok(supported.find(item => String((item.loan as { id: number }).id) === id)?.schedule)
   })
+  const persist = jest.fn()
+  expect(await fetchAccounts({ ...saved, persist }, {
+    fromDate: new Date('2026-01-01T00:00:00+03:00'),
+    includeClosedBeforeStartDate: false,
+    syncedLoanIds: []
+  })).toEqual({ accounts: source.accounts, deposits: [], loans: activeLoans })
+  expect(fetchMock.calls(endpoint).map(([, options]) => new URLSearchParams(String(options?.body)).get('loanId'))).toEqual(['820001', '830001'])
+
+  expect(await fetchAccounts({ ...saved, persist }, {
+    fromDate: new Date('2026-01-01T00:00:00+03:00'),
+    includeClosedBeforeStartDate: false,
+    syncedLoanIds: ['LN_810002']
+  })).toEqual({ accounts: source.accounts, deposits: [], loans: [loans[0], ...activeLoans] })
+  expect(fetchMock.calls(endpoint).map(([, options]) => new URLSearchParams(String(options?.body)).get('loanId'))).toEqual(['820001', '830001', '810002', '820001', '830001'])
+
+  expect(await fetchAccounts({ ...saved, persist }, {
+    // Exact observed closeDate of loan 810002: equality remains in scope.
+    fromDate: new Date(1678122000000),
+    includeClosedBeforeStartDate: false,
+    syncedLoanIds: []
+  })).toEqual({ accounts: source.accounts, deposits: [], loans: [loans[0], ...activeLoans] })
+  expect(fetchMock.calls(endpoint).map(([, options]) => new URLSearchParams(String(options?.body)).get('loanId'))).toEqual(['820001', '830001', '810002', '820001', '830001', '810002', '820001', '830001'])
+
+  expect(await fetchAccounts({ ...saved, persist }, {
+    fromDate: new Date('2026-01-01T00:00:00+03:00'),
+    includeClosedBeforeStartDate: true,
+    syncedLoanIds: []
+  })).toEqual({ accounts: source.accounts, deposits: [], loans: supported })
+  expect(fetchMock.calls(endpoint).map(([, options]) => new URLSearchParams(String(options?.body)).get('loanId'))).toEqual(['820001', '830001', '810002', '820001', '830001', '810002', '820001', '830001', '810002', '810001', '820001', '830001'])
+})
+
+it('[model] keeps a known mortgage discoverable after the bank closes it', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const source = require('./fixtures/accounts.json') as { accounts: unknown[] }
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mortgage = require('./fixtures/active-mortgage.json') as { loan: Record<string, unknown>, schedule: unknown }
+  const closedLoan = { ...mortgage.loan, closeDate: mortgage.loan.maturityDate, closeDateS: mortgage.loan.maturityDateS }
+  fetchMock.post(base + '/mobileService/3.0/json/getMyFinancesPage', ok({
+    accounts: { accounts: source.accounts, savingAccounts: [] },
+    loanList: { loans: [closedLoan] },
+    depositList: { deposits: [] }
+  }))
+  const endpoint = base + '/mobileService/3.0/json/getCreditSchedule'
+  fetchMock.post(endpoint, ok(mortgage.schedule))
+  const persist = jest.fn()
+  const options = { fromDate: new Date('2041-01-01T00:00:00+03:00'), includeClosedBeforeStartDate: false }
+  expect(await fetchAccounts({ ...saved, persist }, { ...options, syncedLoanIds: [] })).toEqual({ accounts: source.accounts, deposits: [], loans: [] })
+  expect(fetchMock.calls(endpoint)).toHaveLength(0)
+  expect(await fetchAccounts({ ...saved, persist }, { ...options, syncedLoanIds: ['LN_820001'] })).toEqual({
+    accounts: source.accounts,
+    deposits: [],
+    loans: [{ loan: closedLoan, schedule: mortgage.schedule }]
+  })
+  expect(fetchMock.calls(endpoint)).toHaveLength(1)
+})
+
+it('[model] returns a loan without requesting a schedule when the bank marks it unavailable', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mortgage = require('./fixtures/active-mortgage.json') as { loan: Record<string, unknown> }
+  const loan = { ...mortgage.loan, hasSchedule: false }
+  fetchMock.post(base + '/mobileService/3.0/json/getMyFinancesPage', ok({
+    accounts: { accounts: [], savingAccounts: [] },
+    loanList: { loans: [loan] },
+    depositList: { deposits: [] }
+  }))
+  const endpoint = base + '/mobileService/3.0/json/getCreditSchedule'
+  expect(await fetchAccounts({ ...saved, persist: jest.fn() }, {
+    fromDate: new Date('2026-01-01T00:00:00+03:00'),
+    includeClosedBeforeStartDate: false,
+    syncedLoanIds: []
+  })).toEqual({ accounts: [], deposits: [], loans: [{ loan, schedule: null }] })
+  expect(fetchMock.calls(endpoint)).toHaveLength(0)
 })
 
 it('[model] persists authenticated cookie rotation before subsequent product validation fails', async () => {
@@ -254,7 +345,11 @@ it('[model] persists authenticated cookie rotation before subsequent product val
     body: ok({})
   })
   const persist = jest.fn()
-  await expect(fetchAccounts({ ...saved, persist })).rejects.toThrow('Missing bank accounts')
+  await expect(fetchAccounts({ ...saved, persist }, {
+    fromDate: new Date('2026-01-01T00:00:00+03:00'),
+    includeClosedBeforeStartDate: false,
+    syncedLoanIds: []
+  })).rejects.toThrow('Missing bank accounts')
   expect(persist).toHaveBeenCalledWith({
     ...saved,
     cookieHeader: 'SESSION=rotated-secret',

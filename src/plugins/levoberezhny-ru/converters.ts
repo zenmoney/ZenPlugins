@@ -1,6 +1,131 @@
 import get, { getOptArray, getOptBoolean, getOptNumber, getOptString } from '../../types/get'
 import { Account, AccountType, DepositOrLoan, ExtendedTransaction } from '../../types/zenmoney'
+import { getIntervalBetweenDates } from '../../common/momentDateUtils'
 import { AccountPlan, BankProducts } from './models'
+
+function loanRows (schedule: unknown): unknown[] {
+  const rows = getOptArray(schedule, 'schedules')
+  console.assert(rows != null, 'Missing loan schedule')
+  return rows ?? []
+}
+
+function optionalIdentifier (value: unknown, path: string): string | null {
+  const string = getOptString(value, path)
+  if (string != null && string !== '') return string
+  const number = getOptNumber(value, path)
+  return number != null && Number.isSafeInteger(number) ? String(number) : null
+}
+
+function annuityTerms (loan: unknown, rows: unknown[]): Pick<DepositOrLoan, 'capitalization' | 'payoffInterval' | 'payoffStep'> | null {
+  const bankAnnuity = getOptNumber(loan, 'annuity')
+  const methodRows = rows.filter(row => getOptNumber(row, 'earlyRepaymentAmount') == null && getOptNumber(row, 'principalAmount') != null && (getOptNumber(row, 'principalAmount') ?? 0) > 0)
+  const amountCounts = new Map<number, number>()
+  for (const row of methodRows) {
+    const amount = getOptNumber(row, 'amount')
+    if (amount != null && Number.isFinite(amount)) amountCounts.set(amount, (amountCounts.get(amount) ?? 0) + 1)
+  }
+  const bankAmount = bankAnnuity != null && Number.isFinite(bankAnnuity) && bankAnnuity > 0 ? bankAnnuity : null
+  const bankAmountCount = bankAmount == null ? 0 : (amountCounts.get(bankAmount) ?? 0)
+  const repeatedAmount = bankAmountCount >= 3 ? bankAmount : Array.from(amountCounts).sort((left, right) => right[1] - left[1])[0]?.[0]
+  const repeatedRows = repeatedAmount == null ? [] : methodRows.filter(row => getOptNumber(row, 'amount') === repeatedAmount)
+  const portions = new Set(repeatedRows.map(row => getOptNumber(row, 'principalAmount')))
+  const months = Array.from(new Set(repeatedRows.map(row => {
+    const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(getOptString(row, 'dateS') ?? '')
+    return match == null ? null : Number(match[3]) * 12 + Number(match[2]) - 1
+  }).filter((month): month is number => month != null))).sort((left, right) => left - right)
+  let monthlyRun = months.length === 0 ? 0 : 1
+  let longestMonthlyRun = monthlyRun
+  for (let i = 1; i < months.length; i++) {
+    monthlyRun = months[i] === months[i - 1] + 1 ? monthlyRun + 1 : 1
+    longestMonthlyRun = Math.max(longestMonthlyRun, monthlyRun)
+  }
+  return repeatedRows.length >= 3 && portions.size > 1 && longestMonthlyRun >= 3
+    ? { capitalization: true, payoffInterval: 'month', payoffStep: 1 }
+    : null
+}
+
+function completedLoanSchedule (schedule: unknown, principal: number, outstanding: number): unknown | null {
+  const rows = getOptArray(schedule, 'schedules')
+  if (rows == null) return null
+  const actualRows = rows.filter(row => getOptBoolean(row, 'actual') === true)
+  let previous = principal
+  const rowIds = new Set<string>()
+  const normalized = []
+  for (const row of actualRows) {
+    if (getOptBoolean(row, 'overdue') !== false) return null
+    const dateValue = getOptNumber(row, 'date')
+    const rowPrincipal = getOptNumber(row, 'principalAmount')
+    const interest = getOptNumber(row, 'interestAmount')
+    const charges = getOptNumber(row, 'chargesAmount')
+    const early = getOptNumber(row, 'earlyRepaymentAmount')
+    const total = getOptNumber(row, 'amount')
+    const finalBalance = getOptNumber(row, 'finalBalance')
+    if (dateValue == null || !Number.isFinite(dateValue) || rowPrincipal == null || rowPrincipal < 0 || !Number.isFinite(rowPrincipal) ||
+      interest == null || interest < 0 || !Number.isFinite(interest) || charges == null || charges < 0 || !Number.isFinite(charges) ||
+      rowPrincipal + interest + charges <= 0 || total == null || !Number.isFinite(total) || finalBalance == null || !Number.isFinite(finalBalance) ||
+      (early != null && (!Number.isFinite(early) || early <= 0 || early > rowPrincipal)) || Math.abs(rowPrincipal + interest + charges - total) >= 0.005 ||
+      Math.abs(previous - rowPrincipal - finalBalance) >= 0.005) return null
+    previous = finalBalance
+    const dateMatch = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(getOptString(row, 'dateS') ?? '')
+    if (dateMatch == null) return null
+    const day = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`
+    if (new Date(dateValue + 7 * 3600000).toISOString().slice(0, 10) !== day || rowIds.has(day)) return null
+    rowIds.add(day)
+    normalized.push(row)
+  }
+  if (Math.abs(previous - outstanding) >= 0.005) return null
+  return { schedules: normalized }
+}
+
+function loanPlan (source: { loan: unknown, schedule: unknown }): AccountPlan | null {
+  const { loan, schedule } = source
+  const id = optionalIdentifier(loan, 'id')
+  const rows = getOptArray(schedule, 'schedules')
+  const principal = getOptNumber(loan, 'amount')
+  const opening = getOptNumber(loan, 'openDate')
+  const maturity = getOptNumber(loan, 'maturityDate')
+  const outstanding = getOptNumber(loan, 'outstandingDebt.principalAmount')
+  const rate = getOptNumber(loan, 'interestRate')
+  const currency = getOptString(loan, 'currency.code')
+  const contract = getOptString(loan, 'displayNumber')
+  const title = getOptString(loan, 'productName') ?? contract
+  const closed = (getOptString(loan, 'closeDateS') ?? '') !== ''
+  const overduePrincipal = getOptNumber(loan, 'outstandingDebt.overduePrincipalAmount')
+  const overdueInterest = getOptNumber(loan, 'outstandingDebt.overdueInterestAmount')
+  const penalty = getOptNumber(loan, 'outstandingDebt.penaltyAmount')
+  if (id == null || principal == null || principal <= 0 || !Number.isFinite(principal) ||
+    opening == null || maturity == null || !Number.isFinite(opening) || !Number.isFinite(maturity) || maturity <= opening ||
+    outstanding == null || !Number.isFinite(outstanding) || outstanding < 0 || (closed && outstanding !== 0) ||
+    (overduePrincipal != null && overduePrincipal !== 0) || (overdueInterest != null && overdueInterest !== 0) || (penalty != null && penalty !== 0) ||
+    (rate != null && (!Number.isFinite(rate) || rate < 0)) || currency == null || currency === '' || title == null || title === '') return null
+  if (!closed && getOptBoolean(loan, 'archive') !== false) return null
+  const repaymentTerms = annuityTerms(loan, rows ?? [])
+  if (repaymentTerms == null) return null
+  let term: ReturnType<typeof getIntervalBetweenDates>
+  try {
+    term = getIntervalBetweenDates(new Date(opening), new Date(maturity))
+  } catch (_) {
+    return null
+  }
+  if (!Number.isInteger(term.count) || term.count <= 0) return null
+  const account: DepositOrLoan = {
+    id: `LN_${id}`,
+    type: AccountType.loan,
+    title,
+    instrument: currency,
+    syncIds: [contract == null || contract === '' ? id : contract.replace(/\s/g, '')],
+    balance: outstanding === 0 ? 0 : -outstanding,
+    archived: closed,
+    startDate: new Date(opening),
+    startBalance: principal,
+    percent: rate ?? null,
+    ...repaymentTerms,
+    endDateOffsetInterval: term.interval,
+    endDateOffset: term.count
+  }
+  const loanSchedule = completedLoanSchedule(schedule, principal, outstanding)
+  return { account, fetchParams: { accountId: id, historyAvailable: false }, ...(loanSchedule == null ? {} : { loanSchedule }) }
+}
 
 function text (value: unknown, path: string): string {
   const result = getOptString(value, path)
@@ -64,6 +189,7 @@ function depositTerms (deposit: unknown, contract: unknown, accountNumber: strin
 export function convertAccounts (source: unknown[] | BankProducts, syncedDepositIds: string[] = []): AccountPlan[] {
   const items = Array.isArray(source) ? source : source.accounts
   const deposits = Array.isArray(source) ? [] : source.deposits
+  const loans = Array.isArray(source) ? [] : source.loans ?? []
   const depositPlans: AccountPlan[] = []
   const depositIds = new Set<string>()
   for (const deposit of deposits) {
@@ -140,7 +266,95 @@ export function convertAccounts (source: unknown[] | BankProducts, syncedDeposit
       fetchParams: { accountId: id }
     }]
   })
-  return [...regularPlans, ...depositPlans]
+  const convertedLoans = loans.map(loan => loanPlan(loan))
+  const loanPlans = convertedLoans.filter((plan): plan is AccountPlan => plan != null)
+  if (loanPlans.length < loans.length) console.info('Levoberezhny loan products outside verified data contract', { count: loans.length - loanPlans.length })
+  const loansWithoutHistory = loanPlans.filter(plan => plan.loanSchedule == null).length
+  if (loansWithoutHistory > 0) console.info('Levoberezhny loan histories outside verified data contract', { count: loansWithoutHistory })
+  const accountIds = [...regularPlans, ...depositPlans, ...loanPlans].map(plan => plan.account.id)
+  console.assert(new Set(accountIds).size === accountIds.length, 'Duplicate account identity')
+  return [...regularPlans, ...depositPlans, ...loanPlans]
+}
+
+export function convertLoanTransactions (schedule: unknown, account: Account, fromDate: Date, toDate?: Date): ExtendedTransaction[] {
+  console.assert(account.type === AccountType.loan, 'Expected loan account')
+  const rows = loanRows(schedule)
+  const result: ExtendedTransaction[] = []
+  const ids = new Set<string>()
+  let previous = account.type === AccountType.loan ? account.startBalance : NaN
+  let futureSeen = false
+  if (account.type === AccountType.loan && account.startDate >= fromDate && (toDate == null || account.startDate <= toDate)) {
+    result.push({
+      date: account.startDate,
+      hold: false,
+      merchant: null,
+      comment: 'Выдача кредита',
+      movements: [{ id: `${account.id}:opening:principal`, account: { id: account.id }, sum: -account.startBalance, fee: 0, invoice: null }]
+    })
+  }
+  for (const row of rows) {
+    const actual = getOptBoolean(row, 'actual')
+    console.assert(actual != null, 'Unsupported loan schedule state')
+    if (actual === false) {
+      futureSeen = true
+      continue
+    }
+    console.assert(!futureSeen && getOptBoolean(row, 'overdue') === false, 'Unsupported completed loan schedule state')
+    const dateValue = getOptNumber(row, 'date')
+    const principal = getOptNumber(row, 'principalAmount')
+    const interest = getOptNumber(row, 'interestAmount')
+    const charges = getOptNumber(row, 'chargesAmount')
+    const early = getOptNumber(row, 'earlyRepaymentAmount')
+    const total = getOptNumber(row, 'amount')
+    const finalBalance = getOptNumber(row, 'finalBalance')
+    console.assert(dateValue != null && Number.isFinite(dateValue), 'Invalid loan payment date')
+    console.assert(principal != null && principal >= 0 && Number.isFinite(principal) && interest != null && interest >= 0 && Number.isFinite(interest) && charges != null && charges >= 0 && Number.isFinite(charges) && (principal > 0 || interest > 0 || charges > 0) && total != null && finalBalance != null, 'Unsupported loan payment amounts')
+    console.assert((early == null || (early > 0 && principal != null && early <= principal)) && Math.abs((principal ?? NaN) + (interest ?? NaN) + (charges ?? NaN) - (total ?? NaN)) < 0.005 && Math.abs(previous - (principal ?? NaN) - (finalBalance ?? NaN)) < 0.005, 'Loan schedule does not reconcile')
+    previous = finalBalance ?? NaN
+    const dateText = text(row, 'dateS')
+    const dateMatch = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(dateText)
+    console.assert(dateMatch != null, 'Invalid loan payment date label')
+    const day = `${dateMatch?.[3] ?? ''}-${dateMatch?.[2] ?? ''}-${dateMatch?.[1] ?? ''}`
+    const rawDay = new Date((dateValue ?? NaN) + 7 * 3600000).toISOString().slice(0, 10)
+    console.assert(rawDay === day, 'Loan payment dates disagree')
+    const date = new Date(`${day}T00:00:00+03:00`)
+    const rowId = [account.id, day].join(':')
+    console.assert(!ids.has(rowId), 'Duplicate completed loan payment')
+    ids.add(rowId)
+    if (date < fromDate || (toDate != null && date > toDate)) continue
+    const movement = (suffix: string, sum: number, key?: string): ExtendedTransaction => ({
+      ...(key == null ? {} : { groupKeys: [key] }),
+      date,
+      hold: false,
+      merchant: null,
+      comment: suffix === 'principal' ? 'Погашение основного долга' : suffix.startsWith('interest') ? 'Проценты по кредиту' : 'Комиссия по кредиту',
+      movements: [{ id: `${rowId}:${suffix}`, account: { id: account.id }, sum, fee: 0, invoice: null }]
+    })
+    if ((principal ?? 0) > 0) result.push(movement('principal', principal ?? NaN, JSON.stringify(['loan', account.id, 'principal', principal, day])))
+    if ((interest ?? 0) > 0) {
+      result.push(movement('interest-payment', interest ?? NaN, JSON.stringify(['loan', account.id, 'interest', interest, day])))
+      result.push(movement('interest-expense', -(interest ?? NaN)))
+    }
+    if ((charges ?? 0) > 0) {
+      result.push(movement('charges-payment', charges ?? NaN))
+      result.push(movement('charges-expense', -(charges ?? NaN)))
+    }
+  }
+  console.assert(account.type === AccountType.loan && account.balance != null && Math.abs(previous + account.balance) < 0.005, 'Loan principal does not reconcile')
+  return result
+}
+
+function loanTransferKey (item: unknown, accounts: Account[], amount: number, date: Date): string | undefined {
+  if (amount >= 0) return undefined
+  const details = getOptString(item, 'details') ?? ''
+  const principal = /Погашение кредита по договору N ([^ ]+) от /.exec(details)
+  const interest = /Погашение процентов за кредит по договору номер ([^ ]+) от /.exec(details)
+  if ((principal != null) === (interest != null)) return undefined
+  const contract = principal?.[1] ?? interest?.[1]
+  const matches = accounts.filter(account => account.type === AccountType.loan && account.syncIds.includes(contract ?? ''))
+  if (matches.length !== 1) return undefined
+  const day = new Date(date.getTime() + 3 * 3600000).toISOString().slice(0, 10)
+  return JSON.stringify(['loan', matches[0].id, principal == null ? 'interest' : 'principal', Math.abs(amount), day])
 }
 
 export function operationDate (operation: unknown): Date {
@@ -256,7 +470,7 @@ export function convertTransactions (items: unknown[], account: Account, fromDat
     }
     const comment = Array.from(new Set([details, purpose].filter(value => value !== ''))).join('\n')
     const date = operationDate(item)
-    const key = depositTransferKey(item, accounts, history) ?? ownTransferKey(item, account, accounts, amount, date)
+    const key = depositTransferKey(item, accounts, history) ?? loanTransferKey(item, accounts, amount, date) ?? ownTransferKey(item, account, accounts, amount, date)
     return {
       ...(key == null ? {} : { groupKeys: [key] }),
       date,
