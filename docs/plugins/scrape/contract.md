@@ -24,6 +24,8 @@ The optional `cashbacks` result field is a complete snapshot object, not an arra
 
 Omit the outer field when no cashback update is provided. `{ cashbacks: [] }` is an explicit empty snapshot and can clear previously imported cashbacks; it MUST NOT replace a loading or conversion failure. Account binding `externalId` values identify `account.id` values from the same scrape, not `syncIds` or application-local account IDs. Card-specific cashback MUST use an account binding for the corresponding plugin account; a separate card binding is not supported. Preserve supported raw-text variants when the bank provides text that cannot safely be parsed.
 
+Parse bank-provided period text into inclusive `from`/`to` dates, using explicit bank dates and the applicable calendar context for missing years or relative months. For monthly cashbacks specifying only an end date, use the first day of that month when no explicit start is available. An unsupported or invalid supplied period MUST fail conversion; moving its text into `content.description` and returning `permanent` is not a valid fallback. Reserve `permanent` for sources that do not specify a validity period.
+
 Validate actual converter output in tests under [cashback testing](testing.md#cashback-payloads). Schema validation checks the payload shape, not whether bank data was interpreted correctly or account references resolve.
 
 ## Dates and repeated runs
