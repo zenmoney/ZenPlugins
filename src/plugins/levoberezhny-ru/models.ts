@@ -4,7 +4,13 @@ export interface Preferences {
   login?: string
   password?: string
   startDate?: string
-  syncLoans?: boolean
+  syncClosedLoansBeforeStartDate?: boolean
+}
+
+export interface LoanSyncOptions {
+  fromDate: Date
+  includeClosedBeforeStartDate: boolean
+  syncedLoanIds: string[]
 }
 
 export interface StoredCookie {

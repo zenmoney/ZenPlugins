@@ -24,6 +24,16 @@ const augustRecords = require('../../fixtures/loan-august-2019.json') as unknown
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mortgage = require('../../fixtures/active-mortgage.json') as { loan: unknown, repaymentAccount: unknown, schedule: unknown, operations: unknown[] }
 
+function withoutRepaymentAccount (loan: unknown, id = 820001): Record<string, unknown> {
+  return {
+    ...(loan as Record<string, unknown>),
+    id,
+    repayAccountId: null,
+    repayAccount: null,
+    outstandingDebt: { ...((loan as { outstandingDebt: Record<string, unknown> }).outstandingDebt), repayAccountBalance: null }
+  }
+}
+
 it('converts both closed loans without using repayment accounts as their identity', () => {
   const plans = convertAccounts({ accounts: graph.accounts, deposits: [], loans })
   const loanPlans = plans.filter(plan => plan.account.type === AccountType.loan)
@@ -102,14 +112,85 @@ it('converts the observed active mortgage and its linked repayment account', () 
   expect(plans[1].fetchParams).toEqual({ accountId: '820001', historyAvailable: false })
 })
 
-it('recognizes an active mortgage by product kind rather than one tariff name', () => {
+it('recognizes a supported active loan contract independently of its product category', () => {
   const loan = {
     ...(mortgage.loan as Record<string, unknown>),
-    productName: 'ЛББ_Ипотечный стандарт',
-    loanPurpose: 'Кредит на приобретение жилья'
+    productName: 'ЛББ. Автомобильный кредит',
+    loanPurpose: 'Автокредит'
   }
   const plans = convertAccounts({ accounts: [mortgage.repaymentAccount], deposits: [], loans: [{ loan, schedule: mortgage.schedule }] })
-  expect(plans.find(plan => plan.account.type === AccountType.loan)?.account.title).toBe('ЛББ_Ипотечный стандарт')
+  expect(plans.find(plan => plan.account.type === AccountType.loan)?.account.title).toBe('ЛББ. Автомобильный кредит')
+})
+
+it('keeps confirmed debt without inventing a missing rate or contract number', () => {
+  const loan = {
+    ...(mortgage.loan as Record<string, unknown>),
+    interestRate: null,
+    displayNumber: null
+  }
+  const plan = convertAccounts({ accounts: [], deposits: [], loans: [{ loan, schedule: mortgage.schedule }] })[0]
+  expect(plan.account).toEqual(expect.objectContaining({
+    id: 'LN_820001',
+    syncIds: ['820001'],
+    balance: -2517275.4,
+    percent: null
+  }))
+})
+
+it('preserves a bank-confirmed loan term that is not a whole number of years', () => {
+  const source = loans[0].loan as Record<string, unknown>
+  const loan = {
+    ...source,
+    maturityDate: new Date('2023-04-11T17:00:00.000Z').getTime(),
+    maturityDateS: '12.04.2023'
+  }
+  const plan = convertAccounts({ accounts: [], deposits: [], loans: [{ loan, schedule: loans[0].schedule }] })[0]
+  expect(plan.account).toEqual(expect.objectContaining({
+    id: 'LN_810002',
+    endDateOffsetInterval: 'month',
+    endDateOffset: 18
+  }))
+})
+
+it('supports an active loan without a repayment-account relationship and skips only incompatible debt state', () => {
+  const loanWithoutRepaymentAccount = withoutRepaymentAccount(mortgage.loan, 830002)
+  const overdue = {
+    ...(mortgage.loan as Record<string, unknown>),
+    id: 830003,
+    outstandingDebt: { ...((mortgage.loan as { outstandingDebt: Record<string, unknown> }).outstandingDebt), penaltyAmount: 1 }
+  }
+  const plans = convertAccounts({
+    accounts: [],
+    deposits: [],
+    loans: [
+      { loan: mortgage.loan, schedule: mortgage.schedule },
+      { loan: loanWithoutRepaymentAccount, schedule: mortgage.schedule },
+      { loan: overdue, schedule: mortgage.schedule }
+    ]
+  })
+  expect(plans.filter(plan => plan.account.type === AccountType.loan).map(plan => plan.account.id)).toEqual(['LN_820001', 'LN_830002'])
+})
+
+it('[model] keeps a previously discovered mortgage as the same archived loan after closure', () => {
+  const sourceLoan = mortgage.loan as { outstandingDebt: Record<string, unknown>, maturityDate: number, maturityDateS: string }
+  const sourceSchedule = mortgage.schedule as { schedules: Array<Record<string, unknown>>, loanScheduleAmounts: unknown }
+  const loan = {
+    ...sourceLoan,
+    closeDate: sourceLoan.maturityDate,
+    closeDateS: sourceLoan.maturityDateS,
+    outstandingDebt: {
+      ...sourceLoan.outstandingDebt,
+      amount: 0,
+      principalAmount: 0,
+      interestAmount: 0,
+      monthInterestAmount: 0,
+      repayAccountBalance: 0
+    }
+  }
+  const schedule = { ...sourceSchedule, schedules: sourceSchedule.schedules.map(row => ({ ...row, actual: true })) }
+  const plan = convertAccounts({ accounts: [], deposits: [], loans: [{ loan, schedule }] })[0]
+  expect(plan.account).toEqual(expect.objectContaining({ id: 'LN_820001', type: AccountType.loan, balance: 0, archived: true }))
+  expect(() => convertLoanTransactions(schedule, plan.account, plan.account.type === AccountType.loan ? plan.account.startDate : new Date(NaN))).not.toThrow()
 })
 
 it('imports only completed mortgage rows and reconciles the current principal', () => {
@@ -127,6 +208,45 @@ it('imports only completed mortgage rows and reconciles the current principal', 
   expect(convertLoanTransactions(plan.loanSchedule, plan.account, plan.account.type === AccountType.loan ? plan.account.startDate : new Date(NaN))).toEqual(transactions)
 })
 
+it('does not require future schedule rows for an active loan with confirmed terms and debt', () => {
+  const source = mortgage.schedule as { schedules: Array<Record<string, unknown>> }
+  const schedule = { schedules: source.schedules.filter(row => row.actual === true) }
+  const plan = convertAccounts({ accounts: [], deposits: [], loans: [{ loan: mortgage.loan, schedule }] })[0]
+  expect(plan.account).toEqual(expect.objectContaining({ id: 'LN_820001', balance: -2517275.4, archived: false }))
+  expect(plan.loanSchedule).toEqual(schedule)
+})
+
+it('does not invent monthly repayment terms when no schedule is available', () => {
+  const loan = { ...(mortgage.loan as Record<string, unknown>), hasSchedule: false }
+  expect(convertAccounts({ accounts: [], deposits: [], loans: [{ loan, schedule: null }] })).toEqual([])
+})
+
+it('keeps a bank-active loan with confirmed zero principal until the bank closes it', () => {
+  const source = mortgage.loan as { outstandingDebt: Record<string, unknown> }
+  const loan = {
+    ...source,
+    outstandingDebt: { ...source.outstandingDebt, principalAmount: 0 }
+  }
+  const plan = convertAccounts({ accounts: [], deposits: [], loans: [{ loan, schedule: mortgage.schedule }] })[0]
+  expect(plan.account).toEqual(expect.objectContaining({ id: 'LN_820001', balance: 0, archived: false }))
+  expect(plan.loanSchedule).toBeUndefined()
+})
+
+it('keeps the confirmed loan account but omits all history when a completed row does not reconcile', () => {
+  const source = mortgage.schedule as { schedules: Array<Record<string, unknown>> }
+  let changed = false
+  const schedule = {
+    schedules: source.schedules.map(row => {
+      if (changed || row.actual !== true) return row
+      changed = true
+      return { ...row, amount: Number(row.amount) + 1 }
+    })
+  }
+  const plan = convertAccounts({ accounts: [], deposits: [], loans: [{ loan: mortgage.loan, schedule }] })[0]
+  expect(plan.account).toEqual(expect.objectContaining({ id: 'LN_820001', balance: -2517275.4 }))
+  expect(plan.loanSchedule).toBeUndefined()
+})
+
 it('groups every selected repayment-account debit with the matching completed mortgage movement', () => {
   const plans = convertAccounts({ accounts: [mortgage.repaymentAccount], deposits: [], loans: [{ loan: mortgage.loan, schedule: mortgage.schedule }] })
   const repayment = plans[0].account
@@ -141,6 +261,24 @@ it('groups every selected repayment-account debit with the matching completed mo
   expect(withRepayment).toHaveLength(28)
   expect(withRepayment.every(transaction => transaction.movements.length === 2 && transaction.movements.some(movement => 'id' in movement.account && movement.account.id === loan.account.id))).toBe(true)
   expect(grouped).toHaveLength(40)
+})
+
+it('groups account debits by contract even when the loan has no repayment-account relationship', () => {
+  const plans = convertAccounts({
+    accounts: [mortgage.repaymentAccount],
+    deposits: [],
+    loans: [{ loan: withoutRepaymentAccount(mortgage.loan), schedule: mortgage.schedule }]
+  })
+  const repayment = plans[0].account
+  const loan = plans[1]
+  const from = new Date('2025-11-04T21:00:00.000Z')
+  const grouped = groupTransactions([
+    ...convertTransactions(mortgage.operations, repayment, from, undefined, plans.map(plan => plan.account), mortgage.operations),
+    ...convertLoanTransactions(loan.loanSchedule, loan.account, from)
+  ])
+  const withRepayment = grouped.filter(transaction => transaction.movements.some(movement => 'id' in movement.account && movement.account.id === repayment.id))
+  expect(withRepayment).toHaveLength(28)
+  expect(withRepayment.every(transaction => transaction.movements.length === 2 && transaction.movements.some(movement => 'id' in movement.account && movement.account.id === loan.account.id))).toBe(true)
 })
 
 it('groups confirmed account debits with the completed payment and leaves interest as one expense', () => {

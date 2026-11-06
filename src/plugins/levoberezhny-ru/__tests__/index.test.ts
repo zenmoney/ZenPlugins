@@ -47,9 +47,23 @@ it('[model] includes a checking account and its fetch plan without requiring a c
   await expect(scrape({ preferences: { login: 'model', password: 'model' }, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [account], transactions: [] })
   expect(fetchTransactions).toHaveBeenCalledTimes(1)
   expect(fetchTransactions).toHaveBeenCalledWith(expect.objectContaining(auth), params, fromDate, undefined)
-  expect(fetchAccounts).toHaveBeenCalledWith(expect.objectContaining(auth), false)
-  await scrape({ preferences: { syncLoans: true }, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })
-  expect(fetchAccounts).toHaveBeenLastCalledWith(expect.objectContaining(auth), true)
+  expect(fetchAccounts).toHaveBeenLastCalledWith(expect.objectContaining(auth), { fromDate, includeClosedBeforeStartDate: false, syncedLoanIds: [] })
+  await scrape({ preferences: { syncClosedLoansBeforeStartDate: true }, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })
+  expect(fetchAccounts).toHaveBeenLastCalledWith(expect.objectContaining(auth), { fromDate, includeClosedBeforeStartDate: true, syncedLoanIds: [] })
+})
+
+it('[model] returns an empty successful result when every bank product is intentionally unsupported', async () => {
+  jest.clearAllMocks()
+  const host = { getData: jest.fn(), setData: jest.fn(), saveData: jest.fn(), isAccountSkipped: jest.fn(), locale: '' }
+  Object.assign(global, { ZenMoney: host })
+  jest.mocked(login).mockImplementation(async (_preferences, _saved, _background, persist) => ({ cookieHeader: 'model-cookie', fingerprint: 'model-device', persist }))
+  jest.mocked(fetchAccounts).mockResolvedValue({ accounts: [], deposits: [], loans: [] })
+  jest.mocked(convertAccounts).mockReturnValue([])
+  await expect(scrape({ preferences: {}, fromDate: new Date('2026-01-01T00:00:00+03:00'), toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [], transactions: [] })
+  expect(fetchTransactions).not.toHaveBeenCalled()
+  expect(convertTransactions).not.toHaveBeenCalled()
+  expect(convertLoanTransactions).not.toHaveBeenCalled()
+  expect(host.setData).not.toHaveBeenCalled()
 })
 
 it('[model] preserves savings metadata, fetches selected histories once and excludes skipped history from matching', async () => {
@@ -169,9 +183,52 @@ it('[model] loads a closed loan schedule from opening even when the app requests
   jest.mocked(convertAccounts).mockReturnValue([{ account, fetchParams: { accountId: 'model', historyAvailable: false }, loanSchedule: schedule }])
   jest.mocked(convertLoanTransactions).mockReturnValue([])
   const fromDate = new Date('2026-10-21T17:00:00Z')
-  await expect(scrape({ preferences: { syncLoans: true }, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [account], transactions: [] })
+  await expect(scrape({ preferences: {}, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [account], transactions: [] })
   expect(fetchTransactions).not.toHaveBeenCalled()
   expect(convertLoanTransactions).toHaveBeenCalledWith(schedule, account, account.startDate, undefined)
+})
+
+it('[model] remembers a discovered loan so later date filtering cannot hide it', async () => {
+  jest.clearAllMocks()
+  const state = new Map<string, unknown>()
+  const host = {
+    getData: jest.fn((key: string) => state.get(key)),
+    setData: jest.fn((key: string, value: unknown) => state.set(key, value)),
+    saveData: jest.fn(),
+    isAccountSkipped: jest.fn().mockReturnValue(false),
+    locale: ''
+  }
+  Object.assign(global, { ZenMoney: host })
+  jest.mocked(login).mockImplementation(async (_preferences, _saved, _background, persist) => ({ cookieHeader: 'model-cookie', fingerprint: 'model-device', persist }))
+  jest.mocked(fetchAccounts).mockResolvedValue({ accounts: [], deposits: [], loans: [] })
+  const account = {
+    id: 'LN_model-known',
+    type: AccountType.loan as const,
+    title: 'Model known loan',
+    instrument: 'RUB',
+    syncIds: ['model-known-contract'],
+    balance: 0,
+    archived: true,
+    startDate: new Date('2018-04-09T17:00:00Z'),
+    startBalance: 500000,
+    percent: 12.9,
+    capitalization: true,
+    endDateOffsetInterval: 'year' as const,
+    endDateOffset: 5,
+    payoffInterval: 'month' as const,
+    payoffStep: 1
+  }
+  jest.mocked(convertAccounts).mockReturnValue([{ account, fetchParams: { accountId: 'model-known', historyAvailable: false }, loanSchedule: { schedules: [] } }])
+  jest.mocked(convertLoanTransactions).mockReturnValue([])
+  const firstFromDate = new Date('2020-01-01T00:00:00+03:00')
+  await scrape({ preferences: { syncClosedLoansBeforeStartDate: true }, fromDate: firstFromDate, toDate: undefined, isFirstRun: true, isInBackground: false })
+  expect(state.get('syncedLoanIds')).toEqual(['LN_model-known'])
+  expect(fetchAccounts).toHaveBeenLastCalledWith(expect.anything(), { fromDate: firstFromDate, includeClosedBeforeStartDate: true, syncedLoanIds: [] })
+
+  const laterFromDate = new Date('2026-10-01T00:00:00+03:00')
+  await scrape({ preferences: {}, fromDate: laterFromDate, toDate: undefined, isFirstRun: false, isInBackground: true })
+  expect(fetchAccounts).toHaveBeenLastCalledWith(expect.anything(), { fromDate: laterFromDate, includeClosedBeforeStartDate: false, syncedLoanIds: ['LN_model-known'] })
+  expect(state.get('syncedLoanIds')).toEqual(['LN_model-known'])
 })
 
 it('[model] does not convert a skipped loan schedule', async () => {
@@ -198,7 +255,7 @@ it('[model] does not convert a skipped loan schedule', async () => {
   }
   jest.mocked(convertAccounts).mockReturnValue([{ account, fetchParams: { accountId: 'model-skipped', historyAvailable: false }, loanSchedule: { schedules: [] } }])
   const fromDate = new Date('2026-10-21T17:00:00Z')
-  await expect(scrape({ preferences: { syncLoans: true }, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [account], transactions: [] })
+  await expect(scrape({ preferences: {}, fromDate, toDate: undefined, isFirstRun: false, isInBackground: false })).resolves.toEqual({ accounts: [account], transactions: [] })
   expect(fetchTransactions).not.toHaveBeenCalled()
   expect(convertLoanTransactions).not.toHaveBeenCalled()
 })

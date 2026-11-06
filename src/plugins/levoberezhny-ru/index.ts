@@ -14,8 +14,10 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   })
   const savedDepositIds: unknown = ZenMoney.getData('syncedDepositIds')
   const syncedDepositIds = Array.isArray(savedDepositIds) ? savedDepositIds.filter((id): id is string => typeof id === 'string') : []
-  const plans = convertAccounts(await fetchAccounts(session, preferences.syncLoans === true), syncedDepositIds)
-  console.assert(plans.length > 0, 'No supported bank accounts')
+  const savedLoanIds: unknown = ZenMoney.getData('syncedLoanIds')
+  const syncedLoanIds = Array.isArray(savedLoanIds) ? savedLoanIds.filter((id): id is string => typeof id === 'string') : []
+  const loanSync = { fromDate, includeClosedBeforeStartDate: preferences.syncClosedLoansBeforeStartDate === true, syncedLoanIds }
+  const plans = convertAccounts(await fetchAccounts(session, loanSync), syncedDepositIds)
   const transactions: ExtendedTransaction[] = []
   const histories = []
   for (const { account, fetchParams } of plans) {
@@ -42,6 +44,11 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
   const depositIds = accounts.filter(account => account.type === AccountType.deposit || ('savings' in account && account.savings === true)).map(account => account.id)
   if (depositIds.length > 0) {
     ZenMoney.setData('syncedDepositIds', Array.from(new Set([...syncedDepositIds, ...depositIds])))
+    ZenMoney.saveData()
+  }
+  const loanIds = accounts.filter(account => account.type === AccountType.loan).map(account => account.id)
+  if (loanIds.length > 0) {
+    ZenMoney.setData('syncedLoanIds', Array.from(new Set([...syncedLoanIds, ...loanIds])))
     ZenMoney.saveData()
   }
   return { accounts, transactions: grouped }
