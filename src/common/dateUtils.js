@@ -73,3 +73,31 @@ export function getMidnight (date, offset) {
   midnight.setHours(0, 0, 0, 0)
   return midnight
 }
+
+export function getFirstDayOfMonth (date, offset = 0) {
+  const firstDay = new Date(date.getTime())
+  firstDay.setMonth(firstDay.getMonth() + offset, 1)
+  return getMidnight(firstDay, 0)
+}
+
+export function isISODate (value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return isValidDate(date) && date.toISOString().slice(0, 10) === value
+}
+
+/** Classify an inclusive calendar-date range; partial periods remain custom. */
+export function getDatePeriodType (from, to) {
+  if (!isISODate(from) || !isISODate(to)) throw new Error('Invalid date period boundary')
+  if (from > to) throw new Error('Invalid date period range')
+  const start = new Date(`${from}T00:00:00`)
+  const end = new Date(`${to}T00:00:00`)
+  const lastDay = getMidnight(getFirstDayOfMonth(end, 1), -1)
+  if (start.getFullYear() === end.getFullYear() && start.getDate() === 1 && end.getDate() === lastDay.getDate()) {
+    const monthCount = end.getMonth() - start.getMonth() + 1
+    if (monthCount === 1) return 'month'
+    if (monthCount === 3 && start.getMonth() % 3 === 0) return 'quarter'
+    if (monthCount === 12) return 'year'
+  }
+  return 'custom'
+}

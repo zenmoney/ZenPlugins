@@ -1,4 +1,4 @@
-import { createDateIntervals, dateInTimezone, formatCommentDateTime, isValidDate } from './dateUtils'
+import { createDateIntervals, dateInTimezone, formatCommentDateTime, getDatePeriodType, getFirstDayOfMonth, getMidnight, isISODate, isValidDate, toISODateString } from './dateUtils'
 import { getIntervalBetweenDates } from './momentDateUtils'
 
 describe('formatCommentDateTime', () => {
@@ -129,5 +129,67 @@ describe('dateInTimezone', () => {
   it('moves date to specific time zone', () => {
     expect(dateInTimezone(new Date('2019-01-01T00:00:00+06:00'), 6 * 60)).toEqual(new Date(2019, 0, 1))
     expect(dateInTimezone(new Date('2019-05-13T23:04:05-03:00'), -3 * 60)).toEqual(new Date(2019, 4, 13, 23, 4, 5))
+  })
+})
+
+describe('calendar dates and inclusive periods [model]', () => {
+  // Calendar boundaries must preserve local dates, reject rollover and leave inputs intact.
+  it.each([
+    ['2028-02-29', true],
+    ['2026-02-29', false],
+    ['2026-04-31', false],
+    ['2026-8-01', false],
+    ['2026-08-01T00:00:00Z', false],
+    [null, false]
+  ])('strictly validates ISO date %s', (value, expected) => {
+    expect(isISODate(value)).toBe(expected)
+  })
+
+  it.each([
+    [0, new Date(2026, 0, 1)],
+    [1, new Date(2026, 1, 1)],
+    [-1, new Date(2025, 11, 1)]
+  ])('finds the first day with month offset %s without overflowing or mutating the input', (offset, expected) => {
+    const date = new Date(2026, 0, 31, 17, 45)
+    expect(getFirstDayOfMonth(date, offset)).toEqual(expected)
+    expect(date).toEqual(new Date(2026, 0, 31, 17, 45))
+  })
+
+  it('resets time at the target month boundary', () => {
+    // In America/Santiago, this source day's midnight rolls forward to 01:00.
+    expect(getFirstDayOfMonth(new Date(2026, 8, 6, 17, 45))).toEqual(new Date(2026, 8, 1))
+  })
+
+  it.each([
+    [new Date(2026, 1, 15), '2026-02-28'],
+    [new Date(2028, 1, 15), '2028-02-29'],
+    [new Date(2026, 11, 15), '2026-12-31']
+  ])('finds the last day of the month containing %s', (date, expected) => {
+    expect(toISODateString(getMidnight(getFirstDayOfMonth(date, 1), -1))).toBe(expected)
+  })
+
+  it.each([
+    ['2026-12-31T20:59:59Z', 180, '2026-12-31'],
+    ['2026-12-31T21:00:00Z', 180, '2027-01-01'],
+    ['2026-12-31T21:00:00Z', 0, '2026-12-31'],
+    ['2027-01-01T00:00:00Z', -180, '2026-12-31']
+  ])('formats %s at the requested offset of %s minutes', (value, offset, expected) => {
+    expect(toISODateString(dateInTimezone(new Date(value), offset))).toBe(expected)
+  })
+
+  it.each([
+    ['2028-02-01', '2028-02-29', 'month'],
+    ['2026-04-01', '2026-06-30', 'quarter'],
+    ['2026-01-01', '2026-12-31', 'year'],
+    ['2026-02-01', '2026-04-30', 'custom'],
+    ['2026-09-07', '2026-09-13', 'custom'],
+    ['2026-12-27', '2027-01-03', 'custom']
+  ])('classifies inclusive range %s through %s as %s', (from, to, expected) => {
+    expect(getDatePeriodType(from, to)).toBe(expected)
+  })
+
+  it('rejects invalid or reversed period boundaries', () => {
+    expect(() => getDatePeriodType('2026-02-01', '2026-02-30')).toThrow('Invalid date period boundary')
+    expect(() => getDatePeriodType('2026-08-20', '2026-08-10')).toThrow('Invalid date period range')
   })
 })
