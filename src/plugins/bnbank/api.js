@@ -3,7 +3,7 @@ import { generateRandomString } from '../../common/utils'
 import { InvalidOtpCodeError, InvalidPreferencesError, TemporaryError } from '../../errors'
 
 const BASE_URL = 'https://bnb-mobile.bnb.by/'
-const APP_VERSION = '1.9.0'
+const APP_VERSION = '1.11.2'
 const PAGE_SIZE = 20
 const MAX_TRANSACTION_PAGES = 1000
 const DEVICE_KEY = 'device'
