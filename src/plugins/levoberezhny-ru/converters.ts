@@ -14,7 +14,7 @@ function identifier (value: unknown, path: string): string {
   return String(id)
 }
 
-function depositTerms (deposit: unknown, contract: unknown): Omit<DepositOrLoan, 'id' | 'title' | 'instrument' | 'syncIds' | 'balance' | 'archived'> | null {
+function depositTerms (deposit: unknown, contract: unknown, accountNumber: string): Omit<DepositOrLoan, 'id' | 'title' | 'instrument' | 'syncIds' | 'balance' | 'archived'> | null {
   if (getOptString(deposit, 'term.typeCode') !== 'time') return null
   const period = getOptString(deposit, 'term.capitalizationPeriod')
   const product = getOptString(deposit, 'productName')
@@ -34,24 +34,27 @@ function depositTerms (deposit: unknown, contract: unknown): Omit<DepositOrLoan,
     return null
   }
   const opening = getOptNumber(deposit, 'openDate')
-  const maturity = getOptNumber(deposit, 'term.expiryDate')
   const days = getOptNumber(deposit, 'term.contractPeriod')
   const principal = getOptNumber(contract, 'amount')
   const rate = getOptNumber(contract, 'interestRate')
-  console.assert(opening != null && Number.isFinite(opening) && maturity != null && Number.isFinite(maturity), 'Missing deposit contract dates')
-  console.assert(days != null && Number.isInteger(days) && days > 0 && maturity != null && opening != null && maturity - opening === days * 86400000, 'Invalid deposit contract term')
-  console.assert(principal != null && Number.isFinite(principal) && principal > 0, 'Missing deposit original principal')
-  console.assert(rate != null && Number.isFinite(rate) && rate >= 0 && rate < 100, 'Missing or invalid deposit rate')
-  const interestAccount = text(contract, 'interestAccountNumber').replace(/\s/g, '')
+  const interestAccount = getOptString(contract, 'interestAccountNumber')?.replace(/\s/g, '')
+  // Contract terms only enrich the account representation. If they are
+  // incomplete or invalid, preserve financial synchronization as savings
+  // instead of inventing deposit metadata or rejecting balances and history.
+  if (opening == null || !Number.isFinite(opening) ||
+    days == null || !Number.isInteger(days) || days <= 0 ||
+    principal == null || !Number.isFinite(principal) || principal <= 0 ||
+    (rate != null && (!Number.isFinite(rate) || rate < 0)) ||
+    interestAccount == null || interestAccount === '') return null
   return {
     type: AccountType.deposit,
-    startDate: new Date(opening ?? NaN),
-    startBalance: principal ?? NaN,
+    startDate: new Date(opening),
+    startBalance: principal,
     // This is the bank's quoted rate, not a calculated yield or an assumed bonus.
-    percent: rate ?? NaN,
-    capitalization: interestAccount === text(contract, 'account.number').replace(/\s/g, ''),
+    percent: rate ?? null,
+    capitalization: interestAccount === accountNumber,
     endDateOffsetInterval: 'day',
-    endDateOffset: days ?? NaN,
+    endDateOffset: days,
     // Actual interest transactions come only from bank history.
     payoffInterval,
     payoffStep
@@ -89,9 +92,14 @@ export function convertAccounts (source: unknown[] | BankProducts, syncedDeposit
       // their metadata. Never query their AC filter:
       // the server returns unrelated accounts instead of a missing-account error.
       const historyAvailable = !(archived && linked.length === 0 && getOptBoolean(contract, 'actions.canDoStatement') === false)
-      const terms = depositTerms(deposit, contract)
+      const terms = depositTerms(deposit, contract, number)
+      const productName = getOptString(deposit, 'productName')?.trim()
+      const accountName = getOptString(contract, 'account.name')?.trim()
+      const title = productName != null && productName !== ''
+        ? productName
+        : accountName != null && accountName !== '' ? accountName : number
       depositPlans.push({
-        account: { id, ...(terms ?? { type: AccountType.checking, savings: true }), title: text(deposit, 'productName'), instrument: currency, syncIds: [number], balance, archived },
+        account: { id, ...(terms ?? { type: AccountType.checking, savings: true }), title, instrument: currency, syncIds: [number], balance, archived },
         fetchParams: { accountId: id, historyAvailable }
       })
     }
