@@ -1,0 +1,457 @@
+[
+  {
+    "id": "sber:9000000000000037",
+    "type": "checking",
+    "title": "Ааааааааааааа аааа (Ааааааа)",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000254035"
+    ],
+    "balance": 0.0,
+    "archived": false,
+    "savings": true
+  },
+  {
+    "id": "sber:9000000000000038",
+    "type": "checking",
+    "title": "Баа Аааааааааааа (Бааа)",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000224003"
+    ],
+    "balance": 100.45,
+    "archived": false,
+    "savings": true
+  },
+  {
+    "id": "sber:9000000000000039",
+    "type": "checking",
+    "title": "Ааааааааа Баааааа аааааа Вааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000024029"
+    ],
+    "balance": 432.42,
+    "archived": false,
+    "savings": true
+  },
+  {
+    "id": "sber:9000000000000040",
+    "type": "checking",
+    "title": "А Ааааа ",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000294026"
+    ],
+    "balance": 140031.56,
+    "archived": false,
+    "savings": true
+  },
+  {
+    "id": "sber:9000000000000041",
+    "type": "checking",
+    "title": "Ааааааааа Гааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000204034"
+    ],
+    "balance": 54575.25,
+    "archived": false,
+    "savings": true
+  },
+  {
+    "id": "sber:9000000000000042",
+    "type": "checking",
+    "title": "Aaaaa  Aaaa Baaaa Baaa ",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000044022"
+    ],
+    "balance": 0.0,
+    "archived": false,
+    "savings": true
+  },
+  {
+    "id": "sber:9000000000000043",
+    "type": "checking",
+    "title": "Бааааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000084004"
+    ],
+    "balance": 0.39,
+    "archived": false,
+    "savings": true
+  },
+  {
+    "id": "sber:9000000000000044",
+    "type": "ccard",
+    "title": "Баааааааа аааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000194031"
+    ],
+    "balance": 541.17,
+    "archived": false,
+    "creditLimit": 0.0,
+    "available": 541.17
+  },
+  {
+    "id": "sber:9000000000000046",
+    "type": "ccard",
+    "title": "Аааааааааа аааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000124005"
+    ],
+    "balance": 11550.0,
+    "archived": false,
+    "creditLimit": 0.0,
+    "available": 11550.0
+  },
+  {
+    "id": "sber:9000000000000047",
+    "type": "ccard",
+    "title": "ГАА Дааа гааааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000334006"
+    ],
+    "balance": 2670.7,
+    "archived": false,
+    "creditLimit": 0.0,
+    "available": 2670.7
+  },
+  {
+    "id": "sber:9000000000000048",
+    "type": "ccard",
+    "title": "Баааааааа аааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000214016"
+    ],
+    "balance": 4701.0,
+    "archived": false,
+    "creditLimit": 0.0,
+    "available": 4701.0
+  },
+  {
+    "id": "sber:9000000000000050",
+    "type": "ccard",
+    "title": "Баааааааа аааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000114014"
+    ],
+    "balance": 0.0,
+    "archived": false,
+    "creditLimit": 0.0,
+    "available": 0.0
+  },
+  {
+    "id": "sber:9000000000000052",
+    "type": "checking",
+    "title": "Гаааааа. еаа. баааа (даааааа)",
+    "instrument": "XAG",
+    "syncIds": [
+      "40817099000000014009"
+    ],
+    "balance": 0.0,
+    "archived": false
+  },
+  {
+    "id": "sber:digital:40817810000000134007",
+    "type": "checking",
+    "title": "Цифровой рубль",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000134007"
+    ],
+    "balance": 0.0,
+    "archived": false
+  },
+  {
+    "id": "sber:archive:40817810000000034033",
+    "type": "ccard",
+    "title": "Баааааааа аааа (ааа.)",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000034033"
+    ],
+    "balance": null,
+    "archived": true
+  },
+  {
+    "id": "sber:archive:40817810000000054008",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000054008"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000064025",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000064025"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000074027",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000074027"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000094012",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000094012"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000104010",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000104010"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000144028",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000144028"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000154024",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000154024"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000164017",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000164017"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000174013",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000174013"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000184011",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000184011"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000234002",
+    "type": "checking",
+    "title": "Ааааааааааааа аааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000234002"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000244019",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000244019"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000264001",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000264001"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000274021",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000274021"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000284030",
+    "type": "checking",
+    "title": "Ааааааааааааа аааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000284030"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000304023",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000304023"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000314018",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000314018"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:40817810000000324032",
+    "type": "ccard",
+    "title": "Баааааааа аааа (ааа.)",
+    "instrument": "RUB",
+    "syncIds": [
+      "40817810000000324032"
+    ],
+    "balance": null,
+    "archived": true
+  },
+  {
+    "id": "sber:archive:40817840000000344020",
+    "type": "checking",
+    "title": "Аааааааааааааа дааа",
+    "instrument": "USD",
+    "syncIds": [
+      "40817840000000344020"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:archive:42304810000000354015",
+    "type": "checking",
+    "title": "Жааааааа ЗаА@да",
+    "instrument": "RUB",
+    "syncIds": [
+      "42304810000000354015"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:history:account:RUB:4049",
+    "type": "checking",
+    "title": "Ааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "4049"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:history:account:RUB:4050",
+    "type": "checking",
+    "title": "Ааааааааааааа дааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "4050"
+    ],
+    "balance": null,
+    "archived": true,
+    "savings": true
+  },
+  {
+    "id": "sber:history:ct-account:RUB:4048",
+    "type": "ccard",
+    "title": "Баааааааа аааа",
+    "instrument": "RUB",
+    "syncIds": [
+      "4048"
+    ],
+    "balance": null
+  }
+]

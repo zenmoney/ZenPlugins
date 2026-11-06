@@ -20,6 +20,8 @@ The `serverIp` bootloader preference is required. Enter only the development mac
 
 Every scrape creates a new session id. Sessions contain console and error events, network requests, accounts, transactions, plugin data state, checkpoints, and the final result. The selected session can be exported as a `.log` file from the web UI. Console and error events are mirrored to the browser DevTools console instead of being rendered on the page.
 
+The event endpoint accepts JSON batches up to 16 MiB so complete statement results can arrive together with their diagnostics. Session creation retains its separate 256 KiB limit. An event batch exceeding the bound is rejected with HTTP 413; it is not recorded as a completed synchronization.
+
 Port `5050` is reserved for Bootloader. `yarn host` stops a previous Bootloader V2 process found on that port, but refuses to stop any other service and exits with an error.
 
 ## bootloader_config.json
