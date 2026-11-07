@@ -33,7 +33,7 @@ import {
   fetchTrustDeviceV2,
   fetchUnTrustDeviceV2
 } from './fetchApi'
-import { InvalidLoginOrPasswordError } from '../../errors'
+import { InvalidLoginOrPasswordError, PasswordExpiredError } from '../../errors'
 import { generateRandomString } from '../../common/utils'
 
 async function askOtpCodeV2 (prompt: string, timeout = 3000): Promise<string> {
@@ -88,6 +88,12 @@ function generateDeviceInfo (deviceId: string | null): DeviceInfo {
 
 function generateDeviceData (deviceInfo: DeviceInfo): DeviceData {
   return DeviceData.fromDeviceInfo(deviceInfo, ZenMoney.device.os.name, ZenMoney.device.os.version)
+}
+
+export function assertPasswordChangeNotRequired (loginInfo: Pick<LoginResponse, 'changePasswordRequired'>, cookies: string[]): void {
+  if (loginInfo.changePasswordRequired && cookies.length === 0) {
+    throw new PasswordExpiredError()
+  }
 }
 
 function getOtpIdForDevice (loginInfo: LoginResponse, device: OtpDeviceV2): string {
@@ -231,6 +237,7 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
       deviceTrusted = true
       cookies = loginInfo.cookies
     }
+    assertPasswordChangeNotRequired(loginInfo, cookies)
     const registrationId = await fetchRegisterDeviceV2({ deviceName: deviceInfo.manufacturer, passcode: PASSCODE, deviceId: deviceInfo.deviceId }, cookies)
     session = {
       cookies,
@@ -258,6 +265,7 @@ WxdnLbK6zKx6+4WL9qWhGu6R+7HNPAaKOb7KXEwjV2ekr6FVZneKRFe/XivMk66O
       deviceTrusted = true
       cookies = loginInfo.cookies
     }
+    assertPasswordChangeNotRequired(loginInfo, cookies)
     session = {
       cookies,
       auth
