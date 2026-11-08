@@ -211,6 +211,11 @@ function cardTransaction (transaction: unknown, sourceCardId: string, accounts: 
     // Top-up fee fields do not reduce the card's credited amount.
     if (sign < 0 && debitFee !== 0) throw new Error('Q-Pay card fees have no confirmed account-currency total')
   }
+  // A standalone commission is the expense itself; a zero principal is rejected by the app.
+  if (sign < 0 && principal === 0 && fee < 0) {
+    principal = -fee
+    fee = 0
+  }
   const movement: Movement = {
     id: `q-pay:card-tx:${requiredString(transaction, 'id')}`,
     account: { id: account.id },

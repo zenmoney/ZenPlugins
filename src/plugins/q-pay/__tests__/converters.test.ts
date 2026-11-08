@@ -643,8 +643,8 @@ describe('Q-Pay current application conversion', () => {
         movements: [{
           id: 'q-pay:card-tx:00000000-0000-4000-8000-000000000022',
           account: { id: 'q-pay:card:00000000-0000-4000-8000-000000000003' },
-          sum: 0,
-          fee: -0.4,
+          sum: -0.4,
+          fee: 0,
           invoice: null
         }],
         merchant: null,
