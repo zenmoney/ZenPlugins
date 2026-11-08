@@ -174,6 +174,13 @@ function cardMerchant (transaction: unknown): Merchant | null {
   }
 }
 
+export function normalizeCardMovement (movement: Movement): Movement | null {
+  if (movement.sum !== 0) return movement
+  if (movement.fee === 0) return null
+  // A standalone commission is the expense itself; the app rejects a zero principal.
+  return { ...movement, sum: movement.fee, fee: 0 }
+}
+
 function cardTransaction (transaction: unknown, sourceCardId: string, accounts: Map<string, Account>): Transaction | null {
   const account = accountFor(accounts, cardId(sourceCardId))
   const sign = cardSign(transaction)
@@ -210,11 +217,6 @@ function cardTransaction (transaction: unknown, sourceCardId: string, accounts: 
       : currency === account.instrument ? rawAmount : null
     // Top-up fee fields do not reduce the card's credited amount.
     if (sign < 0 && debitFee !== 0) throw new Error('Q-Pay card fees have no confirmed account-currency total')
-  }
-  // A standalone commission is the expense itself; a zero principal is rejected by the app.
-  if (sign < 0 && principal === 0 && fee < 0) {
-    principal = -fee
-    fee = 0
   }
   const movement: Movement = {
     id: `q-pay:card-tx:${requiredString(transaction, 'id')}`,
@@ -269,7 +271,11 @@ export function convertTransactions (graph: QPayAccountGraph, history: QPayHisto
   for (const group of history.cards) {
     for (const source of group.transactions) {
       const converted = cardTransaction(source, group.cardId, accounts)
-      if (converted != null) result.push(ownedCards.has(group.cardId) ? linkWalletFunding(source, converted, accounts) : converted)
+      if (converted == null) continue
+      const movement = normalizeCardMovement(converted.movements[0])
+      if (movement == null) continue
+      converted.movements[0] = movement
+      result.push(ownedCards.has(group.cardId) ? linkWalletFunding(source, converted, accounts) : converted)
     }
   }
   return result.sort((left, right) => left.date.getTime() - right.date.getTime())
