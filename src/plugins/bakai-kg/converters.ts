@@ -78,8 +78,8 @@ function merchantFor (record: unknown, code: string): Merchant | null {
   }
 }
 
-export function convertTransaction (record: unknown, account: AccountOrCard, fee = 0): ExtendedTransaction {
-  if (account.type === AccountType.checking) return convertAccountTransaction(record, account)
+export function convertTransaction (record: unknown, account: AccountOrCard, fee = 0, accounts: AccountOrCard[] = [account]): ExtendedTransaction {
+  if (account.type === AccountType.checking) return convertAccountTransaction(record, account, accounts)
   const amount = getOptNumber(record, 'amount')
   const original = getOptNumber(record, 'operation_amount')
   const currency = getOptString(record, 'currency')
@@ -121,7 +121,7 @@ export function convertTransaction (record: unknown, account: AccountOrCard, fee
       fee: 0
     }]
   }
-  if ((code === 'OPTP0422' && amount > 0) || (code === '120' && amount < 0)) {
+  if ((code === 'OPTP0422' && amount > 0) || ((code === '120' || code === 'OPTP0402') && amount < 0)) {
     // Observed opposite sides match within one second. This is a minute-based
     // heuristic, not a shared bank reference. An absent side stays unpaired.
     transaction.groupKeys = [`bakai:${currency}:${Math.abs(amount - fee)}:${Math.floor(date.getTime() / 60000)}`]
@@ -129,26 +129,47 @@ export function convertTransaction (record: unknown, account: AccountOrCard, fee
   return transaction
 }
 
-function convertAccountTransaction (record: unknown, account: AccountOrCard): ExtendedTransaction {
-  const amount = getOptNumber(record, 'balance')
-  const original = getOptNumber(record, 'operation_amount')
-  assert(amount != null && Number.isFinite(amount) && original === amount, 'Unimplemented bank account amount semantics')
+function convertAccountTransaction (record: unknown, account: AccountOrCard, accounts: AccountOrCard[]): ExtendedTransaction {
+  // account.history balances are running balances; operation_amount is the signed posting.
+  const amount = getOptNumber(record, 'operation_amount')
+  assert(amount != null && Number.isFinite(amount), 'Bank account operation amount is invalid')
   assert(getOptString(record, 'currency') === account.instrument && getOptString(record, 'operation_currency') === account.instrument, 'Unimplemented bank account currency semantics')
-  // Every observed ledger ID is the placeholder zero; it cannot identify a movement.
-  assert(getOptNumber(record, 'id') === 0, 'Unimplemented bank account movement identity')
-  assert(getOptString(record, 'correspondent') == null && getOptString(record, 'corraccount') == null && getOptString(record, 'location') == null, 'Unimplemented bank account counterparty semantics')
+  // The endpoint uses zero placeholders or interval-relative row numbers, not stable movement IDs.
+  const rowNumber = getOptNumber(record, 'id')
+  assert(rowNumber != null && Number.isSafeInteger(rowNumber) && rowNumber >= 0, 'Bank account row number is invalid')
+  assert(getOptString(record, 'location') == null, 'Unimplemented bank account location semantics')
   const purpose = getOptString(record, 'purpose')
   assert(purpose != null && purpose.trim() !== '', 'Bank account operation purpose is missing')
-  return {
+  const counterpartyAccount = getOptString(record, 'corraccount')
+  const isOwnAccount = counterpartyAccount != null && accounts.some(item => item.syncIds?.includes(counterpartyAccount))
+  const correspondent = getOptString(record, 'correspondent')?.trim()
+  const transaction: ExtendedTransaction = {
     date: operationDate(getOptString(record, 'date')),
     hold: null,
     movements: [{ id: null, account: { id: account.id }, invoice: null, sum: amount, fee: 0 }],
-    merchant: null,
+    merchant: isOwnAccount || correspondent == null || correspondent === ''
+      ? null
+      : { title: correspondent, city: null, country: null, mcc: null, location: null },
     comment: purpose.trim()
   }
+  if (purpose === 'Перевод Сам себе' && isOwnAccount) {
+    // Observed card/account pairs share their currency, amount and minute (up to one second apart).
+    // The existing minute-based strategy only pairs actual movements; an absent side stays unpaired.
+    transaction.groupKeys = [`bakai:${account.instrument}:${Math.abs(amount)}:${Math.floor(transaction.date.getTime() / 60000)}`]
+  } else if (!isOwnAccount && counterpartyAccount != null &&
+    (purpose === 'Перевод Сам себе' || purpose.startsWith('Перевод клиринг,'))) {
+    transaction.movements.push({
+      id: null,
+      account: { type: null, instrument: account.instrument, company: null, syncIds: [counterpartyAccount] },
+      invoice: null,
+      sum: -amount,
+      fee: 0
+    })
+  }
+  return transaction
 }
 
-export function convertTransactions (records: unknown[], account: AccountOrCard, fromDate: Date, toDate?: Date): ExtendedTransaction[] {
+export function convertTransactions (records: unknown[], account: AccountOrCard, fromDate: Date, toDate?: Date, accounts: AccountOrCard[] = [account]): ExtendedTransaction[] {
   const deferred = new Set<unknown>()
   const fees = new Map<unknown, number>()
   if (account.type === AccountType.ccard) {
@@ -169,7 +190,7 @@ export function convertTransactions (records: unknown[], account: AccountOrCard,
       deferred.add(record)
     }
   }
-  const result = records.filter(record => !deferred.has(record)).map(record => convertTransaction(record, account, fees.get(record) ?? 0)).filter(transaction =>
+  const result = records.filter(record => !deferred.has(record)).map(record => convertTransaction(record, account, fees.get(record) ?? 0, accounts)).filter(transaction =>
     transaction.date.getTime() >= fromDate.getTime() && (toDate == null || transaction.date.getTime() <= toDate.getTime())
   )
   const ids = new Set<string>()

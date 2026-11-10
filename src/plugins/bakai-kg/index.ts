@@ -18,12 +18,12 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     if (!ZenMoney.isAccountSkipped(plan.account.id)) getHistoryDates(plan.fetchParams, fromDate, toDate)
   }
   const transactions: ExtendedTransaction[] = []
+  const accounts = plans.map(plan => plan.account)
   for (const plan of plans) {
     plan.account.balance = await fetchAccountBalance(state, plan.fetchParams.accountId)
     if (ZenMoney.isAccountSkipped(plan.account.id)) continue
     const records = await fetchTransactions(state, plan.fetchParams, fromDate, toDate)
-    transactions.push(...convertTransactions(records, plan.account, fromDate, toDate))
+    transactions.push(...convertTransactions(records, plan.account, fromDate, toDate, accounts))
   }
-  const accounts = plans.map(plan => plan.account)
   return { accounts, transactions: adjustTransactions({ transactions }) }
 }

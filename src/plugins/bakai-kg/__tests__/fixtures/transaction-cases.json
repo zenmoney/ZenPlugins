@@ -507,46 +507,6 @@
     "accountId": 1000,
     "sourceFlowId": "00000000-0000-4000-8000-000000000002",
     "operation": {
-      "amount": -5620.14,
-      "currency": "KGS",
-      "date": "2021-06-01T15:56:03+06:00",
-      "date2": "2021-06-01T15:56:03+06:00",
-      "location": "TEST BANK POSTING",
-      "operation_amount": -5620.14,
-      "operation_currency": "KGS",
-      "type": "Списание со счета",
-      "type_code": "OPTP0402",
-      "utrnno": "000000031",
-      "merchant_id": "SJ625769",
-      "balance": 2504.15,
-      "rrn": "926339953521",
-      "mcc": "6010",
-      "terminal_id": "SJ625769"
-    },
-    "name": "OPTP0402-KGS-KGS-10",
-    "class": "expense",
-    "expected": {
-      "hold": null,
-      "date": "2021-06-01T09:56:03.000Z",
-      "movements": [
-        {
-          "id": "000000031:debit",
-          "account": {
-            "id": "1000"
-          },
-          "invoice": null,
-          "sum": -5620.14,
-          "fee": 0
-        }
-      ],
-      "merchant": null,
-      "comment": null
-    }
-  },
-  {
-    "accountId": 1000,
-    "sourceFlowId": "00000000-0000-4000-8000-000000000002",
-    "operation": {
       "amount": -75241,
       "currency": "KGS",
       "date": "2021-05-25T00:00:00+06:00",
