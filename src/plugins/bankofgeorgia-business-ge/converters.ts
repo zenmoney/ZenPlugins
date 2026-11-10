@@ -77,21 +77,11 @@ export function convertToZenMoneyTransaction (record: AccountRecord): ExtendedTr
         transaction.movements[0].invoice = { sum: -record.DocumentSourceAmount, instrument: record.DocumentSourceCurrency }
         break
       }
-      // currency exchange between accounts
-      transaction.movements.push(
-        {
-          id: null,
-          account: {
-            type: AccountType.checking,
-            instrument: record.DocumentSourceCurrency,
-            company: null,
-            syncIds: [record.SenderDetails.AccountNumber]
-          },
-          sum: -record.DocumentSourceAmount,
-          fee: 0,
-          invoice: null
-        }
-      )
+      // Currency exchange entries already contain the signed posting for this account.
+      // Pair actual entries by document, as with PLC; missing/skipped sides stay unpaired.
+      console.assert(record.DocumentKey != null && String(record.DocumentKey).trim() !== '', 'CCO document key is missing')
+      transaction.merchant = null
+      transaction.groupKeys = [String(record.DocumentKey)]
       break
 
     case 'VE': // Verification Entry - bank fee for document/certificate

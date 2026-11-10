@@ -236,28 +236,11 @@ describe('convertToZenMoneyTransaction', () => {
             sum: 100,
             fee: 0,
             invoice: null
-          },
-          {
-            id: null,
-            account: {
-              type: AccountType.checking,
-              instrument: 'USD',
-              company: null,
-              syncIds: ['GE00BG0000000000000000USD']
-            },
-            sum: -40,
-            fee: 0,
-            invoice: null
           }
         ],
-        merchant: {
-          country: null,
-          city: null,
-          title: 'COMPANY NAME LLC',
-          mcc: null,
-          location: null
-        },
-        comment: 'Currency exchange. Rate: 2.500 Counter amount: USD40.00. Conversion'
+        merchant: null,
+        comment: 'Currency exchange. Rate: 2.500 Counter amount: USD40.00. Conversion',
+        groupKeys: ['00000000000.0']
       }
     ],
     [
@@ -333,29 +316,11 @@ describe('convertToZenMoneyTransaction', () => {
             sum: 157.48,
             fee: 0,
             invoice: null
-          },
-          {
-            id: null,
-            account:
-              {
-                type: 'checking',
-                instrument: 'EUR',
-                company: null,
-                syncIds: ['GE38BG0000000606041770GEL']
-              },
-            sum: -157.48,
-            fee: 0,
-            invoice: null
           }
         ],
-        merchant: {
-          city: null,
-          country: null,
-          mcc: null,
-          title: 'ინდივიდუალური მეწარმე არტემ ზდასიუკ',
-          location: null
-        },
-        comment: 'ვალუტის გაცვლითი ოპერაცია. კურსი:3.175 კონტრთანხა: GEL500.. Currency Exchange'
+        merchant: null,
+        comment: 'ვალუტის გაცვლითი ოპერაცია. კურსი:3.175 კონტრთანხა: GEL500.. Currency Exchange',
+        groupKeys: ['29144301701']
       }
     ],
 
