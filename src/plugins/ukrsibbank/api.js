@@ -12,7 +12,7 @@ import {
 } from '../../errors'
 
 const API_URL = 'https://online.ukrsibbank.com/clientendpoint'
-const APP_VERSION = '2.264.0'
+const APP_VERSION = '2.270.0'
 const AUTH_SCHEMA_VERSION = 1
 // Android 2.261.0 SyncServiceImpl.loadOperHistory requests and terminates at 300 records.
 const PAGE_SIZE = 300

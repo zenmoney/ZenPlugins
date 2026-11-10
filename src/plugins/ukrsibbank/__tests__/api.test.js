@@ -75,7 +75,8 @@ describe('UKRSIB online 2.0 authorization', () => {
     expect(mockFetchJson.mock.calls[0][1].headers).toMatchObject({
       authorization: 'stored-authorization',
       RefreshToken: 'stored-refresh-token',
-      clientVersion: '2.264.0'
+      // Log 209125, build 175: HTTP 412 advertises minapplicationversion 2.270.0.
+      clientVersion: '2.270.0'
     })
     expect(session.authState).toMatchObject({
       authorization: 'new-authorization',
