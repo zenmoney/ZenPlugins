@@ -1,7 +1,9 @@
 // Regression tests for TBC-GE registerDevice cookie fix.
-// Without session cookies, TBC returns 401 with empty body → JSON.parse fails → null → crash.
+// Without session cookies, TBC returns 401 with an empty body; preserve the original parse failure.
 
 import { fetchRegisterDeviceV2 } from '../../fetchApi'
+import fetchMock from 'fetch-mock'
+import { ParseError } from '../../../../common/network'
 
 const AUTH = { deviceName: 'TestPhone', passcode: '12345', deviceId: 'device-001' }
 
@@ -15,6 +17,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  fetchMock.restore()
   global.fetch = originalFetch
   ;(global as { ZenMoney?: unknown }).ZenMoney = undefined
 })
@@ -53,12 +56,9 @@ describe('fetchRegisterDeviceV2 — Cookie header', () => {
     expect(headers.Cookie).toBeUndefined()
   })
 
-  it('throws "response is null" on 401 with empty body — the original bug', async () => {
-    // Root cause: TBC returns 401 + empty body when Cookie header is missing.
-    // JSON.parse('') throws → network.js catches → returns null → fetchRegisterDeviceV2 throws.
-    global.fetch = async () => new Response('', { status: 401 })
-
-    await expect(fetchRegisterDeviceV2(AUTH, [])).rejects.toThrow('response is null')
+  it('preserves the original parse failure on the observed empty 401 response', async () => {
+    fetchMock.postOnce('https://rmbgwauth.tbconline.ge/v1/auth/registerDevice', { status: 401, body: '' })
+    await expect(fetchRegisterDeviceV2(AUTH, [])).rejects.toBeInstanceOf(ParseError)
   })
 
   it('sends POST to the correct TBC endpoint', async () => {

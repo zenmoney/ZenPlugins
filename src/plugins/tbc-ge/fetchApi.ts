@@ -1,4 +1,4 @@
-import { fetch, FetchOptions, FetchResponse, ParseError } from '../../common/network'
+import { fetch, FetchOptions, FetchResponse } from '../../common/network'
 import { isArray } from 'lodash'
 import get, { getBoolean, getNumber, getOptString, getString } from '../../types/get'
 import { InvalidLoginOrPasswordError, TemporaryUnavailableError } from '../../errors'
@@ -25,8 +25,7 @@ import {
 } from './models'
 import { getCookies } from './utils'
 
-async function fetchApi (url: string, options: FetchOptions): Promise<FetchResponse | null> {
-  let response: FetchResponse | null = null
+async function fetchApi (url: string, options: FetchOptions): Promise<FetchResponse> {
   if (options.sanitizeRequestLog == null) {
     options.sanitizeRequestLog = {}
   }
@@ -37,19 +36,7 @@ async function fetchApi (url: string, options: FetchOptions): Promise<FetchRespo
   }
   // @ts-expect-error Disallowing cookies in response logs
   options.sanitizeResponseLog.headers = { 'set-cookie': true }
-  try {
-    response = await fetch(url, options)
-  } catch (e) {
-    console.error(e)
-    if (response !== null) {
-      console.error(response)
-    }
-    if (e instanceof ParseError && e.response.status === 502) {
-      throw new TemporaryUnavailableError()
-    }
-    return null
-  }
-  return response
+  return await fetch(url, options)
 }
 
 export async function fetchLoginByPasswordV2 ({ username, password, deviceInfo, deviceData }:
@@ -413,9 +400,7 @@ export async function fetchDepositDetailsV2 (id: number, session: SessionV2): Pr
     },
     parse: JSON.parse
   })
-  if (result == null) {
-    return null
-  }
+  assert(result.status >= 200 && result.status < 300, 'Unexpected deposit details HTTP status', result.status)
   return result.body as DepositDetailsV2
 }
 
