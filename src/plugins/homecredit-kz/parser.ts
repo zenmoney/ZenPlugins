@@ -53,6 +53,8 @@ const LOCALE: Record<HomeCreditLocale, LocalePatterns> = {
       'Исходящие переводы',
       'Платежи за услуги в приложении',
       'Платежи по кредиту',
+      'Отмены и возвраты',
+      'Снятия, комиссии и другое',
       'Refund',
       'Возврат'
     ]),
@@ -224,6 +226,9 @@ export function parseHeader (text: string, locale: HomeCreditLocale): ParsedHead
 
 export function parseTransactionsFromLines (lines: string[], statementUid: string, locale: HomeCreditLocale): StatementTransactionRaw[] {
   const start = findFirstTransactionLineIndex(lines)
+  if (start < 0 && locale === 'ru' && lines.some(line => line.trim() === 'В этот период не было ни одной банковской операции.')) {
+    return []
+  }
   assert(start >= 0, 'Home Credit statement: no transactions block found')
 
   const out: StatementTransactionRaw[] = []

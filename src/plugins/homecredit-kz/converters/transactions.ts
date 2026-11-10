@@ -1,4 +1,4 @@
-import { Movement } from '../../../types/zenmoney'
+import { AccountType, Movement } from '../../../types/zenmoney'
 import { ConvertedTransaction, ConvertedAccount, StatementTransaction } from '../models'
 import { parseSumFromAmountString } from './converterUtils'
 
@@ -19,7 +19,7 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
   if (sum === 0) {
     return null
   }
-  const movements: [Movement] = [
+  let movements: [Movement] | [Movement, Movement] = [
     {
       id: null,
       account: { id: rawAccount.account.id },
@@ -29,6 +29,17 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
     }
   ]
   const merchantTitle = merchantFromDescription(rawTransaction.description)
+  const isCashWithdrawal = merchantTitle === 'Банкомат Home Credit Bank' &&
+    rawTransaction.description?.endsWith(' — Снятия, комиссии и другое') === true && sum < 0
+  if (isCashWithdrawal) {
+    movements = [movements[0], {
+      id: null,
+      account: { type: AccountType.cash, instrument: rawAccount.account.instrument, company: null, syncIds: null },
+      invoice: null,
+      sum: -sum,
+      fee: 0
+    }]
+  }
   const isLoanPayment = ['Платежи по кредиту', 'Кредит бойынша төлемдер']
     .some(operation => rawTransaction.description?.endsWith(` — ${operation}`) === true)
   return {
@@ -40,11 +51,13 @@ export function convertPdfStatementTransaction (rawTransaction: StatementTransac
       date: new Date(rawTransaction.date),
       merchant: merchantTitle === null || isLoanPayment
         ? null
-        : {
-            fullTitle: merchantTitle,
-            mcc: null,
-            location: null
-          }
+        : isCashWithdrawal
+          ? { title: 'Home Credit Bank', city: null, country: null, mcc: null, location: null }
+          : {
+              fullTitle: merchantTitle,
+              mcc: null,
+              location: null
+            }
     }
   }
 }
