@@ -1,5 +1,5 @@
-import { parseAccountInfo, parseHiddenFields, parseLoginStep, parseTransactions } from '../../parsers'
-import { splitPeriod } from '../../index'
+import { parseAccountInfo, parseAuthorizationDate, parseHiddenFields, parseLoginStep, parseTransactions } from '../../parsers'
+import { dateAsMade, splitPeriod } from '../../index'
 
 // Markup as the bank served it in October 2026, with the identifiers shortened.
 function row (day: string, month: string, id: string, title: string, lines: string[], status: string, amount: string, negative: boolean): string {
@@ -65,6 +65,61 @@ describe('parseTransactions', () => {
       'LAST YEAR SHOP',
       'BONJUK BAY, MUGLA'
     ])
+  })
+
+  it('keeps the link to each row\'s details and whether it was a card payment', () => {
+    expect(transactions.map(t => [t.detailsUrl, t.isCard])).toEqual([
+      ['/webapp/AccountData/Transactions/Details?q=abc', true],
+      ['/webapp/AccountData/Transactions/Details?q=abc', false],
+      ['/webapp/AccountData/Transactions/Details?q=abc', false],
+      ['/webapp/AccountData/Transactions/Details?q=abc', true],
+      ['/webapp/AccountData/Transactions/Details?q=abc', true]
+    ])
+  })
+})
+
+// A details page as the bank served it in November 2026.
+const detailsPage = `
+  <div class="content-inner-box"> <h3 class="section-label">Detalji</h3> </div>
+  <div class="content-inner-box">
+    <div class="list-item"><div class="text-holder"><span class="list-item-top-label">Id transakcije</span><span class="list-item-main-label">CT-64749127955-3085333759093/3</span></div></div>
+    <div class="list-item"><div class="text-holder"><span class="list-item-top-label">Datum autorizacije</span><span class="list-item-main-label">08.11.2026.</span></div></div>
+    <div class="list-item"><div class="text-holder"><span class="list-item-top-label">Datum valute</span><span class="list-item-main-label">09.11.2026.</span></div></div>
+    <div class="list-item"><div class="text-holder"><span class="list-item-top-label">Opis transakcije</span><span class="list-item-main-label">BELBIM ELEKTRONIK PARA, ISTANBUL</span></div></div>
+  </div>`
+
+describe('parseAuthorizationDate', () => {
+  it('reads the day the payment was made, not the day it was booked', () => {
+    expect(parseAuthorizationDate(detailsPage)).toEqual(new Date(2026, 10, 8))
+  })
+
+  it('returns null for a page without it', () => {
+    expect(parseAuthorizationDate('<div class="list-item-top-label">Datum valute</div>')).toBeNull()
+  })
+})
+
+describe('dateAsMade', () => {
+  const toDate = new Date(2026, 10, 10)
+  const tx = (date: Date, isCard: boolean, detailsUrl?: string): any => ({ id: 'x', date, address: '', amount: -1, currency: 'EUR', description: '', isCard, detailsUrl })
+
+  it('moves a recent card payment to the day it was made, and nothing else', async () => {
+    const card = tx(new Date(2026, 10, 9), true, '/d1')
+    const transfer = tx(new Date(2026, 10, 9), false, '/d2')
+    const old = tx(new Date(2026, 5, 1), true, '/d3')
+    const asked: string[] = []
+    await dateAsMade([card, transfer, old], toDate, async url => { asked.push(url); return new Date(2026, 10, 7) })
+    expect(card.date).toEqual(new Date(2026, 10, 7))
+    expect(transfer.date).toEqual(new Date(2026, 10, 9))
+    expect(old.date).toEqual(new Date(2026, 5, 1))
+    expect(asked).toEqual(['/d1'])
+  })
+
+  it('keeps the booking day when the details cannot be read, or are later than it', async () => {
+    const unread = tx(new Date(2026, 10, 9), true, '/d1')
+    const later = tx(new Date(2026, 10, 9), true, '/d2')
+    await dateAsMade([unread, later], toDate, async url => url === '/d1' ? null : new Date(2026, 10, 10))
+    expect(unread.date).toEqual(new Date(2026, 10, 9))
+    expect(later.date).toEqual(new Date(2026, 10, 9))
   })
 })
 
