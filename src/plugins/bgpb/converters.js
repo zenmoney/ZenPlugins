@@ -118,11 +118,12 @@ function getMerchantKeyParts (merchant) {
 }
 
 function createStableSourceKey (apiTransaction) {
+  const authCode = normalizeIdPart(apiTransaction.authCode)
   if (isHistoryApiTransaction(apiTransaction) && apiTransaction.orderNumber) {
-    return joinIdParts(['order', apiTransaction.orderNumber, apiTransaction.authCode ? `auth:${apiTransaction.authCode}` : null])
+    return joinIdParts(['order', apiTransaction.orderNumber, authCode ? `auth:${authCode}` : null])
   }
-  if (apiTransaction.authCode) {
-    return `auth:${apiTransaction.authCode}`
+  if (authCode) {
+    return `auth:${authCode}`
   }
   if (apiTransaction.orderNumber) {
     return `order:${apiTransaction.orderNumber}`
