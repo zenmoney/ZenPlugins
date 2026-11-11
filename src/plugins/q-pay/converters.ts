@@ -174,6 +174,26 @@ function cardMerchant (transaction: unknown): Merchant | null {
   }
 }
 
+export function normalizeCardMovement (movement: Movement): Movement | null {
+  if (movement.sum !== 0) return movement
+  if (movement.fee === 0) return null
+  // A standalone commission is the expense itself; the app rejects a zero principal.
+  return { ...movement, sum: movement.fee, fee: 0 }
+}
+
+export function convertCardHistory (sources: unknown[], convert: (source: unknown) => Transaction | null): Transaction[] {
+  const result: Transaction[] = []
+  for (const [index, source] of sources.entries()) {
+    try {
+      const converted = convert(source)
+      if (converted != null) result.push(converted)
+    } catch {
+      console.warn('Q-Pay skipped a card transaction after a conversion error', { index })
+    }
+  }
+  return result
+}
+
 function cardTransaction (transaction: unknown, sourceCardId: string, accounts: Map<string, Account>): Transaction | null {
   const account = accountFor(accounts, cardId(sourceCardId))
   const sign = cardSign(transaction)
@@ -262,10 +282,14 @@ export function convertTransactions (graph: QPayAccountGraph, history: QPayHisto
     .map(({ card }) => requiredString(card, 'id')))
   const result: Transaction[] = []
   for (const group of history.cards) {
-    for (const source of group.transactions) {
+    result.push(...convertCardHistory(group.transactions, source => {
       const converted = cardTransaction(source, group.cardId, accounts)
-      if (converted != null) result.push(ownedCards.has(group.cardId) ? linkWalletFunding(source, converted, accounts) : converted)
-    }
+      if (converted == null) return null
+      const movement = normalizeCardMovement(converted.movements[0])
+      if (movement == null) return null
+      converted.movements[0] = movement
+      return ownedCards.has(group.cardId) ? linkWalletFunding(source, converted, accounts) : converted
+    }))
   }
   return result.sort((left, right) => left.date.getTime() - right.date.getTime())
 }
