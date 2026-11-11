@@ -2,7 +2,7 @@ import { fetch, FetchResponse } from '../../common/network'
 import { delay } from '../../common/utils'
 import { BankMessageError, InvalidLoginOrPasswordError, TemporaryError } from '../../errors'
 import { AccountInfo, AccountTransaction, Preferences } from './models'
-import { parseAccountInfo, parseHiddenFields, parseLoginStep, parseRequestVerificationToken, parseTransactions } from './parsers'
+import { parseAccountInfo, parseAuthorizationDate, parseHiddenFields, parseLoginStep, parseRequestVerificationToken, parseTransactions } from './parsers'
 import { sanitize } from '../../common/sanitize'
 import moment from 'moment'
 // @ts-expect-error no types for package
@@ -149,6 +149,23 @@ export async function fetchTransactions (
   console.debug('fetchTransactions', sanitize(transactions, false))
 
   return transactions
+}
+
+// The day a payment was made, from its details page. A page that cannot be
+// read leaves the row on its booking day rather than failing the sync.
+export async function fetchAuthorizationDate (detailsUrl: string): Promise<Date | null> {
+  try {
+    const response = await fetch(
+      'https://onlinebanking.posted.co.rs' + detailsUrl.replace(/&amp;/g, '&'),
+      {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      }) as FetchResponse & { body: string }
+    return typeof response.body === 'string' ? parseAuthorizationDate(response.body) : null
+  } catch (e) {
+    console.debug('fetchAuthorizationDate failed', e)
+    return null
+  }
 }
 
 export async function fetchCardTransactions (

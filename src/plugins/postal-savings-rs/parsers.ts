@@ -145,14 +145,40 @@ export function parseTransactions (body: string, fromDate: Date, toDate: Date = 
     const reversal = (amountText ?? '').startsWith('-') ? -1 : 1
     const direction = (amountElement.hasClass('negative-amount') ? -1 : 1) * reversal
 
+    const detailsUrl = $('[data-href*="Details"]').first().attr('data-href')
+    const title = $('.transaction-list-item-title').first().text().trim().toLowerCase()
+
     transactions.push({
       id: 'id_' + id,
       date: date !== null && isValidDate(date) ? date : fromDate,
       address,
       amount: direction * Math.abs(parseAmount(amountText ?? '0')),
       currency,
-      description
+      description,
+      detailsUrl: detailsUrl !== undefined && detailsUrl !== '' ? detailsUrl : undefined,
+      isCard: title.startsWith('transakcija karticom')
     })
   })
   return transactions
+}
+
+// The list dates a row by its value date, when the bank booked it — for a card
+// payment one to three days after it was made (a trip's payments of 7 and 8
+// November were all listed under 9 November). The day it was made is on the
+// row's details page as "Datum autorizacije".
+export function parseAuthorizationDate (body: string): Date | null {
+  const html = cheerio.load(body)
+  let found: Date | null = null
+  html('.list-item-top-label').each((_, element) => {
+    if (found !== null || !/^Datum autorizacije/i.test(html(element).text().trim())) {
+      return
+    }
+    const value = html(element).siblings('.list-item-main-label').first().text().trim()
+    const match = value.match(/^(\d{2})\.(\d{2})\.(\d{4})/)
+    if (match != null) {
+      const date = new Date(parseInt(match[3], 10), parseInt(match[2], 10) - 1, parseInt(match[1], 10))
+      found = isValidDate(date) ? date : null
+    }
+  })
+  return found
 }
