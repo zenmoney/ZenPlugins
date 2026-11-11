@@ -3,6 +3,8 @@ import { fetchReceipt } from '../index'
 import { convertReceipt } from '../converters'
 import { manifest } from '../ZenmoneyManifest'
 import source1 from './convertReceipt-01.html'
+import testReceipt from './fetchReceipt-01.html'
+import missingReceipt from './fetchReceipt-02.html'
 
 const args = (value: string): Parameters<typeof fetchReceipt>[0] => ({ code: { format: 'qr', value }, isInBackground: true })
 beforeEach(() => { Object.assign(globalThis, { ZenMoney: { locale: 'en' } }); fetchMock.catch(() => { throw new Error('Unexpected receipt request') }) })
@@ -38,4 +40,22 @@ test('[model] HTTP diagnostics retain public receipt data and mask response cook
   expect(debug).toHaveBeenCalledWith('response', expect.objectContaining({ status: 200, body: expect.stringContaining('Бананваг.'), headers: expect.objectContaining({ 'set-cookie': expect.stringMatching(/^<string\[\d+\]>$/) }) }))
   expect(JSON.stringify(debug.mock.calls)).toContain('43260979XXXX2199')
   expect(JSON.stringify(debug.mock.calls)).not.toContain('synthetic-secret')
+})
+
+// Complete public responses captured 2026-11-10: the screenshot's QR and the same
+// receipt path with a _missing suffix. Fixtures retain the complete HTML.
+test.each([
+  ['TEST_gBrOUhU9r4M_Jg?MAC:6823c3c25e5cdd2f90f59f70c2c62cf142734e36b09406497bd550619924c047;DT:02-09-2024T18:25:13;FR:TEST_gBrOUhU9r4M_Jg;SUM:1;FN:3', 200, testReceipt],
+  ['TEST_gBrOUhU9r4M_Jg_missing', 404, missingReceipt]
+])('reports no fiscal receipt for observed lookup %s', async (id, status, body) => {
+  const code = `https://kasa.vchasno.ua/c/${String(id)}`
+  fetchMock.get(code, { status, body })
+  await expect(fetchReceipt(args(code))).resolves.toEqual({ status: 'notFound' })
+})
+
+// Model transport invariant: an unknown server failure must remain reportable.
+test('[model] unexpected HTTP failure is not reported as an absent receipt', async () => {
+  const code = 'https://kasa.vchasno.ua/c/TEST_gBrOUhU9r4M_Jg'
+  fetchMock.get(code, { status: 503 })
+  await expect(fetchReceipt(args(code))).rejects.toThrow('Unexpected receipt HTTP status')
 })

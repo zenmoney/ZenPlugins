@@ -1,8 +1,8 @@
 import { load } from 'cheerio'
-import { fetch } from '../../common/network'
+import { fetch, FetchResponse } from '../../common/network'
 
-export async function fetchReceipt (code: string): Promise<unknown> {
-  const response = await fetch(code, {
+export async function fetchReceipt (code: string): Promise<FetchResponse> {
+  return await fetch(code, {
     sanitizeRequestLog: { headers: { Authorization: true, Cookie: true } },
     sanitizeResponseLog: {
       headers: { Authorization: true, Cookie: true, 'Set-Cookie': true },
@@ -21,6 +21,4 @@ export async function fetchReceipt (code: string): Promise<unknown> {
       }
     }
   })
-  assert(response.status === 200, 'Unexpected receipt HTTP status', { status: response.status })
-  return response.body
 }

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Перегляд чеку</title>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://kasa.vchasno.ua/cloud-cgi/static/kasa-static-files-prd/favicons/favicon.png" rel="icon">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <style type="text/css">
+      html {
+    padding: 0;
+    margin: 0;
+}
+
+table {
+    width: 100%;
+}
+
+td {
+    margin-left: 0;
+    vertical-align: top;
+}
+
+tfoot td {
+    padding-top: 10px;
+}
+
+td:last-child {
+    padding-left: 5px;
+    text-align: right;
+}
+
+td.center {
+    width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    text-align: center;
+}
+
+td.left {
+    width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    text-align: left;
+}
+
+td.comment {
+    text-align: left;
+    word-wrap: anywhere;
+}
+
+.bodyDefault {
+    margin: 10px 5px;
+    background-color: #f1f1fc;
+    color: #000;
+    font-family: arial, sans-serif;
+    font-size: 14px;
+}
+
+.container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.check {
+    width: 400px;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 3px 0 rgba(217, 224, 239, 1);
+}
+
+.header {
+    text-align: center;
+}
+
+tbody .tableSpacer:not(:last-child) {
+    height: 5px;
+}
+
+.divider {
+    border-bottom: 1px solid #dbe5ea;
+}
+
+.sum {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.mac {
+    overflow: auto;
+    word-break: break-all;
+}
+
+.svg {
+    max-width: 250px;
+    max-height: 250px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.topComment {
+    margin: 10px 0;
+    text-align: center;
+    word-wrap: anywhere;
+}
+
+.lastComment {
+    padding: 4px 0;
+    word-wrap: anywhere;
+}
+
+.lastCommentTitle {
+    margin-bottom: 4px;
+}
+
+.bottomIcon {
+    display: flex;
+    justify-content: center;
+}
+
+.bottomIcon a {
+    display: flex;
+    width: 224px;
+    height: 56px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.bottomIcon a:hover {
+    border-color: #e07fd0;
+    background-color: #f0f4f8;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.bottomIcon a:active {
+    border-color: #c965ba;
+    background-color: #e2eaf2;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+p {
+    margin: 5px 0;
+}
+
+h4 {
+    margin: 8px auto;
+}
+
+.underLineContainer {
+    position: relative;
+}
+
+.underLine::after,
+.cashierUnderLine::after,
+.epzUnderLine::after {
+    position: absolute;
+    bottom: 0;
+    border-bottom: 1px solid black;
+    content: '';
+}
+
+.cashierUnderLine::after {
+    left: 40px;
+    width: calc(100% - 40px);
+}
+
+.epzUnderLine::after {
+    left: 105px;
+    width: calc(100% - 105px);
+}
+
+.lineLinkContainer {
+    padding: 5px 10px;
+    text-align: center;
+}
+
+.lineLink {
+    padding: 4px 10px;
+    background-color: #e582b8;
+    color: #fff;
+    text-decoration: none;
+}
+
+.lineLink:hover {
+    background-color: #ce6fa3;
+}
+
+.testCheckInfo {
+    height: 60px;
+    box-sizing: border-box;
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: #f0f4f8;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.testCheckInfo > span {
+    font-weight: 500;
+}
+
+@media print {
+    .check {
+        padding: 0;
+        box-shadow: none;
+    }
+
+    .divider {
+        display: none;
+    }
+
+    table {
+        margin: 2px 0;
+    }
+
+    .svg {
+        margin: 0 auto;
+    }
+
+    tbody .tableSpacer:not(:last-child) {
+        height: 5px;
+    }
+
+    .bottomIcon a {
+        border: none;
+        box-shadow: none;
+    }
+}
+
+@media screen and (min-width: 768px) {
+    .bodyDefault {
+        margin: 40px 5px;
+    }
+
+    .container {
+        flex-direction: row-reverse;
+        align-items: normal;
+        justify-content: center;
+    }
+}
+
+@media screen and (min-width: 1140px) {
+    .bodyDefault {
+        margin: 40px 5px;
+    }
+
+    .container {
+        position: relative;
+        width: 400px;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+}
+    </style>
+  </head>
+  <body class="bodyDefault">
+    <div class="container">
+      <div class="check">
+        <div class="bottomIcon" style="padding: 20px;">
+        <img
+          src="https://kasa.vchasno.ua/cloud-cgi/static/kasa-static-files-prd/images/kasa-logo.svg"
+          class="img"
+          alt="Вчасно.Каса"
+        />
+        </div>
+        <p>
+          Фіскальний номер: <b>TEST_gBrOUhU9r4M_Jg_missing</b>
+        </p>
+        <p>
+          Чек не знайдено / чек поки недоступний
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
