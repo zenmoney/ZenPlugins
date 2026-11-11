@@ -29,10 +29,3 @@ test('[model] original transport failures propagate', async () => {
   fetchMock.get('https://einvoice.s1ecos.gr/v/EL094352564-129092730-915A1D9301C57B4F75B5062F9B4A7F288B341ED9-71DC856659A04C399FFAA087AEECE001', { throws: failure })
   await expect(fetchReceipt(args('https://einvoice.s1ecos.gr/v/EL094352564-129092730-915A1D9301C57B4F75B5062F9B4A7F288B341ED9-71DC856659A04C399FFAA087AEECE001'))).rejects.toBe(failure)
 })
-
-test('[model] receipt bodies and response cookies are absent from emitted diagnostics', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
-  fetchMock.get('https://einvoice.s1ecos.gr/v/EL094352564-129092730-915A1D9301C57B4F75B5062F9B4A7F288B341ED9-71DC856659A04C399FFAA087AEECE001', { body: source1, headers: { 'Set-Cookie': 'session=synthetic-secret' } })
-  await fetchReceipt(args('https://einvoice.s1ecos.gr/v/EL094352564-129092730-915A1D9301C57B4F75B5062F9B4A7F288B341ED9-71DC856659A04C399FFAA087AEECE001'))
-  expect(debug).not.toHaveBeenCalled()
-})

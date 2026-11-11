@@ -29,10 +29,3 @@ test('[model] original transport failures propagate', async () => {
   fetchMock.get('https://receipt.kaspi.kz/web/fiscal?i=005819786639&f=600904304944&s=9930.0&t=2026-10-07%2013%3A51%3A06.954000', { throws: failure })
   await expect(fetchReceipt(args('https://receipt.kaspi.kz/web/fiscal?i=005819786639&f=600904304944&s=9930.0&t=2026-10-07%2013%3A51%3A06.954000'))).rejects.toBe(failure)
 })
-
-test('[model] receipt bodies and response cookies are absent from emitted diagnostics', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
-  fetchMock.get('https://receipt.kaspi.kz/web/fiscal?i=005819786639&f=600904304944&s=9930.0&t=2026-10-07%2013%3A51%3A06.954000', { body: source1, headers: { 'Set-Cookie': 'session=synthetic-secret' } })
-  await fetchReceipt(args('https://receipt.kaspi.kz/web/fiscal?i=005819786639&f=600904304944&s=9930.0&t=2026-10-07%2013%3A51%3A06.954000'))
-  expect(debug).not.toHaveBeenCalled()
-})

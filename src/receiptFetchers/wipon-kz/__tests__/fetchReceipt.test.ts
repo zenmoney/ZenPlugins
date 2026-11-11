@@ -51,10 +51,3 @@ test('[model] original transport failures propagate', async () => {
   fetchMock.get('https://api.kassa.wipon.kz/links/check/019fb922-8981-7073-b102-13925e7ae14a', { throws: failure })
   await expect(fetchReceipt(args('https://api.kassa.wipon.kz/links/check/019fb922-8981-7073-b102-13925e7ae14a'))).rejects.toBe(failure)
 })
-
-test('[model] receipt bodies and response cookies are absent from emitted diagnostics', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
-  fetchMock.get('https://api.kassa.wipon.kz/links/check/019fb922-8981-7073-b102-13925e7ae14a', { body: source1, headers: { 'Set-Cookie': 'session=synthetic-secret' } })
-  await fetchReceipt(args('https://api.kassa.wipon.kz/links/check/019fb922-8981-7073-b102-13925e7ae14a'))
-  expect(debug).not.toHaveBeenCalled()
-})

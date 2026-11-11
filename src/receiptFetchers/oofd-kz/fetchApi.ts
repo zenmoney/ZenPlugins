@@ -6,7 +6,7 @@ export async function fetchConsumerPage (parameters: Record<string, string>): Pr
 }
 
 export async function fetchPublicPage (code: string): Promise<{ body: string, url: string }> {
-  const response = await fetch(code.replace(/^http:/, 'https:'), { log: false })
+  const response = await fetch(code.replace(/^http:/, 'https:'))
   assert(response.status >= 200 && response.status < 300, 'Unexpected receipt HTTP status', { status: response.status })
   assert(typeof response.body === 'string', 'Expected receipt response text')
   assert(typeof response.url === 'string', 'Unexpected receipt response URL')
@@ -14,7 +14,7 @@ export async function fetchPublicPage (code: string): Promise<{ body: string, ur
 }
 
 export async function fetchReceipt (path: string): Promise<unknown> {
-  const response = await fetchJson(`https://consumer.oofd.kz/api/tickets${path}`, { log: false })
+  const response = await fetchJson(`https://consumer.oofd.kz/api/tickets${path}`)
   assert(response.status >= 200 && response.status < 300, 'Unexpected receipt HTTP status', { status: response.status })
   return response.body
 }

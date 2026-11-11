@@ -13,12 +13,10 @@ afterEach(() => { fetchMock.restore(); jest.restoreAllMocks() })
 
 // Complete observed page and same-origin invoice frame, captured 2026-11-05 (receipts.csv row 547).
 test('retrieves the frame without a browser or user interaction', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
   fetchMock.get(code, { body: page })
   fetchMock.get(target, { body: invoice })
   await expect(fetchReceipt(args)).resolves.toEqual({ status: 'found', receipt: convertReceipt(invoice) })
   expect(get(fetchMock.calls(), 'matched')).toHaveLength(2)
-  expect(debug).not.toHaveBeenCalled()
 })
 
 // A model failure at the second transport boundary must propagate, not return the outer page as a receipt.

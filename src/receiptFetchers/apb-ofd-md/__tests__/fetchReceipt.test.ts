@@ -29,10 +29,3 @@ test('[model] original transport failures propagate', async () => {
   fetchMock.get('https://ofd.apb.online/Ofd/check?fiscal_code=000086460031&timestamp=31.07.2026%2021:34:05&type=check&amount=107063&currency=000&sign=cash_in', { throws: failure })
   await expect(fetchReceipt(args('https://ofd.apb.online/Ofd/check?fiscal_code=000086460031&timestamp=31.07.2026%2021:34:05&type=check&amount=107063&currency=000&sign=cash_in'))).rejects.toBe(failure)
 })
-
-test('[model] receipt bodies and response cookies are absent from emitted diagnostics', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
-  fetchMock.get('https://ofd.apb.online/Ofd/check?fiscal_code=000086460031&timestamp=31.07.2026%2021:34:05&type=check&amount=107063&currency=000&sign=cash_in', { body: source1, headers: { 'Set-Cookie': 'session=synthetic-secret' } })
-  await fetchReceipt(args('https://ofd.apb.online/Ofd/check?fiscal_code=000086460031&timestamp=31.07.2026%2021:34:05&type=check&amount=107063&currency=000&sign=cash_in'))
-  expect(debug).not.toHaveBeenCalled()
-})

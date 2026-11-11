@@ -17,10 +17,8 @@ afterEach(() => { fetchMock.restore(); jest.restoreAllMocks() })
 // The unmodified public PDF (2026-11-05, receipts.csv row 1177) exercises the actual runtime parser.
 // The JSON fixture preserves the complete extracted text, including the terminal/loyalty sections.
 test('retrieves the original PDF and converts all source lines in the background', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
   fetchMock.get(endpoint, new Response(new Uint8Array(fs.readFileSync(path.join(__dirname, 'convertReceipt-01.pdf'))), { headers: { 'Content-Type': 'application/pdf', 'Set-Cookie': 'session=synthetic-secret' } }))
   await expect(fetchReceipt({ code, isInBackground: true })).resolves.toEqual({ status: 'found', receipt: convertReceipt(text) })
-  expect(debug).not.toHaveBeenCalled()
 })
 
 // Model transport invariant: propagate the original failure before parsing or prompting.

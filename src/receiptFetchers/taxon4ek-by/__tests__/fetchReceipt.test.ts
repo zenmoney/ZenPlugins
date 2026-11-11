@@ -29,10 +29,3 @@ test('[model] original transport failures propagate', async () => {
   fetchMock.get('https://taxon4ek.by/taxon4ek_api_release/api/outer/v1/bill/billInfoByOrderUid?orderUid=01a0bd6a-7820-7596-8ef0-3ad678f7daeb', { throws: failure })
   await expect(fetchReceipt(args('https://taxon4ek.by/billInfoByOrderUid/01a0bd6a-7820-7596-8ef0-3ad678f7daeb'))).rejects.toBe(failure)
 })
-
-test('[model] receipt bodies and response cookies are absent from emitted diagnostics', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
-  fetchMock.get('https://taxon4ek.by/taxon4ek_api_release/api/outer/v1/bill/billInfoByOrderUid?orderUid=01a0bd6a-7820-7596-8ef0-3ad678f7daeb', { body: JSON.stringify(source1), headers: { 'Set-Cookie': 'session=synthetic-secret' } })
-  await fetchReceipt(args('https://taxon4ek.by/billInfoByOrderUid/01a0bd6a-7820-7596-8ef0-3ad678f7daeb'))
-  expect(debug).not.toHaveBeenCalled()
-})

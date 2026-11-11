@@ -14,13 +14,9 @@ test('returns provider data from the lookup without converting the receipt', asy
 })
 
 test.each([code, code.replace('cabinet.kofd.kz', 'consumer.kofd.kz')])('loads the canonical receipt from either supported host: %s', async value => {
-  const debug = jest.spyOn(console, 'debug')
   fetchMock.get(endpoint, { body: { data: { found: 1, ticket: fixture } } })
   const result = await fetchReceipt(args(value))
   expect(result).toMatchObject({ status: 'found', receipt: { currency: 'KZT', totalAmount: '1484' } })
-  const logs = JSON.stringify(debug.mock.calls)
-  expect(logs).not.toContain(value)
-  expect(logs).not.toContain(JSON.stringify(fixture))
 })
 
 test('confirmed absence differs from a malformed response', async () => {

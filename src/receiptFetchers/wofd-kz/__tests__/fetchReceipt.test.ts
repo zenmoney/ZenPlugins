@@ -17,9 +17,7 @@ test('retrieves domain variant 1 from the canonical ticket API', async () => {
   const code = 'https://cabinet.wofd.kz/consumer?i=50062&f=600904705899&s=7962.00&t=20260816T150214'
 
   fetchMock.get('https://cabinet.wofd.kz/api/tickets?registrationNumber=600904705899&ticketNumber=50062&ticketDate=2026-08-16', { body: JSON.stringify(source1) })
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
   await expect(fetchReceipt(args(code))).resolves.toEqual({ status: 'found', receipt: convertReceipt(source1) })
-  expect(debug).not.toHaveBeenCalled()
   const matcher = manifest.capabilities.fetchReceipt?.matcher
   expect(matcher instanceof RegExp && matcher.test(code)).toBe(true)
 })
@@ -29,9 +27,7 @@ test('retrieves domain variant 2 from the canonical ticket API', async () => {
   const code = 'https://consumer.wofd.kz?i=1467537925976&f=620504504203&s=4240.00&t=20261103T200341'
 
   fetchMock.get('https://cabinet.wofd.kz/api/tickets?registrationNumber=620504504203&ticketNumber=1467537925976&ticketDate=2026-11-03', { body: JSON.stringify(source2) })
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
   await expect(fetchReceipt(args(code))).resolves.toEqual({ status: 'found', receipt: convertReceipt(source2) })
-  expect(debug).not.toHaveBeenCalled()
   const matcher = manifest.capabilities.fetchReceipt?.matcher
   expect(matcher instanceof RegExp && matcher.test(code)).toBe(true)
 })
@@ -41,9 +37,7 @@ test('retrieves domain variant 3 from the canonical ticket API', async () => {
   const code = 'https://kpos-sg.kkgroup.cn/shopping_api/backend/webkassa/redirect?order_id=KZKOK904133019245166592'
   fetchMock.get(code, { status: 302, headers: { Location: String(get(redirect, 'location')) }, body: '' })
   fetchMock.get('https://cabinet.wofd.kz/api/tickets?registrationNumber=600804641732&ticketNumber=1430641997894&ticketDate=2026-04-18', { body: JSON.stringify(source3) })
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
   await expect(fetchReceipt(args(code))).resolves.toEqual({ status: 'found', receipt: convertReceipt(source3) })
-  expect(debug).not.toHaveBeenCalled()
   const matcher = manifest.capabilities.fetchReceipt?.matcher
   expect(matcher instanceof RegExp && matcher.test(code)).toBe(true)
 })

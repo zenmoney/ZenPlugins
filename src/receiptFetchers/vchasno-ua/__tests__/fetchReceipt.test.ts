@@ -30,9 +30,12 @@ test('[model] original transport failures propagate', async () => {
   await expect(fetchReceipt(args('https://kasa.vchasno.ua/c/b8rKhKHlRII?MAC:d8c74ca88cce6c1a9d61007ae4f88c91903c15683cad0174736033d4b5d33ffd;DT:09-11-2024T18:01:35;FR:b8rKhKHlRII;SUM:241,5;FN:4000958329'))).rejects.toBe(failure)
 })
 
-test('[model] receipt bodies and response cookies are absent from emitted diagnostics', async () => {
+test('[model] HTTP diagnostics retain public receipt data and mask response cookies', async () => {
   const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
   fetchMock.get('https://kasa.vchasno.ua/c/b8rKhKHlRII?MAC:d8c74ca88cce6c1a9d61007ae4f88c91903c15683cad0174736033d4b5d33ffd;DT:09-11-2024T18:01:35;FR:b8rKhKHlRII;SUM:241,5;FN:4000958329', { body: source1, headers: { 'Set-Cookie': 'session=synthetic-secret' } })
   await fetchReceipt(args('https://kasa.vchasno.ua/c/b8rKhKHlRII?MAC:d8c74ca88cce6c1a9d61007ae4f88c91903c15683cad0174736033d4b5d33ffd;DT:09-11-2024T18:01:35;FR:b8rKhKHlRII;SUM:241,5;FN:4000958329'))
-  expect(debug).not.toHaveBeenCalled()
+  expect(debug).toHaveBeenCalledWith('request', expect.objectContaining({ method: 'GET', url: expect.stringContaining('https://kasa.vchasno.ua/c/b8rKhKHlRII') }))
+  expect(debug).toHaveBeenCalledWith('response', expect.objectContaining({ status: 200, body: expect.stringContaining('Бананваг.'), headers: expect.objectContaining({ 'set-cookie': expect.stringMatching(/^<string\[\d+\]>$/) }) }))
+  expect(JSON.stringify(debug.mock.calls)).toContain('43260979XXXX2199')
+  expect(JSON.stringify(debug.mock.calls)).not.toContain('synthetic-secret')
 })

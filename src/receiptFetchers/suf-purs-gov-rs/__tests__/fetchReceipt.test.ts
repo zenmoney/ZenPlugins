@@ -15,13 +15,11 @@ afterEach(() => { fetchMock.restore(); jest.restoreAllMocks() })
 test('follows the observed short link once to the validated Serbian receipt', async () => {
   const target = get(redirect, 'location')
   assert(typeof target === 'string', 'Missing captured redirect')
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
   fetchMock.get(code, { status: 307, headers: { Location: target }, body: '' })
   fetchMock.get(target, { body: html })
   await expect(fetchReceipt(args)).resolves.toEqual({ status: 'found', receipt: convertReceipt(html) })
   expect(get(fetchMock.lastOptions(code), 'redirect')).toBe('manual')
   expect(get(fetchMock.calls(), 'matched')).toHaveLength(2)
-  expect(debug).not.toHaveBeenCalled()
   const matcher = manifest.capabilities.fetchReceipt?.matcher
   assert(matcher != null && typeof matcher === 'object' && 'any' in matcher, 'Expected matcher alternatives')
   expect(matcher.any.some(child => child instanceof RegExp && child.test(code))).toBe(true)

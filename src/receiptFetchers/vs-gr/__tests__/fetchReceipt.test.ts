@@ -29,10 +29,3 @@ test('[model] original transport failures propagate', async () => {
   fetchMock.get('https://vs.gr/iv/invoice/download/uhhs_1/uhhs_1~k1~7f8f481e7eed2ff7002cef7014939a1ae495a4fa~UB5icSvkbOCN958J_rZswWl7AK43vOsdHLH2b0MOvgs', { throws: failure })
   await expect(fetchReceipt(args('https://vs.gr/iv/invoice/download/uhhs_1/uhhs_1~k1~7f8f481e7eed2ff7002cef7014939a1ae495a4fa~UB5icSvkbOCN958J_rZswWl7AK43vOsdHLH2b0MOvgs'))).rejects.toBe(failure)
 })
-
-test('[model] receipt bodies and response cookies are absent from emitted diagnostics', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
-  fetchMock.get('https://vs.gr/iv/invoice/download/uhhs_1/uhhs_1~k1~7f8f481e7eed2ff7002cef7014939a1ae495a4fa~UB5icSvkbOCN958J_rZswWl7AK43vOsdHLH2b0MOvgs', { body: source1, headers: { 'Set-Cookie': 'session=synthetic-secret' } })
-  await fetchReceipt(args('https://vs.gr/iv/invoice/download/uhhs_1/uhhs_1~k1~7f8f481e7eed2ff7002cef7014939a1ae495a4fa~UB5icSvkbOCN958J_rZswWl7AK43vOsdHLH2b0MOvgs'))
-  expect(debug).not.toHaveBeenCalled()
-})

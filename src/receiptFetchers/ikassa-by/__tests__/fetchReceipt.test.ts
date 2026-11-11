@@ -107,13 +107,6 @@ test('[model] rejects a receipt belonging to another UID', async () => {
   await expect(fetchReceipt(args(uid))).rejects.toThrow('does not match the requested identifier')
 })
 
-test('[model] unstructured receipt HTML and authorization cookies are not emitted into HTTP diagnostics', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
-  fetchMock.get(endpoint, { body: papaDoner, headers: { 'Set-Cookie': 'session=synthetic-secret' } })
-  await fetchReceipt(args(uid))
-  expect(debug).not.toHaveBeenCalled()
-})
-
 // Observed cloud domain and document, 2026-11-05, receipts.csv row 1489.
 test('uses the observed cloud host rather than the legacy render database', async () => {
   const code = 'https://receipts.cloud.ikassa.by/render/150B5F7DDEA9F05207196D2D'

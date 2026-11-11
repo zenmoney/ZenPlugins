@@ -10,7 +10,6 @@ const args = (value: string): Parameters<typeof fetchReceipt>[0] => ({ code: { f
 afterEach(() => { fetchMock.restore(); jest.restoreAllMocks() })
 
 test.each([code, code.replace('https:', 'http:'), code + '/', code + '?print=1#receipt'])('retrieves the canonical public receipt: %s', async input => {
-  const debug = jest.spyOn(console, 'debug')
   const matcher = get(manifest, 'capabilities.fetchReceipt.matcher')
   assert(matcher instanceof RegExp, 'Missing receipt matcher')
   expect(input).toMatch(matcher)
@@ -25,7 +24,6 @@ test.each([code, code.replace('https:', 'http:'), code + '/', code + '?print=1#r
     }
   })
   expect(fetchMock.calls(code)).toHaveLength(1)
-  expect(debug).not.toHaveBeenCalled()
 })
 
 // Captured 2026-10-25: GET the same public route with receipt id ending q50m

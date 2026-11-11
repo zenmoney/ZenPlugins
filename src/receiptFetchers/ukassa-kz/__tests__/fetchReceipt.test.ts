@@ -11,7 +11,6 @@ const args = (value: string): Parameters<typeof fetchReceipt>[0] => ({ code: { f
 afterEach(() => { fetchMock.restore(); jest.restoreAllMocks() })
 
 test.each([code, `https://${code}`, `http://${code}`, code.replace('/check?', '/check/?')])('retrieves the source QR variant %s', async value => {
-  const debug = jest.spyOn(console, 'debug')
   fetchMock.post(endpoint, { body: fixture })
   const matcher = get(manifest, 'capabilities.fetchReceipt.matcher')
   assert(matcher instanceof RegExp, 'Missing uKassa matcher')
@@ -20,7 +19,6 @@ test.each([code, `https://${code}`, `http://${code}`, code.replace('/check?', '/
     status: 'found', receipt: { id: '290575609', totalAmount: '1081', items: [{ quantity: '1', totalAmount: '1081' }] }
   })
   expect(JSON.parse(String(fetchMock.lastOptions()?.body))).toEqual({ id: '290575609', fiscal_number: '3193862841', kod_kgd: 'UK00010034' })
-  expect(debug).not.toHaveBeenCalled()
 })
 
 test.each([

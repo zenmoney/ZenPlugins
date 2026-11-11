@@ -13,7 +13,6 @@ const fragmentUrl = code + '&fragment=1&captcha_skip=1'
 // The complete initial page and fragment were captured from the same public lookup on 2026-10-25.
 // fetchReceipt-01.html supplies the site's requestTicket(null, true) fallback protocol.
 test.each([false, true])('retrieves the current receipt after the verification page (background=%s)', async isInBackground => {
-  const debug = jest.spyOn(console, 'debug')
   fetchMock.getOnce(code, { body: gate })
   fetchMock.getOnce(fragmentUrl, { body: fragment })
   await expect(fetchReceipt({ ...args(code), isInBackground })).resolves.toEqual({
@@ -40,7 +39,6 @@ test.each([false, true])('retrieves the current receipt after the verification p
   expect(fetchMock.calls(code)).toHaveLength(1)
   expect(fetchMock.calls(fragmentUrl)).toHaveLength(1)
   expect(fetchMock.lastOptions()?.headers).toMatchObject({ 'X-Requested-With': 'XMLHttpRequest' })
-  expect(debug).not.toHaveBeenCalled()
 })
 
 test('legacy receipt pages need only the original request', async () => {

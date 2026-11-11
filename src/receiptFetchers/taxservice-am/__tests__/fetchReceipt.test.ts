@@ -29,10 +29,3 @@ test('[model] original transport failures propagate', async () => {
   fetchMock.get('https://mytax.taxservice.am/receipt/1784837855/26BHCRE4FT71JM', { throws: failure })
   await expect(fetchReceipt(args('https://mytax.taxservice.am/receipt/1784837855/26BHCRE4FT71JM'))).rejects.toBe(failure)
 })
-
-test('[model] receipt bodies and response cookies are absent from emitted diagnostics', async () => {
-  const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
-  fetchMock.get('https://mytax.taxservice.am/receipt/1784837855/26BHCRE4FT71JM', { body: source1, headers: { 'Set-Cookie': 'session=synthetic-secret' } })
-  await fetchReceipt(args('https://mytax.taxservice.am/receipt/1784837855/26BHCRE4FT71JM'))
-  expect(debug).not.toHaveBeenCalled()
-})
