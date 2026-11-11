@@ -1,0 +1,30 @@
+{
+  "application": "ru.sberbankmobile",
+  "version": "17.13.0",
+  "apkSha256": "d978be8cbe8fbaefd19776f6963aa4d851541845df75bd7d69066ab6ea08cc54",
+  "captureDate": "2026-10-25",
+  "accountsSource": "MAIN_SCREEN part of /sm-uko/v3/mobile/aggregate/session/create",
+  "historySource": "/uoh-bh/v1/operations/list; from 18.10.2026T00:00:00, size 100, offset 0; 87 records, offset 100 returned empty",
+  "sanitization": "Account/PAN identifiers replaced consistently; personal/free text replaced preserving whitespace and punctuation; secrets redacted. Complete selected account groups and operation records retained.",
+  "nativeValidation": {
+    "platform": "Android 16, Zenmoney 26.8 build 1105",
+    "firstRun": "2540af59-45a3-4aea-b50d-bb4fb762df57",
+    "repeatedRun": "b0230602-4f5b-4ba9-a1ee-034c4acfc396",
+    "result": "Both successful: 14 accounts and 64 transactions; identical full transaction results and movement identities; repeated run used native saved auth, override disabled.",
+    "revisionScope": "Native validation predates the external-counterparty repair; the repaired outputs are verified offline against these complete bank records and the mobile adapter."
+  },
+  "externalTransferRegression": {
+    "externalTransferForms": [
+      "ExtCardTransferIn",
+      "RurPayment",
+      "P2PSBPInTransfer",
+      "UfsOutTransfer",
+      "UfsTransferBankPartnerPhone",
+      "UfsTransferAccount",
+      "UfsTransferRusCard"
+    ],
+    "source": "Existing complete sanitized operations retained unchanged; real incoming transfers, outgoing transfers with/without fees, and absent counterparty resources are selected by observed form and state.",
+    "expectedResults": "The previous independent principal/fee/date/merchant ledger is retained. Add the counterparty movement from its actual masked resource: opposite principal, zero fee, null movement ID, unknown type/company, observed suffix. Resource currency is absent in these records; use invoice currency if present, otherwise local account currency. No exchange rate or external account balance is inferred.",
+    "scope": "Only observed transfer forms with a known masked resource outside the represented graph gain an external side. Current captures contain RUB external transfers; a distinct confirmed external currency is not present. Operations without such a resource, internal transfers, cash, and local movement identities are preserved."
+  }
+}

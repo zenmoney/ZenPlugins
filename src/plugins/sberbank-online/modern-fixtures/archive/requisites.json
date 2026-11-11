@@ -1,0 +1,338 @@
+[
+  {
+    "request": {
+      "id": 9000000000000175,
+      "type": "card"
+    },
+    "response": {
+      "success": true,
+      "body": {
+        "productRequisites": [
+          {
+            "currencyDetails": "RUB",
+            "subHeader": "Наа ёаааааааа щааааааааа еаааа а кбаааааа оаа фааа лбаааааа обаааа",
+            "currencyLabel": "Пбаааа лаааааааааа мбаааааа",
+            "currencyDescription": "Вааааааааа ваааа (GAA)",
+            "parameters": [
+              {
+                "paramName": "Получатель",
+                "paramValue": "ЭАААА ВАААААА БААААААААА"
+              },
+              {
+                "paramName": "Номер счёта",
+                "paramValue": "40817810000000034033"
+              },
+              {
+                "paramName": "Банк получателя",
+                "paramValue": "ИАА Зааааааа"
+              },
+              {
+                "paramName": "БИК",
+                "paramValue": "044525225"
+              },
+              {
+                "paramName": "Корр. счёт",
+                "paramValue": "30101810000000004000"
+              },
+              {
+                "paramName": "ИНН",
+                "paramValue": "7707083893"
+              },
+              {
+                "paramName": "КПП",
+                "paramValue": "773643001"
+              },
+              {
+                "paramName": "ОКПО",
+                "paramValue": "57972160"
+              },
+              {
+                "paramName": "ОГРН",
+                "paramValue": "9000000000202"
+              },
+              {
+                "paramName": "SWIFT-код",
+                "paramValue": "FAAAAAAA"
+              },
+              {
+                "paramName": "Почтовый адрес банка",
+                "paramValue": "109544, ПААААА, ЛА.Л.ЛАААААААААААА,6"
+              },
+              {
+                "paramName": "Почтовый адрес доп.офиса",
+                "paramValue": "127247, В.ПААААА, ВАААААААААААААА НБААААА, М. 40, РБАААА 3"
+              }
+            ]
+          },
+          {
+            "currencyDetails": "USD",
+            "subHeader": "Наа ёаааааааа щааааааааа еаааа а еааааа оаа фааа лбаааааа обаааа",
+            "currencyLabel": "Пбаааа лаааааааааа мбаааааа",
+            "currencyDescription": "Сбаааа ТАА (JAA)",
+            "parameters": [
+              {
+                "paramName": "Beneficiary Name",
+                "paramValue": "QAAAA MAAAAAA DAAAAAAAAA",
+                "paramHint": "Нбаааааа обаааааа аа обааааа г иааааааааааа абааааааа УАА"
+              },
+              {
+                "paramName": "Beneficiary Account",
+                "paramValue": "40817810000000034033"
+              },
+              {
+                "paramName": "Correspondent SWIFT",
+                "paramValue": "OAAAAA3F"
+              },
+              {
+                "paramName": "Correspondent Bank",
+                "paramValue": "Qaa Saaa qa Raa Taaa Paaaaa, Raa Taaa"
+              },
+              {
+                "paramName": "Beneficiary SWIFT",
+                "paramValue": "FAAAAAAA"
+              },
+              {
+                "paramName": "Beneficiary Bank",
+                "paramValue": "GAAAAAAA, GAAAAA, NAAAAAA EAAAAAAAAA"
+              }
+            ]
+          },
+          {
+            "currencyDetails": "EUR",
+            "subHeader": "Наа ёаааааааа щааааааааа еаааа а еааааа оаа кбаааааа лбаааааа обаааа",
+            "currencyLabel": "Пбаааа лаааааааааа мбаааааа",
+            "currencyDescription": "Фааа (SAA)",
+            "parameters": [
+              {
+                "paramName": "Beneficiary Name",
+                "paramValue": "QAAAA MAAAAAA DAAAAAAAAA",
+                "paramHint": "Нбаааааа обаааааа аа обааааа г иааааааааааа абааааааа УАА"
+              },
+              {
+                "paramName": "Beneficiary Account",
+                "paramValue": "40817810000000034033"
+              },
+              {
+                "paramName": "Correspondent SWIFT",
+                "paramValue": "HAAAAAAA"
+              },
+              {
+                "paramName": "Correspondent Bank",
+                "paramValue": "IAAAAAAA SAAA RA, Iaaaaaaaa sa Uaaa"
+              },
+              {
+                "paramName": "Beneficiary SWIFT",
+                "paramValue": "FAAAAAAA"
+              },
+              {
+                "paramName": "Beneficiary Bank",
+                "paramValue": "GAAAAAAA, GAAAAA, NAAAAAA EAAAAAAAAA"
+              }
+            ]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "saveRequisitesButton",
+            "parameters": [
+              {
+                "key": "raaaa",
+                "value": "Ббааааааа оаа вбааааааа"
+              },
+              {
+                "key": "qaaaaa",
+                "value": "saaaa"
+              }
+            ]
+          },
+          {
+            "id": "orderDocumentButton",
+            "parameters": [
+              {
+                "key": "raaaa",
+                "value": "Пбаааааа рбаааааа"
+              },
+              {
+                "key": "qaaaaa",
+                "value": "jaaaaaaa"
+              },
+              {
+                "key": "aaaaaaAaaaaaaaa",
+                "value": "AaaaaaaaaaAaaAaaaaaaaaa?jaaaaaaaa=kaaaaaaa_oaaaaaa_faaaaaaaaa_vaaa_paaaaaa&kaaaaaaAa=waaa:9000000000000175"
+              }
+            ]
+          }
+        ],
+        "buttonText": "Ббааааааа оаа вбааааааа"
+      }
+    }
+  },
+  {
+    "request": {
+      "id": 9000000000000164,
+      "type": "card"
+    },
+    "response": {
+      "success": true,
+      "body": {
+        "productRequisites": [
+          {
+            "currencyDetails": "RUB",
+            "subHeader": "Наа ёаааааааа щааааааааа еаааа а кбаааааа оаа фааа лбаааааа обаааа",
+            "currencyLabel": "Пбаааа лаааааааааа мбаааааа",
+            "currencyDescription": "Вааааааааа ваааа (GAA)",
+            "parameters": [
+              {
+                "paramName": "Получатель",
+                "paramValue": "ЭАААА ВАААААА БААААААААА"
+              },
+              {
+                "paramName": "Номер счёта",
+                "paramValue": "40817810000000324032"
+              },
+              {
+                "paramName": "Банк получателя",
+                "paramValue": "ИАА Зааааааа"
+              },
+              {
+                "paramName": "БИК",
+                "paramValue": "044525225"
+              },
+              {
+                "paramName": "Корр. счёт",
+                "paramValue": "30101810000000004000"
+              },
+              {
+                "paramName": "ИНН",
+                "paramValue": "7707083893"
+              },
+              {
+                "paramName": "КПП",
+                "paramValue": "773643001"
+              },
+              {
+                "paramName": "ОКПО",
+                "paramValue": "57972160"
+              },
+              {
+                "paramName": "ОГРН",
+                "paramValue": "9000000000202"
+              },
+              {
+                "paramName": "SWIFT-код",
+                "paramValue": "FAAAAAAA"
+              },
+              {
+                "paramName": "Почтовый адрес банка",
+                "paramValue": "109544, ПААААА, ЛА.Л.ЛАААААААААААА,6"
+              },
+              {
+                "paramName": "Почтовый адрес доп.офиса",
+                "paramValue": "127247, В.ПААААА, МАААААААААА Н., М.98"
+              }
+            ]
+          },
+          {
+            "currencyDetails": "USD",
+            "subHeader": "Наа ёаааааааа щааааааааа еаааа а еааааа оаа фааа лбаааааа обаааа",
+            "currencyLabel": "Пбаааа лаааааааааа мбаааааа",
+            "currencyDescription": "Сбаааа ТАА (JAA)",
+            "parameters": [
+              {
+                "paramName": "Beneficiary Name",
+                "paramValue": "QAAAA MAAAAAA DAAAAAAAAA",
+                "paramHint": "Нбаааааа обаааааа аа обааааа г иааааааааааа абааааааа УАА"
+              },
+              {
+                "paramName": "Beneficiary Account",
+                "paramValue": "40817810000000324032"
+              },
+              {
+                "paramName": "Correspondent SWIFT",
+                "paramValue": "OAAAAA3F"
+              },
+              {
+                "paramName": "Correspondent Bank",
+                "paramValue": "Qaa Saaa qa Raa Taaa Paaaaa, Raa Taaa"
+              },
+              {
+                "paramName": "Beneficiary SWIFT",
+                "paramValue": "FAAAAAAA"
+              },
+              {
+                "paramName": "Beneficiary Bank",
+                "paramValue": "GAAAAAAA, GAAAAA, NAAAAAA EAAAAAAAAA"
+              }
+            ]
+          },
+          {
+            "currencyDetails": "EUR",
+            "subHeader": "Наа ёаааааааа щааааааааа еаааа а еааааа оаа кбаааааа лбаааааа обаааа",
+            "currencyLabel": "Пбаааа лаааааааааа мбаааааа",
+            "currencyDescription": "Фааа (SAA)",
+            "parameters": [
+              {
+                "paramName": "Beneficiary Name",
+                "paramValue": "QAAAA MAAAAAA DAAAAAAAAA",
+                "paramHint": "Нбаааааа обаааааа аа обааааа г иааааааааааа абааааааа УАА"
+              },
+              {
+                "paramName": "Beneficiary Account",
+                "paramValue": "40817810000000324032"
+              },
+              {
+                "paramName": "Correspondent SWIFT",
+                "paramValue": "HAAAAAAA"
+              },
+              {
+                "paramName": "Correspondent Bank",
+                "paramValue": "IAAAAAAA SAAA RA, Iaaaaaaaa sa Uaaa"
+              },
+              {
+                "paramName": "Beneficiary SWIFT",
+                "paramValue": "FAAAAAAA"
+              },
+              {
+                "paramName": "Beneficiary Bank",
+                "paramValue": "GAAAAAAA, GAAAAA, NAAAAAA EAAAAAAAAA"
+              }
+            ]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "saveRequisitesButton",
+            "parameters": [
+              {
+                "key": "raaaa",
+                "value": "Ббааааааа оаа вбааааааа"
+              },
+              {
+                "key": "qaaaaa",
+                "value": "saaaa"
+              }
+            ]
+          },
+          {
+            "id": "orderDocumentButton",
+            "parameters": [
+              {
+                "key": "raaaa",
+                "value": "Пбаааааа рбаааааа"
+              },
+              {
+                "key": "qaaaaa",
+                "value": "jaaaaaaa"
+              },
+              {
+                "key": "aaaaaaAaaaaaaaa",
+                "value": "AaaaaaaaaaAaaAaaaaaaaaa?jaaaaaaaa=kaaaaaaa_oaaaaaa_faaaaaaaaa_vaaa_paaaaaa&kaaaaaaAa=waaa:9000000000000164"
+              }
+            ]
+          }
+        ],
+        "buttonText": "Ббааааааа оаа вбааааааа"
+      }
+    }
+  }
+]

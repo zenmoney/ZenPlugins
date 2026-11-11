@@ -1,0 +1,82 @@
+{
+  "captureDate": "2026-10-26",
+  "application": "ru.sberbankmobile 17.13.0",
+  "apkSha256": "d978be8cbe8fbaefd19776f6963aa4d851541845df75bd7d69066ab6ea08cc54",
+  "sources": {
+    "current": "MAIN_SCREEN.body.dataModel from aggregate session; complete relevant account groups",
+    "products": "POST /personal-finance/pfmassets/v2/mobile/product/history/details; full observed 70 snapshots retained; protocol ywm.q/rwm.a/uym.a",
+    "requisites": "POST /ufs-product-requisites/rest/v1/getProductRequisites {id,type:card}; j17.c/s6e.b/n6e.a; both complete responses and request contexts retained",
+    "operations": "Selected complete records from 7940-row /uoh-bh/v1/operations/list response set, 2023-10-27 through 2026-10-26",
+    "details": "Complete real operation details for USD to RUB, RUB to USD funding, and two openings without a source account ID",
+    "second-session-operations": "The same 148 complete operations matched by uohId in a later native Android capture. Closed-account transport IDs changed and some authorizations settled; source state fields are retained without modification."
+  },
+  "interpretation": [
+    "Current account/card relationships are explicit in CTACCOUNTS.cards. Old closed cards are linked to accounts by full account numbers from requisites, not equal amounts or nicknames.",
+    "Historical PFM account numbers/currencies distinguish 33 regular products. A unique masked account suffix plus confirmed currency/type links own history references; conflicting candidates fail. External counterpart resources are not matched this way.",
+    "Three historical account references are absent from PFM month-end snapshots. Their bank transport IDs rotate between sessions. Preserve stable account kind, currency and masked suffix identity, unknown current balance, and existing local IDs from saved identity metadata. Two have confirmed closure records; the remaining payment-account closure state is unknown.",
+    "All observed accumulations are regular savings/current-account balances. No contractual term-deposit/loan DTO was observed; no maturity, opening principal or rate is invented.",
+    "Two successful funded openings identify the debit account only by a masked bank label. Preserve that side as a reference by data, not a fabricated fetched account.",
+    "Currency funding details provide 998 RUB debit for 10 USD credit. The history nationalAmount of 10 RUB is not a posted debit.",
+    "Refunds and charges sharing an authorizationDocId remain separate operations; their distinct uohId values and opposite effects are preserved.",
+    "Cached transport aliases are not reused to resolve new records. Refresh old-card requisites from the current bank session; match physical account numbers or unique own-account mask, currency and kind.",
+    "Expected transaction ledgers for both captures were independently calculated from the complete sanitized records. Holds can settle between captures; dates, movement IDs, account IDs, amounts, fees and invoices stay identical."
+  ],
+  "sanitization": "Complete records; account/PAN/bank identifiers and masked suffixes replaced consistently. Personal/free text pseudonymized preserving case, whitespace, punctuation and equality. Protocol labels, currencies, dates and monetary values preserved.",
+  "nativeValidation": {
+    "date": "2026-10-26",
+    "platform": "Android 16 / Zenmoney 26.8",
+    "historyRecords": 7941,
+    "pagesIncludingFinalEmpty": 81,
+    "executedFinancialRecords": 5832,
+    "returnedTransactions": 5832,
+    "accounts": 38,
+    "duplicateNonNullMovementIds": 0,
+    "errors": 0,
+    "previousRunMovementsChanged": 0,
+    "previousAccountIdentitiesPreserved": true,
+    "scope": "Complete Bootloader native result and bank statement comparison; does not inspect Zenmoney internal database for pre-existing duplicates.",
+    "missingFinancialRecords": 0,
+    "unexpectedNativeOperations": 0,
+    "commissionMismatches": 0,
+    "principalMismatches": 0,
+    "executedNonzeroFeesVerified": 147,
+    "subsequentIncrementalRefresh": {
+      "status": "success",
+      "accounts": 38,
+      "transactions": 106,
+      "transactionsExactlyEqualToFullImport": 106,
+      "changedMovements": 0,
+      "duplicateNonNullMovementIds": 0,
+      "accountIdentitiesPreserved": true,
+      "savedLastSuccessDateReused": true,
+      "phoneScreen": "Bank connection shows successful refresh time without an error indicator; internal database not exported or inspected."
+    },
+    "revisionScope": "Native validation predates the external-counterparty repair; the repaired outputs are verified offline against these complete bank records and the mobile adapter."
+  },
+  "externalTransferRegression": {
+    "externalTransferForms": [
+      "ExtCardTransferIn",
+      "RurPayment",
+      "P2PSBPInTransfer",
+      "UfsOutTransfer",
+      "UfsTransferBankPartnerPhone",
+      "UfsTransferAccount",
+      "UfsTransferRusCard"
+    ],
+    "source": "Existing complete sanitized operations retained unchanged; real incoming transfers, outgoing transfers with/without fees, and absent counterparty resources are selected by observed form and state.",
+    "expectedResults": "The previous independent principal/fee/date/merchant ledger is retained. Add the counterparty movement from its actual masked resource: opposite principal, zero fee, null movement ID, unknown type/company, observed suffix. Resource currency is absent in these records; use invoice currency if present, otherwise local account currency. No exchange rate or external account balance is inferred.",
+    "scope": "Only observed transfer forms with a known masked resource outside the represented graph gain an external side. Current captures contain RUB external transfers; a distinct confirmed external currency is not present. Operations without such a resource, internal transfers, cash, and local movement identities are preserved."
+  },
+  "closureRegression": "For each of the two real short-lived savings accounts, replay all selected complete records before its actual UfsDepositClose, persist the resulting graph, then process the later capture with rotated bank transport IDs and both closures. Full account results must update archived while retaining prior local IDs, titles and unknown balances; saved input remains unchanged and a further repeat is identical.",
+  "offlineRegressionReplay": {
+    "sourceRecords": 7941,
+    "transactions": 5832,
+    "accounts": 38,
+    "localFinancialOrIdentityChanges": 0,
+    "addedExternalCounterparties": 434,
+    "duplicateNonNullMovementIds": 0,
+    "details": 4,
+    "source": "Complete native Android capture already retained locally; replayed with the repaired converters without new bank requests.",
+    "scope": "Existing local movement IDs, sums, invoices, fees, dates, holds, merchants and comments compare exactly with the successful native result; 434 existing operations gain their known external reference. This is offline verification, not a new phone synchronization."
+  }
+}
