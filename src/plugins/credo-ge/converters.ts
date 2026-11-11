@@ -271,8 +271,24 @@ function isConversionComment (comment: string | null): boolean {
  * When both exist on the same account at the exact same timestamp, we drop the
  * conversion and update the payment's sum to reflect the true cost (including
  * the FX spread). The payment keeps its merchant name and invoice.
+ *
+ * A conversion whose other leg is on another account of the result is an
+ * exchange between own accounts (e.g. the bank debits EUR and credits USD to
+ * pay a USD card payment from a USD account): both legs are kept.
  */
 export function mergeForeignCurrencyPairs (transactions: ExtendedTransaction[]): ExtendedTransaction[] {
+  const conversionAccounts = new Map<string, Set<string>>()
+  for (const t of transactions) {
+    const accountId = (t.movements[0].account as AccountReferenceById).id
+    for (const key of t.groupKeys ?? []) {
+      if (key?.startsWith(CONVERSION_GROUP_PREFIX) === true) {
+        conversionAccounts.set(key, (conversionAccounts.get(key) ?? new Set<string>()).add(accountId))
+      }
+    }
+  }
+  const hasLegOnOtherAccount = (t: ExtendedTransaction): boolean =>
+    t.groupKeys?.some(key => key !== null && (conversionAccounts.get(key)?.size ?? 0) > 1) === true
+
   const groups = new Map<string, ExtendedTransaction[]>()
 
   for (const t of transactions) {
@@ -298,6 +314,7 @@ export function mergeForeignCurrencyPairs (transactions: ExtendedTransaction[]):
 
     const conversion = conversions[0]
     const payment = payments[0]
+    if (hasLegOnOtherAccount(conversion)) continue
     const conversionSum = conversion.movements[0].sum ?? 0
     const paymentSum = payment.movements[0].sum ?? 0
 
