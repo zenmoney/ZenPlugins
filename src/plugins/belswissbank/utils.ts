@@ -42,3 +42,38 @@ export function encryptCredentials (value: string, salt: string): string {
   const encrypted = publicKey.encrypt(toEncode, 'RSAES-PKCS1-V1_5')
   return forge.util.encode64(encrypted)
 }
+
+function sha256Hex (value: string): string {
+  return forge.md.sha256.create().update(value, 'utf8').digest().toHex()
+}
+
+// Mirrors by.bank.bsb.mobile anti_fraud.AntiFraudDevicePayload (app 202611.1.0),
+// sent base64-encoded in the x-device-fingerprint header of auth/login.
+export function buildDeviceFingerprint (device: Device): string {
+  const androidVersion = Math.max(11, parseInt(device.osVersion, 10) - 20).toString()
+  const buildId = `AP${androidVersion}A.${sha256Hex(device.androidId + 'id').slice(0, 6)}.001`
+  const payload = {
+    device_model: device.model,
+    device_name: `${device.manufacturer} ${device.model}`,
+    deviceid: device.androidId,
+    geolocationdata: '',
+    locale: 'ru-BY',
+    time_zone: 180,
+    os_name: 'Android',
+    os_version: androidVersion,
+    width: '1080',
+    height: '2340',
+    scale: '3.0',
+    uuid: device.androidId,
+    android_specific: {
+      build_bootloader: 'unknown',
+      build_display: buildId,
+      build_id: buildId,
+      build_fingerprint: `${device.manufacturer.toLowerCase()}/${device.model}/${device.model}:${androidVersion}/${buildId}:user/release-keys`,
+      build_manufacturer: device.manufacturer,
+      build_radio: 'unknown',
+      package_manager_getsystemavailablefeatures: sha256Hex(device.androidId + 'features')
+    }
+  }
+  return forge.util.encode64(forge.util.encodeUtf8(JSON.stringify(payload)))
+}

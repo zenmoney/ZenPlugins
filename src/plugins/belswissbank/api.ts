@@ -1,9 +1,9 @@
 import { fetch, FetchOptions, FetchResponse } from '../../common/network'
 import { BankMessageError, InvalidOtpCodeError, UserInteractionError } from '../../errors'
-import { APP_VERSION } from './consts'
+import { APP_BUILD_VERSION, APP_STORE_PLATFORM, APP_VERSION } from './consts'
 import { Device, Preferences, Session } from './models'
 import { Strings } from './strings'
-import { encryptCredentials, formatToApiDate, getDevice } from './utils'
+import { buildDeviceFingerprint, encryptCredentials, formatToApiDate, getDevice } from './utils'
 import _ from 'lodash'
 import { sanitize } from '../../common/sanitize'
 import { getOptString } from '../../types/get'
@@ -193,6 +193,9 @@ export class Api {
   private async authLogin (salt: string): Promise<LoginResponse> {
     const response = await this.fetchApi('authentication-management/free-zone/auth/login', {
       method: 'POST',
+      headers: {
+        'x-device-fingerprint': buildDeviceFingerprint(this.device)
+      },
       body: {
         password: encryptCredentials(this.preferences.password.trim(), salt),
         username: encryptCredentials(this.preferences.username.trim(), salt),
@@ -299,6 +302,8 @@ export class Api {
   private getUserDevice (): object {
     return {
       appVersion: APP_VERSION,
+      appStorePlatform: APP_STORE_PLATFORM,
+      appBuildVersion: APP_BUILD_VERSION,
       deviceDescription: `${this.device.manufacturer} ${this.device.model}`,
       deviceGuid: this.device.androidId,
       deviceIP: this.device.ip,
