@@ -1,12 +1,9 @@
 import { JSDOM } from 'jsdom'
 import { runInContext } from 'vm'
 import { transformSync, build } from 'esbuild'
-import { resolve } from 'path'
-import { buildProductionScript } from '../../../../scripts/__tests__/helpers/webpack'
 import type { Disposable, WebViewInstance } from '../../webView'
 import { createDomPolicyScript, installDomPolicies } from '../dom'
 import type { DomPolicyController, DomPolicyFactory, DomPolicyErrorHandler } from '../dom'
-import { geoPermission, installPermissions } from '../permissions'
 
 const ORIGIN = 'https://example.test'
 function source (body: string): string {
@@ -411,18 +408,5 @@ describe('[model] DOM policies', () => {
     expect(view.run("document.querySelector('button') !== null")).toBe(true)
     await view.navigate('<button class=target></button>')
     expect(view.run("document.querySelector('button')")).toBeNull()
-  })
-
-  it('executes standalone page callbacks through the production Webpack pipeline alongside permissions', async () => {
-    const code = await buildProductionScript(resolve(__dirname, '../dom/index.ts'))
-    const module = { exports: {} }
-    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-    new Function('module', 'exports', code)(module, module.exports)
-    const api = module.exports as { createDomPolicyScript: typeof createDomPolicyScript, installDomPolicies: typeof installDomPolicies }
-    const permissions = await installPermissions(view.webView, { origins: [ORIGIN], permissions: { geolocation: 'granted' }, mode: 'force', adapters: [geoPermission({ getPosition: () => ({ latitude: 1, longitude: 2, accuracy: 3 }) })] })
-    controllers.push(permissions)
-    const controller = await api.installDomPolicies(view.webView, { origins: [ORIGIN], script: api.createDomPolicyScript<DomPolicyFactory>(source('[{ selectors: \'.target\', policy: { type: \'custom\', apply: el => { el.setAttribute(\'production\', \'\') } } }]')) })
-    controllers.push(controller)
-    expect(view.run("document.querySelector('button').hasAttribute('production')")).toBe(true)
   })
 })

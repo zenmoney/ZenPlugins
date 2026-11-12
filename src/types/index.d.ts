@@ -81,6 +81,7 @@ export interface ZenMoneyApi {
 
 declare global {
   // A global var also declares globalThis.ZenMoney, which host mocks replace.
+  // eslint-disable-next-line no-var
   var ZenMoney: ZenMoneyApi
 
   function assert (condition: boolean, ...args: unknown[]): asserts condition
