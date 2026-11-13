@@ -1,13 +1,13 @@
-import { BankMessageError } from '../../errors'
+import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesError, UserInteractionError } from '../../errors'
 import Base64 from 'crypto-js/enc-base64'
 import Utf8 from 'crypto-js/enc-utf8'
-import { getOptNumber, getOptString } from '../../types/get'
-import { authorizeInWebView } from './sso'
+import get, { getOptNumber, getOptString } from '../../types/get'
+import { generateUUID } from '../../common/utils'
 import { parsePdf } from '../../common/pdfUtils'
 import { convertAccounts, convertCardTransaction, convertPaymentHistoryTransaction } from './converters'
 import { fetchApi, type ApiResponse } from './fetchApi'
 import { asNonEmptyString, getLastCardDigits, normalizeProductIdentifier, toNumber } from './helpers'
-import type { AuthState, LoginRequest, ProductAccount } from './models'
+import { APP_VERSION, type AuthState, type LoginRequest, type NativeAuthInput, type PreferenceInput, type ProductAccount } from './models'
 import { parseStatementTransactions } from './statement'
 import type { AccountsResponse, BankAccount, CardTransactionsResponse, CardsResponse, Credit, CreditsResponse, ErrorInfo, ErrorResponse, PaymentHistoryItem, PaymentHistoryResponse } from './types/fetch'
 
@@ -136,7 +136,7 @@ const parseLoginRequest = (value: unknown): LoginRequest | undefined => {
   }
 }
 
-const parseAuth = (value: unknown, stage: 'hot' | 'cold', previous?: Pick<AuthState, 'loginRequest' | 'platformType'>): AuthState => {
+const parseAuth = (value: unknown, stage: 'hot' | 'cold', previous?: Pick<AuthState, 'login' | 'loginRequest' | 'platformType'>): AuthState => {
   const sessionToken = getOptString(value, 'sessionToken') ?? getOptString(value, 'token')
   const refreshToken = getOptString(value, 'refreshToken')
   const tokenType = getOptString(value, 'tokenType')
@@ -183,16 +183,87 @@ const getAuthErrorCode = (body: unknown): string | undefined => {
   return code != null ? String(code) : undefined
 }
 
-// Android 2026.7.0 loginConfirmation: PIN is checked locally, then saved credentials
+const isCredentialRejection = (response: ApiResponse<unknown>): boolean =>
+  !(response.status >= 200 && response.status < 300) && ['1011', '1042'].includes(getAuthErrorCode(response.body) ?? '')
+
+const assertAuthSuccess = (response: ApiResponse<unknown>, stage: string): void => {
+  console.assert(response.status >= 200 && response.status < 300, `[auth/${stage}] Request failed`, {
+    status: response.status, errorCode: getAuthErrorCode(response.body)
+  })
+}
+
+const makeLoginRequest = (preferences: PreferenceInput, deviceUid: string): LoginRequest => {
+  const login = getOptString(preferences, 'login')?.trim()
+  const password = getOptString(preferences, 'password')
+  if (login == null || login.length === 0 || password == null || password.length === 0) {
+    throw new InvalidPreferencesError('Укажите логин или номер телефона и пароль от нового приложения «Беларусбанк».')
+  }
+  const phone = login.replace(/[\s()-]/g, '')
+  return {
+    appVersion: APP_VERSION,
+    deviceModel: 'ZenMoney',
+    deviceUid,
+    ...(/^\+?375\d{9}$/.test(phone) ? { mobilePhone: phone.startsWith('+') ? phone : `+${phone}` } : { login }),
+    osType: 'Android',
+    osVersion: '16',
+    password,
+    token: ''
+  }
+}
+
+// Official APK 2026.6.0: prepareAuthConfirmation/loginConfirmation and
+// backendApiService.loginConfirmation. PIN renewal below uses the same saved device.
+const authenticateNative = async (
+  input: NativeAuthInput | undefined,
+  previousDeviceUid: string | undefined,
+  isInBackground: boolean,
+  onAuthUpdate?: (auth: AuthState) => void
+): Promise<AuthState> => {
+  const deviceUid = previousDeviceUid ?? (typeof input?.deviceUid === 'string' && input.deviceUid.length > 0 ? input.deviceUid : generateUUID())
+  const loginRequest = makeLoginRequest(input?.preferences ?? {}, deviceUid)
+  // Preparation sends the bank's SMS, before the plugin asks for its code.
+  if (isInBackground) throw new UserInteractionError()
+  input?.onDeviceUid(deviceUid)
+  const preparation = await fetchApi<unknown>('users/auth/login/preparation', {
+    method: 'POST', body: loginRequest, retry: false
+  })
+  if (isCredentialRejection(preparation)) throw new InvalidLoginOrPasswordError()
+  assertAuthSuccess(preparation, 'cold/preparation')
+  const requestId = getOptString(preparation.body, 'requestId')
+  console.assert(requestId != null && requestId.length > 0, '[auth/cold] Missing request ID')
+  const rawNeedCodeWord = get(preparation.body, 'needCodeWord')
+  console.assert(rawNeedCodeWord == null || typeof rawNeedCodeWord === 'boolean', '[auth/cold] Invalid code word requirement')
+  let codeWord: string | undefined
+  if (rawNeedCodeWord === true) {
+    const answer = await ZenMoney.readLine('Введите кодовое слово для входа в Беларусбанк', { inputType: 'text', time: 120000 })
+    console.assert(answer != null && answer.trim().length > 0, '[auth/cold] Required code word was not provided')
+    codeWord = (answer as string).trim()
+  }
+  const answer = await ZenMoney.readLine('Введите код из SMS от Беларусбанка', { inputType: 'number', time: 120000 })
+  console.assert(answer != null && answer.trim().length > 0, '[auth/cold] Required SMS code was not provided')
+  const code = (answer as string).trim()
+  const confirmation = await fetchApi<unknown>(`users/auth/login/${encodeURIComponent(requestId as string)}`, {
+    method: 'POST', query: { code, codeWord }, body: { requestId, code, ...(codeWord != null ? { codeWord } : {}) }, retry: false
+  })
+  // Official error catalogue: SMS_CODE_CONFIRMATION_ERROR / SMS_CODE_EXPIRED.
+  if (!(confirmation.status >= 200 && confirmation.status < 300) && ['5004', '1007'].includes(getAuthErrorCode(confirmation.body) ?? '')) {
+    throw new InvalidOtpCodeError()
+  }
+  assertAuthSuccess(confirmation, 'cold/confirmation')
+  const auth = parseAuth(confirmation.body, 'cold', { loginRequest })
+  onAuthUpdate?.(auth)
+  return auth
+}
+
+// Official Android APK 2026.6.0 loginConfirmation: PIN is checked locally, then saved credentials
 // and the same deviceUid are used for preparation/confirmation without an OTP.
 const authenticateSavedDevice = async (auth: AuthState, loginRequest: LoginRequest): Promise<AuthState | null> => {
   const preparation = await fetchApi<unknown>('users/auth/login/preparation', {
     method: 'POST', query: { loginMode: 'PIN' }, body: loginRequest, ...authOptions(auth), platformType: 'mobile', retry: false
   })
   const confirmedRejection = (response: ApiResponse<unknown>): boolean => {
-    if (response.status >= 200 && response.status < 300) return false
     // The official application resets saved credentials only for these AUTH_ERRORS.
-    return ['1011', '1042'].includes(getAuthErrorCode(response.body) ?? '')
+    return isCredentialRejection(response)
   }
   if (confirmedRejection(preparation)) return null
   console.assert(preparation.status >= 200 && preparation.status < 300, '[auth/hot] Saved-device preparation failed', {
@@ -213,18 +284,29 @@ const authenticateSavedDevice = async (auth: AuthState, loginRequest: LoginReque
 export const authenticate = async (
   storedAuth: unknown,
   isInBackground: boolean,
-  onAuthUpdate?: (auth: AuthState) => void
+  onAuthUpdate?: (auth: AuthState) => void,
+  nativeInput?: NativeAuthInput
 ): Promise<AuthState> => {
   const sessionToken = getOptString(storedAuth, 'sessionToken')
   const refreshToken = getOptString(storedAuth, 'refreshToken')
   const tokenType = getOptString(storedAuth, 'tokenType')
   const platformType = getOptString(storedAuth, 'platformType') === 'pwa' ? 'pwa' as const : undefined
-  const savedLoginRequest = storedAuth != null && typeof storedAuth === 'object'
+  const savedLoginRequest = platformType == null && storedAuth != null && typeof storedAuth === 'object'
     ? parseLoginRequest((storedAuth as Record<string, unknown>).loginRequest)
     : undefined
+  // The pre-SSO plugin kept the device UID separately. Recover that registered
+  // device only when current credentials still identify the saved native login.
+  const legacyLogin = getOptString(storedAuth, 'login')
+  let legacyLoginRequest: LoginRequest | undefined
+  if (savedLoginRequest == null && platformType == null && legacyLogin != null &&
+      legacyLogin === nativeInput?.preferences.login?.trim() && typeof nativeInput.deviceUid === 'string' &&
+      nativeInput.deviceUid.length > 0 && (nativeInput.preferences.password?.length ?? 0) > 0) {
+    legacyLoginRequest = makeLoginRequest(nativeInput.preferences, nativeInput.deviceUid)
+  }
   if (sessionToken != null && sessionToken.length > 0 && refreshToken != null && refreshToken.length > 0 && tokenType != null && tokenType.length > 0) {
     const savedDevice = {
       ...(savedLoginRequest != null ? { loginRequest: savedLoginRequest } : {}),
+      ...(legacyLogin != null ? { login: legacyLogin } : {}),
       ...(platformType != null ? { platformType } : {})
     }
     const auth = { sessionToken, refreshToken, tokenType, ...savedDevice }
@@ -235,13 +317,15 @@ export const authenticate = async (
       const response = await fetchApi<unknown>('users/auth/refresh-token', {
         method: 'POST', body: refreshToken, rawStringBody: true, ...authOptions(auth), retry: false
       })
-      console.assert(response.status >= 200 && response.status < 300, '[auth/hot] Refresh request failed', {
-        status: response.status, errorCode: getOptNumber(response.body, 'errorInfo.code') ?? getOptString(response.body, 'errorInfo.code')
-      })
-      return parseAuth(response.body, 'hot', savedDevice)
+      if (!isCredentialRejection(response)) {
+        assertAuthSuccess(response, 'hot/refresh')
+        return parseAuth(response.body, 'hot', savedDevice)
+      }
+      console.log('[auth/hot] Refresh authorization rejected; attempting saved-device renewal')
     }
-    if (savedLoginRequest != null) {
-      const renewed = await authenticateSavedDevice(auth, savedLoginRequest)
+    const renewalLoginRequest = savedLoginRequest ?? legacyLoginRequest
+    if (renewalLoginRequest != null) {
+      const renewed = await authenticateSavedDevice(auth, renewalLoginRequest)
       if (renewed != null) return renewed
       // Avoid spending another password attempt on the next sync if cold auth is canceled.
       onAuthUpdate?.({ sessionToken, refreshToken, tokenType, ...(platformType != null ? { platformType } : {}) })
@@ -250,21 +334,7 @@ export const authenticate = async (
       console.log('[auth/hot] Saved refresh token expired and saved-device credentials are unavailable; starting cold authentication')
     }
   }
-  let confirmedAuth: AuthState | undefined
-  const acceptColdAuth = (result: unknown): AuthState => {
-    const loginRequest = result != null && typeof result === 'object'
-      ? parseLoginRequest((result as Record<string, unknown>).loginRequest)
-      : undefined
-    const auth = parseAuth(result, 'cold', {
-      ...(loginRequest != null ? { loginRequest } : {}),
-      ...(getOptString(result, 'platformType') === 'pwa' ? { platformType: 'pwa' as const } : {})
-    })
-    onAuthUpdate?.(auth)
-    confirmedAuth = auth
-    return auth
-  }
-  const result = await authorizeInWebView(isInBackground, acceptColdAuth)
-  return confirmedAuth ?? acceptColdAuth(result)
+  return await authenticateNative(nativeInput, savedLoginRequest?.deviceUid ?? legacyLoginRequest?.deviceUid, isInBackground, onAuthUpdate)
 }
 
 interface SessionInput {

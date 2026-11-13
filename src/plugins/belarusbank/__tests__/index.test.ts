@@ -119,7 +119,11 @@ describe('Belarusbank scrape', () => {
       isFirstRun: false,
       isInBackground: true
     })).rejects.toBe(error)
-    expect(mockAuthenticate).toHaveBeenCalledWith(stored, true, expect.any(Function))
+    expect(mockAuthenticate).toHaveBeenCalledWith(stored, true, expect.any(Function), {
+      preferences: { login: 'changed-login', password: 'changed-password' },
+      deviceUid: null,
+      onDeviceUid: expect.any(Function)
+    })
     expect(pluginData.get('belarusbankAuth')).toEqual(renewed)
   })
 
