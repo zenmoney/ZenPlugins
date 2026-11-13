@@ -514,8 +514,9 @@ export async function fetchHistoryV2 (session: SessionV2, fromDate: Date, data: 
       type: '200'
     }
   ]
-  let lastDate = new Date().getTime()
   while (true) {
+    const previousSortColKey: number | null = lastSortColKey
+    const previousBlockedMovementDate: number | null = lastBlockedMovementDate
     const b = {
       coreAccountIds,
       pageSize,
@@ -552,12 +553,6 @@ export async function fetchHistoryV2 (session: SessionV2, fromDate: Date, data: 
       if (transactionByDate.date <= fromDate.getTime()) {
         stop = true
       }
-      if (lastDate === transactionByDate.date) {
-        stop = true
-      }
-      if (lastDate > transactionByDate.date) {
-        lastDate = transactionByDate.date
-      }
       for (const transaction of transactionByDate.transactions) {
         if (transaction.transactionId !== null && transaction.transactionId !== 0) {
           lastSortColKey = transaction.transactionId
@@ -570,6 +565,13 @@ export async function fetchHistoryV2 (session: SessionV2, fromDate: Date, data: 
     }
 
     if (stop) {
+      break
+    }
+    // A day is often split between two pages, so seeing the same date again does not mean
+    // the history has ended. Stop paging only when the cursor did not move, otherwise
+    // the same page would be requested forever.
+    if (lastSortColKey === previousSortColKey && lastBlockedMovementDate === previousBlockedMovementDate) {
+      console.log('TBC history cursor did not advance, stop paging')
       break
     }
   }
