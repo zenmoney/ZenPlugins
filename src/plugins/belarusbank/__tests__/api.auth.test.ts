@@ -44,7 +44,7 @@ describe('authentication lifecycle [model]', () => {
     expect(mockAuthorize).not.toHaveBeenCalled()
   })
 
-  it.each([undefined, 'pwa'] as const)('refreshes within the access expiry gap with saved authorization and platform %s', async (platformType) => {
+  it.each([undefined, 'pwa', 'mobile'] as const)('refreshes within the access expiry gap with saved authorization and platform %s', async (platformType) => {
     const platform = platformType != null ? { platformType } : {}
     const stored = { ...tokens, sessionToken: jwt(29), refreshToken: jwt(100), loginRequest, ...platform }
     const url = 'https://mb.asb.by/ibanking/users/auth/refresh-token'
@@ -58,17 +58,27 @@ describe('authentication lifecycle [model]', () => {
   })
 
   it('renews an expired refresh session through the official saved-device PIN flow in background', async () => {
-    const stored = { ...tokens, sessionToken: jwt(1), refreshToken: jwt(2), loginRequest }
+    const stored = { ...tokens, sessionToken: jwt(1), refreshToken: jwt(2), loginRequest, platformType: 'mobile' }
     const prepareUrl = 'https://mb.asb.by/ibanking/users/auth/login/preparation?loginMode=PIN'
     const confirmUrl = 'https://mb.asb.by/ibanking/users/auth/login/model-request'
     fetchMock.post(prepareUrl, { requestId: 'model-request' })
     fetchMock.post(confirmUrl, tokens)
-    await expect(authenticate(stored, true)).resolves.toEqual({ ...tokens, loginRequest })
+    await expect(authenticate(stored, true)).resolves.toEqual({ ...tokens, loginRequest, platformType: 'mobile' })
     expect(JSON.parse(String(fetchMock.lastCall(prepareUrl)?.[1]?.body))).toEqual(loginRequest)
     expect(fetchMock.lastCall(confirmUrl)?.[1]?.body).toBe(JSON.stringify({ requestId: 'model-request' }))
+    expect(fetchMock.lastCall(prepareUrl)?.[1]?.headers).toMatchObject({ 'Platform-Type': 'mobile', Authorization: `Bearer ${stored.sessionToken}` })
     expect(fetchMock.calls(prepareUrl)).toHaveLength(1)
     expect(fetchMock.calls(confirmUrl)).toHaveLength(1)
     expect(mockAuthorize).not.toHaveBeenCalled()
+  })
+
+  it('registers a mobile device in SSO once an old PWA refresh expires', async () => {
+    const stored = { ...tokens, refreshToken: jwt(1), loginRequest, platformType: 'pwa' }
+    const mobileAuth = { ...tokens, loginRequest, platformType: 'mobile' }
+    mockAuthorize.mockResolvedValue(mobileAuth)
+    await expect(authenticate(stored, false)).resolves.toEqual(mobileAuth)
+    expect(fetchMock.called()).toBe(false)
+    expect(mockAuthorize).toHaveBeenCalledWith(false, expect.any(Function))
   })
 
   it.each(credentialRejections)('falls back after recorded saved-device credential rejection %#', async (response) => {
@@ -130,13 +140,13 @@ describe('authentication lifecycle [model]', () => {
 
   it('keeps the captured login request only after successful cold authorization', async () => {
     const { token, ...webLoginRequest } = loginRequest
-    mockAuthorize.mockResolvedValue({ ...tokens, loginRequest: webLoginRequest, platformType: 'pwa' })
-    await expect(authenticate(null, false)).resolves.toEqual({ ...tokens, loginRequest: webLoginRequest, platformType: 'pwa' })
+    mockAuthorize.mockResolvedValue({ ...tokens, loginRequest: webLoginRequest, platformType: 'mobile' })
+    await expect(authenticate(null, false)).resolves.toEqual({ ...tokens, loginRequest: webLoginRequest, platformType: 'mobile' })
   })
 
   it('persists captured cold authorization before a subsequent WebView cleanup failure', async () => {
     const { scrape } = jest.requireActual<typeof import('../index')>('../index')
-    const saved = { ...tokens, loginRequest, platformType: 'pwa' }
+    const saved = { ...tokens, loginRequest, platformType: 'mobile' }
     const error = new Error('Model WebView cleanup failure after authorization')
     mockAuthorize.mockImplementation(async (_background: boolean, onAuthorized: (value: unknown) => void) => {
       onAuthorized(saved)
@@ -175,14 +185,14 @@ describe('authentication lifecycle [model]', () => {
 
   it('persists renewed saved-device tokens before a downstream loading failure', async () => {
     const { scrape } = jest.requireActual<typeof import('../index')>('../index')
-    const stored = { ...tokens, refreshToken: jwt(1), loginRequest }
+    const stored = { ...tokens, refreshToken: jwt(1), loginRequest, platformType: 'mobile' }
     ZenMoney.getData = jest.fn((key: string) => key === 'belarusbankAuth' ? stored : undefined) as typeof ZenMoney.getData
     fetchMock.post('https://mb.asb.by/ibanking/users/auth/login/preparation?loginMode=PIN', { requestId: 'model-request' })
     fetchMock.post('https://mb.asb.by/ibanking/users/auth/login/model-request', tokens)
     const error = new Error('Model product loading failure')
     for (const path of ['cards', 'accounts', 'deposits', 'credits']) {
       fetchMock.get(`https://mb.asb.by/ibanking/${path}?ibState=VISIBLE&refresh=true`, () => {
-        expect(ZenMoney.setData).toHaveBeenCalledWith('belarusbankAuth', { ...tokens, loginRequest })
+        expect(ZenMoney.setData).toHaveBeenCalledWith('belarusbankAuth', { ...tokens, loginRequest, platformType: 'mobile' })
         expect(ZenMoney.saveData).toHaveBeenCalled()
         throw error
       })

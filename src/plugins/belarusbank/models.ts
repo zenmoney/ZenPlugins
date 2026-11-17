@@ -2,6 +2,7 @@ import type { Account } from '../../types/zenmoney'
 
 export const BASE_API_URL = 'https://mb.asb.by/ibanking/'
 export const AUTH_DATA_KEY = 'belarusbankAuth'
+export const APP_VERSION = '2026.8.0'
 
 export interface PreferenceInput {
   login?: string
@@ -14,7 +15,7 @@ export interface AuthState {
   refreshToken: string
   tokenType: string
   loginRequest?: LoginRequest
-  platformType?: 'pwa'
+  platformType?: 'pwa' | 'mobile'
 }
 
 export interface LoginRequest {

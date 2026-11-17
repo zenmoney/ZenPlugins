@@ -183,7 +183,12 @@ const getAuthErrorCode = (body: unknown): string | undefined => {
   return code != null ? String(code) : undefined
 }
 
-// Android 2026.7.0 loginConfirmation: PIN is checked locally, then saved credentials
+const getPlatformType = (value: unknown): AuthState['platformType'] => {
+  const platformType = getOptString(value, 'platformType')
+  return platformType === 'pwa' || platformType === 'mobile' ? platformType : undefined
+}
+
+// Android 2026.8.0 loginConfirmation: PIN is checked locally, then saved credentials
 // and the same deviceUid are used for preparation/confirmation without an OTP.
 const authenticateSavedDevice = async (auth: AuthState, loginRequest: LoginRequest): Promise<AuthState | null> => {
   const preparation = await fetchApi<unknown>('users/auth/login/preparation', {
@@ -207,7 +212,10 @@ const authenticateSavedDevice = async (auth: AuthState, loginRequest: LoginReque
   console.assert(confirmation.status >= 200 && confirmation.status < 300, '[auth/hot] Saved-device confirmation failed', {
     status: confirmation.status, errorCode: getAuthErrorCode(confirmation.body)
   })
-  return parseAuth(confirmation.body, 'hot', { loginRequest })
+  return parseAuth(confirmation.body, 'hot', {
+    loginRequest,
+    ...(auth.platformType != null ? { platformType: auth.platformType } : {})
+  })
 }
 
 export const authenticate = async (
@@ -218,7 +226,7 @@ export const authenticate = async (
   const sessionToken = getOptString(storedAuth, 'sessionToken')
   const refreshToken = getOptString(storedAuth, 'refreshToken')
   const tokenType = getOptString(storedAuth, 'tokenType')
-  const platformType = getOptString(storedAuth, 'platformType') === 'pwa' ? 'pwa' as const : undefined
+  const platformType = getPlatformType(storedAuth)
   const savedLoginRequest = storedAuth != null && typeof storedAuth === 'object'
     ? parseLoginRequest((storedAuth as Record<string, unknown>).loginRequest)
     : undefined
@@ -236,18 +244,20 @@ export const authenticate = async (
         method: 'POST', body: refreshToken, rawStringBody: true, ...authOptions(auth), retry: false
       })
       console.assert(response.status >= 200 && response.status < 300, '[auth/hot] Refresh request failed', {
-        status: response.status, errorCode: getOptNumber(response.body, 'errorInfo.code') ?? getOptString(response.body, 'errorInfo.code')
+        status: response.status, errorCode: getAuthErrorCode(response.body)
       })
       return parseAuth(response.body, 'hot', savedDevice)
     }
-    if (savedLoginRequest != null) {
+    // A PWA login registered browser metadata, not the mobile device used by PIN renewal.
+    // Keep usable PWA tokens above; register a mobile device through SSO after expiry.
+    if (savedLoginRequest != null && platformType !== 'pwa') {
       const renewed = await authenticateSavedDevice(auth, savedLoginRequest)
       if (renewed != null) return renewed
       // Avoid spending another password attempt on the next sync if cold auth is canceled.
       onAuthUpdate?.({ sessionToken, refreshToken, tokenType, ...(platformType != null ? { platformType } : {}) })
       console.log('[auth/hot] Saved-device credentials rejected; starting cold authentication')
     } else {
-      console.log('[auth/hot] Saved refresh token expired and saved-device credentials are unavailable; starting cold authentication')
+      console.log('[auth/hot] Refresh authorization is unusable and mobile device credentials are unavailable; starting cold authentication')
     }
   }
   let confirmedAuth: AuthState | undefined
@@ -257,7 +267,7 @@ export const authenticate = async (
       : undefined
     const auth = parseAuth(result, 'cold', {
       ...(loginRequest != null ? { loginRequest } : {}),
-      ...(getOptString(result, 'platformType') === 'pwa' ? { platformType: 'pwa' as const } : {})
+      ...(getPlatformType(result) != null ? { platformType: getPlatformType(result) } : {})
     })
     onAuthUpdate?.(auth)
     confirmedAuth = auth
@@ -270,7 +280,7 @@ export const authenticate = async (
 interface SessionInput {
   sessionToken: string
   tokenType: string
-  platformType?: 'pwa'
+  platformType?: 'pwa' | 'mobile'
 }
 
 const authOptions = (auth: AuthState): SessionInput => ({

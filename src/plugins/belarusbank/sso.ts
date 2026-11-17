@@ -7,6 +7,8 @@ import type ssoPolicies from './sso-ui.webview'
 import ssoUiScript from './sso-ui.webview.ts?format=iife&globalName=WebViewScript&bundle'
 import { res } from './res'
 import { TemporaryError, UserInteractionError } from '../../errors'
+import { generateUUID } from '../../common/utils'
+import { APP_VERSION, type LoginRequest } from './models'
 import authCaptureScript from './sso.webview.js?format=iife&globalName=WebViewScript&bundle'
 
 const AUTH_URL = 'https://mb.asb.by/auth-board/login'
@@ -14,7 +16,11 @@ const AUTH_ORIGIN = 'https://mb.asb.by'
 const BRIDGE_NAME = '__zenmoneyAuthCompleted'
 
 // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-const installCapture = new Function('config', `${authCaptureScript}\nreturn WebViewScript.default(config)`) as (config: { origin: string, bridgeName: string }) => void
+const installCapture = new Function('config', `${authCaptureScript}\nreturn WebViewScript.default(config)`) as (config: {
+  origin: string
+  bridgeName: string
+  device: Pick<LoginRequest, 'appVersion' | 'deviceModel' | 'deviceUid' | 'osType' | 'osVersion' | 'token'>
+}) => void
 
 export const authorizeInWebView = async (isInBackground: boolean, onAuthorized?: (value: unknown) => void): Promise<unknown> => {
   if (isInBackground) throw new UserInteractionError()
@@ -80,7 +86,11 @@ export const authorizeInWebView = async (isInBackground: boolean, onAuthorized?:
       }
     })
 
-    await webView.addInitScript(installCapture, { origin: AUTH_ORIGIN, bridgeName: BRIDGE_NAME })
+    await webView.addInitScript(installCapture, {
+      origin: AUTH_ORIGIN,
+      bridgeName: BRIDGE_NAME,
+      device: { appVersion: APP_VERSION, deviceModel: 'ZenMoney', deviceUid: generateUUID(), osType: 'Android', osVersion: '16', token: '' }
+    })
     if (!closed) {
       await webView.show()
       if (!closed) void webView.goto(AUTH_URL, { waitUntil: 'domcontentloaded' }).catch(rejectAuth)

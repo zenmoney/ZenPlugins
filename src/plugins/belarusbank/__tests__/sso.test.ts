@@ -4,6 +4,7 @@ import { TemporaryError, UserInteractionError, ZPAPIError } from '../../../error
 import type { WebViewNavigationPolicy } from '../../../common/webView'
 import { getAdapterDefinition } from '../../../common/webview/permissions/core/internal'
 import { res } from '../res'
+import { APP_VERSION } from '../models'
 
 const domDispose = jest.fn(async () => {})
 const domThrowIfFailed = jest.fn()
@@ -53,36 +54,54 @@ class NativeView extends EventEmitter {
     }
     window.top = window
     class Xhr extends EventEmitter {
+      url = ''
+      headers: Record<string, string> = {}
+      sentBody?: string
       responseURL = ''
       status = 0
       responseType = ''
       responseText = ''
       response: unknown
+      open (_method: string, url: string): void { this.url = url }
+      setRequestHeader (name: string, value: string): void {
+        const key = name.toLowerCase()
+        this.headers[key] = this.headers[key] != null ? `${this.headers[key]}, ${value}` : value
+      }
+
       addEventListener (event: string, callback: () => void): void { this.once(event, callback) }
-      send (): void { this.emit('load') }
+      send (body?: string): void { this.sentBody = body; requests.push(this); this.emit('load') }
     }
-    this.browser = { window, XMLHttpRequest: Xhr, URL, arg, nativeFetch: window.fetch }
+    const requests: BrowserXhr[] = []
+    this.browser = { window, XMLHttpRequest: Xhr, URL, Headers, Request, arg, nativeFetch: window.fetch, requests }
     NativeView.onInit(this.browser)
     runInNewContext(`(${script.toString()})(arg)`, this.browser)
   }
 }
 
 interface BrowserXhr {
+  url: string
+  headers: Record<string, string>
+  sentBody?: string
   responseURL: string
   status: number
   responseType: string
   responseText: string
   response: unknown
+  open: (method: string, url: string) => void
+  setRequestHeader: (name: string, value: string) => void
   send: (body?: string) => void
 }
 const xhr = (view: NativeView, url: string, status: number, response: unknown, json = false, body?: unknown): void => {
   const Xhr = view.browser.XMLHttpRequest as new () => BrowserXhr
   const request = new Xhr()
-  Object.assign(request, { responseURL: url, status, response, responseType: json ? 'json' : '', responseText: JSON.stringify(response) })
+  request.open('POST', url)
+  request.setRequestHeader('Platform-Type', 'pwa')
+  request.setRequestHeader('X-Device-Print', 'model-fingerprint')
+  Object.assign(request, { responseURL: request.url, status, response, responseType: json ? 'json' : '', responseText: JSON.stringify(response) })
   request.send(body != null ? JSON.stringify(body) : undefined)
 }
 
-const tokenResult = { sessionToken: 'model-session', refreshToken: 'model-refresh', tokenType: 'Bearer', platformType: 'pwa' }
+const tokenResult = { sessionToken: 'model-session', refreshToken: 'model-refresh', tokenType: 'Bearer', platformType: 'mobile' }
 
 describe('interactive authorization [model]', () => {
   beforeEach(() => {
@@ -177,13 +196,31 @@ describe('interactive authorization [model]', () => {
   })
 
   it('pairs saved credentials with their successful preparation and confirmation without capturing OTP data', async () => {
-    // Model capture association; endpoint/body fields come from PWA build 666 getLoginRequest.
-    const loginRequest = { login: 'model-login', password: 'model-password', deviceUid: 'model-device-id' }
+    // Projected protocol: PWA main-FUXOY5FK.js and Android 2026.8.0 main-3XFNAZ2D.js,
+    // getLoginRequest/prepareAuthConfirmation. Model values verify mobile registration and capture association.
+    const loginRequest = { login: 'model-login', password: 'model-password', deviceUid: 'model-pwa-id', browser: 'model-browser', browserVersion: '1', screenResolution: '1x1' }
     NativeView.onGoto = async (view) => {
       xhr(view, 'https://mb.asb.by/ibanking/users/auth/login/preparation?loginMode=CREDENTIALS', 200, { requestId: 'model-request' }, false, loginRequest)
       xhr(view, 'https://mb.asb.by/ibanking/users/auth/login/model-request?code=model-otp', 200, tokenResult, false, { requestId: 'model-request', code: 'model-otp' })
     }
-    await expect(authorizeInWebView(false)).resolves.toEqual({ ...tokenResult, loginRequest })
+    const result = await authorizeInWebView(false)
+    const requests = NativeView.instance.browser.requests as BrowserXhr[]
+    const mobileLogin = JSON.parse(requests[0].sentBody as string)
+    expect(mobileLogin).toEqual({
+      login: loginRequest.login,
+      password: loginRequest.password,
+      appVersion: APP_VERSION,
+      deviceModel: 'ZenMoney',
+      deviceUid: expect.stringMatching(/^[0-9a-f-]{36}$/i),
+      osType: 'Android',
+      osVersion: '16',
+      token: ''
+    })
+    expect(requests[0].url).toBe('https://mb.asb.by/ibanking/users/auth/login/preparation')
+    expect(requests.map(request => request.headers)).toEqual([{ 'platform-type': 'mobile' }, { 'platform-type': 'mobile' }])
+    expect(requests[1].url).toBe('https://mb.asb.by/ibanking/users/auth/login/model-request?code=model-otp')
+    expect(JSON.parse(requests[1].sentBody as string)).toEqual({ requestId: 'model-request', code: 'model-otp' })
+    expect(result).toEqual({ ...tokenResult, loginRequest: mobileLogin })
   })
 
   it('does not attach credentials from a different preparation to successful authorization', async () => {
@@ -198,13 +235,22 @@ describe('interactive authorization [model]', () => {
     const loginRequest = { login: 'model-login', password: 'model-password', deviceUid: 'model-device-id' }
     const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
     NativeView.onGoto = async (view) => {
-      const window = view.browser.window as { fetch: (url: string, options: { body: string }) => Promise<unknown> }
+      const window = view.browser.window as { fetch: (request: Request) => Promise<unknown> }
       const nativeFetch = view.browser.nativeFetch as jest.Mock
       nativeFetch.mockResolvedValue({ url: 'https://mb.asb.by/ibanking/users/auth/login', status: 200, ok: true, clone: () => ({ json: async () => tokenResult }) })
-      await window.fetch('https://mb.asb.by/ibanking/users/auth/login', { body: JSON.stringify(loginRequest) })
+      await window.fetch(new Request('https://mb.asb.by/ibanking/users/auth/login', {
+        method: 'POST', headers: { 'Platform-Type': 'pwa', 'X-Device-Print': 'model-fingerprint', 'X-device-session-id': 'model-trace' }, body: JSON.stringify(loginRequest)
+      }))
     }
     try {
-      await expect(authorizeInWebView(false)).resolves.toEqual({ ...tokenResult, loginRequest })
+      const result = await authorizeInWebView(false)
+      const request = (NativeView.instance.browser.nativeFetch as jest.Mock).mock.calls[0][0] as Request
+      const sentLogin = JSON.parse(await request.text())
+      expect(request.headers.get('Platform-Type')).toBe('mobile')
+      expect(request.headers.has('X-Device-Print')).toBe(false)
+      expect(request.headers.get('X-device-session-id')).toBe('model-trace')
+      expect(sentLogin).toMatchObject({ login: loginRequest.login, password: loginRequest.password, appVersion: APP_VERSION, osType: 'Android' })
+      expect(result).toEqual({ ...tokenResult, loginRequest: sentLogin })
       expect(JSON.stringify(debug.mock.calls)).not.toContain(loginRequest.password)
     } finally { debug.mockRestore() }
   })
