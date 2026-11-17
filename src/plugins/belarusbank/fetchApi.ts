@@ -77,6 +77,7 @@ const makeUrl = (path: string, query: RequestOptions['query']): string => {
 /** Requests an endpoint with sanitized diagnostics. */
 export const fetchApi = async <T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> => {
   const headers: Record<string, string> = {
+    'Accept-Language': 'ru',
     Accept: options.accept ?? 'application/json, text/plain, */*',
     'Content-Type': 'application/json;',
     'Platform-Type': options.platformType ?? 'mobile',
