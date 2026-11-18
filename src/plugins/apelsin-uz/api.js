@@ -1,3 +1,4 @@
+import { sanitize } from '../../common/sanitize'
 import { fetchJson } from '../../common/network'
 import {
   convertAccount,
@@ -11,6 +12,8 @@ import {
   convertWalletTransaction,
   convertMasterCardTransaction
 } from './converters'
+
+const productResponseLog = { headers: { 'set-cookie': true }, body: { data: { ownerName: true } } }
 
 const baseUrl = 'https://mobile.apelsin.uz/api'
 const appVersion = 'Av2.50.0'
@@ -44,14 +47,15 @@ export async function getUzcardCards () {
       ...defaultHeaders,
       ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } },
+    sanitizeResponseLog: productResponseLog
   })
 
   if (response.status === 401) {
     throw new AuthError()
   }
 
-  console.assert(response.ok, 'unexpected uzcard response', response)
+  console.assert(response.ok, 'unexpected uzcard response', sanitize(response, productResponseLog))
 
   return response.body.data.map(convertCard).filter(card => card !== null)
 }
@@ -74,10 +78,11 @@ export async function getHumoCards () {
       ...defaultHeaders,
       ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } },
+    sanitizeResponseLog: productResponseLog
   })
 
-  console.assert(response.ok, 'unexpected humo response', response)
+  console.assert(response.ok, 'unexpected humo response', sanitize(response, productResponseLog))
 
   return response.body.data.map(convertCard).filter(card => card !== null)
 }
@@ -100,10 +105,11 @@ export async function getVisaCards () {
       ...defaultHeaders,
       ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } },
+    sanitizeResponseLog: productResponseLog
   })
 
-  console.assert(response.ok, 'unexpected visa response', response)
+  console.assert(response.ok, 'unexpected visa response', sanitize(response, productResponseLog))
 
   return response.body.data.map(convertCard).filter(card => card !== null)
 }
@@ -126,10 +132,11 @@ export async function getUzumVisaCards () {
       ...defaultHeaders,
       ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } },
+    sanitizeResponseLog: productResponseLog
   })
 
-  console.assert(response.ok, 'unexpected dbs/debit response', response)
+  console.assert(response.ok, 'unexpected dbs/debit response', sanitize(response, productResponseLog))
 
   return response.body.data.map(convertCard).filter((card) => card !== null)
 }
@@ -152,10 +159,11 @@ export async function getMastercardCards () {
       ...defaultHeaders,
       ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } },
+    sanitizeResponseLog: productResponseLog
   })
 
-  console.assert(response.ok, 'unexpected master response', response)
+  console.assert(response.ok, 'unexpected master response', sanitize(response, productResponseLog))
 
   return response.body.data.map(convertCard).filter(card => card !== null)
 }
@@ -178,10 +186,11 @@ export async function getWallets () {
       ...defaultHeaders,
       ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } },
+    sanitizeResponseLog: productResponseLog
   })
 
-  console.assert(response.ok, 'unexpected wallet response', response)
+  console.assert(response.ok, 'unexpected wallet response', sanitize(response, productResponseLog))
 
   return response.body.data.map(convertWallet)
 }
@@ -204,10 +213,11 @@ export async function getAccounts () {
       ...defaultHeaders,
       ...requestHeaders
     },
-    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } }
+    sanitizeRequestLog: { headers: { 'device-id': true, authorization: true } },
+    sanitizeResponseLog: productResponseLog
   })
 
-  console.assert(response.ok, 'unexpected account response', response)
+  console.assert(response.ok, 'unexpected account response', sanitize(response, productResponseLog))
 
   return response.body.data.map(convertAccount)
 }
