@@ -133,9 +133,9 @@ describe('календарный день', () => {
   })
 })
 
-// Перевод между своими счетами банк показывает двумя строками — по одной
-// в выписке каждого счёта. Своего номера операции у него нет, поэтому пара
-// узнаётся по дню, валюте и сумме, как в alfabank-ua, apelsin-uz и bgpb
+// The bank reports an own-account transfer or currency exchange as two rows — one
+// in each account statement. Statements have no transaction ID, so the pair is matched
+// by transfer kind, local calendar day, currency, and amount.
 describe('перевод между своими счетами', () => {
   const other: AccountOrCard = { ...account, id: '22300100000002', title: 'второй счёт' }
   const row = (details: string, credit: string | null, debit: string | null): unknown[] =>
@@ -192,5 +192,113 @@ describe('перевод между своими счетами', () => {
       ]
     })
     expect(merged).toHaveLength(2)
+  })
+
+  // Observed in online.artsakhbank.am STATEM_XLS Account ENG statements on 26.10.2026:
+  // 200.00 USD purchased from an AMD card account (-72,800.00 AMD at rate 364.00) into a USD card
+  // account (+200.00 USD), with both statement rows labeled 'Order for currency purchase - ARTSAKHBANK CJSC'.
+  // Also observed on 26.08.2026: 200.00 USD sold into an AMD card account (+72,500.00 AMD at rate 362.50)
+  // labeled 'Order for currency selling - H'. Account numbers are sanitized.
+  it('merges cross-currency exchange order legs and assigns distinct groupKeys to selling orders', () => {
+    const amdAccount: AccountOrCard = {
+      id: '22300100000002',
+      type: AccountType.ccard,
+      title: 'MasterCard MC STANDARD',
+      instrument: 'AMD',
+      syncIds: ['22300100000002'],
+      balance: 6424.1
+    }
+    const usdAccount: AccountOrCard = {
+      id: '22300100000001',
+      type: AccountType.ccard,
+      title: 'MasterCard MCS VIRTUAL',
+      instrument: 'USD',
+      syncIds: ['22300100000001'],
+      balance: 529.63
+    }
+    const amdPurchaseRow = [
+      '26.10.2026', '200.00', 'USD', null, null, '-72,800.00', null, '364.00', null, '26.10.2026',
+      null, null, null, 'Order for currency purchase - ARTSAKHBANK CJSC'
+    ]
+    const usdPurchaseRow = [
+      '26.10.2026', '200.00', 'USD', '+200.00', null, null, null, null, null, '26.10.2026',
+      null, null, null, 'Order for currency purchase - ARTSAKHBANK CJSC'
+    ]
+    const amdSellingRow = [
+      '26.08.2026', '200.00', 'USD', '+72,500.00', null, null, null, '362.50', null, '26.08.2026',
+      null, null, null, 'Order for currency selling - H'
+    ]
+
+    const amdPurchaseTransactions = convertTransactions([amdPurchaseRow], amdAccount)
+    const usdPurchaseTransactions = convertTransactions([usdPurchaseRow], usdAccount)
+    const amdSellingTransactions = convertTransactions([amdSellingRow], amdAccount)
+
+    expect(amdPurchaseTransactions).toEqual([{
+      hold: false,
+      date: new Date(2026, 9, 26),
+      movements: [{
+        id: null,
+        account: { id: '22300100000002' },
+        invoice: { sum: -200, instrument: 'USD' },
+        sum: -72800,
+        fee: 0
+      }],
+      merchant: null,
+      comment: 'Order for currency purchase - ARTSAKHBANK CJSC',
+      groupKeys: ['ORDER FOR CURRENCY PURCHASE_2026-10-26_USD_200']
+    }])
+    expect(usdPurchaseTransactions).toEqual([{
+      hold: false,
+      date: new Date(2026, 9, 26),
+      movements: [{
+        id: null,
+        account: { id: '22300100000001' },
+        invoice: null,
+        sum: 200,
+        fee: 0
+      }],
+      merchant: null,
+      comment: 'Order for currency purchase - ARTSAKHBANK CJSC',
+      groupKeys: ['ORDER FOR CURRENCY PURCHASE_2026-10-26_USD_200']
+    }])
+    expect(amdSellingTransactions).toEqual([{
+      hold: false,
+      date: new Date(2026, 7, 26),
+      movements: [{
+        id: null,
+        account: { id: '22300100000002' },
+        invoice: { sum: 200, instrument: 'USD' },
+        sum: 72500,
+        fee: 0
+      }],
+      merchant: null,
+      comment: 'Order for currency selling - H',
+      groupKeys: ['ORDER FOR CURRENCY SELLING_2026-08-26_USD_200']
+    }])
+
+    expect(adjustTransactions({
+      transactions: [...amdPurchaseTransactions, ...usdPurchaseTransactions]
+    })).toEqual([{
+      hold: false,
+      date: new Date(2026, 9, 26),
+      movements: [
+        {
+          id: null,
+          account: { id: '22300100000002' },
+          invoice: { sum: -200, instrument: 'USD' },
+          sum: -72800,
+          fee: 0
+        },
+        {
+          id: null,
+          account: { id: '22300100000001' },
+          invoice: null,
+          sum: 200,
+          fee: 0
+        }
+      ],
+      merchant: null,
+      comment: 'Order for currency purchase - ARTSAKHBANK CJSC'
+    }])
   })
 })
