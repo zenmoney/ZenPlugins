@@ -253,3 +253,109 @@ describe('convertTransaction', () => {
     expect(convertAccountTransaction(account, rawTransaction)).toEqual(transaction)
   })
 })
+
+it('preserves the original USD amount of a settled Uzum Visa purchase', () => {
+  // mail_inbound 221805, apelsin-uz build 75, 2026-11-17, /api/dbs/debit/history.
+  // Complete selected source record; the phone in merchantName is the merchant contact.
+  const operation = {
+    transactionId: '55225acc-267c-4645-af6e-52f754d73fe6',
+    holdId: '646db35c-3f3c-4a96-9806-7cd680917f2d',
+    description: 'ELECTRONIC_PURCHASE',
+    transactionStatus: 'SUCCESS',
+    transAmount: '460.38',
+    transCurrency: 'USD',
+    conversionRate: '12189.5100000',
+    balanceBefore: '5921344.85',
+    balanceAfter: '309537.00',
+    mcc: '4511',
+    transDate: 1794858405429,
+    amount: '5611807.85',
+    merchantName: 'Centrum Air Tickets>+998970362580     UZ',
+    transType: 'DEBIT',
+    fee: '0.00',
+    currency: {
+      uzscurrency: true,
+      name: 'UZS',
+      scale: 2
+    },
+    transCode: '680',
+    reversed: false
+  }
+  expect(convertUzumVisaCardTransaction({ id: 'card', instrument: 'UZS' }, operation)).toEqual({
+    date: new Date('2026-11-16T19:46:45.429Z'),
+    hold: false,
+    merchant: {
+      country: null,
+      city: null,
+      title: 'Centrum Air Tickets>+998970362580     UZ',
+      mcc: 4511,
+      location: null
+    },
+    movements: [
+      {
+        id: '55225acc-267c-4645-af6e-52f754d73fe6',
+        account: {
+          id: 'card'
+        },
+        invoice: {
+          sum: -460.38,
+          instrument: 'USD'
+        },
+        sum: -5611807.85,
+        fee: 0
+      }
+    ],
+    comment: null
+  })
+})
+
+it('retains MCC without adding an invoice for a UZS purchase', () => {
+  // mail_inbound 221805, apelsin-uz build 75, 2026-11-17, /api/dbs/debit/history.
+  // Complete selected source record; the phone in merchantName is the merchant contact.
+  const operation = {
+    transactionId: '8bb5d68c-78a9-4006-8a03-2e7d463748aa',
+    description: 'ELECTRONIC_PURCHASE',
+    transactionStatus: 'SUCCESS',
+    transAmount: '267120.00',
+    transCurrency: 'UZS',
+    conversionRate: '1.0000000',
+    balanceBefore: '488464.85',
+    balanceAfter: '221344.85',
+    mcc: '5811',
+    transDate: 1794856372403,
+    amount: '267120.00',
+    merchantName: 'UZUM MARKET>uzumbank.uz/              UZ',
+    transType: 'DEBIT',
+    fee: '0.00',
+    currency: {
+      uzscurrency: true,
+      name: 'UZS',
+      scale: 2
+    },
+    transCode: '680',
+    reversed: false
+  }
+  expect(convertUzumVisaCardTransaction({ id: 'card', instrument: 'UZS' }, operation)).toEqual({
+    date: new Date('2026-11-16T19:12:52.403Z'),
+    hold: false,
+    merchant: {
+      country: null,
+      city: null,
+      title: 'UZUM MARKET>uzumbank.uz/              UZ',
+      mcc: 5811,
+      location: null
+    },
+    movements: [
+      {
+        id: '8bb5d68c-78a9-4006-8a03-2e7d463748aa',
+        account: {
+          id: 'card'
+        },
+        invoice: null,
+        sum: -267120,
+        fee: 0
+      }
+    ],
+    comment: null
+  })
+})

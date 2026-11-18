@@ -276,6 +276,16 @@ export function convertUzumVisaCardTransaction (card, rawTransaction) {
     instrument: rawTransaction.currency.name
   }
 
+  const originalInvoice = rawTransaction.transCurrency !== card.instrument
+    ? {
+        sum: Math.sign(amount) * Number(rawTransaction.transAmount),
+        instrument: rawTransaction.transCurrency
+      }
+    : null
+  console.assert(originalInvoice === null ||
+    (typeof originalInvoice.instrument === 'string' && originalInvoice.instrument.length > 0 && Number.isFinite(originalInvoice.sum)),
+  'Invalid Uzum Visa original transaction amount')
+
   const transaction = {
     date: new Date(rawTransaction.transDate),
     hold: false,
@@ -283,14 +293,14 @@ export function convertUzumVisaCardTransaction (card, rawTransaction) {
       country: null,
       city: null,
       title: rawTransaction.merchantName,
-      mcc: null,
+      mcc: rawTransaction.mcc ? Number(rawTransaction.mcc) : null,
       location: null
     },
     movements: [
       {
         id: rawTransaction.transactionId,
         account: { id: card.id },
-        invoice: invoice.instrument === card.instrument ? null : invoice,
+        invoice: invoice.instrument === card.instrument ? originalInvoice : invoice,
         sum: invoice.instrument === card.instrument ? invoice.sum : null,
         fee: fee ? -fee : 0
       }
