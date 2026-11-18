@@ -12,6 +12,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({
   isInBackground,
   isFirstRun
 }) => {
+  ZenMoney.locale = 'ru'
   toDate = toDate ?? new Date()
 
   trustCertificates()

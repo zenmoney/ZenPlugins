@@ -44,6 +44,7 @@ it('[model] keeps skipped account metadata and only loads enabled histories from
       comment: null
     }]
   })
+  expect(ZenMoney.locale).toBe('ru')
   expect(fetchTransactions.mock.calls).toEqual([[100002, fromDate, toDate], [100003, fromDate, toDate]])
 })
 

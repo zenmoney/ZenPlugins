@@ -1,5 +1,5 @@
 import { fetch, FetchOptions, FetchResponse } from '../../common/network'
-import { BankMessageError, InvalidOtpCodeError, UserInteractionError } from '../../errors'
+import { BankMessageError, InvalidOtpCodeError, InvalidPreferencesError, UserInteractionError } from '../../errors'
 import { APP_BUILD_VERSION, APP_STORE_PLATFORM, APP_VERSION } from './consts'
 import { Device, Preferences, Session } from './models'
 import { Strings } from './strings'
@@ -226,8 +226,12 @@ export class Api {
     })
     if (response.status === 400) {
       const message = getOptString(response.body, 'message')
-      if (getOptString(response.body, 'code') === 'MAS-0073' &&
-        message === 'Для восстановления доступа сбросьте пароль или повторите попытку позже') {
+      const code = getOptString(response.body, 'code')
+      if (code === 'MAS-0008') {
+        throw new InvalidPreferencesError(Strings.ErrorCredentials)
+      }
+      if ((code === 'MAS-0073' && message === 'Для восстановления доступа сбросьте пароль или повторите попытку позже') ||
+        (code === 'MAS-0074' && message === 'Для восстановления доступа сбросьте пароль или авторизуйтесь повторно через 20 минут')) {
         throw new BankMessageError(message)
       }
       if (_.get(response.body, 'code') !== 'MAS-0007') {
