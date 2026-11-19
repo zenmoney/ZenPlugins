@@ -1,10 +1,11 @@
 import crypto from 'crypto-js'
 import qs from 'querystring'
-import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
+import { fetch, fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import { sanitize } from '../../common/sanitize'
 import { generateUUID } from '../../common/utils'
-import get from '../../types/get'
-import { InvalidOtpCodeError, InvalidPreferencesError } from '../../errors'
+import get, { getOptString, getOptNumber } from '../../types/get'
+import { UserInteractionError } from '../../errors'
+import { solveCaptcha } from './captcha'
 
 export type Session = {
   clientId: string
@@ -60,12 +61,28 @@ export interface CardTransaction {
   usageType: string
 }
 
+// Error details and financial data stay visible; authentication and customer identity do not.
+function sanitizeLog (value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sanitizeLog)
+  if (typeof value !== 'object' || value === null) return value
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+    const sensitive = /^(authorization|cookie|set-cookie|x-token|x-transaction-token|token|encryptionKey|identifier|secret|captchaId|captchaData|captchaByteData|code|applicationVersion|fullName|firstName|lastName|userName|customerName|customerIdentity|customerBirthDate|loginOperatorName|email|phoneNumber|mobilePhoneNumber|address|gibSessionId|hcpSingleSessionToken|hcpSingleSessionId|signature|serialNumberEncrypted|shadowCardNumber|encPhoneNumber|mobileCrushActivationToken|cardHolderName|customerNumber|identityNumber|customerId|customerNo|userId|birthDate|profileImageUrl|authenticatorType|mainCardOwnerName|cardHolder)$/i.test(key)
+    // The API sometimes returns full PANs alongside already masked card numbers.
+    const fullPan = /^(cardNumber|maskedCardNumber)$/i.test(key) && typeof item === 'string' && /^\d{13,19}$/.test(item)
+    return [key, sensitive || /token|password|secret|^enc[A-Z]|^.*(?:phone|email|address)$/i.test(key) || fullPan ? sanitize(item, true) : sanitizeLog(item)]
+  }))
+}
+
+class SessionExpiredError extends Error {}
+
 export class DenizBankApi {
   private readonly baseUrl: string
   private readonly encryptionStaticKey: crypto.lib.WordArray
+  private readonly onSessionUpdate?: (session: Session) => void
 
-  constructor (options: { baseUrl: string, encryptionStaticKeyBase64: string }) {
+  constructor (options: { baseUrl: string, encryptionStaticKeyBase64: string, onSessionUpdate?: (session: Session) => void }) {
     this.baseUrl = options.baseUrl
+    this.onSessionUpdate = options.onSessionUpdate
     this.encryptionStaticKey = crypto.enc.Utf8.parse(Buffer.from(options.encryptionStaticKeyBase64, 'base64').toString('utf8'))
   }
 
@@ -94,8 +111,8 @@ export class DenizBankApi {
       : {}
 
     const sanitizeOptions: Pick<FetchOptions, 'sanitizeRequestLog' | 'sanitizeResponseLog'> = {
-      sanitizeRequestLog: (obj: unknown) => sanitize(obj, true),
-      sanitizeResponseLog: (obj: unknown) => sanitize(obj, true)
+      sanitizeRequestLog: sanitizeLog,
+      sanitizeResponseLog: sanitizeLog
     }
 
     const mergedOptions = (options != null)
@@ -103,6 +120,7 @@ export class DenizBankApi {
           ...sanitizeOptions,
           ...options,
           headers: {
+            ...(options.body != null && options.body !== '' ? { 'Content-Type': 'application/json-patch+json' } : {}),
             ...(typeof options.headers === 'object' && options.headers != null ? options.headers : {}),
             ...sessionHeaders
           }
@@ -111,14 +129,22 @@ export class DenizBankApi {
 
     const response = await fetchJson(this.baseUrl + url, mergedOptions)
 
-    if (predicate !== null && predicate !== undefined) {
-      this.validateResponse(response, response => !(get(response.body, 'error') != null) && predicate(response))
+    // This exact expiry state is also handled by the current Janus web interceptor.
+    if (response.status === 401 && get(response.body, 'ErrorType') === 1 && get(response.body, 'ResponseType') === 5) {
+      throw new SessionExpiredError('Session expired')
     }
+    this.validateResponse(response, res => res.ok && get(res.body, 'error') == null && get(res.body, 'ErrorCode') == null)
+    const token = response.headers.get('x-token')
+    if (session != null && 'token' in session && token != null && token !== '' && token !== session.token) {
+      session.token = token
+      if ('createdDate' in session) this.onSessionUpdate?.(session)
+    }
+    if (predicate != null) this.validateResponse(response, predicate)
     return response
   }
 
   private validateResponse (response: FetchResponse, predicate?: (x: FetchResponse) => boolean): void {
-    console.assert((predicate == null) || predicate(response), 'non-successful response')
+    console.assert((predicate == null) || predicate(response), 'Non-successful response', { status: response.status, body: sanitizeLog(response.body) })
   }
 
   public async login ({ login, password }: Preferences, isInBackground: boolean, session?: Session): Promise<Session> {
@@ -128,18 +154,20 @@ export class DenizBankApi {
       console.debug('login', { expirationDate })
 
       if (expirationDate > new Date()) {
-        await this.extendSession(session)
-        console.debug('login', 'extended session')
-        return {
-          ...session,
-          createdDate: new Date()
+        try {
+          await this.extendSession(session)
+          console.debug('login', 'extended session')
+          return { ...session, createdDate: new Date() }
+        } catch (error) {
+          if (!(error instanceof SessionExpiredError)) throw error
+          console.debug('Saved session was rejected; starting interactive login')
         }
       }
     }
 
-    session = {
-      clientId: generateUUID()
-    }
+    if (isInBackground) throw new UserInteractionError()
+    const applicationVersion = await this.getApplicationVersion()
+    session = { clientId: generateUUID() }
 
     const { token, encryptionKey } = await this.getInitialToken(session)
 
@@ -149,9 +177,7 @@ export class DenizBankApi {
       token
     }
 
-    const { id: captchaId, captchaByteData } = await this.getCaptcha(session)
-
-    const captchaData = await this.askForCaptcha(captchaByteData)
+    const { id: captchaId, code: captchaData } = await this.askForCaptcha(session, isInBackground)
 
     const cryptoKey = crypto.AES.decrypt(
       session.encryptionKey,
@@ -177,12 +203,7 @@ export class DenizBankApi {
       this.getCipherOption(cryptoKey)
     ).toString()
 
-    const { currentTime, sessionTimeout } = await this.sendCredentials(session, loginEncrypted, passwordEncrypted, captchaIdEncrypted, captchaData)
-    session = {
-      ...session,
-      createdDate: currentTime,
-      timeoutSeconds: sessionTimeout
-    }
+    const { sessionTimeout } = await this.sendCredentials(session, loginEncrypted, passwordEncrypted, captchaIdEncrypted, captchaData, applicationVersion)
 
     const { pushSentId } = await this.sendPush(session)
 
@@ -209,26 +230,30 @@ export class DenizBankApi {
       pushTimeout -= (new Date().valueOf() - timeStart.valueOf()) / 1000
     }
 
-    return session
+    console.assert(userHasVerifiedPush, 'Push confirmation timed out')
+    return { ...session, createdDate: new Date(), timeoutSeconds: sessionTimeout }
+  }
+
+  private async getApplicationVersion (): Promise<string> {
+    const response = await fetch('https://acikdeniz.denizbank.com/', {
+      sanitizeRequestLog: sanitizeLog,
+      sanitizeResponseLog: { headers: { 'set-cookie': true }, body: true }
+    })
+    const version = typeof response.body === 'string' ? response.body.match(/window\.versionInfo\s*=\s*"(\d{8}\.\d+)"/)?.[1] : undefined
+    console.assert(response.ok && version != null, 'Could not determine Janus application version', { status: response.status })
+    return `JanusIB-${String(version)}-`
   }
 
   private async getCaptcha (session: Session): Promise<{ id: string, captchaByteData: string }> {
     const response = await this.fetchApi('auth/captcha-create', session, {
       method: 'GET'
-    }) as FetchResponse & { body: { id: string, captchaByteData: string } }
-
-    console.log('getCaptcha', response.body)
+    }, res => getOptString(res.body, 'id') != null && getOptString(res.body, 'captchaByteData') != null) as FetchResponse & { body: { id: string, captchaByteData: string } }
 
     return response.body
   }
 
-  private async askForCaptcha (captchaByteData: string): Promise<string> {
-    const image = new Uint8Array(Buffer.from(captchaByteData, 'base64'))
-    const code = await ZenMoney.readLine('Введите код с картинки', { image })
-    if (code === null || code === undefined || code === '') {
-      throw new InvalidOtpCodeError()
-    }
-    return code
+  private async askForCaptcha (session: Session, isInBackground: boolean): Promise<{ id: string, code: string }> {
+    return await solveCaptcha(async () => await this.getCaptcha(session), isInBackground)
   }
 
   private async getInitialToken (session: Session): Promise<{ token: string, encryptionKey: string }> {
@@ -254,8 +279,8 @@ export class DenizBankApi {
     }, (res) => {
       return typeof res.body === 'object' &&
       res.body != null &&
-      'token' in res.body &&
-      'encryptionKey' in res.body
+      getOptString(res.body, 'token') != null &&
+      getOptString(res.body, 'encryptionKey') != null
     }) as { body: { token: string, encryptionKey: string } }
 
     console.debug('getInitialToken', sanitize(response.body, true))
@@ -263,7 +288,7 @@ export class DenizBankApi {
     return response.body
   }
 
-  private async sendCredentials (session: Session, loginEncrypted: string, passwordEncrypted: string, captchaIdEncrypted: string, captchaData: string): Promise<{ currentTime: Date, sessionTimeout: number }> {
+  private async sendCredentials (session: Session, loginEncrypted: string, passwordEncrypted: string, captchaIdEncrypted: string, captchaData: string, applicationVersion: string): Promise<{ currentTime: Date, sessionTimeout: number }> {
     const response = await this.fetchApi('auth/token', session, {
       method: 'PATCH',
       body: {
@@ -271,16 +296,13 @@ export class DenizBankApi {
         captchaId: captchaIdEncrypted,
         secret: passwordEncrypted,
         grantType: 'username',
-        applicationVersion: 'JanusIB-20250527.3652-gD2GnZwbfqRyrb3xeCZ2',
+        applicationVersion: applicationVersion + ('token' in session ? session.token : ''),
         captchaData
       }
-    }) as FetchResponse & { body: { currentTime: string, sessionTimeout: number, Message?: string | null } }
-
-    console.debug('sendCredentials', sanitize(response.body, true))
-
-    if (response.body.Message?.match(/.*girdiğiniz.*bilgil.*/i) != null) {
-      throw new InvalidPreferencesError()
-    }
+    }, res => get(res.body, 'isSuccess') === true &&
+      Number.isFinite(new Date(getOptString(res.body, 'currentTime') ?? '').valueOf()) &&
+      Number.isFinite(getOptNumber(res.body, 'sessionTimeout')) &&
+      (getOptNumber(res.body, 'sessionTimeout') ?? 0) > 0) as FetchResponse & { body: { currentTime: string, sessionTimeout: number } }
 
     return {
       currentTime: new Date(response.body.currentTime),
@@ -298,8 +320,8 @@ export class DenizBankApi {
     }, (res) => {
       return typeof res.body === 'object' &&
       res.body != null &&
-      'pushSentId' in res.body &&
-      'maskedPhoneNumber' in res.body
+      getOptString(res.body, 'pushSentId') != null &&
+      getOptString(res.body, 'maskedPhoneNumber') != null
     }) as { body: { pushSentId: string, maskedPhoneNumber: string } }
 
     console.debug('sendPush', sanitize(response.body, true))
@@ -313,7 +335,7 @@ export class DenizBankApi {
       body: {
         code: pushIdEncrypted
       }
-    }) as FetchResponse & { body: { isSuccess: boolean }, headers: { 'x-token': string } }
+    }, res => typeof get(res.body, 'isSuccess') === 'boolean') as FetchResponse & { body: { isSuccess: boolean } }
 
     console.debug('verifyPush', sanitize({ body: response.body, headers: response.headers }, true))
 
@@ -321,10 +343,9 @@ export class DenizBankApi {
       return { pushVerified: false }
     }
 
-    return {
-      pushVerified: true,
-      token: response.headers['x-token']
-    }
+    const token = response.headers.get('x-token')
+    console.assert(token != null && token !== '', 'Missing token after push confirmation')
+    return { pushVerified: true, token: token as string }
   }
 
   private async extendSession (session: Session): Promise<void> {
@@ -338,7 +359,7 @@ export class DenizBankApi {
       undefined,
       (res) => typeof res.body === 'object' && res.body != null
     ) as FetchResponse & { body: Record<string, unknown> }
-    console.debug('fetchCards', sanitize(response.body, true))
+    console.assert(get(response.body, 'ErrorType') == null, 'Invalid cards response')
 
     const cardIds = Object.values(response.body).reduce<CardInfo[]>((acc, cardResponse) => {
       if (typeof cardResponse === 'object' && cardResponse != null) {
@@ -370,13 +391,15 @@ export class DenizBankApi {
     session: Session,
     cardId: string,
     fromDate: Date,
-    toDate?: Date): Promise<CardTransaction[] | undefined> {
+    toDate?: Date): Promise<CardTransaction[]> {
     const response = await this.fetchApi(
       `cards/new-debitcard-transactions/${cardId}?${qs.stringify({
         startTime: fromDate.toISOString(),
         endTime: toDate?.toISOString()
       })}`,
-      session
+      session,
+      undefined,
+      res => Array.isArray(get(res.body, 'selectedCardIntermRecordList.intermRecordList'))
     ) as FetchResponse & {
       body: {
         selectedCardIntermRecordList: {
@@ -387,7 +410,7 @@ export class DenizBankApi {
 
     console.debug('fetchCardTransactions', sanitize(response.body, true))
 
-    return response.body.selectedCardIntermRecordList?.intermRecordList.map(t => ({
+    return response.body.selectedCardIntermRecordList.intermRecordList.map(t => ({
       currency: t.currency as string,
       amount: -(t.transactionAmount as number),
       description: t.description as string,
@@ -402,7 +425,7 @@ export class DenizBankApi {
       'accounts',
       session,
       undefined,
-      (res) => typeof res.body === 'object' && res.body != null && 'accounts' in res.body
+      (res) => typeof res.body === 'object' && res.body != null && Array.isArray(get(res.body, 'accounts')) && (get(res.body, 'accounts') as unknown[]).length > 0
     ) as FetchResponse & { body: { accounts: Array<Record<string, unknown>> } }
     console.debug('fetchAccounts', sanitize(response.body, true))
     return response.body.accounts.map(a => ({
@@ -421,7 +444,7 @@ export class DenizBankApi {
       startTime: fromDate.toISOString(),
       endTime: toDate?.toISOString()
     })}`,
-    session) as FetchResponse & { body: { activities: Array<Record<string, unknown>> } }
+    session, undefined, res => Array.isArray(get(res.body, 'activities'))) as FetchResponse & { body: { activities: Array<Record<string, unknown>> } }
 
     console.debug('fetchTransactions', sanitize(respose.body, true))
 
@@ -437,7 +460,12 @@ export class DenizBankApi {
   }
 }
 
-export const denizBankApi = new DenizBankApi({
-  baseUrl: 'https://janusacikdenizv2.denizbank.com/Janus/api/',
-  encryptionStaticKeyBase64: 'U0tob0FBeWRTWWltQ1NpSw=='
-})
+export function createDenizBankApi (onSessionUpdate?: (session: Session) => void): DenizBankApi {
+  return new DenizBankApi({
+    baseUrl: 'https://acikdeniz.denizbank.com/Janus/api/',
+    encryptionStaticKeyBase64: 'U0tob0FBeWRTWWltQ1NpSw==',
+    onSessionUpdate
+  })
+}
+
+export const denizBankApi = createDenizBankApi()

@@ -3,5 +3,5 @@
     <id>denizbank-tr</id>
     <company>15639</company>
     <codeRequired>true</codeRequired>
-    <description>В настройках интернет-банка увеличьте время сессии до 30 минут.</description>
+    <description>İnternet bankacılığı ayarlarında oturum süresini 30 dakikaya çıkarın.</description>
 </provider>
