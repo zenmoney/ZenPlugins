@@ -1,5 +1,5 @@
 import { InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryError, UserInteractionError } from '../../../../errors'
-import { Preferences } from '../../models'
+import { OTP_CHANNEL, Preferences } from '../../models'
 import { AUTO_SUBMIT_PAGE } from '../../__fixtures__/autoSubmitPage'
 import { LOGIN_PAGE } from '../../__fixtures__/loginPage'
 import { MAIN_PAGE } from '../../__fixtures__/mainPage'
@@ -275,6 +275,22 @@ describe('подтверждение входа кодом', () => {
     readLine.mockResolvedValueOnce('000000')
 
     await expect(login(preferences, false)).rejects.toBeInstanceOf(InvalidOtpCodeError)
+  })
+
+  it.each([
+    [OTP_CHANNEL.email, 'Введите код, который Арцахбанк прислал на почту'],
+    [OTP_CHANNEL.sms, 'Введите код, который Арцахбанк прислал в СМС'],
+    [undefined, 'Введите код, который Арцахбанк прислал в СМС']
+  ])('prompts matching OTP channel %s', async (otpChannel, expectedPrompt) => {
+    respondWithSignIn(PIN_PAGE, CONTENT_PAGE, CONTENT_PAGE)
+    readLine.mockResolvedValueOnce('123456')
+
+    await login({ login: 'user', password: 'secret', otpChannel }, false)
+
+    expect(readLine).toHaveBeenCalledWith(
+      expectedPrompt,
+      expect.objectContaining({ inputType: 'number' })
+    )
   })
 })
 

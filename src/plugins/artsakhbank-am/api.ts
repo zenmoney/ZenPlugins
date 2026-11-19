@@ -15,7 +15,7 @@ import {
   parseSessionContext,
   throwLoginError
 } from './fetchApi'
-import { Auth, AuthorizedSession, Preferences, Session, SignedIn } from './models'
+import { Auth, AuthorizedSession, OTP_CHANNEL, Preferences, Session, SignedIn } from './models'
 
 export async function login (preferences: Preferences, isInBackground: boolean): Promise<SignedIn> {
   const reused = await reuseSession()
@@ -69,7 +69,7 @@ async function signIn (preferences: Preferences, isInBackground: boolean): Promi
   ZenMoney.setData(OTP_SEEN, isPinRequired(accountsPage))
   ZenMoney.saveData()
   if (isPinRequired(accountsPage)) {
-    await confirmPin(session, accountsPage, isInBackground)
+    await confirmPin(session, accountsPage, isInBackground, preferences.otpChannel)
     // После подтверждения страница грузится впервые и приходит уже с данными
     accountsPage = await fetchContentPage(session, context, 'accounts')
   }
@@ -107,12 +107,20 @@ function rememberSession (session: AuthorizedSession): void {
 // Письмо доходит медленнее СМС, поэтому ждём ввода долго
 const USER_INPUT_TIMEOUT_MS = 180000
 
-async function confirmPin (session: Session, html: string, isInBackground: boolean): Promise<void> {
+async function confirmPin (
+  session: Session,
+  html: string,
+  isInBackground: boolean,
+  otpChannel?: string
+): Promise<void> {
   if (isInBackground) {
     // Ввод кода спросить не у кого, а без него банк не отдаёт ни одной страницы
     throw new UserInteractionError()
   }
-  const code = await ZenMoney.readLine('Введите код, который Арцахбанк прислал в СМС', {
+  const prompt = otpChannel === OTP_CHANNEL.email
+    ? 'Введите код, который Арцахбанк прислал на почту'
+    : 'Введите код, который Арцахбанк прислал в СМС'
+  const code = await ZenMoney.readLine(prompt, {
     inputType: 'number',
     time: USER_INPUT_TIMEOUT_MS
   })
