@@ -1,11 +1,32 @@
 import { Preferences, Session, AccountInfo, AccountTransaction } from './models'
 import { generateUUID } from '../../common/utils'
-import { sanitize } from '../../common/sanitize'
 import { dateInTimezone } from '../../common/dateUtils'
 import { fetchJson, FetchOptions, FetchResponse } from '../../common/network'
 import get from '../../types/get'
-import { InvalidPreferencesError, InvalidOtpCodeError } from '../../errors'
+import { InvalidOtpCodeError, UserInteractionError } from '../../errors'
+import { ui } from '../../common/ui'
 import padLeft from 'pad-left'
+
+function sanitizeApiLog (value: unknown, key = '', personalProfile = false): unknown {
+  const field = key.replace(/[-_]/g, '').toLowerCase()
+  const sensitive = /^(authorization|cookie|setcookie|logincredential|password|pin|otp|cvv|firstname|lastname|surname|fullname|parentfullname|customername|cardholdername|mothermaidenname|email|phone|phonenumber|gsmnumber|parentgsm|identitynumber|tcidentificationnumber|tckn|passportnumber|internationalpassportno|birthdate|address|homeaddress|avatar|photo)$/.test(field) || field.endsWith('token') || field.endsWith('signature') || (personalProfile && field === 'name')
+  // The API also uses accessToken as a boolean flow flag, which is diagnostic data.
+  if (sensitive && typeof value !== 'boolean' && value != null) return '<redacted>'
+  if (/^(cardnumber|pan)$/.test(field) && (typeof value !== 'string' || !value.includes('*'))) return '<redacted>'
+  if (field === 'url' && typeof value === 'string') {
+    return value.replace(/(\/users\/)[^/?]+/g, '$1<redacted>')
+      .replace(/([?&](?:[^=&]*token|password|otp|loginCredential)=)[^&]*/gi, '$1<redacted>')
+  }
+  if (Array.isArray(value)) return value.map(item => sanitizeApiLog(item, '', personalProfile))
+  if (value != null && typeof value === 'object') {
+    // GetUserResponse identifies the customer profile; account/merchant names elsewhere remain useful.
+    const profile = personalProfile || get(value, 'customerToken') != null || get(value, 'tcIdentificationNumber') != null
+    const result: Record<string, unknown> = {}
+    for (const name of Object.keys(value)) result[name] = sanitizeApiLog((value as Record<string, unknown>)[name], name, profile)
+    return result
+  }
+  return value
+}
 
 export class IninalApi {
   private readonly baseUrl: string
@@ -43,8 +64,8 @@ export class IninalApi {
     }
 
     const sanitizeOptions: Pick<FetchOptions, 'sanitizeRequestLog' | 'sanitizeResponseLog'> = {
-      sanitizeRequestLog: (obj: unknown) => sanitize(obj, true),
-      sanitizeResponseLog: (obj: unknown) => sanitize(obj, true)
+      sanitizeRequestLog: sanitizeApiLog,
+      sanitizeResponseLog: sanitizeApiLog
     }
 
     const mergedOptions = (options != null)
@@ -69,21 +90,22 @@ export class IninalApi {
   }
 
   private validateResponse (response: FetchResponse, predicate?: (x: FetchResponse) => boolean): void {
-    console.assert((predicate == null) || predicate(response), 'non-successful response')
+    console.assert((predicate == null) || predicate(response), 'Non-successful response', {
+      status: response.status,
+      httpCode: get(response.body, 'httpCode')
+    })
   }
 
   public async login (preferences: Preferences, isInBackground: boolean, session?: Session): Promise<Session> {
-    console.debug('login', sanitize({ session }, true))
-
     if (session == null) {
       session = {
         deviceId: this.generateDeviceID()
       }
     }
 
-    session.deviceId = session?.deviceId !== '' ? session?.deviceId : this.generateDeviceID()
+    session.deviceId = typeof session.deviceId === 'string' && session.deviceId !== '' ? session.deviceId : this.generateDeviceID()
 
-    if ('accessToken' in session && 'userId' in session) {
+    if (typeof session.accessToken === 'string' && session.accessToken !== '' && typeof session.userId === 'string' && session.userId !== '') {
       // try to fetch user info to check auth
       const userResponse = await this.fetchApi(
         `v3.0/users/${session.userId ?? ''}`,
@@ -92,16 +114,18 @@ export class IninalApi {
           method: 'GET'
         }
       ) as FetchResponse & { body: { httpCode: number, response: { customerToken: string } } }
-      // if ok, session is fine -- return it
-      if (userResponse.body.httpCode === 200 && userResponse.body.response.customerToken === session.userId) {
-        return session
-      }
+      // No observed expiry code is available: unknown hot-auth failures must not start a new login.
+      this.validateResponse(userResponse, response => get(response.body, 'httpCode') === 200 &&
+        get(response.body, 'response.customerToken') === session?.userId)
+      return session
     }
 
     // remove session accessToken now -- it's not valid for sure
     if ('accessToken' in session) {
       delete session.accessToken
     }
+
+    if (isInBackground) throw new UserInteractionError()
 
     const confirmationToken = await this.authSignin(preferences, session)
 
@@ -116,10 +140,10 @@ export class IninalApi {
 
     // check if authToken is needed because of OTP missing
     if (needOtp) {
-      const smsCode = await ZenMoney.readLine('Enter SMS OTP Code')
-      console.assert(smsCode, 'OTP Code is missing')
+      const smsCode = await ui.readLine('SMS doğrulama kodunu girin')
+      if (smsCode == null || smsCode.trim() === '') throw new InvalidOtpCodeError('SMS doğrulama kodu girilmedi.')
 
-      const { authToken, userId } = await this.authVerifyDevice(confirmationToken, smsCode as string, session)
+      const { authToken, userId } = await this.authVerifyDevice(confirmationToken, smsCode, session)
 
       session.userId = userId
       session.accessToken = authToken
@@ -128,7 +152,7 @@ export class IninalApi {
     }
 
     // otherwise, authCheckPassword failed -- no token and otp is missing
-    throw new InvalidPreferencesError()
+    throw new Error('Authentication returned neither an access token nor an OTP challenge')
   }
 
   private async authVerifyDevice (confirmationToken: string, otpCode: string, session: Session): Promise<{ authToken: string, userId: string }> {
@@ -160,9 +184,7 @@ export class IninalApi {
 
     const response = rawResponse.body.response
 
-    if (!response.accessToken) {
-      throw new InvalidOtpCodeError()
-    }
+    console.assert(response.accessToken && typeof response.token === 'string' && response.token !== '', 'Device verification did not return an access token')
 
     return {
       authToken: response.token,
@@ -224,7 +246,7 @@ export class IninalApi {
   }
 
   // fetchAccounts returns list of accounts, but also refreshes session token
-  public async fetchAccounts (session: Session): Promise<{ session?: Session, accounts: AccountInfo[] }> {
+  public async fetchAccounts (session: Session, onSession?: (session: Session) => void): Promise<{ session?: Session, accounts: AccountInfo[] }> {
     const rawResponse = await this.fetchApi(
       `v3.2/users/${session.userId ?? ''}/cardaccount`,
       session,
@@ -267,9 +289,10 @@ export class IninalApi {
 
     // if there is accessToken in response, update the session
     let newSession: Session | undefined
-    if ((response?.accessToken) !== null) {
+    if (typeof response.accessToken === 'string' && response.accessToken !== '') {
       session.accessToken = response.accessToken
       newSession = session
+      onSession?.(session)
     }
 
     const accounts = response.accountListResponse.map((apiAccount): AccountInfo => ({
