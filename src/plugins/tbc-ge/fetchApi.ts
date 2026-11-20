@@ -1,7 +1,7 @@
 import { fetch, FetchOptions, FetchResponse } from '../../common/network'
 import { isArray } from 'lodash'
 import get, { getBoolean, getNumber, getOptString, getString } from '../../types/get'
-import { InvalidLoginOrPasswordError, TemporaryUnavailableError } from '../../errors'
+import { InvalidLoginOrPasswordError, InvalidOtpCodeError, TemporaryUnavailableError } from '../../errors'
 import {
   APP_VERSION,
   AuthV2,
@@ -299,6 +299,9 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
     throw new Error(`Error in fetchUnTrustDeviceV2\n${JSON.stringify(confirmResponse.body)}`)
   }
 
+  if (!confirmResponse.ok) {
+    throw new Error(`Unexpected device removal confirmation status: ${confirmResponse.status}`)
+  }
   const returnDeviceId = getOptString(confirmResponse.body, 'deviceId')
   return returnDeviceId === deviceData.deviceId
 }
@@ -381,6 +384,9 @@ export async function fetchConfirmTrustedDeviceV2 (authorizationCode: string, or
   }
 
   if (response.status === 400) {
+    if (getOptString(response.body, 'code') === 'WrongCode') {
+      throw new InvalidOtpCodeError('The bank rejected the device confirmation code.')
+    }
     if (get(response.body, 'detail', null) === 'Already trusted') {
       return null
     }
