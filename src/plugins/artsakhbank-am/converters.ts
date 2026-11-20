@@ -40,7 +40,7 @@ export function parseGridRecords (html: string): Array<Record<string, string>> {
   }
   const end = html.indexOf(']', start)
   const records: Array<Record<string, string>> = []
-  for (const block of html.slice(start, end < 0 ? undefined : end).matchAll(/\{[^{}]*\}/g)) {
+  for (const block of html.slice(start, end < 0 ? undefined : end).matchAll(/\{(?:[^{}]|\{[^{}]*\})*\}/g)) {
     const record: Record<string, string> = {}
     for (const field of block[0].matchAll(/(\w+)\s*:\s*'([^']*)'/g)) {
       record[field[1]] = field[2]
@@ -149,9 +149,9 @@ const RATE_TOLERANCE = 0.02
 // в остальных описание операции приходит в национальной кодировке
 const ENGLISH_SHEET = 'Account ENG'
 
-// Перевод между своими счетами банк подписывает «своего счёта» в транслите:
-// 'POPOLNENIE SVOEGO ScETA 22300100000001'
-const OWN_TRANSFER = /\bSVOEGO\b/i
+// Own-account transfers are marked with transliterated 'SVOEGO' or a currency exchange order:
+// 'POPOLNENIE SVOEGO ScETA 22300100000001', 'Order for currency purchase - ARTSAKHBANK CJSC'
+const OWN_TRANSFER = /\b(?:SVOEGO|Order for currency (?:purchase|selling))\b/i
 
 export function parseStatement (file: ArrayBuffer): unknown[][] {
   let workbook: XLSX.WorkBook
@@ -197,6 +197,7 @@ function convertTransaction (row: unknown[], account: AccountOrCard): ExtendedTr
   const details = cell(row, STATEMENT_COLUMN.details) ?? ''
   const invoice = parseInvoice(row, account.instrument, sum)
   const transferAmount = invoice ?? { instrument: account.instrument, sum }
+  const transferKind = OWN_TRANSFER.exec(details)?.[0].toUpperCase()
 
   return {
     // Банк прямо пишет, что непроведённых операций в выписке нет
@@ -215,12 +216,13 @@ function convertTransaction (row: unknown[], account: AccountOrCard): ExtendedTr
     }],
     merchant: parseMerchant(details),
     comment: parseComment(details),
-    // Ключ склейки вешаем только на строки, которые банк сам назвал переводом
-    // между своими счетами. Без этого условия любая пара «покупка на 100 и
-    // приход на 100 в тот же день по разным счетам» слиплась бы в один перевод:
-    // своего номера операции в выписке нет. Так же поступают apelsin-uz и bgpb
-    ...OWN_TRANSFER.test(details) && {
-      groupKeys: [`${localDay(date)}_${transferAmount.instrument}_${Math.abs(transferAmount.sum).toString()}`]
+    // Attach a merge key only to rows explicitly marked as an own-account transfer
+    // or currency exchange order. Without this guard any same-day purchase and income
+    // of the same amount across accounts would merge into a transfer, as statements
+    // have no transaction ID. Include transferKind so same-day purchase and selling
+    // orders for the same amount do not merge with each other.
+    ...transferKind != null && {
+      groupKeys: [`${transferKind}_${localDay(date)}_${transferAmount.instrument}_${Math.abs(transferAmount.sum).toString()}`]
     }
   }
 }
