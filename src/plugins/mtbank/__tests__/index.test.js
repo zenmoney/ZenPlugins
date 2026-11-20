@@ -2,6 +2,10 @@ import fetchMock from 'fetch-mock'
 import { scrape } from '..'
 
 describe('scrape', () => {
+  beforeEach(() => {
+    global.ZenMoney = {}
+  })
+
   afterEach(() => {
     fetchMock.restore()
   })

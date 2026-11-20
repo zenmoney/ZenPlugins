@@ -38,8 +38,15 @@ async function fetchApiJson (url, options, predicate = () => true, error = (mess
     }
     if ([
       'PASSWORD_ERROR'
-    ].indexOf(response.body.error.code) >= 0) {
+    ].indexOf(response.body.error.code) >= 0 ||
+      (url === 'login/checkPassword4' && response.status === 200 && response.body.success === false &&
+        response.body.error.code === null && response.body.error.error_description === 'Bad credentials')) {
       throw new InvalidPreferencesError('Неверный номер телефона или пароль')
+    }
+    if (url === 'login/checkPassword4' && response.status === 200 && response.body.success === false &&
+      response.body.error.code === null &&
+      /^Пользователь временно заблокирован\. Время блокировки: [1-9]\d* сек\.$/.test(response.body.error.error_description)) {
+      throw new TemporaryError(response.body.error.error_description)
     }
     if ([
       'USER_TEMP_LOCKED',

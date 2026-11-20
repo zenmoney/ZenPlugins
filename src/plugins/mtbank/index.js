@@ -2,6 +2,7 @@ import { fetchAccounts, fetchTransactions, login } from './api'
 import { convertAccount, convertTransaction, filterDuplicates } from './converters'
 
 export async function scrape ({ preferences, fromDate, toDate }) {
+  ZenMoney.locale = 'ru'
   const cookies = await login(preferences.phone, preferences.password)
 
   const accounts = (await fetchAccounts(cookies))
