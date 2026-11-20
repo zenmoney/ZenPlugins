@@ -1,12 +1,15 @@
-import { ScrapeFunc, Account } from '../../types/zenmoney'
+import { ScrapeFunc, Account, AccountType } from '../../types/zenmoney'
 import { Auth, Preferences, StatementTransaction, ConvertedTransaction } from './models'
 import { getMobileExchangeRates, parsePdfStatements } from './api'
 import { convertPdfStatementTransaction } from './converters/transactions'
 import { isEqual, omit, groupBy, toPairs } from 'lodash'
 import { generateRandomString } from '../../common/utils'
 import { mergeCounterparts, mergeSinglesIntoSelfTransfers, dedupeSinglesAgainstTransfers, dropPlaceholderTransfers, dropOffsettingSinglesSameAccount } from './transferCleanup'
+import { cashbackMonth, configureCashbacks, readCashbackSettings } from './cashback-api'
+import { convertCashbacks } from './converters/cashbacks'
 
-export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) => {
+export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun, preferences, isInBackground }) => {
+  ZenMoney.locale = 'ru'
   let auth = ZenMoney.getData('auth') as Auth | undefined
   if ((auth == null) || auth.deviceId === '') {
     auth = {
@@ -65,8 +68,20 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun }) 
   const withoutPlaceholders = dropPlaceholderTransfers(deduped)
   const cleaned = dropOffsettingSinglesSameAccount(withoutPlaceholders)
 
+  let cashbacks
+  if (result.accounts.some(account => account.type === AccountType.ccard)) {
+    const month = cashbackMonth(new Date())
+    const saved = preferences.reconfigureCashbacks === true ? null : readCashbackSettings(ZenMoney.getData('cashbackSettings'))
+    const settings = saved?.month === month
+      ? saved
+      : await configureCashbacks(month, isInBackground)
+    cashbacks = convertCashbacks(result.accounts, settings)
+    ZenMoney.setData('cashbackSettings', settings)
+    ZenMoney.saveData()
+  }
   return {
     accounts: result.accounts,
-    transactions: cleaned
+    transactions: cleaned,
+    ...(cashbacks === undefined ? {} : { cashbacks })
   }
 }
