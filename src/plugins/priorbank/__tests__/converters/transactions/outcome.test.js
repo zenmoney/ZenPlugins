@@ -1,6 +1,103 @@
 import { convertTransaction } from '../../../converters'
 
 describe('convertTransaction', () => {
+  // Complete CardDesc records from zenmoney_plugin_log_2026-11-16-09-55-54.log,
+  // response 1 (publication build absent). Amounts, dates and merchant names are synthetic.
+  it.each([
+    [
+      {
+        amount: 11,
+        transAmount: 11,
+        transCurrIso: 'BYN',
+        transDetails: 'Retail BLR TAXI.EXAMPLE Sample Taxi',
+        transDate: '2026-01-15T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '17:27:58',
+        hce: false
+      },
+      'BYN',
+      false,
+      {
+        movements: [{ id: null, account: { id: 'account' }, invoice: null, sum: -11, fee: 0 }],
+        date: new Date('2026-01-15T17:27:58+03:00'),
+        hold: true,
+        merchant: { title: 'Sample Taxi', city: null, country: 'BLR', mcc: null, location: null },
+        comment: null
+      }
+    ],
+    [
+      {
+        amount: 2.1,
+        transAmount: 6,
+        transCurrIso: 'GEL',
+        transDetails: 'Retail GEO TBILISI FLT*SAMPLE MOBILE',
+        transDate: '2026-01-15T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '12:24:15',
+        hce: false
+      },
+      'EUR',
+      false,
+      {
+        movements: [{ id: null, account: { id: 'account' }, invoice: { sum: -6, instrument: 'GEL' }, sum: -2.1, fee: 0 }],
+        date: new Date('2026-01-15T12:24:15+03:00'),
+        hold: true,
+        merchant: { title: 'FLT*SAMPLE MOBILE', city: 'TBILISI', country: 'GEO', mcc: null, location: null },
+        comment: null
+      }
+    ],
+    [
+      {
+        postingDate: '2026-01-07T00:00:00+03:00',
+        postingDateSpecified: true,
+        transDate: '2026-01-05T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '00:00:00',
+        transCurrIso: 'USD',
+        amount: -20,
+        feeAmount: 0,
+        accountAmount: -18,
+        transDetails: 'Retail DEU www.host.example Sample Hosting  ',
+        hce: false
+      },
+      'EUR',
+      true,
+      {
+        movements: [{ id: null, account: { id: 'account' }, invoice: { sum: -20, instrument: 'USD' }, sum: -18, fee: 0 }],
+        date: new Date('2026-01-05T00:00:00+03:00'),
+        hold: false,
+        merchant: { title: 'Sample Hosting', city: null, country: 'DEU', mcc: null, location: null },
+        comment: null
+      }
+    ],
+    [
+      {
+        postingDate: '2026-01-13T00:00:00+03:00',
+        postingDateSpecified: true,
+        transDate: '2026-01-13T00:00:00+03:00',
+        transDateSpecified: true,
+        transTime: '00:00:00',
+        transCurrIso: 'BYN',
+        amount: -10,
+        feeAmount: 0,
+        accountAmount: -10,
+        transDetails: 'Payment From Client Contract   000001-00002-000003  ',
+        hce: false
+      },
+      'BYN',
+      true,
+      {
+        movements: [{ id: null, account: { id: 'account' }, invoice: null, sum: -10, fee: 0 }],
+        date: new Date('2026-01-13T00:00:00+03:00'),
+        hold: false,
+        merchant: null,
+        comment: null
+      }
+    ]
+  ])('preserves statement state, currencies and merchant boundaries', (source, instrument, regular, expected) => {
+    expect(convertTransaction(source, { account: { instrument, id: 'account' } }, regular)).toEqual(expected)
+  })
+
   it.each([
     [
       {
@@ -29,7 +126,9 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'BLR MINSK STOLOVAYA SSH N6',
+          title: 'STOLOVAYA SSH N6',
+          city: 'MINSK',
+          country: 'BLR',
           mcc: null,
           location: null
         },
@@ -63,7 +162,9 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: {
-          fullTitle: 'BLR Minsk Gippo',
+          title: 'Gippo',
+          city: 'Minsk',
+          country: 'BLR',
           mcc: null,
           location: null
         },
@@ -99,7 +200,9 @@ describe('convertTransaction', () => {
         hold: false,
         merchant:
           {
-            fullTitle: 'BLR MINSK INTERNET-MAGAZIN"FIZCULT"',
+            title: 'INTERNET-MAGAZIN"FIZCULT"',
+            city: 'MINSK',
+            country: 'BLR',
             mcc: null,
             location: null
           },
@@ -134,7 +237,9 @@ describe('convertTransaction', () => {
         date: new Date('2021-04-20T00:00:00+03:00'),
         hold: false,
         merchant: {
-          fullTitle: 'RUS PODOLSK WB',
+          title: 'WB',
+          city: 'PODOLSK',
+          country: 'RUS',
           mcc: null,
           location: null
         },
@@ -169,10 +274,12 @@ describe('convertTransaction', () => {
             }
           ],
         date: new Date('2021-02-08T08:47:56+0300'),
-        hold: false,
+        hold: true,
         groupKeys: ['2021-02-08_08:47:56_24.44_BYN'],
         merchant: {
-          fullTitle: 'BLR MINSK SOU INTERNETBANK',
+          title: 'SOU INTERNETBANK',
+          city: 'MINSK',
+          country: 'BLR',
           mcc: null,
           location: null
         },

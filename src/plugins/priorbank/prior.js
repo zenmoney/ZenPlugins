@@ -27,11 +27,12 @@ export function assertResponseSuccess (response) {
 
 const makeApiUrl = (path) => `https://www.prior.by/api3/api${path}`
 const userAgent = 'PriorMobile3/3.48.3 (Android 30; versionCode 136)'
+const responseHeaderLogMask = { Authorization: true, Cookie: true, 'Set-Cookie': true }
 
 export async function getMobileToken () {
   const response = await fetchJson(makeApiUrl('/Authorization/MobileToken'), {
     method: 'GET',
-    sanitizeResponseLog: { body: true }
+    sanitizeResponseLog: { headers: responseHeaderLogMask, body: true }
   })
   assertResponseSuccess(response)
   console.assert(response.body.token_type === 'bearer', 'unknown token type', response.body.token_type)
@@ -51,7 +52,7 @@ export async function getSalt ({ authAccessToken, clientSecret, login }) {
       'User-Agent': userAgent
     },
     sanitizeRequestLog: { body: { login: true }, headers: true },
-    sanitizeResponseLog: { body: { result: true } }
+    sanitizeResponseLog: { headers: responseHeaderLogMask, body: { result: true } }
   })
   assertResponseSuccess(response)
 
@@ -99,7 +100,7 @@ export async function authLogin ({ authAccessToken, clientSecret, loginSalt, log
       'User-Agent': userAgent
     },
     sanitizeRequestLog: { body: { login: true, password: true, password2: true }, headers: true },
-    sanitizeResponseLog: { body: { result: true } }
+    sanitizeResponseLog: { headers: responseHeaderLogMask, body: { result: true } }
   })
   assertResponseSuccess(response)
 
@@ -119,7 +120,7 @@ export function getCards ({ accessToken, clientSecret, userSession }) {
       Authorization: `bearer ${accessToken}`
     },
     sanitizeRequestLog: { body: { usersession: true }, headers: true },
-    sanitizeResponseLog: { body: { result: { clientObject: { cardRBSNumber: true, contractNum: true, iban: true } } } }
+    sanitizeResponseLog: { headers: responseHeaderLogMask, body: { result: { clientObject: { cardRBSNumber: true, contractNum: true, iban: true } } } }
   })
 }
 
@@ -147,6 +148,6 @@ export function getCardDesc ({ accessToken, clientSecret, userSession, fromDate 
       Authorization: `bearer ${accessToken}`
     },
     sanitizeRequestLog: { body: { usersession: true }, headers: true },
-    sanitizeResponseLog: { body: { result: { contract: { addrLineA: true, addrLineB: true, addrLineC: true } } } }
+    sanitizeResponseLog: { headers: responseHeaderLogMask, body: { result: { contract: { addrLineA: true, addrLineB: true, addrLineC: true } } } }
   })
 }

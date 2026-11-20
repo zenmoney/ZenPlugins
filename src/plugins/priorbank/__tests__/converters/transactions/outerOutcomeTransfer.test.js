@@ -83,7 +83,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Retail BLR MINSK MOBILE BANK'
+        comment: null
       }
     ],
     [
@@ -162,7 +162,7 @@ describe('convertTransaction', () => {
         hce: false
       },
       {
-        hold: false,
+        hold: true,
         date: new Date('2020-11-09T16:09:38+03:00'),
         movements: [
           {
@@ -186,7 +186,7 @@ describe('convertTransaction', () => {
           }
         ],
         merchant: null,
-        comment: 'Retail BLR MINSK MOBILE BANK'
+        comment: null
       }
     ],
     [

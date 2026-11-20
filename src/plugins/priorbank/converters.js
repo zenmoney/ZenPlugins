@@ -110,7 +110,7 @@ export function convertTransaction (apiTransaction, mainAccount, isRegularTransa
       }
     ],
     date,
-    hold: false,
+    hold: !isRegularTransaction,
     merchant: null,
     comment: null
   };
@@ -123,7 +123,7 @@ export function convertTransaction (apiTransaction, mainAccount, isRegularTransa
   ].some(parser => parser(transaction, apiTransaction, invoice))
 
   transaction.comment = joinCommentLines([
-    transaction.comment,
+    cleanComment(transaction.comment),
     formatCommentFeeLine(fee || apiTransaction.feeAmount || 0, accountCurrency)
   ])
   return transaction
@@ -220,11 +220,7 @@ function parsePayee (transaction, apiTransaction, invoice) {
   })) {
     return false
   }
-  transaction.merchant = {
-    fullTitle: apiTransaction.transDetails.replace(regex, '').trim(),
-    mcc: null,
-    location: null
-  }
+  transaction.merchant = parseMerchant(apiTransaction.transDetails.replace(regex, ''))
   return true
 }
 
@@ -237,15 +233,38 @@ function parseComment (transaction, apiTransaction, invoice) {
     regex = regexp
     return regexp.test(apiTransaction.transDetails)
   })) {
-    transaction.merchant = {
-      fullTitle: apiTransaction.transDetails.replace(regex, '').trim(),
-      mcc: null,
-      location: null
-    }
+    transaction.merchant = parseMerchant(apiTransaction.transDetails.replace(regex, ''))
     return true
   }
   transaction.comment = apiTransaction.transDetails
   return true
+}
+
+function parseMerchant (text) {
+  const fullTitle = text.trim()
+  const match = /^([A-Z]{3}) (\S+) (.+)$/.exec(fullTitle)
+  if (!match) {
+    return { fullTitle, mcc: null, location: null }
+  }
+  const [, country, place, title] = match
+  return {
+    title: title.replace(/\s+/g, ' ').trim(),
+    // The terminal location sometimes contains a website instead of a city.
+    city: place.includes('.') ? null : place,
+    country,
+    mcc: null,
+    location: null
+  }
+}
+
+function cleanComment (comment) {
+  if (comment === null) return null
+  const text = comment.replace(/\s+/g, ' ').trim()
+  if (/^(?:Поступление на контракт клиента|Payment From Client Contract) \d+(?:-\d+)+$/.test(text) ||
+      /^Retail [A-Z]{3} \S+ MOBILE BANK$/.test(text)) {
+    return null
+  }
+  return text.replace(/^Зачисление денежных средств (Онлайн пополнение счета) IBAN: [A-Z]{2}\d{2}[A-Z0-9]+$/, '$1') || null
 }
 
 export function convertTransactions ({ apiAccountsWithoutDuplicates, apiAccountDetails, accounts }) {

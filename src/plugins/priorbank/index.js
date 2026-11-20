@@ -58,6 +58,9 @@ export async function scrape ({ preferences, fromDate, toDate }) {
     apiAccountDetails,
     accounts
     // includeDateTimeInComment: preferences.includeDateTimeInComment
+  }).filter(transaction => {
+    console.assert(!Number.isNaN(transaction.date.getTime()), 'Invalid transaction date')
+    return (fromDate == null || transaction.date >= fromDate) && (toDate == null || transaction.date <= toDate)
   })
 
   return {
