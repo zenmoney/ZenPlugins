@@ -1,0 +1,1085 @@
+[
+  {
+    "uohId": "91fc1eb4-7d92-4e8a-9b15-83efebb1fc65",
+    "date": "13.07.2026T04:52:05",
+    "creationChannel": 8,
+    "form": "ExtCardOtherOut",
+    "state": {
+      "name": "FINANCIAL",
+      "category": "executed"
+    },
+    "description": "Аааааа аааааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "АААААААААА_А2А А. АААААА ААА",
+    "operationAmount": {
+      "amount": -252.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -302.0,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 50.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "classificationCode": 6538,
+    "type": "payment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 198.0,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGfWSyhiJNSDv6e3jOe",
+    "externalId": "JUAHCWMu894AAAGfX5MqBfD1AUhs2TvK",
+    "isFinancial": true,
+    "isHidden": false
+  },
+  {
+    "uohId": "0003_9000000000000000037",
+    "ufsId": "0003_9000000000000000037",
+    "date": "29.06.2026T21:03:51",
+    "creationChannel": 3,
+    "form": "UfsTransferBankPartnerPhone",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа а аааааа аааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000015",
+      "displayedValue": "Ааааааааа аааа •• 1006"
+    },
+    "toResource": {
+      "displayedValue": "Ааааааа •• 1007"
+    },
+    "correspondent": "Ааааааа Аааааааааааа А.",
+    "operationAmount": {
+      "amount": -800.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -812.0,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 12.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "serviceCode": "900000000038",
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000015",
+      "name": "Ааааааааа аааа",
+      "amount": 31.21,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGfFI1P5wB5CU8GUrNt",
+    "externalId": "0003_9000000000000000037",
+    "isFinancial": true,
+    "isHidden": false
+  },
+  {
+    "uohId": "0003_9000000000000000040",
+    "ufsId": "0003_9000000000000000040",
+    "date": "09.05.2026T20:59:57",
+    "creationChannel": 3,
+    "form": "UfsTransferRusCard",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа аа аааааа ааааа а аааааа аааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Ааааа •• 1009"
+    },
+    "correspondent": "•• 1009",
+    "operationAmount": {
+      "amount": -300.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -330.0,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 30.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 1365.0,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGeDeYDBF6tbpQH0dJz",
+    "externalId": "0003_9000000000000000040",
+    "isFinancial": true
+  },
+  {
+    "uohId": "beee2307-68aa-462c-b278-ded52b900053",
+    "date": "16.04.2026T21:09:39",
+    "creationChannel": 8,
+    "form": "ExtCardOtherOut",
+    "state": {
+      "name": "FINANCIAL",
+      "category": "executed"
+    },
+    "description": "Аааааа аааааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "АААААААААА_А2А А. АААААА ААА",
+    "operationAmount": {
+      "amount": -1000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -1050.0,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 50.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "classificationCode": 6538,
+    "type": "payment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 232.0,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGdl3v60ONWbOMKGBIu",
+    "externalId": "JUAHCWMu894AAAGdmlVCz/hcsHYKSwGl",
+    "isFinancial": true,
+    "isHidden": false
+  },
+  {
+    "uohId": "fa694c2b-bcf8-46d5-a900-b595bb900041",
+    "date": "14.04.2026T19:46:21",
+    "creationChannel": 8,
+    "form": "ExtCardOtherOut",
+    "state": {
+      "name": "UNAUTHORIZATION",
+      "description": "Аааааааааааа ааааааа",
+      "category": "cancel"
+    },
+    "description": "Аааааа аааааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "АаааааАааа_А2А а. Аааааа ААА",
+    "operationAmount": {
+      "amount": -5000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -5062.5,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 62.5,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "classificationCode": 6538,
+    "type": "payment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 5050.69,
+      "currencyCode": "RUB"
+    },
+    "refusalReason": "Аааааааааааа ааааааа",
+    "authorizationDocId": "JUAHCWMu894AAAGdjOL/YJuGJvb84asu",
+    "externalId": "JUAHCWMu894AAAGdjOL/YJuGJvb84asu",
+    "isFinancial": true
+  },
+  {
+    "uohId": "6be7415c-274a-40c8-9938-0eaadf900054",
+    "date": "14.04.2026T19:15:01",
+    "creationChannel": 8,
+    "form": "ExtCardOtherOut",
+    "state": {
+      "name": "UNAUTHORIZATION",
+      "description": "Аааааааааааа ааааааа",
+      "category": "cancel"
+    },
+    "description": "Аааааа аааааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "АаааааАааа_А2А а. Аааааа ААА",
+    "operationAmount": {
+      "amount": -5000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -5062.5,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 62.5,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "classificationCode": 6538,
+    "type": "payment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 5050.69,
+      "currencyCode": "RUB"
+    },
+    "refusalReason": "Аааааааааааа ааааааа",
+    "authorizationDocId": "JUAHCWMu894AAAGdjMZPoPS0UXXTNqL1",
+    "externalId": "JUAHCWMu894AAAGdjMZPoPS0UXXTNqL1",
+    "isFinancial": true
+  },
+  {
+    "uohId": "7dae8344-42f0-424c-b730-c4b8f5607f2b",
+    "date": "14.04.2026T19:13:57",
+    "creationChannel": 8,
+    "form": "ExtCardOtherOut",
+    "state": {
+      "name": "UNAUTHORIZATION",
+      "description": "Аааааааааааа ааааааа",
+      "category": "cancel"
+    },
+    "description": "Аааааа аааааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "АаааааАааа_А2А а. Аааааа ААА",
+    "operationAmount": {
+      "amount": -5000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -5062.5,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 62.5,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "classificationCode": 6538,
+    "type": "payment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 0.0,
+      "currencyCode": "RUB"
+    },
+    "refusalReason": "Аааааааааааа ааааааа",
+    "authorizationDocId": "JUAHCWMu894AAAGdjMVVoEdlg8stunG+",
+    "externalId": "JUAHCWMu894AAAGdjMVVoEdlg8stunG+",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000042",
+    "ufsId": "0003_9000000000000000042",
+    "date": "28.02.2026T16:32:12",
+    "creationChannel": 3,
+    "form": "UfsP2PSBPOutTransfer",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа аа ААА",
+    "fromResource": {
+      "id": "ct-account:9000000000000015",
+      "displayedValue": "Ааааааааа аааа •• 1006"
+    },
+    "correspondent": "Ааааа Ааааааааа А",
+    "operationAmount": {
+      "amount": -15000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -15023.05,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 23.05,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000015",
+      "name": "Ааааааааа аааа",
+      "amount": 61.72,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGcpHMXus9L+xJj0tfw",
+    "externalId": "0003_9000000000000000042",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000055",
+    "ufsId": "0003_9000000000000000055",
+    "date": "29.01.2026T21:24:33",
+    "creationChannel": 3,
+    "form": "UfsP2PSBPOutTransfer",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа аа ААА",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "Ааааааааа Аааааааааа А",
+    "operationAmount": {
+      "amount": -10000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -10050.0,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 50.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 10.0,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGcCv/4lp5NKUsg3du5",
+    "externalId": "0003_9000000000000000055",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000056",
+    "ufsId": "0003_9000000000000000056",
+    "date": "29.01.2026T21:22:12",
+    "creationChannel": 3,
+    "form": "UfsP2PSBPOutTransfer",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа аа ААА",
+    "fromResource": {
+      "id": "ct-account:9000000000000015",
+      "displayedValue": "Ааааааааа аааа •• 1006"
+    },
+    "correspondent": "Ааааааа Аааааааа А",
+    "operationAmount": {
+      "amount": -10000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -10045.97,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 45.97,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000015",
+      "name": "Ааааааааа аааа",
+      "amount": 40.43,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGcCv3RJ2TtKNguhKJE",
+    "externalId": "0003_9000000000000000056",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000057",
+    "ufsId": "0003_9000000000000000057",
+    "date": "15.01.2026T19:40:51",
+    "creationChannel": 3,
+    "form": "UfsTransferBankPartnerPhone",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа а аааааа аааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Ааааааа •• 1014"
+    },
+    "correspondent": "Ааааа Аааааааа А.",
+    "operationAmount": {
+      "amount": -300.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -304.5,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 4.5,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "serviceCode": "900000000058",
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 7.11,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGbwogEO0yWOrEXs+w3",
+    "externalId": "0003_9000000000000000057",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000059",
+    "ufsId": "0003_9000000000000000059",
+    "date": "18.12.2025T19:48:23",
+    "creationChannel": 3,
+    "form": "UfsTransferBankPartnerPhone",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа а аааааа аааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Ааааааа •• 1014"
+    },
+    "correspondent": "Ааааа Аааааааа А.",
+    "operationAmount": {
+      "amount": -333.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -338.0,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 5.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "serviceCode": "900000000058",
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 4739.75,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGbMlzcJD8YEY1cCDn4",
+    "externalId": "0003_9000000000000000059",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000043",
+    "ufsId": "0003_9000000000000000043",
+    "date": "30.10.2025T19:31:20",
+    "creationChannel": 3,
+    "form": "UfsOutTransfer",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа Ааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Ааааа •• 1010"
+    },
+    "correspondent": "Ааааааааа Аааааааааааа А.",
+    "operationAmount": {
+      "amount": -50.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -50.75,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 0.75,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 3.46,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGaNfWkG+W1okK/0Dw5",
+    "externalId": "0003_9000000000000000043",
+    "isFinancial": true,
+    "isHidden": false
+  },
+  {
+    "uohId": "0003_9000000000000000060",
+    "ufsId": "0003_9000000000000000060",
+    "date": "30.10.2025T10:44:35",
+    "creationChannel": 3,
+    "form": "UfsP2PSBPOutTransfer",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа аа ААА",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "Ааааааа Аааааааа А",
+    "operationAmount": {
+      "amount": -35000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -35145.79,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 145.79,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 54.21,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGaNBNaXnChZ9fOw+CX",
+    "externalId": "0003_9000000000000000060",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000061",
+    "ufsId": "0003_9000000000000000061",
+    "date": "29.10.2025T10:52:30",
+    "creationChannel": 3,
+    "form": "UfsTransferRusCard",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа аа аааааа ааааа а аааааа аааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Ааааа •• 1015"
+    },
+    "correspondent": "•• 1015",
+    "operationAmount": {
+      "amount": -100.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -130.0,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 30.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 50.88,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGaLvSTRQIRtbi6EGE6",
+    "externalId": "0003_9000000000000000061",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000062",
+    "ufsId": "0003_9000000000000000062",
+    "date": "27.10.2025T20:08:44",
+    "creationChannel": 3,
+    "form": "UfsOutTransfer",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа Ааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Ааааааааа аааа •• 1016"
+    },
+    "correspondent": "Ааааааааа Ааааааааа А.",
+    "operationAmount": {
+      "amount": -1100.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -1116.5,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 16.5,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 30.88,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGaJqTMXe1OQdXRMZ7f",
+    "externalId": "0003_9000000000000000062",
+    "isFinancial": true,
+    "isHidden": false
+  },
+  {
+    "uohId": "0003_9000000000000000063",
+    "ufsId": "0003_9000000000000000063",
+    "date": "27.10.2025T09:18:54",
+    "creationChannel": 3,
+    "form": "UfsOutTransfer",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа Ааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Ааааааааа аааа •• 1017"
+    },
+    "correspondent": "Аааааа Ааааааааааааааа А.",
+    "operationAmount": {
+      "amount": -4000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -4060.0,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 60.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 7.38,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGaJFIptJcpa+qYnJn7",
+    "externalId": "0003_9000000000000000063",
+    "isFinancial": true,
+    "isHidden": false
+  },
+  {
+    "uohId": "0003_9000000000000000064",
+    "ufsId": "0003_9000000000000000064",
+    "date": "23.10.2025T19:47:15",
+    "creationChannel": 3,
+    "form": "UfsOutTransfer",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа Ааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Ааааа •• 1010"
+    },
+    "correspondent": "Ааааааааа Аааааааааааа А.",
+    "operationAmount": {
+      "amount": -100.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -101.5,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 1.5,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 70.38,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGaEfeydwIgkuSD7dM4",
+    "externalId": "0003_9000000000000000064",
+    "isFinancial": true,
+    "isHidden": false
+  },
+  {
+    "uohId": "0003_9000000000000000044",
+    "ufsId": "0003_9000000000000000044",
+    "date": "20.10.2025T17:24:51",
+    "creationChannel": 3,
+    "form": "UfsTransferAccount",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа Ааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Аааа •• 1011"
+    },
+    "correspondent": "Ааа Аааааааа А.",
+    "operationAmount": {
+      "amount": -30000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -30001.5,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 1.5,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 198.5,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGaAgKimw8gThfsRsUg",
+    "externalId": "0003_9000000000000000044",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000065",
+    "ufsId": "0003_9000000000000000065",
+    "date": "29.07.2025T23:31:28",
+    "creationChannel": 3,
+    "form": "UfsP2PSBPOutTransfer",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа аа ААА",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "Ааааааа Аааааааа А",
+    "operationAmount": {
+      "amount": -3000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -3013.5,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 13.5,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 94.5,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGYV+II8tKIlXm16dIF",
+    "externalId": "0003_9000000000000000065",
+    "isFinancial": true
+  },
+  {
+    "uohId": "0003_9000000000000000066",
+    "ufsId": "0003_9000000000000000066",
+    "date": "24.07.2025T17:05:56",
+    "creationChannel": 3,
+    "form": "UfsTransferBankPartnerPhone",
+    "state": {
+      "name": "EXECUTED",
+      "category": "executed"
+    },
+    "description": "Ааааааа а аааааа аааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "toResource": {
+      "displayedValue": "Ааааааа •• 1018"
+    },
+    "correspondent": "Аааааааа Аааааааааа А.",
+    "operationAmount": {
+      "amount": -500.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -507.5,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 7.5,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": true,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "serviceCode": "900000000038",
+    "type": "ufsPayment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 570.89,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGYPMFbJf4pIKSN+bdd",
+    "externalId": "0003_9000000000000000066",
+    "isFinancial": true
+  },
+  {
+    "uohId": "8baa2936-8f4f-4c45-a39e-900067bc823a",
+    "date": "29.04.2025T08:33:40",
+    "creationChannel": 8,
+    "form": "ExtCardOtherOut",
+    "state": {
+      "name": "FINANCIAL",
+      "category": "executed"
+    },
+    "description": "Аааааа аааааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "АААААААААА_А2А А. АААААА ААА",
+    "operationAmount": {
+      "amount": -60000.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -60200.0,
+      "currencyCode": "RUB"
+    },
+    "commission": {
+      "amount": 200.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "classificationCode": 6538,
+    "type": "payment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 2.17,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGWgAlfIDaPFagCRNWK",
+    "externalId": "JUAHCWMu894AAAGWhaPANWR9/yFkD2nz",
+    "isFinancial": true,
+    "isHidden": false
+  },
+  {
+    "uohId": "d2e90068-896c-4fe0-ba62-5e8fea80e472",
+    "date": "03.04.2026T15:31:17",
+    "creationChannel": 8,
+    "form": "TakingMeans",
+    "state": {
+      "name": "FINANCIAL",
+      "category": "executed"
+    },
+    "description": "Аааааааа",
+    "fromResource": {
+      "id": "ct-account:9000000000000023",
+      "displayedValue": "Ааааааааа аааа •• 1005"
+    },
+    "correspondent": "Аа аааааа «Ааааааааааа»",
+    "operationAmount": {
+      "amount": -99.0,
+      "currencyCode": "RUB"
+    },
+    "nationalAmount": {
+      "amount": -99.0,
+      "currencyCode": "RUB"
+    },
+    "attributes": {
+      "copyable": false,
+      "nfc": false,
+      "cashReceipt": false,
+      "compositePayment": false
+    },
+    "imageUrl": "https://cms-res.online.sberbank.ru/MERCHANT/e231a239-b593-431d-9994-15d28f2ae48b.png",
+    "classificationCode": 99993200,
+    "type": "payment",
+    "billingAmount": {
+      "id": "9000000000000023",
+      "name": "Ааааааааа аааа",
+      "amount": 3919.41,
+      "currencyCode": "RUB"
+    },
+    "authorizationDocId": "JUAHCWMu894AAAGdU1OLqCjTgtUiO2dq",
+    "externalId": "JUAHCWMu894AAAGdU1OLqCjTgtUiO2dq",
+    "isFinancial": true
+  }
+]

@@ -1,0 +1,616 @@
+[
+  {
+    "date": "2026-07-13T01:52:05.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "91fc1eb4-7d92-4e8a-9b15-83efebb1fc65",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -252.0,
+        "invoice": null,
+        "fee": -50.0
+      }
+    ],
+    "merchant": {
+      "title": "АААААААААА_А2А А. АААААА ААА",
+      "city": null,
+      "country": null,
+      "mcc": 6538,
+      "location": null
+    },
+    "comment": "Аааааа аааааааа"
+  },
+  {
+    "date": "2026-06-29T18:03:51.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000037",
+        "account": {
+          "id": "sber:9000000000000015"
+        },
+        "sum": -800.0,
+        "invoice": null,
+        "fee": -12.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1007"
+          ]
+        },
+        "sum": 800.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Ааааааа Аааааааааааа А.",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа а аааааа аааа"
+  },
+  {
+    "date": "2026-05-09T17:59:57.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000040",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -300.0,
+        "invoice": null,
+        "fee": -30.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1009"
+          ]
+        },
+        "sum": 300.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "•• 1009",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа аа аааааа ааааа а аааааа аааа"
+  },
+  {
+    "date": "2026-04-16T18:09:39.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "beee2307-68aa-462c-b278-ded52b900053",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -1000.0,
+        "invoice": null,
+        "fee": -50.0
+      }
+    ],
+    "merchant": {
+      "title": "АААААААААА_А2А А. АААААА ААА",
+      "city": null,
+      "country": null,
+      "mcc": 6538,
+      "location": null
+    },
+    "comment": "Аааааа аааааааа"
+  },
+  {
+    "date": "2026-02-28T13:32:12.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000042",
+        "account": {
+          "id": "sber:9000000000000015"
+        },
+        "sum": -15000.0,
+        "invoice": null,
+        "fee": -23.05
+      }
+    ],
+    "merchant": {
+      "title": "Ааааа Ааааааааа А",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа аа ААА"
+  },
+  {
+    "date": "2026-01-29T18:24:33.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000055",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -10000.0,
+        "invoice": null,
+        "fee": -50.0
+      }
+    ],
+    "merchant": {
+      "title": "Ааааааааа Аааааааааа А",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа аа ААА"
+  },
+  {
+    "date": "2026-01-29T18:22:12.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000056",
+        "account": {
+          "id": "sber:9000000000000015"
+        },
+        "sum": -10000.0,
+        "invoice": null,
+        "fee": -45.97
+      }
+    ],
+    "merchant": {
+      "title": "Ааааааа Аааааааа А",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа аа ААА"
+  },
+  {
+    "date": "2026-01-15T16:40:51.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000057",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -300.0,
+        "invoice": null,
+        "fee": -4.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1014"
+          ]
+        },
+        "sum": 300.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Ааааа Аааааааа А.",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа а аааааа аааа"
+  },
+  {
+    "date": "2025-12-18T16:48:23.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000059",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -333.0,
+        "invoice": null,
+        "fee": -5.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1014"
+          ]
+        },
+        "sum": 333.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Ааааа Аааааааа А.",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа а аааааа аааа"
+  },
+  {
+    "date": "2025-10-30T16:31:20.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000043",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -50.0,
+        "invoice": null,
+        "fee": -0.75
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1010"
+          ]
+        },
+        "sum": 50.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Ааааааааа Аааааааааааа А.",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа Ааааа"
+  },
+  {
+    "date": "2025-10-30T07:44:35.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000060",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -35000.0,
+        "invoice": null,
+        "fee": -145.79
+      }
+    ],
+    "merchant": {
+      "title": "Ааааааа Аааааааа А",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа аа ААА"
+  },
+  {
+    "date": "2025-10-29T07:52:30.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000061",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -100.0,
+        "invoice": null,
+        "fee": -30.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1015"
+          ]
+        },
+        "sum": 100.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "•• 1015",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа аа аааааа ааааа а аааааа аааа"
+  },
+  {
+    "date": "2025-10-27T17:08:44.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000062",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -1100.0,
+        "invoice": null,
+        "fee": -16.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1016"
+          ]
+        },
+        "sum": 1100.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Ааааааааа Ааааааааа А.",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа Ааааа"
+  },
+  {
+    "date": "2025-10-27T06:18:54.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000063",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -4000.0,
+        "invoice": null,
+        "fee": -60.0
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1017"
+          ]
+        },
+        "sum": 4000.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Аааааа Ааааааааааааааа А.",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа Ааааа"
+  },
+  {
+    "date": "2025-10-23T16:47:15.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000064",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -100.0,
+        "invoice": null,
+        "fee": -1.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1010"
+          ]
+        },
+        "sum": 100.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Ааааааааа Аааааааааааа А.",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа Ааааа"
+  },
+  {
+    "date": "2025-10-20T14:24:51.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000044",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -30000.0,
+        "invoice": null,
+        "fee": -1.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1011"
+          ]
+        },
+        "sum": 30000.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Ааа Аааааааа А.",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа Ааааа"
+  },
+  {
+    "date": "2025-07-29T20:31:28.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000065",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -3000.0,
+        "invoice": null,
+        "fee": -13.5
+      }
+    ],
+    "merchant": {
+      "title": "Ааааааа Аааааааа А",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа аа ААА"
+  },
+  {
+    "date": "2025-07-24T14:05:56.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "0003_9000000000000000066",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -500.0,
+        "invoice": null,
+        "fee": -7.5
+      },
+      {
+        "id": null,
+        "account": {
+          "type": null,
+          "instrument": "RUB",
+          "company": null,
+          "syncIds": [
+            "1018"
+          ]
+        },
+        "sum": 500.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Аааааааа Аааааааааа А.",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Ааааааа а аааааа аааа"
+  },
+  {
+    "date": "2025-04-29T05:33:40.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "8baa2936-8f4f-4c45-a39e-900067bc823a",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -60000.0,
+        "invoice": null,
+        "fee": -200.0
+      }
+    ],
+    "merchant": {
+      "title": "АААААААААА_А2А А. АААААА ААА",
+      "city": null,
+      "country": null,
+      "mcc": 6538,
+      "location": null
+    },
+    "comment": "Аааааа аааааааа"
+  },
+  {
+    "date": "2026-04-03T12:31:17.000Z",
+    "hold": false,
+    "movements": [
+      {
+        "id": "d2e90068-896c-4fe0-ba62-5e8fea80e472",
+        "account": {
+          "id": "sber:9000000000000023"
+        },
+        "sum": -99.0,
+        "invoice": null,
+        "fee": 0
+      }
+    ],
+    "merchant": {
+      "title": "Аа аааааа «Ааааааааааа»",
+      "city": null,
+      "country": null,
+      "mcc": null,
+      "location": null
+    },
+    "comment": "Аааааааа"
+  }
+]
