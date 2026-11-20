@@ -10,4 +10,11 @@
         summary="|гггг-мм-дд|{@s}"
         obligatory="true">
     </EditTextPreference>
+    <CheckBoxPreference
+        key="reconfigureCashbacks"
+        title="Повторно настроить кэшбеки"
+        checked="false"
+        summaryOn="Запрашивать настройки кэшбека после импорта карточной выписки. После изменения выключите флажок."
+        summaryOff="Без флажка настройки запрашиваются один раз в месяц. После изменения выключите флажок."
+    />
 </PreferenceScreen>

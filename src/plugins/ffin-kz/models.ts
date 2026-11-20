@@ -7,6 +7,7 @@ export interface Auth {
 export interface Preferences {
   login: string
   password: string
+  reconfigureCashbacks?: boolean
 }
 
 export interface StatementAccount {
@@ -55,4 +56,14 @@ export interface AccountTypeByLocale {
   ru: AccountTypeHash
   en: AccountTypeHash
   kz: AccountTypeHash
+}
+
+export interface CashbackSettings {
+  version: 1
+  month: string
+  enabled: boolean
+  level: string
+  basePercent: string
+  applePayPercent: string
+  qrPercent: string
 }
