@@ -37,7 +37,7 @@ export async function login (preferences: Preferences, saved: unknown, backgroun
     persist
   }
   // A working session takes precedence over changed credential preferences.
-  let response = await follow(session, await requestJson(session, 'loginInfo'))
+  let response = await loginInfo(session)
   let body = readJson(response)
   if (getOptNumber(body, 'response.result') === 0) {
     confirm(session)
@@ -55,7 +55,7 @@ export async function login (preferences: Preferences, saved: unknown, backgroun
   if (form == null) {
     const forms = typeof response.body === 'string' ? describeLoginForms(response.body) : []
     console.assert(forms.length === 0, 'Unsupported bank SSO interaction form')
-    response = await follow(session, await requestJson(session, 'loginInfo', { fingerprint: session.fingerprint }))
+    response = await loginInfo(session, { fingerprint: session.fingerprint })
     body = readJson(response)
     console.assert(getOptNumber(body, 'response.result') === 0 && (session.cookieHeader !== '' || (session.cookies ?? []).length > 0), 'Silent bank SSO did not confirm authorization')
     confirm(session)
@@ -119,11 +119,31 @@ export async function login (preferences: Preferences, saved: unknown, backgroun
     }
   }
   // The SSO callback must complete before authorization can be persisted.
-  response = await follow(session, await requestJson(session, 'loginInfo', { fingerprint: session.fingerprint }))
+  response = await loginInfo(session, { fingerprint: session.fingerprint })
   body = readJson(response)
   console.assert(getOptNumber(body, 'response.result') === 0 && (session.cookieHeader !== '' || (session.cookies ?? []).length > 0), 'Bank login incomplete; challenge or rejection requires investigation')
   confirm(session)
   return session
+}
+
+async function loginInfo (session: Session, params: Record<string, string> = {}): Promise<FetchResponse> {
+  let response = await follow(session, await requestJson(session, 'loginInfo', params))
+  for (let step = 0; step < 2 && isLoginNotice(readJson(response)); step++) {
+    // Continue in the web client uses ordinary loginInfo requests, without the
+    // script header. Observed recovery: script notice -> ordinary notice -> success.
+    response = await follow(session, await requestJson(session, 'loginInfo', params, { loginScriptRequest: false }))
+  }
+  return response
+}
+
+function isLoginNotice (body: unknown): boolean {
+  const warnings = getOptArray(body, 'response.object.warnings')
+  const warning = warnings?.[0]
+  const buttons = getOptArray(warning, 'buttons')
+  return getOptNumber(body, 'response.result') === 5 && warnings?.length === 1 &&
+    getOptNumber(warning, 'code') === 5 && getOptString(warning, 'message') != null &&
+    get(warning, 'params') === null && buttons?.length === 1 &&
+    getOptString(buttons[0], 'type') === 'PROCEED' && getOptString(buttons[0], 'title') === 'CONTINUE'
 }
 
 export async function fetchAccounts (session: Session, loanSync: LoanSyncOptions): Promise<BankProducts> {

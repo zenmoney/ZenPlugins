@@ -11,6 +11,13 @@ const page = base + '/auth-clustered/realms/mdse_multi/protocol/openid-connect/a
 const action = base + '/auth-clustered/realms/mdse_multi/login-actions/authenticate?session_code=code-secret'
 const preferences = { login: 'login-secret', password: 'password-secret' }
 const saved: Auth = { cookieHeader: 'SESSION=cookie-secret', fingerprint: 'model-device' }
+// Observed loginInfo response: Bootloader session 650a4e43-ed94-477e-a1da-be6ee1e89331,
+// 2026-11-22, event 43. Public maintenance notice, no customer/session data.
+// Session a96f03a7 repeated the notice with the script header. Read-only requests
+// using that session then observed: script notice -> ordinary notice -> ordinary success.
+// Browser reqids 329/337 confirm ordinary notice -> ordinary success on Continue.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const maintenanceWarning = require('./fixtures/login-maintenance-warning.json') as { response: { result: number, object: unknown } }
 const ok = (object: unknown): { response: { result: number, object: unknown } } => ({ response: { result: 0, object } })
 
 afterEach(() => {
@@ -49,16 +56,23 @@ describe('[model] authorization lifecycle', () => {
     expect(fetchMock.calls(info)).toHaveLength(1)
   })
 
-  it('completes a no-challenge form login without exposing secrets in diagnostics', async () => {
+  it('continues past the observed maintenance notice after form login without exposing secrets', async () => {
     const debug = jest.spyOn(console, 'debug').mockImplementation(() => {})
     fetchMock.postOnce(info, { result: 33, object: { redirectUrl: page } })
     fetchMock.get(page, `<form id="kc-form-login" action="${action.replace(/&/g, '&amp;')}"><input type="hidden" name="fingerprint" value=""/></form>`)
     fetchMock.post(action, { status: 302, headers: { Location: '/login/' } })
     fetchMock.get(base + '/login/', '<html>completion</html>')
+    fetchMock.postOnce(info, maintenanceWarning, { overwriteRoutes: false })
+    fetchMock.postOnce(info, maintenanceWarning, { overwriteRoutes: false })
     fetchMock.postOnce(info, { headers: { 'Set-Cookie': 'SESSION=completed-secret' }, body: ok({}) }, { overwriteRoutes: false })
     const persist = jest.fn()
     await login(preferences, undefined, false, persist)
     expect(persist).toHaveBeenCalledTimes(1)
+    expect(fetchMock.calls(info)).toHaveLength(4)
+    const loginRequests = fetchMock.calls(info)
+    expect(loginRequests[1][1]?.headers).toHaveProperty('X-Login-Script-Request', 'true')
+    expect(loginRequests[2][1]?.headers).not.toHaveProperty('X-Login-Script-Request')
+    expect(loginRequests[3][1]?.headers).not.toHaveProperty('X-Login-Script-Request')
     const fields = new URLSearchParams(String(fetchMock.lastOptions(action)?.body))
     expect(fields.get('fsitecode')).toBe('nskbl')
     expect(fields.get('username')).toBe(preferences.login)
@@ -69,6 +83,37 @@ describe('[model] authorization lifecycle', () => {
     }
     expect(logs).toContain('302')
     expect(logs).toContain('/mobileService/3.0/json/loginInfo')
+  })
+
+  it('does not start cold login or persist auth when the observed notice repeats', async () => {
+    fetchMock.post(info, maintenanceWarning)
+    const persist = jest.fn()
+    const error = await login(preferences, saved, false, persist).catch((error: unknown) => error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error).not.toBeInstanceOf(ZPAPIError)
+    expect(fetchMock.calls(info)).toHaveLength(3)
+    expect(persist).not.toHaveBeenCalled()
+  })
+
+  it('stops notice continuation as soon as ordinary loginInfo confirms the saved session', async () => {
+    fetchMock.postOnce(info, maintenanceWarning)
+    fetchMock.postOnce(info, ok({}), { overwriteRoutes: false })
+    const persist = jest.fn()
+    await login(preferences, saved, true, persist)
+    expect(fetchMock.calls(info)).toHaveLength(2)
+    expect(fetchMock.lastOptions(info)?.headers).not.toHaveProperty('X-Login-Script-Request')
+    expect(persist).toHaveBeenCalledTimes(1)
+  })
+
+  it('propagates a transport failure during notice continuation without persisting auth', async () => {
+    // [model] Inject a transport failure after the observed notice.
+    const error = new Error('Model continuation transport failure')
+    fetchMock.postOnce(info, maintenanceWarning)
+    fetchMock.postOnce(info, { throws: error }, { overwriteRoutes: false })
+    const persist = jest.fn()
+    await expect(login(preferences, saved, true, persist)).rejects.toBe(error)
+    expect(fetchMock.calls(info)).toHaveLength(2)
+    expect(persist).not.toHaveBeenCalled()
   })
 
   it('falls back to interactive input when credential preferences are undefined or empty', async () => {
