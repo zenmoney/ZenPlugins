@@ -212,3 +212,15 @@ export function convertTransactions (apiTransactions: GetAccountTransactionsResp
 
   return transactions
 }
+
+// The bank rejects turnover requests longer than 12 months (Err_95400), so the range is split into such periods.
+export function splitDateRange (fromDate: Date, toDate: Date): Array<[Date, Date]> {
+  const periods: Array<[Date, Date]> = []
+  let start = moment(fromDate)
+  while (!start.isAfter(toDate, 'day')) {
+    const end = moment.min(start.clone().add(1, 'year').subtract(1, 'day'), moment(toDate))
+    periods.push([start.toDate(), end.toDate()])
+    start = end.clone().add(1, 'day')
+  }
+  return periods
+}
