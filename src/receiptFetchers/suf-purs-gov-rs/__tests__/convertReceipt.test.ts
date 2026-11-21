@@ -1,5 +1,7 @@
 import shortReceipt from './convertReceipt-02.html'
 import fixture1 from './convertReceipt-01.html'
+import synthetic1 from './convertReceipt-03.html'
+import synthetic2 from './convertReceipt-04.html'
 import { convertReceipt } from '../converters'
 
 test('converts source case 01', () => {
@@ -138,5 +140,44 @@ test('converts the receipt reached through the short link', () => {
       { name: 'Liker Jager. 0,5l+2x shot casa/KOM (Ђ)', quantity: '1', unitPrice: '1957', totalAmount: '1957' },
       { name: 'Fanta orange zero 0,5l PCT/KOM (Ђ)', quantity: '1', unitPrice: '89.99', totalAmount: '89.99' }
     ]
+  })
+})
+
+// Synthetic receipt: shop, items and numbers are invented; only the journal layout is reproduced.
+// Verified against real receipts: before 10:00 the hour has no leading zero, names wrap at the
+// 40-column journal width (mid-word, after a space, or before one), "other cashless" tender.
+test('converts a morning receipt with wrapped names', () => {
+  expect(convertReceipt(synthetic1)).toEqual({
+    completeness: 'full',
+    currency: 'RSD',
+    operation: 'unknown',
+    issuedAt: { date: '2026-11-21', time: '07:05:09' },
+    totalAmount: '1121.46',
+    merchant: { name: 'TEST MARKET DOO', address: 'ТЕСТНА УЛИЦА 1 Нови Сад' },
+    items: [
+      { name: 'HLEB BELI 500G / KOM (Ђ)', quantity: '1', unitPrice: '65', totalAmount: '65' },
+      { name: 'JOGURT NATUR 2.8% MM 1KG CASA 12345 / KOM (Ђ)', quantity: '2', unitPrice: '129.99', totalAmount: '259.98' },
+      { name: 'JABUKE CRVENE / KG (Ђ)', quantity: '1.25', unitPrice: '149.99', totalAmount: '187.49' },
+      { name: 'KAFA MLEVENA 200G STANDARD PAKOVANJE 2X VAKUUM / KOM (Ђ)', quantity: '1', unitPrice: '389', totalAmount: '389' },
+      { name: 'SIR GAUDA NARESCI 150G MLEKARA SABAC 123 / KOM (Ђ)', quantity: '1', unitPrice: '219.99', totalAmount: '219.99' }
+    ],
+    payments: [{ method: 'cashless', amount: '1121.46' }]
+  })
+})
+
+// Synthetic receipt, as above. Cash and a voucher add up to the total, so the printed cash is
+// the applied amount; a voucher has no exact Receipt method.
+test('converts cash and voucher tenders that settle the total', () => {
+  expect(convertReceipt(synthetic2)).toEqual({
+    completeness: 'full',
+    currency: 'RSD',
+    operation: 'unknown',
+    issuedAt: { date: '2026-11-21', time: '19:30:00' },
+    totalAmount: '1499',
+    merchant: { name: 'TEST MARKET DOO', address: 'ТЕСТНА УЛИЦА 1 Нови Сад' },
+    items: [
+      { name: 'MASLINOVO ULJE EXTRA DEVICANSKO 1L / KOM (Ђ)', quantity: '1', unitPrice: '1499', totalAmount: '1499' }
+    ],
+    payments: [{ method: 'cash', amount: '999' }, { method: 'other', amount: '500', name: 'Ваучер' }]
   })
 })
