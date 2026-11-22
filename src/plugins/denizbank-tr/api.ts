@@ -299,7 +299,7 @@ export class DenizBankApi {
         applicationVersion: applicationVersion + ('token' in session ? session.token : ''),
         captchaData
       }
-    }, res => get(res.body, 'isSuccess') === true &&
+    }, res =>
       Number.isFinite(new Date(getOptString(res.body, 'currentTime') ?? '').valueOf()) &&
       Number.isFinite(getOptNumber(res.body, 'sessionTimeout')) &&
       (getOptNumber(res.body, 'sessionTimeout') ?? 0) > 0) as FetchResponse & { body: { currentTime: string, sessionTimeout: number } }
