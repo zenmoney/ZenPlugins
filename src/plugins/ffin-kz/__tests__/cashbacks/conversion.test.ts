@@ -12,6 +12,14 @@ jest.mock('../../cashback-partners', () => ({
 }))
 jest.mock('../../cashback-mappings', () => ({ baseExcludedMcc: [4814, 6011] }))
 const { convertCashbacks } = jest.requireActual<typeof import('../../converters/cashbacks')>('../../converters/cashbacks')
+
+it('excludes passenger rail MCC 4112 from base cashback', () => {
+  // Freedom Bank loyalty rules, appendix 1, section 5:
+  // https://bankffin.kz/storage/docs/QSPSkbumADUU1QwpRPyj5O4a4N7yOphZXUFBo6Bj.pdf#page=14
+  const { baseExcludedMcc } = jest.requireActual<typeof import('../../cashback-mappings')>('../../cashback-mappings')
+  expect(baseExcludedMcc).toContain(4112)
+})
+
 describe('[model] cashback conversion', () => {
   it('binds cashback only to distinct card accounts and preserves leap-month bounds', () => {
     const actual = convertCashbacks([
