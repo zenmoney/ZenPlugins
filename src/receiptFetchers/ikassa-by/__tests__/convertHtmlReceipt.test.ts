@@ -3,13 +3,9 @@ import papaDoner from './convertHtmlReceipt-01.html'
 import proStore from './convertHtmlReceipt-02.html'
 import { convertReceipt } from '../converters'
 
-// Complete public HTML responses captured on 2026-10-25. Bank and loyalty card
-// suffixes in case 02 are redacted at the user’s request; other bytes are unchanged:
+// Complete sectioned HTML response captured on 2026-10-25.
+// Independently retrieved through ch.info-center.by, with matching quantities and totals.
 // https://receipts.ikassa.by/render/1B1B958F18F1B1A5071866A4
-// https://receipts.ikassa.by/render/484979BF5F0D340E07193731
-// Both receipts were independently retrieved through ch.info-center.by; all 60
-// quantities/line totals and both document totals agree. iKassa additionally
-// reports final unit quotes. Discount/refund/prepayment print layouts need samples.
 test('converts the entire Papa Doner receipt, including free choices', () => {
   expect(convertReceipt(papaDoner)).toEqual({
     completeness: 'full',
@@ -36,13 +32,20 @@ test('converts the entire Papa Doner receipt, including free choices', () => {
   })
 })
 
-test('converts all ProStore rows, retaining source unit quotes and rounded weighted totals', () => {
+// Complete flat HTML from zenmoney_plugin_log_2026-11-22-18-31-55.log (HTTP response id 0).
+// The cashier surname and the bank and loyalty card suffixes are redacted.
+// Unit prices match the earlier iKassa capture. Quantities, item amounts and the
+// total also match the independent fiscal lookup. Discount, refund and prepayment
+// layouts still need source examples.
+// https://receipts.ikassa.by/render/484979BF5F0D340E07193731
+test('converts all ProStore items with rounded weighted totals and skips the card slip and parking coupon', () => {
   expect(convertReceipt(proStore)).toEqual({
     completeness: 'full',
     id: '484979BF5F0D340E07193731',
     issuedAt: { date: '2026-10-25', time: '19:12:46' },
     currency: 'BYN',
     operation: 'unknown',
+    originalTotalAmount: '491.02',
     totalAmount: '491.02',
     merchant: {
       name: 'Общество с ограниченной ответственностью "Торговый дом Простор" Гипермаркет "ProStore" Малиновка',
@@ -69,13 +72,13 @@ test('converts all ProStore rows, retaining source unit quotes and rounded weigh
       { name: 'Халва Ванильный аромат 240гр', quantity: '1', totalAmount: '4.29', unitPrice: '4.29' },
       { name: "Драже MМ's Криспи 36г", quantity: '1', totalAmount: '3.79', unitPrice: '3.79' },
       { name: '[M] Сыр тв Брест Литовск выдержанный 12мес 45% 130г ку', quantity: '1', totalAmount: '9.09', unitPrice: '9.09' },
-      { name: '[M] Сыр п/тв Брест-Литовск Маасдам  45% 200г', quantity: '1', totalAmount: '5.53', unitPrice: '5.53' },
+      { name: '[M] Сыр п/тв Брест-Литовск Маасдам 45% 200г', quantity: '1', totalAmount: '5.53', unitPrice: '5.53' },
       { name: 'Шоколад Schogetten молочный с ванильной нач и кусо', quantity: '1', totalAmount: '7.82', unitPrice: '7.82' },
       { name: 'Колбаска Гаскона с/в из м/пт сорт экстра пак мод 1', quantity: '1', totalAmount: '10.65', unitPrice: '10.65' },
       { name: 'Хек филе без кожи морож 500г', quantity: '1', totalAmount: '13.49', unitPrice: '13.49' },
       { name: "Драже MМ's Криспи 36г", quantity: '1', totalAmount: '3.79', unitPrice: '3.79' },
       { name: 'Сырок глазир Молочная страна с ванилином 23% 45г', quantity: '9', totalAmount: '8.91', unitPrice: '0.99' },
-      { name: 'Яйцо Kinder сюрприз из молочного шоколада с игру', quantity: '1', totalAmount: '7.89', unitPrice: '7.89' },
+      { name: 'Яйцо Kinder сюрприз  из молочного шоколада  с игру', quantity: '1', totalAmount: '7.89', unitPrice: '7.89' },
       { name: '[M] Йогурт Суперкид обогащ кальцием и витамином Д с вк', quantity: '1', totalAmount: '1.93', unitPrice: '1.93' },
       { name: 'Яйцо куриное Кобринские йодоселеносодерж С-2 белое', quantity: '1', totalAmount: '7.92', unitPrice: '7.92' },
       { name: 'Мясо креветки в заливке п/уп 180гр', quantity: '1', totalAmount: '7.45', unitPrice: '7.45' },
@@ -122,6 +125,7 @@ test('[model] invalid source calendar dates remain failures', () => {
 })
 
 // Complete public cloud-host receipt, captured 2026-11-05; receipts.csv row 1489.
+// The cashier surname is redacted.
 test('converts the cloud-host document without changing its identity', () => {
   expect(convertReceipt(cloudReceipt)).toEqual({
     completeness: 'full',
