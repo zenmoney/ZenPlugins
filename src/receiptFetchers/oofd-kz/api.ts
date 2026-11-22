@@ -1,5 +1,5 @@
-import { hasHost } from '../../common/receiptFetcher/receipt'
-import { fetchPublicPage, fetchConsumerPage, fetchReceipt as fetchReceiptRaw } from './fetchApi'
+import { hasHost, queryParams } from '../../common/receiptFetcher/receipt'
+import { fetchPublicPage, fetchConsumerPage, fetchReceipt as fetchReceiptRaw, lookupReceipt } from './fetchApi'
 
 export async function fetchReceipt (code: string): Promise<{ status: 'found', data: unknown } | { status: 'notApplicable' | 'notFound' | 'pending' }> {
   if (!hasHost(code, ['consumer.oofd.kz', 'kkm.webkassa.kz'])) return { status: 'notApplicable' }
@@ -18,6 +18,12 @@ export async function fetchReceipt (code: string): Promise<{ status: 'found', da
   assert(typeof response.url === 'string' && hasHost(response.url, ['consumer.oofd.kz']), 'Unexpected OOFD redirect')
   const path = response.url.replace(/^https?:\/\/[^/]+/, '')
   if (path.split('?')[0] === '/') return { status: 'notFound' }
+  if (/^\/(?:ru|kk)\/?(?:\?|$)/.test(path)) {
+    const { i, f, s, t } = queryParams(response.url)
+    assert(typeof i === 'string' && i.length > 0 && typeof f === 'string' && f.length > 0 &&
+      typeof s === 'string' && s.length > 0 && typeof t === 'string' && t.length > 0, 'Missing OOFD lookup parameters')
+    return { status: 'found', data: await lookupReceipt({ i, f, s, t }) }
+  }
   assert(/^\/ticket(?:\/|\?|$)/.test(path), 'Unexpected OOFD receipt path')
   return { status: 'found', data: await fetchReceiptRaw(path) }
 }
