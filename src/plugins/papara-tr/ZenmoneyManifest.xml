@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>papara-tr</id>
+    <company>0</company>
+    <codeRequired>false</codeRequired>
+    <description>
+        Papara hesabınızdaki TL ve döviz bakiyeleri ile işlem geçmişi senkronize edilir.
+        Giriş sırasında güvenlik doğrulaması (Cloudflare) penceresi açılır, ardından Papara uygulamasına gelen kodu girmeniz gerekir. İlk girişte uygulamadaki cihaz onayını da kabul etmeniz istenir.
+        Papara oturumu yaklaşık 30 dakika geçerlidir; bu süre dolduktan sonra senkronizasyon arka planda çalışmaz ve uygulamada yeniden giriş yapmanız istenir.
+        Papara aynı anda yalnızca bir web oturumuna izin verir: papara.com'a tarayıcıdan giriş yapmak bu oturumu sonlandırır.
+        Birikim hesapları, değerli metal ve kripto para bakiyeleri henüz desteklenmemektedir.
+    </description>
+</provider>
