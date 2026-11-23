@@ -18,3 +18,28 @@ export async function fetchReceipt (path: string): Promise<unknown> {
   assert(response.status >= 200 && response.status < 300, 'Unexpected receipt HTTP status', { status: response.status })
   return response.body
 }
+
+export async function lookupReceipt (parameters: { i: string, f: string, s: string, t: string }): Promise<unknown> {
+  const headersMask = { Authorization: true, Cookie: true, 'Set-Cookie': true }
+  const response = await fetchJson('https://consumer.oofd.kz/api/consumer-proxy/api/tickets/get-by-url?' + qs.stringify(parameters), {
+    headers: { 'Content-Type': 'application/json' },
+    sanitizeRequestLog: { headers: headersMask },
+    sanitizeResponseLog: {
+      headers: headersMask,
+      body: {
+        ticket: {
+          customerIinOrBin: true,
+          customerEmail: true,
+          customerPhone: true,
+          operator: { name: true },
+          // The binary protocol copies can duplicate personal data from the decoded fields.
+          requestPayload: true,
+          payload: true,
+          responsePayload: true
+        }
+      }
+    }
+  })
+  assert(response.status >= 200 && response.status < 300, 'Unexpected receipt HTTP status', { status: response.status })
+  return response.body
+}
