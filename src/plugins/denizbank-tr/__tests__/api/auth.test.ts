@@ -43,4 +43,17 @@ describe('authentication [model]', () => {
     expect(error).toBeInstanceOf(Error)
     expect(error).not.toBeInstanceOf(ZPAPIError)
   })
+  it('accepts credentials while the login still awaits push confirmation', async () => {
+    // Reduced from an observed 2026-11-22 credentials response (profile fields omitted):
+    // the bank accepted the login but returned isSuccess: false with an empty errorMessage before the push step.
+    fetchMock.patch('https://example.com/auth/token', {
+      status: 200,
+      body: { currentTime: '2026-11-22T11:12:04.7068609+03:00', sessionTimeout: 570, isSuccess: false, errorMessage: '' }
+    })
+    const session = { clientId: 'client', encryptionKey: 'key', token: 'token' }
+    const result = await (api as unknown as {
+      sendCredentials: (...args: unknown[]) => Promise<{ currentTime: Date, sessionTimeout: number }>
+    }).sendCredentials(session, 'login', 'secret', 'captchaId', 'ABCD', 'JanusIB-20261117.1-')
+    expect(result.sessionTimeout).toBe(570)
+  })
 })
