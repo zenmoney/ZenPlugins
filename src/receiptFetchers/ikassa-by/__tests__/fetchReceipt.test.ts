@@ -1,9 +1,12 @@
 import get from '../../../types/get'
+import fs from 'fs'
+import path from 'path'
 import cloudReceipt from './convertHtmlReceipt-03.html'
 import fetchMock from 'fetch-mock'
 import papaDoner from './convertHtmlReceipt-01.html'
 import proStore from './convertHtmlReceipt-02.html'
 import missingReceipt from './fetchReceipt-01.json'
+import missingWebkassaReceipt from '../../webkassa-by/__tests__/fetchReceipt-01.json'
 import { ZPAPIError } from '../../../errors'
 import { serializeManifest } from '../../../common/receiptFetcher/manifest'
 import { convertReceipt } from '../converters'
@@ -25,14 +28,15 @@ const codes = [
 const readLine = jest.fn(() => { throw new Error('Unexpected input request') })
 const openWebView = jest.fn(() => { throw new Error('Unexpected WebView') })
 beforeEach(() => {
-  Object.assign(globalThis, { ZenMoney: { locale: 'en', readLine, openWebView } })
+  (fetchMock as typeof fetchMock & { setImplementations: (implementations: { Response: typeof Response }) => void }).setImplementations({ Response })
+  Object.assign(globalThis, { ZenMoney: { locale: 'en', features: { binaryResponseBody: true }, readLine, openWebView } })
   jest.clearAllMocks()
   fetchMock.catch(() => { throw new Error('Unexpected receipt request') })
 })
 afterEach(() => { fetchMock.restore(); jest.restoreAllMocks() })
 
 // Preserve query-only and host-independent documentId lookup, and accept fiscal
-// QR UIDs and current render links. The destination always stays on iKassa.
+// QR UIDs and current render links. A successful lookup needs only iKassa.
 test.each(codes)('retrieves the captured complete receipt from %s', async code => {
   fetchMock.get(endpoint, { body: papaDoner, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
   await expect(fetchReceipt(args(code))).resolves.toEqual({ status: 'found', receipt: convertReceipt(papaDoner) })
@@ -73,12 +77,45 @@ test.each([
   expect(fetchMock.called()).toBe(false)
 })
 
-// Complete observed HTTP 400 body for /render/000000000000000000000000,
-// captured on 2026-10-25. A valid-format lookup had no matching database record.
-test('recognizes the confirmed missing-receipt response', async () => {
+// An anonymized WebKassa print-form PDF preserves the observed layout and amount
+// separators. The iKassa response replays the observed missing-record result.
+test('returns the WebKassa receipt when iKassa has no record for the fiscal UID', async () => {
+  const id = '0123456789ABCDEF3B8B8BA7'
+  const primary = `https://receipts.ikassa.by/render/${id}`
+  const fallback = `https://webkassa.by/rsCashAppsWeb/noauth/files/print-forms/checks/${id}`
+  fetchMock.get(primary, { status: 400, body: JSON.stringify(missingReceipt) })
+  const pdf = new Uint8Array(fs.readFileSync(path.join(__dirname, '../../webkassa-by/__tests__/fetchReceipt-02.pdf')))
+  fetchMock.get(fallback, new Response(pdf, {
+    headers: { 'Content-Type': 'application/octet-stream' }
+  }))
+  await expect(fetchReceipt(args(id))).resolves.toEqual({
+    status: 'found',
+    receipt: expect.objectContaining({ id, totalAmount: '2500' })
+  })
+  expect(get(fetchMock.calls(), 'matched')).toEqual([
+    expect.arrayContaining([primary]),
+    expect.arrayContaining([fallback])
+  ])
+})
+
+// Both providers returned their missing-record responses for the all-zero UID.
+test('returns notFound when neither provider has the receipt', async () => {
   const id = '000000000000000000000000'
   fetchMock.get(`https://receipts.ikassa.by/render/${id}`, { status: 400, body: JSON.stringify(missingReceipt) })
+  fetchMock.get(`https://webkassa.by/rsCashAppsWeb/noauth/files/print-forms/checks/${id}`, new Response(JSON.stringify(missingWebkassaReceipt), {
+    status: 500,
+    headers: { 'Content-Type': 'application/json;charset=UTF-8' }
+  }))
   await expect(fetchReceipt(args(id))).resolves.toEqual({ status: 'notFound' })
+  expect(get(fetchMock.calls(), 'matched')).toHaveLength(2)
+})
+
+// Only a confirmed missing record resolves a failed fallback as notFound.
+test('[model] keeps an unclassified fallback failure reportable', async () => {
+  const id = '000000000000000000000000'
+  fetchMock.get(`https://receipts.ikassa.by/render/${id}`, { status: 400, body: JSON.stringify(missingReceipt) })
+  fetchMock.get(`https://webkassa.by/rsCashAppsWeb/noauth/files/print-forms/checks/${id}`, { status: 500 })
+  await expect(fetchReceipt(args(id))).rejects.toThrow('Unexpected receipt HTTP status')
 })
 
 // Model transport/HTTP failures without fabricating provider-specific error codes.

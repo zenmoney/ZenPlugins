@@ -20,14 +20,14 @@ function parseDocumentId (code: string): string | undefined {
   return documentId
 }
 
-export async function fetchReceipt (code: string): Promise<{ status: 'found', data: unknown, documentId: string } | { status: 'notApplicable' | 'notFound' }> {
+export async function fetchReceipt (code: string): Promise<{ status: 'found', data: unknown, documentId: string } | { status: 'notFound', documentId: string } | { status: 'notApplicable' }> {
   const documentId = parseDocumentId(code)
   if (documentId === undefined) return { status: 'notApplicable' }
   const response = await fetchReceiptRaw(documentId, hasHost(code, ['receipts.cloud.ikassa.by']))
   // Observed for a missing UID on 2026-10-25; a generic 400 is not absence.
   if (response.status === 400 && typeof response.body === 'string' && response.body.startsWith('{')) {
     const error: unknown = JSON.parse(response.body)
-    if (get(error, 'code') === 'unknown' && get(error, 'message') === 'no rows in result set') return { status: 'notFound' }
+    if (get(error, 'code') === 'unknown' && get(error, 'message') === 'no rows in result set') return { status: 'notFound', documentId }
   }
   assert(response.status >= 200 && response.status < 300, 'Unexpected receipt HTTP status', { status: response.status })
   return { status: 'found', data: response.body, documentId }
