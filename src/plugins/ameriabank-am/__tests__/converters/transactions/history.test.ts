@@ -116,3 +116,46 @@ it('converts all four July-to-October pages including the previously omitted pag
   expect(convert([...records, ...records])).toEqual(result)
   expect(result.some(t => t.date.getTime() === fromDate.getTime())).toBe(true)
 })
+
+it('imports a closed-card balance transfer as income on the active credit account (AMOUNT-001, TRANSFER-001)', () => {
+  const closedCardTransfer = {
+    swiftPayment: null,
+    status: 'APPROVED',
+    settledAmount: { currency: 'AMD', value: 12.34 },
+    domesticAmount: { currency: 'AMD', value: 12.34 },
+    transactionAmount: { currency: 'AMD', value: 12.34 },
+    transactionType: 'charge:commission',
+    beneficiaryName: 'ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 004',
+    debitAccountNumber: '1570010000000099',
+    creditAccountNumber: '1570010000000002',
+    flowDirection: 'EXPENSE',
+    details: 'Փակված քարտի հաշվի մնացորդի տեղափո',
+    sourceSystem: null,
+    settledDate: 1662699600000,
+    transactionDate: 1662699600000,
+    additionalInfo: null,
+    transactionId: '3f54c9e0-8b2d-5a1c-9e4a-1b2c3d4e5f6a',
+    id: '3f54c9e0-8b2d-5a1c-9e4a-1b2c3d4e5f6a',
+    workflowCode: 'charge:commission',
+    date: '09 սեպտեմբերի',
+    year: '2022',
+    month: 'սեպտեմբեր'
+  }
+  expect(convert([closedCardTransfer])).toEqual([{
+    date: new Date('2022-09-09T05:00:00.000Z'),
+    hold: false,
+    movements: [movement('3f54c9e0-8b2d-5a1c-9e4a-1b2c3d4e5f6a', '2', 12.34)],
+    merchant: { title: 'ՍԱՄՎԵԼ ՊԵՏՐՈՍՅԱՆ 004', city: null, country: null, mcc: null, location: null },
+    comment: 'Փակված քարտի հաշվի մնացորդի տեղափո'
+  }])
+})
+
+// Model an operation whose debit and credit accounts are both outside the fetched account graph.
+it('[model] rejects a history record when neither debit nor credit account exists in accounts', () => {
+  const unmappedTransfer = {
+    ...capture.history[0] as Record<string, unknown>,
+    debitAccountNumber: '1570010000000098',
+    creditAccountNumber: '1570010000000099'
+  }
+  expect(() => convert([unmappedTransfer])).toThrow('MyAmeria movement account is missing')
+})
