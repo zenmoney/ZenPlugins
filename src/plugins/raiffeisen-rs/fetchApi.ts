@@ -6,6 +6,7 @@ import { AccountBalanceResponse, Auth, GetAccountTransactionsResponse, GetTransa
 import { isArray, chunk } from 'lodash'
 import * as argon2 from 'argon2-browser'
 import moment from 'moment'
+import { splitDateRange } from './converters'
 
 const baseUrl = 'https://rol.raiffeisenbank.rs/Retail/Protected/Services/'
 const concurrentFetchOps = 10
@@ -120,6 +121,21 @@ export async function fetchAllAccounts (auth: Auth): Promise<AccountBalanceRespo
 }
 
 export async function fetchAccountTransactions (accountNumber: string, productCoreID: string, auth: Auth, fromDate: Date, toDate: Date): Promise<GetAccountTransactionsResponse[]> {
+  const apiTransactions: GetAccountTransactionsResponse[] = []
+  for (const [periodFrom, periodTo] of splitDateRange(fromDate, toDate)) {
+    apiTransactions.push(...await fetchAccountTurnover(accountNumber, productCoreID, auth, periodFrom, periodTo))
+  }
+
+  for (const apiTransactionsChunk of chunk(apiTransactions, concurrentFetchOps)) {
+    // eslint-disable-next-line @typescript-eslint/return-await
+    await Promise.all(apiTransactionsChunk.map(async apiTransaction => fetchTransactionDetails(apiTransaction, auth)))
+    await new Promise(resolve => setTimeout(resolve, delayBetweenFetches))
+  }
+
+  return apiTransactions
+}
+
+async function fetchAccountTurnover (accountNumber: string, productCoreID: string, auth: Auth, fromDate: Date, toDate: Date): Promise<GetAccountTransactionsResponse[]> {
   // FIXME: find a better way to check if that's a time deposit
   const TIMED_DEPOSIT_PRODUCT_CORE_IDS = ['21']
   const requestURL = 'DataService.svc/' +
@@ -160,15 +176,7 @@ export async function fetchAccountTransactions (accountNumber: string, productCo
 
   assert(isArray(response.body), 'cant get transactions array', response)
 
-  const apiTransactions = response.body.length > 0 ? response.body[0] : []
-
-  for (const apiTransactionsChunk of chunk(apiTransactions, concurrentFetchOps)) {
-    // eslint-disable-next-line @typescript-eslint/return-await
-    await Promise.all(apiTransactionsChunk.map(async apiTransaction => fetchTransactionDetails(apiTransaction, auth)))
-    await new Promise(resolve => setTimeout(resolve, delayBetweenFetches))
-  }
-
-  return apiTransactions
+  return response.body.length > 0 ? response.body[0] : []
 }
 
 async function fetchTransactionDetails (transaction: GetAccountTransactionsResponse, auth: Auth): Promise<void> {
