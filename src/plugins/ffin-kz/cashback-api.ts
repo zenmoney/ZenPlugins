@@ -40,32 +40,38 @@ export function readCashbackSettings (value: unknown): CashbackSettings | null {
   }
 }
 
-async function ask (message: string): Promise<string> {
-  const answer = await ui.readLine(message)
-  if (answer == null) throw new TemporaryError('Настройка кэшбека отменена. Повторите импорт PDF.')
-  return answer.trim()
-}
-
-async function choice (message: string, values: string[]): Promise<string> {
-  while (true) {
-    const answer = await ask(message)
-    if (values.includes(answer)) return answer
-    await ui.alert('Введите номер одного из предложенных вариантов.')
-  }
-}
-
 export async function configureCashbacks (month: string, isInBackground: boolean): Promise<CashbackSettings> {
   if (isInBackground) throw new UserInteractionError()
-  const enabled = await choice(`Кэшбек Freedom на ${month}.\n1 — настроить по данным приложения банка\n0 — не передавать кэшбеки в этом месяце`, ['0', '1'])
-  const settings: CashbackSettings = { version: 1, month, enabled: enabled === '1', level: '', basePercent: '0', applePayPercent: '0', qrPercent: '0' }
-  if (!settings.enabled) return settings
-  const selectedLevel = await choice('Выберите уровень лояльности на текущий месяц после его обновления в приложении Freedom:\n1 — Standard: 1%, Apple Pay +0,5%, QR Freedom +2%\n2 — Silver: 2%, Apple Pay +1%, QR Freedom +2%\n3 — Gold: 3%, Apple Pay +1,5%, QR Freedom +2%\n4 — Platinum: 4%, Apple Pay +2%, QR Freedom +2%', ['1', '2', '3', '4'])
-  const level = loyaltyLevels[Number(selectedLevel) - 1]
-  settings.level = level.title
-  settings.basePercent = level.basePercent
-  settings.applePayPercent = level.contactlessPercent
-  settings.qrPercent = '2'
-  const confirmed = await choice(`Сохранить на ${month}?\nУровень: ${settings.level}\nБазовый кэшбек: ${settings.basePercent}%\nApple Pay: +${settings.applePayPercent}%\nQR через Freedom SuperApp в POS-терминалах Freedom: +${settings.qrPercent}%\n1 — сохранить\n0 — отменить импорт`, ['0', '1'])
-  if (confirmed === '0') throw new TemporaryError('Настройка кэшбека отменена. Повторите импорт PDF.')
-  return settings
+  const qrPercent = '2'
+  const options = loyaltyLevels.map(({ title, basePercent, contactlessPercent }, index) =>
+    `${index + 1} — ${title}: ${basePercent}%, Apple Pay +${contactlessPercent.replace('.', ',')}%`)
+  const message = [
+    `Выберите уровень лояльности Freedom на ${month}. Его можно посмотреть в приложении банка.`,
+    ...options,
+    `QR через Freedom SuperApp в POS-терминалах Freedom: +${qrPercent}% на любом уровне`,
+    '0 — не настраивать кэшбек в этом месяце'
+  ].join('\n')
+
+  while (true) {
+    const input = await ui.readLine(message)
+    if (input == null) throw new TemporaryError('Настройка кэшбека отменена. Повторите импорт PDF.')
+
+    const answer = input.trim()
+    if (answer === '0') {
+      return { version: 1, month, enabled: false, level: '', basePercent: '0', applePayPercent: '0', qrPercent: '0' }
+    }
+    const level = loyaltyLevels.find((_, index) => String(index + 1) === answer)
+    if (level !== undefined) {
+      return {
+        version: 1,
+        month,
+        enabled: true,
+        level: level.title,
+        basePercent: level.basePercent,
+        applePayPercent: level.contactlessPercent,
+        qrPercent
+      }
+    }
+    await ui.alert('Введите номер одного из предложенных вариантов.')
+  }
 }

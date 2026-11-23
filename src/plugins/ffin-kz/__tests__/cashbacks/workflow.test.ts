@@ -35,12 +35,11 @@ afterEach(() => {
 })
 
 describe('[model] monthly cashback workflow', () => {
-  it('saves confirmed input and reuses it on a repeated PDF import', async () => {
-    jest.mocked(ui.readLine)
-      .mockResolvedValueOnce('1').mockResolvedValueOnce('3')
-      .mockResolvedValueOnce('1')
+  it('saves the level after one prompt and reuses it on a repeated PDF import', async () => {
+    jest.mocked(ui.readLine).mockResolvedValueOnce('3')
     const first = await scrape({ ...args, preferences: { login: '', password: '' } })
     assertCashbackPayload(first.cashbacks)
+    expect(ui.readLine).toHaveBeenCalledTimes(1)
     expect(state.cashbackSettings).toEqual({ version: 1, month: '2026-11', enabled: true, level: 'Gold', basePercent: '3', applePayPercent: '1.5', qrPercent: '2' })
     expect(ZenMoney.locale).toBe('ru')
     jest.mocked(ui.readLine).mockClear()
@@ -49,8 +48,8 @@ describe('[model] monthly cashback workflow', () => {
     expect(ui.readLine).not.toHaveBeenCalled()
   })
 
-  it('does not save unconfirmed settings or return a partial import after cancellation', async () => {
-    jest.mocked(ui.readLine).mockResolvedValueOnce('1').mockResolvedValueOnce(null)
+  it('does not save settings or return a partial import after cancellation', async () => {
+    jest.mocked(ui.readLine).mockResolvedValueOnce(null)
     await expect(scrape({ ...args, preferences: { login: '', password: '' } })).rejects.toBeInstanceOf(TemporaryError)
     expect(state.cashbackSettings).toBeUndefined()
   })
@@ -80,6 +79,7 @@ describe('[model] monthly cashback workflow', () => {
     jest.mocked(ui.readLine).mockResolvedValueOnce('0')
     const first = await scrape({ ...args, preferences: { login: '', password: '' } })
     expect(first).toEqual({ accounts: [card], transactions: [] })
+    expect(ui.readLine).toHaveBeenCalledTimes(1)
     jest.mocked(ui.readLine).mockClear()
     expect(await scrape({ ...args, preferences: { login: '', password: '' } })).toEqual(first)
     expect(ui.readLine).not.toHaveBeenCalled()
@@ -87,8 +87,7 @@ describe('[model] monthly cashback workflow', () => {
 
   it('allows explicit reconfiguration in the same month', async () => {
     state.cashbackSettings = { version: 1, month: '2026-11', enabled: false, level: '', basePercent: '0', applePayPercent: '0', qrPercent: '0' }
-    jest.mocked(ui.readLine).mockResolvedValueOnce('1').mockResolvedValueOnce('3')
-      .mockResolvedValueOnce('1')
+    jest.mocked(ui.readLine).mockResolvedValueOnce('3')
     const result = await scrape({ ...args, preferences: { login: '', password: '', reconfigureCashbacks: true } })
     assertCashbackPayload(result.cashbacks)
     expect(state.cashbackSettings).toEqual({ version: 1, month: '2026-11', enabled: true, level: 'Gold', basePercent: '3', applePayPercent: '1.5', qrPercent: '2' })
@@ -101,8 +100,7 @@ describe('[model] monthly cashback workflow', () => {
     ['4', 'Platinum', '4', '2']
   ])('fills published rates for level choice %s without percentage input', async (choice, level, basePercent, applePayPercent) => {
     // The official bank table is the expectation; prompts collect only a numbered level choice.
-    jest.mocked(ui.readLine).mockResolvedValueOnce('1').mockResolvedValueOnce(choice)
-      .mockResolvedValueOnce('1')
+    jest.mocked(ui.readLine).mockResolvedValueOnce(choice)
     expect(await configureCashbacks('2026-11', false)).toEqual({
       version: 1, month: '2026-11', enabled: true, level, basePercent, applePayPercent, qrPercent: '2'
     })
