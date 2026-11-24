@@ -8,7 +8,6 @@ Reference for affected code paths only. These limitations describe checked-in im
 | [ScrapeFunc](../../src/types/zenmoney.ts) | Declares `toDate?: Date` with an outdated “till now” comment; the adapter passes `null`. Follow the [unbounded nullish date contract](scrape/contract.md#dates-and-repeated-runs); a declaration fix needs code verification |
 | [Account masking](../../src/common/accounts.js) | `trimSyncId`/`sanitizeSyncId` can make distinct plugin IDs collide. Keep valid plugin identity selection and report adapter collisions separately |
 | [Transfer grouping](../../src/common/transactionGroupHandler.js) | The default merger does not remove a one-sided duplicate beside an already complete transfer. Use confirmed deduplication for that source pattern; verify no duplicate financial effect |
-| [Legacy transaction adapter](../../src/common/converters.js) | Incoming `sum: null` validation reads the outgoing invoice. A valid incoming invoice can fail. Report the adapter defect; do not guess an amount or drop the operation |
 | [Native preferences](scrape/preferences.md) | Native parser implementations are outside this repository; the browser reader implements only part of the form. Check changed native UI behavior in the application |
 | [Manifest loader](../../scripts/plugin-manifest-loader.js) | XML plugins export `scrape` or `main` from a module, with optional `makeTransfer`; receipt TS/JS metadata exposes only declared receipt operations. Additional plugin types still need an explicit manifest and operation contract |
 

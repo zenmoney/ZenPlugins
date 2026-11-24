@@ -8,8 +8,6 @@ Applies to transaction conversion. Field meanings: [transaction contract](../tra
 
 Do not use exchange rates or current balances to guess a missing historical amount. A known zero is not missing data. Reject NaN/Infinity and malformed required numbers. `sum: null` is allowed when the amount in the known account currency is unavailable and `invoice` supplies the confirmed original-operation amount and currency, different from that account currency. `sum: null` with `invoice: null` is invalid. This nullable representation must not hide a changed bank response; verify its downstream handling and report adapter defects separately from the domain rule.
 
-The legacy transfer adapter has a known failure for an incoming movement with `sum: null`; see [compatibility limitations](../../compatibility.md). This is not permission to guess the amount or drop the operation.
-
 | Case | Required result |
 | --- | --- |
 | 100 USD purchase debits 4,150 UAH | `sum: -4150`, invoice `-100 USD` |

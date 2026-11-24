@@ -331,7 +331,7 @@ export function toZenMoneyTransaction (readableTransaction, accountsByIdLookup) 
     })()
     const income = (() => {
       if (incomeMovement.sum === null) {
-        console.assert(outcomeMovement.invoice.sum >= 0, 'income movement with null sum must have invoice.sum >= 0', {
+        console.assert(incomeMovement.invoice.sum >= 0, 'income movement with null sum must have invoice.sum >= 0', {
           readableTransaction,
           incomeMovement
         })
