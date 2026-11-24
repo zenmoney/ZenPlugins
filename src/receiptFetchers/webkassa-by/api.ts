@@ -1,16 +1,27 @@
 import { parsePdf } from '../../common/pdfUtils'
+import { queryParams } from '../../common/receiptFetcher/receipt'
+import { fiscalUid, ikassaRenderLink, webkassaLink } from './codeMatchers'
 import { fetchReceipt as fetchReceiptRaw } from './fetchApi'
 
-export async function fetchReceipt (code: string): Promise<Awaited<ReturnType<typeof fetchReceiptByUid>> | { status: 'notApplicable' }> {
-  const match = code.match(/^https:\/\/webkassa\.by\/p\?uid=([A-Fa-f0-9]{24})$/)
-  if (match === null) return { status: 'notApplicable' }
-  return await fetchReceiptByUid(match[1])
+function parseUid (code: string): string | undefined {
+  if (fiscalUid.test(code)) return code
+  const webkassaUid = webkassaLink.exec(code)?.[1]
+  if (webkassaUid !== undefined) return webkassaUid
+
+  const renderUid = ikassaRenderLink.exec(code)?.[1]
+  const { documentId } = queryParams(code)
+  if (documentId === undefined) return renderUid
+  if (typeof documentId !== 'string' || !fiscalUid.test(documentId)) return undefined
+  if (renderUid !== undefined && renderUid.toUpperCase() !== documentId.toUpperCase()) return undefined
+  return documentId
 }
 
-export async function fetchReceiptByUid (uid: string): Promise<{ status: 'found', data: unknown } | { status: 'notFound' }> {
+export async function fetchReceipt (code: string): Promise<{ status: 'found', data: unknown, uid: string } | { status: 'notApplicable' | 'notFound' }> {
+  const uid = parseUid(code)?.toUpperCase()
+  if (uid === undefined) return { status: 'notApplicable' }
   // The public endpoint looks up the uppercase fiscal UID case-sensitively.
-  const bytes = await fetchReceiptRaw(uid.toUpperCase())
+  const bytes = await fetchReceiptRaw(uid)
   if (bytes === undefined) return { status: 'notFound' }
   const parsed = await parsePdf({ arrayBuffer: async () => bytes })
-  return { status: 'found', data: parsed.text }
+  return { status: 'found', data: parsed.text, uid }
 }

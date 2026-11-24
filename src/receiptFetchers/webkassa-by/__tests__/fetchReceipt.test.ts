@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import fetchMock from 'fetch-mock'
 import { fetchReceipt } from '../index'
+import { manifest } from '../ZenmoneyManifest'
 import { convertReceipt } from '../converters'
 import text from './convertReceipt-01.json'
 import missingReceipt from './fetchReceipt-01.json'
@@ -24,14 +25,24 @@ test.each([code.value, code.value.toLowerCase()])('retrieves the original PDF an
 
 // The anonymized public PDF preserves the provider's complete retail layout and
 // amount separators. The identifying fields and monetary values are fictional.
-test('converts a retail PDF with grouped amounts and a full timestamp', async () => {
-  const id = '0123456789ABCDEF3B8B8BA7'
+const retailId = '0123456789ABCDEF3B8B8BA7'
+test.each([
+  `https://webkassa.by/p?uid=${retailId}`,
+  retailId,
+  `documentId=${retailId}`,
+  `https://receipts.ikassa.by/?documentId=${retailId}`,
+  `https://receipts.ikassa.by/render/${retailId}`,
+  `https://receipts.cloud.ikassa.by/render/${retailId.toLowerCase()}?download=1#receipt`
+])('matches %s and converts the retail PDF with grouped amounts and a full timestamp', async value => {
+  const matcher = manifest.capabilities.fetchReceipt?.matcher
+  const alternatives = matcher != null && typeof matcher === 'object' && 'any' in matcher ? matcher.any : [matcher]
+  expect(alternatives.some(part => typeof part === 'string' ? value.includes(part) : part instanceof RegExp && part.test(value))).toBe(true)
   const pdf = new Uint8Array(fs.readFileSync(path.join(__dirname, 'fetchReceipt-02.pdf')))
-  fetchMock.get(`https://webkassa.by/rsCashAppsWeb/noauth/files/print-forms/checks/${id}`, new Response(pdf, {
+  fetchMock.get(`https://webkassa.by/rsCashAppsWeb/noauth/files/print-forms/checks/${retailId}`, new Response(pdf, {
     headers: { 'Content-Type': 'application/octet-stream' }
   }))
   await expect(fetchReceipt({
-    code: { format: 'qr', value: `https://webkassa.by/p?uid=${id}` },
+    code: { format: 'qr', value },
     isInBackground: true
   })).resolves.toEqual({
     status: 'found',
@@ -39,7 +50,7 @@ test('converts a retail PDF with grouped amounts and a full timestamp', async ()
       completeness: 'full',
       currency: 'BYN',
       operation: 'unknown',
-      id,
+      id: retailId,
       issuedAt: { date: '2025-02-03', time: '12:34:56' },
       totalAmount: '2500',
       merchant: {
@@ -71,4 +82,21 @@ test('[model] original PDF request failure propagates', async () => {
   const failure = new Error('Connection failed')
   fetchMock.get(endpoint, { throws: failure })
   await expect(fetchReceipt({ code, isInBackground: true })).rejects.toBe(failure)
+})
+
+// WebKassa accepts hexadecimal UIDs. It must not choose between conflicting
+// iKassa identifiers or interpret an untrusted render URL as a receipt code.
+test.each([
+  'Z123456789ABCDEF3B8B8BA7',
+  `https://other.invalid/render/${retailId}`,
+  `https://receipts.ikassa.by/render/${retailId}?documentId=000000000000000000000000`,
+  `documentId=${retailId}&documentId=000000000000000000000000`
+])('returns notApplicable without a network request for %s', async value => {
+  await expect(fetchReceipt({ code: { format: 'qr', value }, isInBackground: true })).resolves.toEqual({ status: 'notApplicable' })
+})
+
+test('[model] rejects a PDF whose fiscal UID differs from the requested UID', async () => {
+  const pdf = new Uint8Array(fs.readFileSync(path.join(__dirname, 'fetchReceipt-02.pdf')))
+  fetchMock.get(endpoint, new Response(pdf, { headers: { 'Content-Type': 'application/octet-stream' } }))
+  await expect(fetchReceipt({ code, isInBackground: true })).rejects.toThrow('Retrieved receipt does not match the requested identifier')
 })
