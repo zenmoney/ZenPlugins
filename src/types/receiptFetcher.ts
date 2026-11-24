@@ -135,6 +135,7 @@ export type FetchReceiptResult =
 export type FetchReceipt = (args: {
   code: ReceiptCode
   isInBackground: boolean // Background runs cannot prompt the user.
+  transactionDate?: LocalDate
 }) => Promise<FetchReceiptResult>
 
 export type ParseReceiptCodeResult =

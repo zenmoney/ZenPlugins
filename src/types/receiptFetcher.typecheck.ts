@@ -1,4 +1,4 @@
-import type { FetchReceipt, ParseReceiptCode, ReceiptFetcherManifest, ReceiptFetcherDescriptor, Receipt, ReceiptItem, ReceiptPaymentMethod, ReceiptMerchantIdentifier, ReceiptAdjustment, Matcher } from './receiptFetcher'
+import type { FetchReceipt, ParseReceiptCode, ReceiptCode, ReceiptFetcherManifest, ReceiptFetcherDescriptor, Receipt, ReceiptItem, ReceiptPaymentMethod, ReceiptMerchantIdentifier, ReceiptAdjustment, Matcher } from './receiptFetcher'
 
 const matcher: Matcher = { all: ['t=', /fn=\d+/i, { not: 'unsupported' }] }
 const manifest: ReceiptFetcherManifest = { id: 'example-ru', countryCodes: ['RU', 'BY'], capabilities: { fetchReceipt: { matcher } } }
@@ -11,6 +11,11 @@ const descriptor: ReceiptFetcherDescriptor = {
 const fetchReceipt: FetchReceipt = async () => ({ status: 'notApplicable' })
 // Both receipt operations settle through promises.
 const parseReceiptCode: ParseReceiptCode = async () => ({ status: 'notApplicable' })
+const code: ReceiptCode = { format: 'qr', value: 'test' }
+void fetchReceipt({ code, isInBackground: false })
+void fetchReceipt({ code, isInBackground: false, transactionDate: '2026-10-07' })
+// @ts-expect-error Only fetchReceipt receives the transaction date.
+void parseReceiptCode({ code, transactionDate: '2026-10-07' })
 const parseReceiptCodePreview: ParseReceiptCode = async () => ({ status: 'parsed', preview: { completeness: 'preview', totalAmount: '10' } })
 // @ts-expect-error Preview returns a promise even when parsing completes immediately.
 const synchronousPreview: ParseReceiptCode = () => ({ status: 'notApplicable' })

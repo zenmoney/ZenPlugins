@@ -6,7 +6,7 @@ Scope: provider operations and their loader lifecycle. [receiptFetcher.ts](../..
 
 | Operation | Input | Result |
 | --- | --- | --- |
-| `fetchReceipt` | Code and required `isInBackground: boolean` | Promise of a full receipt or a recognized lookup outcome |
+| `fetchReceipt` | Code, required `isInBackground: boolean`, and optional `transactionDate` (the transaction's calendar date in `YYYY-MM-DD` format) | Promise of a full receipt or a recognized lookup outcome |
 | `parseReceiptCode` | Code only | Promise of an explicitly partial local preview or `notApplicable` |
 
 Code uses `format: 'qr'` and its original `value`. Plugins MAY implement either or both operations. Receipt operations MUST return their own typed results, without bank `scrape`, `main` or account/transaction submission. Batch retrieval is outside this contract.
