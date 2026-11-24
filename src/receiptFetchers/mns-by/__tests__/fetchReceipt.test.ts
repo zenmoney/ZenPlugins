@@ -1,6 +1,5 @@
 import { JSDOM } from 'jsdom'
 import type { WebViewNavigationPolicy } from '../../../common/webView'
-import { UserInteractionError } from '../../../errors'
 import get from '../../../types/get'
 import { convertReceipt } from '../converters'
 import { fetchReceipt } from '../index'
@@ -24,8 +23,8 @@ test('[model] without a transaction date the provider makes no lookup', async ()
   expect(constructWebView).not.toHaveBeenCalled()
 })
 
-test('[model] the background never initiates the interactive receipt form', async () => {
-  await expect(fetchReceipt({ ...args, isInBackground: true })).rejects.toBeInstanceOf(UserInteractionError)
+test('[model] a foreground-only provider declines background lookup without opening the form', async () => {
+  await expect(fetchReceipt({ ...args, isInBackground: true })).resolves.toEqual({ status: 'notApplicable' })
   expect(constructWebView).not.toHaveBeenCalled()
 })
 
