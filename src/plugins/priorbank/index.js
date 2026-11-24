@@ -52,7 +52,7 @@ export async function scrape ({ preferences, fromDate, toDate }) {
   }
   const [apiAccounts, apiAccountDetails] = responses.map((x) => x.body.result)
   const accounts = convertAccounts(apiAccounts, apiAccountDetails)
-  const apiAccountsWithoutDuplicates = chooseDistinctCards(apiAccounts)
+  const apiAccountsWithoutDuplicates = chooseDistinctCards(apiAccounts, apiAccountDetails)
   const transactions = convertTransactions({
     apiAccountsWithoutDuplicates,
     apiAccountDetails,

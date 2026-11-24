@@ -63,7 +63,7 @@ describe('chooseDistinctCards', () => {
           smsNotifyText: 'СМС+',
           savings: 0,
           orderValue: 0,
-          iban: '<string[28]>',
+          iban: 'BY45PJCB30140000000000000001',
           bic: 'PJCBBY2X',
           contractNumberReplenishment: '',
           contractNumberRedemption: ''
@@ -128,7 +128,7 @@ describe('chooseDistinctCards', () => {
           smsNotifyText: 'Только бесплатные SMS',
           savings: 0,
           orderValue: 0,
-          iban: '<string[28]>',
+          iban: 'BY45PJCB30140000000000000001',
           bic: 'PJCBBY2X',
           contractNumberReplenishment: '',
           contractNumberRedemption: ''
@@ -199,7 +199,7 @@ describe('chooseDistinctCards', () => {
           smsNotifyText: 'Только бесплатные SMS',
           savings: 0,
           orderValue: 0,
-          iban: '<string[28]>',
+          iban: 'BY45PJCB30140000000000000001',
           bic: 'PJCBBY2X',
           contractNumberReplenishment: '',
           contractNumberRedemption: ''
@@ -264,7 +264,7 @@ describe('chooseDistinctCards', () => {
           smsNotifyText: 'СМС.PRO',
           savings: 0,
           orderValue: 0,
-          iban: '<string[28]>',
+          iban: 'BY45PJCB30140000000000000001',
           bic: 'PJCBBY2X',
           contractNumberReplenishment: '',
           contractNumberRedemption: ''
@@ -329,7 +329,7 @@ describe('chooseDistinctCards', () => {
           smsNotifyText: 'Только бесплатные SMS',
           savings: 0,
           orderValue: 0,
-          iban: '<string[28]>',
+          iban: 'BY45PJCB30140000000000000001',
           bic: 'PJCBBY2X',
           contractNumberReplenishment: '',
           contractNumberRedemption: ''

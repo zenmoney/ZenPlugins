@@ -1,45 +1,49 @@
 import _ from 'lodash'
+import { subtract } from '../../common/decimal'
 import { formatCommentFeeLine, joinCommentLines } from '../../common/converters'
+
+function accountIban (card) {
+  const iban = card.iban?.replace(/\s/g, '').toUpperCase()
+  return /^BY\d{2}[A-Z0-9]{24}$/.test(iban) ? iban : null
+}
+
+function groupOwnCards (allCards) {
+  const ownCards = allCards.filter(card => card.status?.respCode !== -9999)
+  return Object.values(_.groupBy(ownCards, ({ clientObject: card }) =>
+    JSON.stringify([card.type, card.currIso, accountIban(card) || card.id])))
+}
 
 export function convertAccounts (apiAccounts, apiAccountDetails) {
   if (!Array.isArray(apiAccountDetails)) { return [] }
-  const accounts = []
-  for (const apiAccount of apiAccounts) {
-    if (apiAccount.status?.respCode === -9999) { continue } // Card of another bank
-    const foundedAccount = accounts.find(account => account.account.syncID.some(syncID => syncID === apiAccount.clientObject.cardContractNumber))
-    if (foundedAccount) {
-      foundedAccount.account.syncID.push(apiAccount.clientObject.cardMaskedNumber.slice(-4))
-      foundedAccount.products.push({
-        id: apiAccount.clientObject.id.toString(),
-        type: 'card'
-      })
-      continue
+  const detailsById = _.keyBy(apiAccountDetails, 'id')
+  const accounts = groupOwnCards(apiAccounts).map(group => {
+    const cards = _.sortBy(_.uniqBy(group, 'clientObject.id'), 'clientObject.id')
+    const cardWithDetails = cards.find(card => detailsById[card.clientObject.id])
+    console.assert(cardWithDetails, 'could not find details for account', cards.map(card => card.clientObject.id))
+    const account = convertCard(cards[0], detailsById[cardWithDetails.clientObject.id])
+    account.syncID = _.uniq([...account.syncID, ...cards.map(card => card.clientObject.cardMaskedNumber.slice(-4))]).sort()
+    const products = cards.map(card => ({ id: card.clientObject.id.toString(), type: 'card' }))
+    return { account, products }
+  })
+  const identifierCounts = _.countBy(_.flatMap(accounts, ({ account }) => account.syncID))
+  for (const { account } of accounts) {
+    if (account.syncID.every(id => identifierCounts[id] > 1)) {
+      account.syncID.push(account.id)
     }
-    const details = apiAccountDetails.find((x) => x.id === apiAccount.clientObject.id)
-    console.assert(details, 'could not find details for account', apiAccount)
-    const account = convertCard(apiAccount, details)
-    const product = {
-      id: apiAccount.clientObject.id.toString(),
-      type: 'card'
-    }
-    accounts.push({ account, products: [product] })
   }
   return accounts
 }
 
 export function convertCard (card, details) {
-  // card.clientObject.type === 5 for credit card (limits source unknown, thus non-specified)
-  // card.clientObject.type === 6 for debit card
   const creditLimit = details.contract.creditLimit || 0
+  const iban = accountIban(card.clientObject)
   return {
     id: card.clientObject.id.toString(),
     title: card.clientObject.customSynonym || card.clientObject.defaultSynonym,
     type: 'ccard',
-    syncID: card.clientObject.cardContractNumber !== card.clientObject.cardMaskedNumber.slice(-4)
-      ? [card.clientObject.cardContractNumber, card.clientObject.cardMaskedNumber.slice(-4)]
-      : [card.clientObject.cardMaskedNumber.slice(-4)],
+    syncID: [card.clientObject.cardMaskedNumber.slice(-4), ...(iban ? [iban] : [])],
     instrument: card.clientObject.currIso,
-    balance: card.balance.available - creditLimit,
+    balance: Number(subtract(card.balance.available, creditLimit)),
     ...creditLimit && { creditLimit }
   }
 }
@@ -58,15 +62,14 @@ const extractRegularTransactionAmount = ({ accountCurrency, apiTransaction }) =>
   return Math.sign(apiTransaction.accountAmount) * Math.abs(apiTransaction.amount)
 }
 
-export function chooseDistinctCards (cardsBodyResult) {
-  const cardsToEvict = _.flatMap(
-    _.toPairs(_.groupBy(cardsBodyResult, (x) => x.clientObject.cardContractNumber)),
-    ([cardContractNumber, cards]) => _.sortBy(cards, [
-      (x) => x.clientObject.cardStatus === 1 ? 0 : 1,
-      (x) => x.clientObject.defaultSynonym
-    ]).slice(1)
-  )
-  return cardsBodyResult.filter((card) => !cardsToEvict.includes(card))
+export function chooseDistinctCards (cardsBodyResult, cardDetails) {
+  const detailsById = _.keyBy(cardDetails, 'id')
+  return groupOwnCards(cardsBodyResult).map(cards => _.sortBy(cards, [
+    (x) => detailsById[x.clientObject.id] ? 0 : 1,
+    (x) => x.clientObject.cardStatus === 1 ? 0 : 1,
+    (x) => x.clientObject.defaultSynonym,
+    (x) => x.clientObject.id
+  ])[0])
 }
 
 function parseDate (apiTransactionPayload) {

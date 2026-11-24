@@ -1,4 +1,4 @@
-import { convertAccounts } from '../../../converters'
+import { chooseDistinctCards, convertAccounts, convertTransactions } from '../../../converters'
 
 describe('convertAccounts', () => {
   it.each([
@@ -182,7 +182,7 @@ describe('convertAccounts', () => {
               type: 'ccard',
               title: 'KK4774',
               instrument: 'BYN',
-              syncID: ['7276', '4774'],
+              syncID: ['4774'],
               balance: -30,
               creditLimit: 2500
             }
@@ -453,7 +453,7 @@ describe('convertAccounts', () => {
               smsNotifyText: 'Только бесплатные SMS',
               savings: 0,
               orderValue: 2,
-              iban: '<string[28]>',
+              iban: 'BY45PJCB30140000000000000001',
               bic: 'PJCBBY2X',
               contractNumberReplenishment: '1110081070518',
               contractNumberRedemption: '',
@@ -570,7 +570,7 @@ describe('convertAccounts', () => {
               smsNotifyText: 'Только бесплатные SMS',
               savings: 0,
               orderValue: 9,
-              iban: '<string[28]>',
+              iban: 'BY45PJCB30140000000000000001',
               bic: 'PJCBBY2X',
               contractNumberReplenishment: '1110081070518',
               contractNumberRedemption: '',
@@ -722,14 +722,16 @@ describe('convertAccounts', () => {
               type: 'ccard',
               title: 'Danik',
               instrument: 'BYN',
-              syncID: ['2957', '2447', '9211'],
+              syncID: ['2447', '9211', 'BY45PJCB30140000000000000001'],
               balance: 1133.19
             }
         }
       ]
     ]
-  ])('converts several credit cards at 1 account', (apiAccounts, apiAccountDetails, accounts) => {
+  ])('groups cards listed on the same account statement under a shared public-safe IBAN', (apiAccounts, apiAccountDetails, accounts) => {
+    expect(convertAccounts([...apiAccounts].reverse(), apiAccountDetails)).toEqual(accounts)
     expect(convertAccounts(apiAccounts, apiAccountDetails)).toEqual(accounts)
+    expect(chooseDistinctCards([...apiAccounts].reverse(), apiAccountDetails)).toEqual([apiAccounts[0]])
   })
 
   it.each([
@@ -1092,7 +1094,7 @@ describe('convertAccounts', () => {
               type: 'ccard',
               title: 'Зарплатная SFS',
               instrument: 'BYN',
-              syncID: ['1153', '0885'],
+              syncID: ['0885'],
               balance: 1175.95
             }
         },
@@ -1109,7 +1111,7 @@ describe('convertAccounts', () => {
               type: 'ccard',
               title: 'Сбережения USD',
               instrument: 'USD',
-              syncID: ['1164', '1440'],
+              syncID: ['1440'],
               balance: 4.83
             }
         }
@@ -1250,4 +1252,403 @@ describe('convertAccounts', () => {
   ])('converts Card of another bank', (apiAccounts, apiAccountDetails, accounts) => {
     expect(convertAccounts(apiAccounts, apiAccountDetails)).toEqual(accounts)
   })
+})
+
+// mail_inbound 227006, build 163. Related Cards and CardDesc records. Public identifiers are substituted.
+it('keeps the debit and credit balances and their history sources separate under one customer contract', () => {
+  const cards = [
+    {
+      status: {
+        respClass: '',
+        respCode: 0,
+        respText: '',
+        module: 11,
+        messageForClient: ''
+      },
+      clientObject: {
+        id: 50101001,
+        prodType: 2,
+        subSystemInstanceId: 4,
+        contract_id: '',
+        externalId: '800000001',
+        identifier: '7811',
+        card_type: '4',
+        cardTypeName: 'MASTERCARD',
+        type: 6,
+        typeName: 'Дебетовая карта',
+        openDate: '2026-04-17T13:12:56+03:00',
+        openDateSpecified: true,
+        closeDateSpecified: false,
+        expDate: '2030-04-30T00:00:00+03:00',
+        expDateSpecified: true,
+        lastComment: 'Доступны все операции Статус карты: Активна, cтатус картсчёта: 51',
+        currCode: 933,
+        currIso: 'BYN',
+        accessStatus: 2,
+        cardStatus: 1,
+        cardStatusName: 'Активна',
+        cardAccStatus: 51,
+        isOpen: 1,
+        isLocked: 0,
+        corNonCor: 2,
+        corNonCorName: 'Некорпоративная',
+        pkgName: 'NO_PACK',
+        cardMaskedNumber: '************7811',
+        cardContractNumber: '6400',
+        cardRBSNumber: '<string[30]>',
+        dopNonDop: 2,
+        cardBin: 0,
+        cardColor: '#9C8768',
+        isCardMain: 0,
+        contractNum: '<string[19]>',
+        contractTypeInt: 0,
+        contractTypeName: '',
+        defaultSynonym: 'DK7811',
+        customSynonym: 'Карта 7811',
+        contractOpenDateSpecified: false,
+        contractCloseDate: '0001-01-01T00:00:00',
+        contractCloseDateSpecified: true,
+        cContractCloseDateSpecified: false,
+        dealTerm: 0,
+        rate: 0,
+        elContractCloseDateSpecified: false,
+        minAmount: 0,
+        contractRest: 0,
+        description: '',
+        isStCashCard: 0,
+        stCashCardContractId: '',
+        isElDeposit: false,
+        secure3D: 2,
+        secure3DText: 'Есть',
+        smsNotify: 6,
+        smsNotifyText: 'Только бесплатные SMS',
+        savings: 0,
+        orderValue: 0,
+        iban: '<string[28]>',
+        bic: 'PJCBBY2X',
+        contractNumberReplenishment: '9000000000001',
+        contractNumberRedemption: '',
+        haveDopCards: false,
+        pinAttempts: {
+          maxPINAttempts: 3,
+          currentPINAttempts: 0
+        },
+        isVirtual: 0,
+        isEpin: 1,
+        currentPercent: 0,
+        paymentDate: '',
+        repaymentProgress: 0,
+        cardExpirationDateExtended: 0
+      },
+      balance: {
+        balance: 0,
+        blocked: 0,
+        available: 0,
+        ownBlance: 0,
+        ovl: 0,
+        totalBalance: 0,
+        crLimit: 0,
+        addLimit: 0,
+        finLimit: 0,
+        creditBalance: {
+          sum: 0,
+          sumTotal: 0
+        }
+      },
+      equivalents: [
+        {
+          amount: 0,
+          currencyCode: 840,
+          currency: 'USD'
+        },
+        {
+          amount: 0,
+          currencyCode: 978,
+          currency: 'EUR'
+        },
+        {
+          amount: 0,
+          currencyCode: 643,
+          currency: 'RUB'
+        }
+      ],
+      reissueFormId: '',
+      expiringStatus: 0
+    },
+    {
+      status: {
+        respClass: '',
+        respCode: 0,
+        respText: '',
+        module: 11,
+        messageForClient: ''
+      },
+      clientObject: {
+        id: 50101002,
+        prodType: 2,
+        subSystemInstanceId: 4,
+        contract_id: '',
+        externalId: '800000002',
+        identifier: '7812',
+        card_type: '3',
+        cardTypeName: 'VISA GOLD',
+        type: 5,
+        typeName: 'Кредитная карта',
+        openDate: '2026-10-12T17:53:00+03:00',
+        openDateSpecified: true,
+        closeDateSpecified: false,
+        expDate: '2031-09-30T00:00:00+03:00',
+        expDateSpecified: true,
+        lastComment: 'Доступны все операции Статус карты: Активна, cтатус картсчёта: 51',
+        currCode: 933,
+        currIso: 'BYN',
+        accessStatus: 2,
+        cardStatus: 1,
+        cardStatusName: 'Активна',
+        cardAccStatus: 51,
+        isOpen: 1,
+        isLocked: 0,
+        corNonCor: 2,
+        corNonCorName: 'Некорпоративная',
+        pkgName: 'NO_PACK',
+        cardMaskedNumber: '************7812',
+        cardContractNumber: '6400',
+        cardRBSNumber: '<string[30]>',
+        dopNonDop: 2,
+        cardBin: 0,
+        cardColor: '#d8c8b0',
+        isCardMain: 0,
+        contractNum: '<string[19]>',
+        contractTypeInt: 0,
+        contractTypeName: '',
+        defaultSynonym: 'KK7812',
+        customSynonym: '',
+        contractOpenDateSpecified: false,
+        contractCloseDate: '0001-01-01T00:00:00',
+        contractCloseDateSpecified: true,
+        cContractCloseDateSpecified: false,
+        dealTerm: 0,
+        rate: 0,
+        elContractCloseDateSpecified: false,
+        minAmount: 0,
+        contractRest: 0,
+        description: '',
+        isStCashCard: 1,
+        stCashCardContractId: '711111-2222-333333',
+        isElDeposit: false,
+        secure3D: 2,
+        secure3DText: 'Есть',
+        smsNotify: 7,
+        smsNotifyText: 'СМС+',
+        savings: 0,
+        orderValue: 0,
+        iban: '<string[0]>',
+        bic: '',
+        contractNumberReplenishment: '',
+        contractNumberRedemption: '1112222333333',
+        haveDopCards: false,
+        pinAttempts: {
+          maxPINAttempts: 3,
+          currentPINAttempts: 0
+        },
+        isVirtual: 0,
+        isEpin: 1,
+        currentPercent: 0,
+        paymentDate: '',
+        repaymentProgress: 0,
+        cardExpirationDateExtended: 0
+      },
+      balance: {
+        balance: 0,
+        blocked: 0,
+        available: 4548.94,
+        ownBlance: 0,
+        ovl: 0,
+        totalBalance: 0,
+        crLimit: 0,
+        addLimit: 0,
+        finLimit: 0,
+        creditBalance: {
+          sum: 0,
+          sumTotal: 0
+        }
+      },
+      equivalents: [
+        {
+          amount: 1513.28,
+          currencyCode: 840,
+          currency: 'USD'
+        },
+        {
+          amount: 1377.21,
+          currencyCode: 978,
+          currency: 'EUR'
+        },
+        {
+          amount: 124287.97,
+          currencyCode: 643,
+          currency: 'RUB'
+        }
+      ],
+      reissueFormId: '',
+      expiringStatus: 0
+    }
+  ]
+  const details = [
+    {
+      id: 50101001,
+      identifier: '7811',
+      contract: {
+        prodNum: 0,
+        prodType: 'D',
+        cardType: 'MASTERCARD',
+        contractCurrIso: 'BYN',
+        contractNumber: '6400',
+        creditLimit: 0,
+        totalBlocked: 0,
+        amountAvailable: 0,
+        addrLineA: '<string[15]>',
+        addrLineB: '<string[45]>',
+        addrLineC: '<string[132]>',
+        message: {
+          messageDateSpecified: false,
+          messageString: ''
+        },
+        account: {
+          transCardList: [],
+          endBalance: 0,
+          beginBalance: 0,
+          plusContracr: 0,
+          minusContracr: 0,
+          feeContracr: 0
+        },
+        abortedContractList: []
+      },
+      monthDebit: {
+        interest: 0,
+        ovd: 0,
+        due: 0,
+        monthlyFee: 0,
+        dueDateSpecified: false,
+        total: 0
+      },
+      currentDebit: {
+        due: 0,
+        ovdField: 0,
+        interest: 0,
+        monthlyFee: 0,
+        total: 0
+      }
+    },
+    {
+      id: 50101002,
+      identifier: '7812',
+      contract: {
+        prodNum: 0,
+        prodType: 'C',
+        cardType: 'VISA GOLD',
+        contractCurrIso: 'BYN',
+        contractNumber: '6400',
+        creditLimit: 10209.94,
+        totalBlocked: 5661,
+        amountAvailable: 4548.94,
+        addrLineA: '<string[15]>',
+        addrLineB: '<string[45]>',
+        addrLineC: '<string[40]>',
+        message: {
+          messageDateSpecified: false,
+          messageString: ''
+        },
+        account: {
+          transCardList: [],
+          endBalance: 0,
+          beginBalance: 0,
+          plusContracr: 0,
+          minusContracr: 0,
+          feeContracr: 0
+        },
+        abortedContractList: [
+          {
+            abortedCard: '7812',
+            abortedTransactionList: [
+              {
+                amount: 5661,
+                transAmount: 5661,
+                transCurrIso: 'BYN',
+                transDetails: 'Retail BLR MINSK OFIS PRODAJ',
+                transDate: '2026-11-20T00:00:00+03:00',
+                transDateSpecified: true,
+                transTime: '12:44:07',
+                hce: false
+              }
+            ]
+          }
+        ]
+      },
+      monthDebit: {
+        interest: 0,
+        ovd: 0,
+        due: 0,
+        monthlyFee: 0,
+        dueDateSpecified: false,
+        total: 0
+      },
+      currentDebit: {
+        due: 0,
+        ovdField: 0,
+        interest: 0,
+        monthlyFee: 0,
+        total: 0
+      }
+    }
+  ]
+  const expected = [
+    {
+      products: [
+        {
+          id: '50101001',
+          type: 'card'
+        }
+      ],
+      account: {
+        id: '50101001',
+        title: 'Карта 7811',
+        type: 'ccard',
+        syncID: ['7811'],
+        instrument: 'BYN',
+        balance: 0
+      }
+    },
+    {
+      products: [
+        {
+          id: '50101002',
+          type: 'card'
+        }
+      ],
+      account: {
+        id: '50101002',
+        title: 'KK7812',
+        type: 'ccard',
+        syncID: ['7812'],
+        instrument: 'BYN',
+        balance: -5661,
+        creditLimit: 10209.94
+      }
+    }
+  ]
+  const accounts = convertAccounts(cards, details)
+  expect(accounts).toEqual(expected)
+  expect(convertAccounts([...cards].reverse(), details)).toEqual([...expected].reverse())
+  const historyCards = chooseDistinctCards(cards, details)
+  expect(historyCards).toEqual(cards)
+  expect(convertTransactions({ apiAccountsWithoutDuplicates: historyCards, apiAccountDetails: details, accounts })).toEqual([
+    {
+      movements: [{ id: null, account: { id: '50101002' }, invoice: null, sum: -5661, fee: 0 }],
+      date: new Date('2026-11-20T12:44:07+03:00'),
+      hold: true,
+      merchant: { title: 'OFIS PRODAJ', city: 'MINSK', country: 'BLR', mcc: null, location: null },
+      comment: null
+    }
+  ])
 })
