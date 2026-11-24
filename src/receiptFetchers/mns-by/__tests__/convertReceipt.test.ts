@@ -1,3 +1,4 @@
+import get from '../../../types/get'
 import { convertReceipt } from '../converters'
 import papaDoner from './convertReceipt-01.json'
 import proStore from './convertReceipt-02.json'
@@ -5,7 +6,7 @@ import proStore from './convertReceipt-02.json'
 // Complete response from the official buyer form (24 November 2026).
 // The public 25 October receipt has zero-priced choices and generic cashless payment.
 test('converts the full receipt and preserves zero-priced items', () => {
-  expect(convertReceipt(papaDoner.data.message)).toEqual({
+  expect(convertReceipt(get(papaDoner, 'data.message'))).toEqual({
     completeness: 'full',
     id: '1B1B958F18F1B1A5071866A4',
     issuedAt: { date: '2026-10-25', time: '17:31:59' },
@@ -88,7 +89,7 @@ test('converts all rows of a weighted retail receipt', () => {
     ['Фасоль стручковая с/м вес 1 кг', '1.042', '8.33'],
     ['Карта ВПРОК (Пластиковая карта)', '1', '2']
   ].map(([name, quantity, totalAmount]) => ({ name, quantity, totalAmount }))
-  expect(convertReceipt(proStore.data.message)).toEqual({
+  expect(convertReceipt(get(proStore, 'data.message'))).toEqual({
     completeness: 'full',
     id: '484979BF5F0D340E07193731',
     issuedAt: { date: '2026-10-25', time: '19:12:46' },

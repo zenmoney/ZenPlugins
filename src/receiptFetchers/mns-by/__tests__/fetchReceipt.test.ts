@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom'
 import type { WebViewNavigationPolicy } from '../../../common/webView'
 import { UserInteractionError } from '../../../errors'
+import get from '../../../types/get'
 import { convertReceipt } from '../converters'
 import { fetchReceipt } from '../index'
 import receipt from './convertReceipt-01.json'
@@ -9,7 +10,7 @@ const constructWebView = Object.assign(jest.fn(), {
   NavigationAction: { LOAD: undefined, BLOCK: true }
 })
 
-const uid = receipt.data.message.ui
+const uid = '1B1B958F18F1B1A5071866A4'
 const date = '2026-10-25'
 const args = { code: { format: 'qr' as const, value: uid }, transactionDate: date, isInBackground: false }
 
@@ -65,7 +66,7 @@ test('opens the dated UID form and converts its successful response', async () =
   }
   constructWebView.mockReturnValue(page)
   try {
-    await expect(fetchReceipt(args)).resolves.toEqual({ status: 'found', receipt: convertReceipt(receipt.data.message) })
+    await expect(fetchReceipt(args)).resolves.toEqual({ status: 'found', receipt: convertReceipt(get(receipt, 'data.message')) })
     expect(page.close).toHaveBeenCalledTimes(1)
   } finally {
     window.close()
