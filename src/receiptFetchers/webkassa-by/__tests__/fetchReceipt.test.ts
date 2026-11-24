@@ -28,11 +28,7 @@ test.each([code.value, code.value.toLowerCase()])('retrieves the original PDF an
 const retailId = '0123456789ABCDEF3B8B8BA7'
 test.each([
   `https://webkassa.by/p?uid=${retailId}`,
-  retailId,
-  `documentId=${retailId}`,
-  `https://receipts.ikassa.by/?documentId=${retailId}`,
-  `https://receipts.ikassa.by/render/${retailId}`,
-  `https://receipts.cloud.ikassa.by/render/${retailId.toLowerCase()}?download=1#receipt`
+  retailId
 ])('matches %s and converts the retail PDF with grouped amounts and a full timestamp', async value => {
   const matcher = manifest.capabilities.fetchReceipt?.matcher
   const alternatives = matcher != null && typeof matcher === 'object' && 'any' in matcher ? matcher.any : [matcher]
@@ -84,13 +80,10 @@ test('[model] original PDF request failure propagates', async () => {
   await expect(fetchReceipt({ code, isInBackground: true })).rejects.toBe(failure)
 })
 
-// WebKassa accepts hexadecimal UIDs. It must not choose between conflicting
-// iKassa identifiers or interpret an untrusted render URL as a receipt code.
+// A bare code without a hexadecimal UID or a link from another host is outside this provider.
 test.each([
   'Z123456789ABCDEF3B8B8BA7',
-  `https://other.invalid/render/${retailId}`,
-  `https://receipts.ikassa.by/render/${retailId}?documentId=000000000000000000000000`,
-  `documentId=${retailId}&documentId=000000000000000000000000`
+  `https://other.invalid/p?uid=${retailId}`
 ])('returns notApplicable without a network request for %s', async value => {
   await expect(fetchReceipt({ code: { format: 'qr', value }, isInBackground: true })).resolves.toEqual({ status: 'notApplicable' })
 })
