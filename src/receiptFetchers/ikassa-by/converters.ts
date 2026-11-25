@@ -1,7 +1,7 @@
 import get from '../../types/get'
 import { load } from 'cheerio'
 import type { Receipt, ReceiptItem, ReceiptPayment } from '../../types/receiptFetcher'
-import { decimal, divideExact } from '../../common/decimal'
+import { add, decimal, divideExact, subtract } from '../../common/decimal'
 import { assertReceipt, localDateTime, optional, text } from '../../common/receiptFetcher/receipt'
 
 export function convertReceipt (data: unknown): Receipt {
@@ -106,7 +106,10 @@ function convertHtmlReceipt (html: string): Receipt {
   let name: string[] = []
   let originalTotalAmount: string | undefined
   let totalAmount: string | undefined
-  for (const [index, line] of bodyLines.slice(1).entries()) {
+  let itemDiscountTotal: string | undefined
+  const rows = bodyLines.slice(1)
+  for (let index = 0; index < rows.length; index++) {
+    const line = rows[index]
     if (line === '' || /^[-─]+$/.test(line)) continue
     const total = line.match(/^ИТОГО К ОПЛАТЕ\s+(-?\d+\.\d+)$/)
     if (total !== null) {
@@ -115,6 +118,12 @@ function convertHtmlReceipt (html: string): Receipt {
       continue
     }
     if (totalAmount !== undefined) {
+      const discountSummary = flat ? line.match(/^ИТОГО СКИДКА\s+(\d+\.\d{2})$/) : null
+      if (discountSummary !== null) {
+        assert(payments.length === 0 && itemDiscountTotal === decimal(discountSummary[1]), 'Unsupported receipt discount summary', { line: index })
+        itemDiscountTotal = undefined
+        continue
+      }
       const payment = line.match(/^(Банк\. пл\. картой|Наличными):\s+(-?\d+\.\d+)$/)
       assert(payment !== null, 'Unsupported receipt settlement line', { line: index })
       payments.push({ method: payment[1] === 'Банк. пл. картой' ? 'card' : 'cash', amount: decimal(payment[2]) })
@@ -130,7 +139,26 @@ function convertHtmlReceipt (html: string): Receipt {
     const item = line.match(/^(-?\d+\.\d+)\s+\*(-?\d+\.\d+)\s+(-?\d+\.\d+)$/)
     if (item !== null) {
       assert(name.length > 0, 'Missing receipt item name', { line: index })
-      items.push({ name: name.join(' '), unitPrice: decimal(item[1]), quantity: decimal(item[2]), totalAmount: decimal(item[3]) })
+      const unitPrice = decimal(item[1])
+      const quantity = decimal(item[2])
+      const lineAmount = decimal(item[3])
+      const discount = flat ? rows[index + 1]?.match(/^Скидка =(\d+\.\d{2})$/) : undefined
+      if (discount != null) {
+        const finalAmount = subtract(lineAmount, discount[1])
+        items.push({
+          name: name.join(' '),
+          quantity,
+          originalUnitPrice: unitPrice,
+          originalTotalAmount: lineAmount,
+          totalAmount: finalAmount,
+          ...optional('unitPrice', quantity === '0' ? undefined : divideExact(finalAmount, quantity)),
+          adjustments: [{ kind: 'discount', amount: subtract('0', discount[1]) }]
+        })
+        itemDiscountTotal = add(itemDiscountTotal ?? '0', discount[1])
+        index++
+      } else {
+        items.push({ name: name.join(' '), unitPrice, quantity, totalAmount: lineAmount })
+      }
       name = []
     } else {
       // Do not merge unparsed price/adjustment rows into the next product's name.
