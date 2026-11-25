@@ -3,14 +3,21 @@ import { AccountSummary, ExportOperation, Preferences } from './models'
 
 export function convertAccount (accountSummary: AccountSummary): { account: AccountOrCard, card: AccountOrCard } {
   const id = accountSummary.id.toString()
-  const cardBalance = accountSummary.totalValue - accountSummary.investments.currentValue - accountSummary.cash.availableToTrade
+  const rawCardBalance =
+    accountSummary.totalValue -
+    accountSummary.investments.currentValue -
+    accountSummary.cash.availableToTrade -
+    accountSummary.cash.reservedForOrders -
+    accountSummary.cash.inPies
+  const cardBalance = Math.max(0, Number(rawCardBalance.toFixed(2)))
+  const accountBalance = Number((accountSummary.totalValue - cardBalance).toFixed(2))
   return {
     account: {
       id,
       type: AccountType.investment,
       title: 'Trading212',
       instrument: accountSummary.currency,
-      balance: accountSummary.totalValue - cardBalance,
+      balance: accountBalance,
       syncIds: [id]
     },
     card: {
