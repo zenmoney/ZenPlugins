@@ -20,7 +20,7 @@ Inspect all available relevant source fields together: separate counterparty fie
 | Confirmed `SHOP_NAME / CITY / COUNTRY` layout | Separate title, city, and country |
 | Confirmed `AMAZON*MARKETPLACE//SEATTLE/US` layout | Parse according to this format, preserving the merchant name |
 | Consistent `MCDONALDS       MOSCOW     RU` layout with country evidence | Parse meaningful whitespace separators before normalization |
-| Name/place boundaries in `MCDONALDS MOSCOW RU` remain unresolved after checking source fields and supported parsing | Keep `fullTitle`; do not guess word boundaries |
+| In `MCDONALDS MOSCOW RU`, the word count, recognizable city, and country-like suffix are the only clues to where the name ends | Keep `fullTitle: "MCDONALDS MOSCOW RU"` |
 | A slash or repeated space occurs inside a real name | The character alone is not proof of a separator |
 | Name is known and the city field is identified, but its text cannot be parsed further | Keep the confirmed name and city text intact |
 | Bank supplies `creditorName: "ROSSMANN 138"`; confirmed description format contains `ROSSMANN 138 WARSZAWA` | Preserve `title: "ROSSMANN 138"` and extract `city: "WARSZAWA"` at the known name boundary; a single space is not a reason to downgrade to `fullTitle` |

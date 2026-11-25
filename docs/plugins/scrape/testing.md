@@ -28,7 +28,9 @@ A single bank-side case MAY expect a complete transfer half with its `groupKeys`
 
 Bank parsing/classification, including helper tests, follows the shared [observed-evidence rule](../../project/fixtures.md#observed-evidence).
 
-Generalize optimistically within the observed bank format. A real `PYATEROCHKA / MOSCOW / RUS` record can justify a `title / city / country` parser without multiple samples or hypothetical slash-containing counterexamples. Preserve the record and expected result; refine the parser when real contradictory data arrives. Apply the same principle to comments and operation types: retain the most informative supported interpretation. Do not export the grammar to unrelated formats or guess missing amounts, currencies, or field meanings; record actual unresolved ambiguities.
+A single record can justify a parsing rule when the bank format shows how to identify the fields. For example, the slashes in `PYATEROCHKA / MOSCOW / RUS` mark the boundaries in that format. When changing a test expectation from `fullTitle` to separate name and place fields, identify the source field or feature of the layout that establishes where the name ends. See [MERCHANT-001](quality/merchants.md#merchant-001-preserve-known-field-boundaries).
+
+Keep the observed record and expected result together. Apply the rule within that format and refine it when a real counterexample appears. For comments and operation types, use the most informative interpretation the source supports. Leave missing amounts, currencies, or field meanings unresolved when the source cannot establish them.
 
 ### Model boundary
 
