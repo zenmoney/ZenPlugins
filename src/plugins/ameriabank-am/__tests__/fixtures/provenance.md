@@ -144,3 +144,10 @@ available balance remains authoritative. This known timing gap avoids guessing
 identity from merchants or equal amounts. No statement download is needed.
 Model coverage verifies that metadata saved by older versions cannot replay the
 settled expenses. Already stored ordinary duplicates are not deleted by the plugin.
+
+The closed-card balance transfer case in `converters/transactions/history.test.ts`
+retains one complete approved `charge:commission` history record from a local
+Bootloader session. The bank reported `flowDirection: "EXPENSE"` for the closed
+debit card account omitted from `/api/accounts-and-cards`, while `creditAccountNumber`
+pointed to an active current account. Account numbers, UUID, beneficiary name, amount
+and shifted timestamp use public-safe replacements consistent with `capture.json`.

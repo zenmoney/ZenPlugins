@@ -64,11 +64,11 @@ interface TransactionContext {
 /** Validate settled amounts and resolve the transaction accounts before classification. */
 function transactionContext (record: unknown, id: string, byId: ReadonlyMap<string, Account>, depositAccountId?: string): TransactionContext {
   console.assert(text(record, 'status') === 'APPROVED', 'Unsupported MyAmeria transaction status')
-  const direction = flowDirection(record)
   const debit = byId.get(text(record, 'debitAccountNumber'))
   const originalCredit = byId.get(text(record, 'creditAccountNumber'))
   console.assert(depositAccountId === undefined || originalCredit === undefined || originalCredit.id === depositAccountId, 'MyAmeria deposit transfer contradicts a known credit account')
   const credit = depositAccountId === undefined ? originalCredit : byId.get(depositAccountId)
+  const direction = effectiveFlowDirection(flowDirection(record), debit, credit)
   const own = direction === 'EXPENSE' ? debit : credit
   console.assert(own !== undefined, 'MyAmeria movement account is missing')
   console.assert(depositAccountId === undefined || credit?.type === 'deposit', 'MyAmeria deposit movement account is missing')
@@ -208,6 +208,18 @@ function exchangeCounterpartValue (detail: unknown, context: TransactionContext,
   const detailCurrency = text(detail, 'amount.currency')
   console.assert(counterpartValue >= 0 && detailValue === value && detailCurrency === own.instrument, 'MyAmeria exchange amount mismatch')
   return counterpartValue
+}
+
+/** Select the effective flow direction when one side is closed and omitted from the account graph. */
+function effectiveFlowDirection (
+  flowDirection: FlowDirection,
+  debit: Account | undefined,
+  credit: Account | undefined
+): FlowDirection {
+  if (debit !== undefined && credit !== undefined) return flowDirection
+  if (debit !== undefined) return 'EXPENSE'
+  if (credit !== undefined) return 'INCOME'
+  return flowDirection
 }
 
 /** Narrow the observed flow direction before choosing signs and account sides. */
