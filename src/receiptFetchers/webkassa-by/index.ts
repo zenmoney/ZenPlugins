@@ -8,5 +8,7 @@ export async function fetchReceipt ({ code }: Parameters<FetchReceipt>[0]): Prom
   if (!isQrCode(code)) return { status: 'notApplicable' }
   const result = await fetchReceiptApi(code.value)
   if (result.status !== 'found') return result
-  return { status: 'found', receipt: convertReceipt(result.data) }
+  const receipt = convertReceipt(result.data)
+  assert(receipt.id?.toUpperCase() === result.uid, 'Retrieved receipt does not match the requested identifier')
+  return { status: 'found', receipt }
 }
