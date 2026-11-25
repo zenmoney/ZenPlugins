@@ -9,6 +9,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ preferences, fromDate, t
     await fetchTransactions(preferences, fromDate, toDate),
     account.id,
     card.id,
+    account.instrument,
     preferences
   )
 

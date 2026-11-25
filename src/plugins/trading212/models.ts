@@ -43,8 +43,15 @@ export interface ExportData {
 export type ExportOperation = {
   ID: string
   Action: string
+  Notes?: string
   'Merchant name'?: string
   'Merchant category'?: string
+  'Currency conversion from amount'?: string
+  'Currency (Currency conversion from amount)'?: string
+  'Currency conversion to amount'?: string
+  'Currency (Currency conversion to amount)'?: string
+  'Currency conversion fee'?: string
+  'Currency (Currency conversion fee)'?: string
 } & ({
   'Time (UTC)': string
   Total: string

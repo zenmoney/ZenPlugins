@@ -1,4 +1,4 @@
-import { AccountOrCard, AccountType, Transaction } from '../../types/zenmoney'
+import { AccountOrCard, AccountType, Movement, Transaction } from '../../types/zenmoney'
 import { AccountSummary, ExportOperation, Preferences } from './models'
 
 export function convertAccount (accountSummary: AccountSummary): { account: AccountOrCard, card: AccountOrCard } {
@@ -31,32 +31,79 @@ export function convertAccount (accountSummary: AccountSummary): { account: Acco
   }
 }
 
-export function convertTransactions (operations: ExportOperation[], accountId: string, cardId: string, preferences: Preferences): Transaction[] {
-  return operations.flatMap(op => convertTransaction(op, accountId, cardId, preferences))
+export function convertTransactions (
+  operations: ExportOperation[],
+  accountId: string,
+  cardId: string,
+  accountCurrency: string,
+  preferences: Preferences
+): Transaction[] {
+  return operations.flatMap(op => convertTransaction(op, accountId, cardId, accountCurrency, preferences))
 }
 
-function convertTransaction (op: ExportOperation, accountId: string, cardId: string, preferences: Preferences): Transaction[] {
+function convertTransaction (
+  op: ExportOperation,
+  accountId: string,
+  cardId: string,
+  accountCurrency: string,
+  preferences: Preferences
+): Transaction[] {
   const isCardDebit = op.Action === 'Card debit'
   const isCardCashback = op.Action === 'Spending cashback' && !preferences.investCashback
   const isCardTransaction = isCardDebit || isCardCashback
   const time = 'Time (UTC)' in op ? op['Time (UTC)'] : op.Time
   const date = new Date('Time (UTC)' in op ? time : `${time}+00:00`)
-  const sum = Number('Total' in op ? op.Total : op['Gross Total'])
+  const amount = Number('Total' in op ? op.Total : op['Gross Total'])
+  const currency = ('Total' in op ? op['Currency (Total)'] : op['Currency (Gross Total)']).trim()
+
+  if (!Number.isFinite(amount)) {
+    throw new Error(`Invalid Trading212 operation amount for ${op.ID}`)
+  }
+  if (currency === '') {
+    throw new Error(`Missing Trading212 operation currency for ${op.ID}`)
+  }
 
   console.log('Converting operation', op)
+
+  const isSameCurrency = currency === accountCurrency
+  const localMovement: Movement = {
+    id: op.ID,
+    account: { id: isCardTransaction ? cardId : accountId },
+    invoice: isSameCurrency ? null : { sum: amount, instrument: currency },
+    sum: isSameCurrency ? amount : null,
+    fee: 0
+  }
+
+  const isExternalTransfer = (op.Action === 'Deposit' || op.Action === 'Withdrawal') && amount !== 0
+  const movements: Transaction['movements'] = isExternalTransfer
+    ? [
+        localMovement,
+        {
+          id: null,
+          account: {
+            type: null,
+            instrument: currency,
+            company: null,
+            syncIds: null
+          },
+          invoice: null,
+          sum: -amount,
+          fee: 0
+        }
+      ]
+    : [localMovement]
+
+  const notes = op.Notes?.trim()
+  const comment = notes != null && notes !== '' && notes !== op.Action
+    ? `${op.Action}: ${notes}`
+    : op.Action
 
   const transactions: Transaction[] = [
     {
       hold: false,
       date,
-      movements: [{
-        id: op.ID,
-        account: { id: isCardTransaction ? cardId : accountId },
-        invoice: null,
-        sum,
-        fee: 0
-      }],
-      comment: op.Action,
+      movements,
+      comment,
       merchant: op['Merchant name'] != null
         ? {
             fullTitle: op['Merchant name'],
@@ -68,9 +115,9 @@ function convertTransaction (op: ExportOperation, accountId: string, cardId: str
     }
   ]
 
-  if (preferences.roundUpTransactions && isCardDebit) {
-    const roundedSum = Math.ceil(Math.abs(sum))
-    const roundUpAmount = +(roundedSum - Math.abs(sum)).toPrecision(5)
+  if (preferences.roundUpTransactions && isCardDebit && localMovement.sum !== null) {
+    const roundedSum = Math.ceil(Math.abs(localMovement.sum))
+    const roundUpAmount = +(roundedSum - Math.abs(localMovement.sum)).toPrecision(5)
     if (roundUpAmount > 0) {
       transactions.push({
         hold: false,
