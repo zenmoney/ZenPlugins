@@ -299,6 +299,13 @@ export async function fetchUnTrustDeviceV2 (deviceData: DeviceData, sessionId: s
     throw new Error(`Error in fetchUnTrustDeviceV2\n${JSON.stringify(confirmResponse.body)}`)
   }
 
+  if (confirmResponse.status >= 500) {
+    // TBC answers 500 SystemError on Unset even for a device that was never trusted
+    // (reproduced with a freshly generated deviceId), so there is nothing to remove.
+    console.warn(`Device removal confirmation failed with status ${confirmResponse.status}, continuing to trust the device`)
+    return false
+  }
+
   if (!confirmResponse.ok) {
     throw new Error(`Unexpected device removal confirmation status: ${confirmResponse.status}`)
   }
