@@ -2,9 +2,11 @@ import get from '../../../types/get'
 import { convertReceipt } from '../converters'
 import papaDoner from './convertReceipt-01.json'
 import proStore from './convertReceipt-02.json'
+import sosedi from './convertReceipt-03.json'
 
 // Complete response from the official buyer form (24 November 2026).
 // The public 25 October receipt has zero-priced choices and generic cashless payment.
+// The cashier name is redacted.
 test('converts the full receipt and preserves zero-priced items', () => {
   expect(convertReceipt(get(papaDoner, 'data.message'))).toEqual({
     completeness: 'full',
@@ -31,8 +33,50 @@ test('converts the full receipt and preserves zero-priced items', () => {
   })
 })
 
-// Complete response from the buyer form (24 November 2026), with the cashier
-// name redacted. Quantities and rounded line amounts are preserved independently.
+// Complete response from the official buyer form (25 November 2026).
+// The lookup identifier, cashier name and unique parts of the marking code are redacted.
+// The iKassa copy confirms the date, amount paid and discount.
+// The source lists 77.57 before a 0.34 item discount.
+test('applies the reported item discount once and preserves the amount paid', () => {
+  expect(convertReceipt(get(sosedi, 'data.message'))).toEqual({
+    completeness: 'full',
+    id: 'TESTRECEIPTMNS0000000003',
+    issuedAt: { date: '2026-11-25', time: '18:06:09' },
+    currency: 'BYN',
+    operation: 'unknown',
+    totalAmount: '77.23',
+    merchant: {
+      name: 'Магазин "Соседи "',
+      address: 'г. Минск, ПР. ДЗЕРЖИНСКОГО 19',
+      identifiers: [{ value: '101454161', countryCode: 'BY', scheme: 'UNP' }]
+    },
+    payments: [{ method: 'cash', amount: '0' }, { method: 'cashless', amount: '77.23' }],
+    items: [
+      { name: 'П/Ф ФАРШ ИЗ ФИЛЕ ЦЫП.ДИЕТ.ФАС.1КГ ПР.ЦЕХ', quantity: '0.534', totalAmount: '10.67' },
+      { name: 'П/Ф ФАРШ ИЗ ФИЛЕ ЦЫП.ДИЕТ.ФАС.1КГ ПР.ЦЕХ', quantity: '0.528', totalAmount: '10.55' },
+      { name: 'ВИНОГРАД ТАЙФИ 1КГ', quantity: '1.344', totalAmount: '7.51' },
+      { name: 'ВИНОГРАД РЕД ГЛОБ 1КГ', quantity: '0.692', totalAmount: '5.39' },
+      { name: 'КОНС.РЫБН.ШПРОТЫ ЗА РОДИНУ С КЛЮЧ.160Г', quantity: '2', totalAmount: '7.7' },
+      {
+        name: 'СМЕТАНА ЗДРАВУШКА 19% СТ.380Г',
+        quantity: '1',
+        originalTotalAmount: '3.38',
+        totalAmount: '3.04',
+        adjustments: [{ kind: 'discount', amount: '-0.34' }]
+      },
+      { name: 'ГРИБЫ ШАМПИНЬОНЫ 1КГ', quantity: '0.238', totalAmount: '2.09' },
+      { name: 'П/Ф ФАРШ ДОМАШНИЙ ОХЛ.ВЕС.1КГ ПР.ЦЕХ', quantity: '0.404', totalAmount: '7.67' },
+      { name: 'П/Ф ФАРШ ИЗ ФИЛЕ ЦЫП.ДИЕТ.ВЕС.1КГ ПР.ЦЕХ', quantity: '0.318', totalAmount: '6.36' },
+      { name: 'КУКУРУЗА ГЛОБУС СЛАДКАЯ 340Г', quantity: '1', totalAmount: '4.79' },
+      { name: 'ЛИМОН 1КГ', quantity: '0.11', totalAmount: '0.77' },
+      { name: 'ПРОД.СВ.ХАМОН БРАУН С/В ПОРЦ.В/У 1КГ', quantity: '0.32', totalAmount: '10.69' }
+    ]
+  })
+})
+
+// Complete response from the buyer form (24 November 2026).
+// The cashier name and unique parts of the marking codes are redacted.
+// Quantities and rounded line amounts are preserved independently.
 test('converts all rows of a weighted retail receipt', () => {
   const items = [
     ['Йогурт Суперкид обогащ кальцием и витамином Д с вк', '1', '1.93'],
