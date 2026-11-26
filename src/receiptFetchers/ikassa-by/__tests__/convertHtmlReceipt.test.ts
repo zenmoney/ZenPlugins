@@ -1,6 +1,7 @@
 import cloudReceipt from './convertHtmlReceipt-03.html'
 import papaDoner from './convertHtmlReceipt-01.html'
 import proStore from './convertHtmlReceipt-02.html'
+import sosediDiscount from './convertHtmlReceipt-04.html'
 import { convertReceipt } from '../converters'
 
 // Complete sectioned HTML response captured on 2026-10-25.
@@ -107,6 +108,47 @@ test('converts all ProStore items with rounded weighted totals and skips the car
       { name: 'Филе форели слабосоленое  вес 1кг', quantity: '0.27', totalAmount: '30.78', unitPrice: '114' },
       { name: 'Фасоль стручковая с/м вес 1 кг', quantity: '1.042', totalAmount: '8.33', unitPrice: '7.99' },
       { name: 'Карта ВПРОК (Пластиковая карта)', quantity: '1', totalAmount: '2', unitPrice: '2' }
+    ]
+  })
+})
+
+// Flat iKassa HTML from a Zenmoney plugin diagnostic log (HTTP response id 0).
+test('applies the Sosedi item discount once and retains the printed receipt totals', () => {
+  expect(convertReceipt(sosediDiscount)).toEqual({
+    completeness: 'full',
+    id: '0123456789ABCDEF01234567',
+    issuedAt: { date: '2026-11-12', time: '10:20:30' },
+    currency: 'BYN',
+    operation: 'unknown',
+    originalTotalAmount: '77.23',
+    totalAmount: '77.23',
+    merchant: {
+      name: 'Общество с ограниченной ответственностью "Либретик" Магазин "Соседи "',
+      address: 'г. Минск ПР. ТЕСТОВЫЙ, 42',
+      identifiers: [{ value: '101454161', countryCode: 'BY', scheme: 'UNP' }]
+    },
+    payments: [{ method: 'card', amount: '77.23' }],
+    items: [
+      { name: '22312100000001 П/Ф ФАРШ ИЗ ФИЛЕ ЦЫП.ДИЕТ.ФАС.1КГ ПР.ЦЕХ', quantity: '0.534', totalAmount: '10.67', unitPrice: '19.99' },
+      { name: '22312100000001 П/Ф ФАРШ ИЗ ФИЛЕ ЦЫП.ДИЕТ.ФАС.1КГ ПР.ЦЕХ', quantity: '0.528', totalAmount: '10.55', unitPrice: '19.99' },
+      { name: '22382200000001 ВИНОГРАД ТАЙФИ 1КГ', quantity: '1.344', totalAmount: '7.51', unitPrice: '5.59' },
+      { name: '22382200000001 ВИНОГРАД РЕД ГЛОБ 1КГ', quantity: '0.692', totalAmount: '5.39', unitPrice: '7.79' },
+      { name: 'КОНС.РЫБН.ШПРОТЫ ЗА РОДИНУ С КЛЮЧ.160Г', quantity: '2', totalAmount: '7.7', unitPrice: '3.85' },
+      {
+        name: '[M] СМЕТАНА ЗДРАВУШКА 19% СТ.380Г',
+        quantity: '1',
+        originalUnitPrice: '3.38',
+        originalTotalAmount: '3.38',
+        unitPrice: '3.04',
+        totalAmount: '3.04',
+        adjustments: [{ kind: 'discount', amount: '-0.34' }]
+      },
+      { name: 'ГРИБЫ ШАМПИНЬОНЫ 1КГ', quantity: '0.238', totalAmount: '2.09', unitPrice: '8.79' },
+      { name: '22312100000001 П/Ф ФАРШ ДОМАШНИЙ ОХЛ.ВЕС.1КГ ПР.ЦЕХ', quantity: '0.404', totalAmount: '7.67', unitPrice: '18.99' },
+      { name: '22312100000001 П/Ф ФАРШ ИЗ ФИЛЕ ЦЫП.ДИЕТ.ВЕС.1КГ ПР.ЦЕХ', quantity: '0.318', totalAmount: '6.36', unitPrice: '19.99' },
+      { name: 'КУКУРУЗА ГЛОБУС СЛАДКАЯ 340Г', quantity: '1', totalAmount: '4.79', unitPrice: '4.79' },
+      { name: '22383600000001 ЛИМОН 1КГ', quantity: '0.11', totalAmount: '0.77', unitPrice: '6.99' },
+      { name: 'ПРОД.СВ.ХАМОН БРАУН С/В ПОРЦ.В/ У 1КГ', quantity: '0.32', totalAmount: '10.69', unitPrice: '33.41' }
     ]
   })
 })
