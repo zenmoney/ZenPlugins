@@ -491,7 +491,7 @@ export interface LoginResponse {
   signature: null
   validEmail: boolean
   success: boolean
-  passcodeDirty: null
+  passcodeDirty: boolean | null
   secondPhaseRequired: boolean // 2FA
   accessToken: null
   changePasswordRequired: boolean

@@ -121,6 +121,13 @@ export async function fetchLoginByPasscodeV2 (auth: AuthV2, deviceInfo: DeviceIn
   }
   const loginResponse = response.body as LoginResponse
   loginResponse.cookies = getCookies(response)
+  // TBC rejects a saved passcode with 200 `success: false, passcodeDirty: true` and no session cookies.
+  // Without a session every later request gets 401, so report it like a failed passcode login
+  // and let loginV2 log in with the password again.
+  if (!loginResponse.secondPhaseRequired && loginResponse.cookies.length === 0) {
+    console.warn(`Passcode login gave no session (success: ${String(loginResponse.success)}, passcodeDirty: ${String(loginResponse.passcodeDirty)}), logging in with the password`)
+    return null
+  }
   return loginResponse
 }
 
