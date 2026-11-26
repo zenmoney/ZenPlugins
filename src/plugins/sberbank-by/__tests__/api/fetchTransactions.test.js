@@ -46,7 +46,12 @@ describe('fetchTransactions', () => {
 
     expect(transactions).toEqual(events)
     expect(fetchJson).toHaveBeenCalledTimes(1)
-    expect(fetchJson.mock.calls[0][0]).toBe('https://digital.sber-bank.by/SBOLServer/rest/client/events')
+    expect(fetchJson.mock.calls[0][0]).toBe('https://sbol.by/SBOLServer/rest/client/events')
+    expect(fetchJson.mock.calls[0][1].headers).toMatchObject({
+      Host: 'sbol.by',
+      'X-Sbol-Version': '4.3.2',
+      'User-Agent': 'sbol/4.3.2 (android 14) test-device'
+    })
     // Live legacy API calls return HTTP 500 for fetch's implicit Accept-Language: *.
     expect(fetchJson.mock.calls[0][1].headers['Accept-Language']).toBe('ru')
     expect(fetchJson.mock.calls[0][1].body).toEqual({

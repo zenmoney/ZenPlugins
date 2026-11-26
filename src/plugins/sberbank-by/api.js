@@ -8,13 +8,14 @@ import { fetch as fetchText, fetchJson } from '../../common/network'
 import { generateUUID } from '../../common/utils'
 import { BankMessageError, InvalidLoginOrPasswordError, InvalidOtpCodeError, InvalidPreferencesError, TemporaryUnavailableError } from '../../errors'
 
-const host = 'digital.sber-bank.by'
-const apiBaseUrl = `https://${host}/SBOLServer`
-const authBaseUrl = `https://${host}/api/v1/auth`
+const host = 'sbol.by'
+const origin = `https://${host}`
+const apiBaseUrl = `${origin}/SBOLServer`
+const authBaseUrl = `${origin}/api/v1/auth`
 const internalAuthHost = 'sbol-auth.apps.k8s-prom1.belpsb.by'
 const internalAuthRootHosts = [internalAuthHost, 'sbol-api-gateway.apps.k8s-prom1.belpsb.by']
-const authRedirectUri = `https://${host}/loginsbol`
-const appVersion = '4.1.10'
+const authRedirectUri = `${origin}/loginsbol`
+const appVersion = '4.3.2'
 const sbolClientId = 'sbol-client'
 const sbolClientSecret = 'BzKFqWMa2T2Y'
 const defaultKeyValueSeparator = ':'
@@ -207,6 +208,9 @@ function resolveAuthUrl (url) {
       resolvedUrl.pathname = `${publicAuthBasePath}${resolvedUrl.pathname}`
     }
   }
+  if (resolvedUrl.origin !== origin) {
+    throw new Error('Unexpected OAuth redirect origin')
+  }
   return resolvedUrl.toString()
 }
 
@@ -221,12 +225,13 @@ function isRedirect (response) {
   return response.status >= 300 && response.status < 400 && Boolean(getHeader(response, 'location'))
 }
 
-function isInternalAuthRootLocation (location) {
+function isAuthRootLocation (location) {
   if (!location) {
     return false
   }
   const parsedLocation = new URL(location, `${authBaseUrl}/`)
-  return internalAuthRootHosts.includes(parsedLocation.hostname) && parsedLocation.pathname === '/'
+  return parsedLocation.pathname === '/' &&
+    (parsedLocation.origin === origin || internalAuthRootHosts.includes(parsedLocation.hostname))
 }
 
 function getAuthorizeUrl (codeChallenge, extraParams = {}) {
@@ -343,8 +348,8 @@ async function requestOAuthToken (auth, device) {
   }
 
   const loginLocation = getHeader(loginResponse, 'location')
-  // The app gets an internal root Location here; public ingress needs the original authorize endpoint with continue=true.
-  const continueUrl = isInternalAuthRootLocation(loginLocation)
+  // A bank root redirect needs the original authorize endpoint with continue=true.
+  const continueUrl = isAuthRootLocation(loginLocation)
     ? getAuthorizeUrl(codeChallenge, { continue: true })
     : resolveAuthUrl(loginLocation)
   const continueResponse = await fetchOAuth(continueUrl, {

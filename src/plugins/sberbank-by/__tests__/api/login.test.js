@@ -25,7 +25,7 @@ function mockOAuthFlow ({ loginLocation = '/api/v1/auth/oauth2/authorize?continu
     .mockResolvedValueOnce({
       status: 302,
       headers: {
-        location: 'https://digital.sber-bank.by/loginsbol?code=authorization-code'
+        location: 'https://sbol.by/loginsbol?code=authorization-code'
       },
       body: ''
     })
@@ -70,21 +70,23 @@ describe('login', () => {
       device
     })
     expect(fetch).toHaveBeenCalledTimes(4)
-    // Official Android 4.2.5 (285), AuthServerUrls; confirmed live on 2026-10-15.
-    expect(fetch.mock.calls[0][0]).toMatch(/^https:\/\/digital\.sber-bank\.by\/api\/v1\/auth\/oauth2\/authorize\?/)
-    expect(fetch.mock.calls[1][0]).toBe('https://digital.sber-bank.by/api/v1/auth/oauth2/login')
+    const authorizeUrl = new URL(fetch.mock.calls[0][0])
+    expect(authorizeUrl.origin + authorizeUrl.pathname).toBe('https://sbol.by/api/v1/auth/oauth2/authorize')
+    expect(authorizeUrl.searchParams.get('redirect_uri')).toBe('https://sbol.by/loginsbol')
+    expect(fetch.mock.calls[1][0]).toBe('https://sbol.by/api/v1/auth/oauth2/login')
     expect(fetch.mock.calls[1][1].headers['Accept-Language']).toBe('ru')
     expect(fetch.mock.calls[1][1].headers.Cookie).toBe('session-cookie=authorize-cookie')
     expect(fetch.mock.calls[1][1].body).toEqual({
       username: 'test-login',
       password: 'test-password'
     })
-    expect(fetch.mock.calls[2][0]).toBe('https://digital.sber-bank.by/api/v1/auth/oauth2/authorize?continue=true')
+    expect(fetch.mock.calls[2][0]).toBe('https://sbol.by/api/v1/auth/oauth2/authorize?continue=true')
     expect(fetch.mock.calls[2][1].headers.Cookie).toBe('session-cookie=authorize-cookie; login-cookie=login-cookie')
-    expect(fetch.mock.calls[3][0]).toBe('https://digital.sber-bank.by/api/v1/auth/oauth2/token')
+    expect(fetch.mock.calls[3][0]).toBe('https://sbol.by/api/v1/auth/oauth2/token')
     expect(fetch.mock.calls[3][1].body).toMatchObject({
       grant_type: 'authorization_code',
       code: 'authorization-code',
+      redirect_uri: 'https://sbol.by/loginsbol',
       client_id: 'sbol-client'
     })
   })
@@ -102,14 +104,31 @@ describe('login', () => {
       udid: 'udid'
     })
 
-    expect(fetch.mock.calls[2][0]).toBe('https://digital.sber-bank.by/api/v1/auth/oauth2/authorize?continue=true')
+    expect(fetch.mock.calls[2][0]).toBe('https://sbol.by/api/v1/auth/oauth2/authorize?continue=true')
+  })
+
+  it('[model] keeps OAuth session cookies on the bank origin', async () => {
+    // A Location header cannot extend the scope of a host-only session cookie.
+    mockOAuthFlow({ loginLocation: 'https://example.invalid/authorize' })
+
+    await expect(login({
+      login: 'test-login',
+      password: 'test-password'
+    }, {
+      androidId: 'android-id',
+      udid: 'udid'
+    })).rejects.toThrow('Unexpected OAuth redirect origin')
+
+    expect(fetch).toHaveBeenCalledTimes(2)
   })
 
   it.each([
+    // Observed during login through the public SBOL gateway on 2026-11-26.
+    'https://sbol.by/',
     'http://sbol-auth.apps.k8s-prom1.belpsb.by/',
     // Observed in the saved-device OAuth login flow on 2026-10-15.
     'http://sbol-api-gateway.apps.k8s-prom1.belpsb.by/'
-  ])('continues internal bank root redirect %s through the public authorize endpoint', async (loginLocation) => {
+  ])('continues bank root redirect %s through the public authorize endpoint', async (loginLocation) => {
     mockOAuthFlow({
       loginLocation
     })
