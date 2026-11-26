@@ -1,0 +1,713 @@
+{
+  "ticket": {
+    "type": "TICKET",
+    "kkmId": "110357",
+    "transactionId": "110357_854834",
+    "transactionDate": "2026-11-21T17:33:41.000",
+    "insertedAt": null,
+    "fiscalId": "173180029",
+    "offlineFiscalId": null,
+    "cancelDate": null,
+    "shiftNumber": 3482,
+    "acceptedAt": "2026-11-21T12:33:44.130Z",
+    "protocolVersion": 203,
+    "linkedTransactionId": null,
+    "options": {
+      "children": [
+        {
+          "children": [],
+          "value": "838921",
+          "name": "printedDocumentNumber"
+        },
+        {
+          "children": [],
+          "value": "",
+          "name": "printedTicket"
+        }
+      ],
+      "value": "",
+      "name": "options"
+    },
+    "kkmRequestId": 854834,
+    "linkedKkmRequestId": null,
+    "linkedKkmRequestTime": null,
+    "modifiers": [],
+    "domain": {
+      "domainType": 1,
+      "accountNumber": "0"
+    },
+    "totalSum": 13828.0,
+    "operationType": 2,
+    "ticketAdInfo": [],
+    "shiftDocumentNumber": null,
+    "customerIinOrBin": null,
+    "customerEmail": null,
+    "customerPhone": null,
+    "extensionAuxiliaries": null,
+    "geoPosition": {
+      "latitude": 0,
+      "longitude": 0,
+      "source": "Manual"
+    },
+    "parentTicket": null,
+    "items": [
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 1.0,
+          "price": 530.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "",
+          "sectionCode": "1",
+          "name": "НАПИТОК DIZZY PARADISE ENERGY 0,33Л СТ/Б (шт)",
+          "sum": 530.0,
+          "code": 351002,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 73.1,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 1.0,
+          "price": 799.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "",
+          "sectionCode": "1",
+          "name": "ШОКОЛАД ТЕМНЫЙ LINDT EXCELLENCE С ВАФЕЛЬНЫМИ КУСОЧКАМИ 100 ГР (шт)",
+          "sum": 799.0,
+          "code": 355101,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 110.21,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 2.0,
+          "price": 875.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "0200136117416",
+          "sectionCode": "1",
+          "name": "МОЛОКО ADAL ПРОДУКТЫ НАШИХ ФЕРМ 2,5% 0,950Л UHT (шт)",
+          "sum": 1750.0,
+          "code": 110063,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 241.38,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 1.0,
+          "price": 1599.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "0200212533208",
+          "sectionCode": "1",
+          "name": "ТОМАТЫ БРИОЗА МИКС КОКТЕЙЛЬНЫЕ КАЗАХСТАН ШТ (шт)",
+          "sum": 1599.0,
+          "code": 227335,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 220.55,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 1.0,
+          "price": 1505.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "0200110397759",
+          "sectionCode": "1",
+          "name": "ЯЙЦО FOODZ ФЕРМЕРСКОЕ ОТБОРНОЕ 15ШТ (шт)",
+          "sum": 1505.0,
+          "code": 264546,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 207.59,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 0.41,
+          "price": 3050.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "166",
+          "listExciseStamp": [],
+          "ntin": "",
+          "sectionCode": "1",
+          "name": "Булочка ромовая баба вес (кг)",
+          "sum": 1250.5,
+          "code": 39865,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 172.48,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": null,
+        "itemType": 3,
+        "discount": null,
+        "markup": {
+          "discount": false,
+          "name": "Коррекция округления",
+          "sum": 0.5,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 0.07,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ],
+          "rate": null
+        },
+        "modifiers": [
+          {
+            "discount": false,
+            "name": "Коррекция округления",
+            "sum": 0.5,
+            "taxes": [
+              {
+                "inTotalSum": true,
+                "sum": 0.07,
+                "layout": {
+                  "rate": 0.16,
+                  "taxCode": 100,
+                  "taxName": ""
+                }
+              }
+            ],
+            "rate": null
+          }
+        ],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 1.0,
+          "price": 899.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "0200212537268",
+          "sectionCode": "1",
+          "name": "ГОЛУБИКА 125ГР ШТ (шт)",
+          "sum": 899.0,
+          "code": 332561,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 124.0,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 0.836,
+          "price": 990.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "166",
+          "listExciseStamp": [],
+          "ntin": "0200212522110",
+          "sectionCode": "1",
+          "name": "БАНАНЫ ВЕС (кг)",
+          "sum": 827.64,
+          "code": 140101,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 114.16,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": null,
+        "itemType": 3,
+        "discount": null,
+        "markup": {
+          "discount": false,
+          "name": "Коррекция округления",
+          "sum": 0.36,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 0.05,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ],
+          "rate": null
+        },
+        "modifiers": [
+          {
+            "discount": false,
+            "name": "Коррекция округления",
+            "sum": 0.36,
+            "taxes": [
+              {
+                "inTotalSum": true,
+                "sum": 0.05,
+                "layout": {
+                  "rate": 0.16,
+                  "taxCode": 100,
+                  "taxName": ""
+                }
+              }
+            ],
+            "rate": null
+          }
+        ],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 1.0,
+          "price": 560.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "",
+          "sectionCode": "1",
+          "name": "СУХАРИКИ ПРОТЕИНОВЫЕ BOMBBAR СО ВКУСОМ БАВАРСКИЕ КОЛБАСКИ С ПЕРЦЕМ 50ГР (шт)",
+          "sum": 560.0,
+          "code": 358222,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 77.24,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 1.0,
+          "price": 1375.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "0200190928539",
+          "sectionCode": "1",
+          "name": "ПАЛОЧКИ КУКУРУЗНЫЕ BOMBBAR ПРОТЕИНОВЫЕ ЛУК И СМЕТАНА 60 ГР (шт)",
+          "sum": 1375.0,
+          "code": 341538,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 189.66,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 0.526,
+          "price": 799.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "166",
+          "listExciseStamp": [],
+          "ntin": "0200212525104",
+          "sectionCode": "1",
+          "name": "МАНДАРИН С ЛИСТЬЯМИ ВЕС (кг)",
+          "sum": 420.27,
+          "code": 146052,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 57.97,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": null,
+        "itemType": 5,
+        "discount": {
+          "discount": true,
+          "name": "Коррекция округления",
+          "sum": 0.27,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 0.04,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ],
+          "rate": null
+        },
+        "markup": null,
+        "modifiers": [
+          {
+            "discount": true,
+            "name": "Коррекция округления",
+            "sum": 0.27,
+            "taxes": [
+              {
+                "inTotalSum": true,
+                "sum": 0.04,
+                "layout": {
+                  "rate": 0.16,
+                  "taxCode": 100,
+                  "taxName": ""
+                }
+              }
+            ],
+            "rate": null
+          }
+        ],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 2.0,
+          "price": 1145.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "",
+          "sectionCode": "1",
+          "name": "ЗЕФИР NEO - BOTANICA NO SUGAR ADDED С МАЛИНОЙ КАРКАДЕ И ВИТАМИНАМИ 135ГР (шт)",
+          "sum": 2290.0,
+          "code": 353924,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 315.86,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": null,
+          "quantity": 2.0,
+          "price": 11.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "",
+          "sectionCode": "1",
+          "name": "Пакет A-Store 380*2*80*600*17 (шт)",
+          "sum": 22.0,
+          "code": 148232,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 3.03,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      }
+    ],
+    "takenSum": 0.0,
+    "changeSum": 0.0,
+    "discount": null,
+    "markup": null,
+    "operator": {
+      "name": "",
+      "code": 61085
+    },
+    "payments": [
+      {
+        "paymentType": "CARD",
+        "sum": 13828.0
+      }
+    ],
+    "taxes": [],
+    "requestPayload": "<redacted>",
+    "payload": "<redacted>",
+    "responsePayload": "<redacted>"
+  },
+  "ticketDescription": "transaction.ticket.sell, transaction.ticket.payment.type.card",
+  "orgTitle": "ТОВАРИЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"АЛМАСТОР\"",
+  "orgId": "100540002064",
+  "retailPlaceAddress": "г. Алматы, р-н Бостандыкский,  г. Алматы, ул. Сатпаева д. 90В",
+  "kkmSerialNumber": "0500210004",
+  "kkmFnsId": "600400124173",
+  "foundDate": "2026-11-26T19:43:07.632",
+  "taxes": [
+    {
+      "rate": 0.16,
+      "name": "",
+      "sum": 1907.31
+    }
+  ],
+  "totalDiscount": 0.27,
+  "totalMarkup": 0.86,
+  "measureUnits": {
+    "796": "шт ",
+    "166": "кг"
+  }
+}

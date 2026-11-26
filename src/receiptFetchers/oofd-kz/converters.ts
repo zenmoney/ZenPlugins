@@ -1,8 +1,23 @@
 import get from '../../types/get'
 import { isEqual } from 'lodash'
 import type { Receipt, ReceiptAdjustment, ReceiptItem, ReceiptPayment } from '../../types/receiptFetcher'
-import { decimal, subtract } from '../../common/decimal'
+import { decimal, divideExact, subtract } from '../../common/decimal'
 import { assertReceipt, localDateTime, optional, text } from '../../common/receiptFetcher/receipt'
+
+function includedTaxes (commodity: unknown): ReceiptAdjustment[] {
+  const taxes = get(commodity, 'taxes')
+  if (taxes == null) return []
+  assert(Array.isArray(taxes), 'Invalid OOFD commodity taxes')
+  return taxes.filter(tax => get(tax, 'inTotalSum') === true).map(tax => {
+    const rate = get(tax, 'layout.rate')
+    return {
+      kind: 'tax',
+      amount: decimal(get(tax, 'sum')),
+      ...optional('name', text(get(tax, 'layout.taxName'))),
+      ...optional('percent', rate == null ? undefined : divideExact(rate, '0.01'))
+    }
+  })
+}
 
 export function convertReceipt (data: unknown): Receipt {
   const sourceItems: unknown = get(data, 'ticket.items')
@@ -12,22 +27,34 @@ export function convertReceipt (data: unknown): Receipt {
   for (const row of sourceItems) {
     const modifiers = get(row, 'modifiers')
     assert(modifiers == null || Array.isArray(modifiers), 'Invalid OOFD item modifiers')
-    if (get(row, 'itemType') === 1) {
+    const type = get(row, 'itemType')
+    if (type === 1) {
       // Item-level modifiers need complete source cases before interpreting their scope.
       assert(modifiers == null || modifiers.length === 0, 'Unsupported OOFD commodity modifiers')
+      const commodity = get(row, 'commodity')
+      const taxes = includedTaxes(commodity)
+      const unitCode = get(commodity, 'measureUnitCode')
       items.push({
-        totalAmount: decimal(get(row, 'commodity.sum')),
-        name: text(get(row, 'commodity.name')) ?? '',
-        ...(get(row, 'commodity.price') == null ? {} : { unitPrice: decimal(get(row, 'commodity.price')) }),
-        quantity: decimal(get(row, 'commodity.quantity'))
+        totalAmount: decimal(get(commodity, 'sum')),
+        name: text(get(commodity, 'name')) ?? '',
+        ...(get(commodity, 'price') == null ? {} : { unitPrice: decimal(get(commodity, 'price')) }),
+        quantity: decimal(get(commodity, 'quantity')),
+        ...optional('unit', typeof unitCode === 'string' && /^\d+$/.test(unitCode) ? text(get(data, `measureUnits.${unitCode}`)) : undefined),
+        ...(taxes.length > 0 ? { adjustments: taxes } : {})
       })
-    } else if (get(row, 'itemType') === 5) {
-      const discount = get(row, 'discount')
-      assert(get(discount, 'discount') === true, 'Invalid OOFD discount')
-      // The standalone row affects the document, not the preceding commodity.
-      // Its modifiers repeat the same effect; do not count them or totalDiscount again.
-      assert(modifiers == null || modifiers.every(modifier => isEqual(modifier, discount)), 'Unsupported OOFD discount modifiers')
-      adjustments.push({ kind: 'discount', ...optional('name', text(get(discount, 'name'))), amount: subtract('0', get(discount, 'sum')) })
+    } else if (type === 3 || type === 5) {
+      const isDiscount = type === 5
+      const effect = get(row, isDiscount ? 'discount' : 'markup')
+      assert(get(effect, 'discount') === isDiscount, 'Invalid OOFD adjustment direction')
+      // Standalone rows are document adjustments. Their modifiers repeat the same effect.
+      assert(modifiers == null || modifiers.every(modifier => isEqual(modifier, effect)), 'Unsupported OOFD adjustment modifiers')
+      const name = text(get(effect, 'name'))
+      const amount = decimal(get(effect, 'sum'))
+      adjustments.push({
+        kind: name === 'Коррекция округления' || name === 'ROUND' ? 'rounding' : (isDiscount ? 'discount' : 'surcharge'),
+        ...optional('name', name),
+        amount: isDiscount ? subtract('0', amount) : amount
+      })
     } else throw new Error('Unsupported OOFD receipt item type')
   }
   const sourcePayments = get(data, 'ticket.payments')
@@ -36,7 +63,7 @@ export function convertReceipt (data: unknown): Receipt {
   const receipt: Receipt = {
     completeness: 'full',
     currency: 'KZT',
-    operation: 'unknown',
+    operation: text(get(data, 'ticketDescription'))?.split(',').some(label => label.trim() === 'transaction.ticket.sell') === true ? 'sale' : 'unknown',
     issuedAt: localDateTime(get(data, 'ticket.transactionDate')),
     totalAmount: decimal(get(data, 'ticket.totalSum')),
     merchant: {

@@ -3,6 +3,8 @@ import fixture2 from './convertReceipt-01.json'
 import { parseWebkassaResponse } from '../api'
 import { fetchReceipt } from '../index'
 
+beforeEach(() => { Object.assign(globalThis, { ZenMoney: { trustCertificates: jest.fn() } }) })
+
 const html: string = fixture1
 const parameters = {
   fiscalNumber: '2770949726',

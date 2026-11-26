@@ -1,8 +1,11 @@
 import { hasHost, queryParams } from '../../common/receiptFetcher/receipt'
+import { addTrustedCertificates } from '../../common/network/tls'
+import { GOGETSSL_RSA_DV_CA } from './certificates'
 import { fetchPublicPage, fetchConsumerPage, fetchReceipt as fetchReceiptRaw, lookupReceipt } from './fetchApi'
 
 export async function fetchReceipt (code: string): Promise<{ status: 'found', data: unknown } | { status: 'notApplicable' | 'notFound' | 'pending' }> {
   if (!hasHost(code, ['consumer.oofd.kz', 'kkm.webkassa.kz'])) return { status: 'notApplicable' }
+  await addTrustedCertificates([GOGETSSL_RSA_DV_CA])
   let response
   if (hasHost(code, ['kkm.webkassa.kz'])) {
     const page = await fetchPublicPage(code)

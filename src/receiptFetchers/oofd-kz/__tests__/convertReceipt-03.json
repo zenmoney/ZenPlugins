@@ -1,0 +1,324 @@
+{
+  "ticket": {
+    "type": "TICKET",
+    "kkmId": "350375",
+    "transactionId": "350375_239836",
+    "transactionDate": "2026-11-25T15:51:34.000",
+    "insertedAt": null,
+    "fiscalId": "1599156457",
+    "offlineFiscalId": null,
+    "cancelDate": null,
+    "shiftNumber": 1616,
+    "acceptedAt": "2026-11-25T10:51:36.044Z",
+    "protocolVersion": 203,
+    "linkedTransactionId": null,
+    "options": {
+      "children": [
+        {
+          "children": [],
+          "value": "238481",
+          "name": "printedDocumentNumber"
+        },
+        {
+          "children": [],
+          "value": "",
+          "name": "printedTicket"
+        }
+      ],
+      "value": "",
+      "name": "options"
+    },
+    "kkmRequestId": 239836,
+    "linkedKkmRequestId": null,
+    "linkedKkmRequestTime": null,
+    "modifiers": [],
+    "domain": {
+      "domainType": 0
+    },
+    "totalSum": 2693.0,
+    "operationType": 2,
+    "ticketAdInfo": [],
+    "shiftDocumentNumber": null,
+    "customerIinOrBin": null,
+    "customerEmail": null,
+    "customerPhone": null,
+    "extensionAuxiliaries": null,
+    "geoPosition": {
+      "latitude": 0,
+      "longitude": 0,
+      "source": "Manual"
+    },
+    "parentTicket": null,
+    "items": [
+      {
+        "commodity": {
+          "barcode": "",
+          "quantity": 0.314,
+          "price": 990.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "166",
+          "listExciseStamp": [],
+          "ntin": "",
+          "sectionCode": "1",
+          "name": "2155924003144 КЕБЕКТІ БИДАЙ НАНЫ, КГ",
+          "sum": 310.86,
+          "code": 0,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 42.88,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": "",
+          "quantity": 2.0,
+          "price": 349.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "0200355072053",
+          "sectionCode": "1",
+          "name": "4870091000847 СУЛТАН   МАКАРОН  ШИЫРШЫҚ  400 Г",
+          "sum": 698.0,
+          "code": 0,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 96.28,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": "",
+          "quantity": 2.0,
+          "price": 445.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "0200355104884",
+          "sectionCode": "1",
+          "name": "4870091000663 СУЛТАН   МАКАРОН  СПАГЕТТИ 400 Г",
+          "sum": 890.0,
+          "code": 0,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 122.76,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": "",
+          "quantity": 1.0,
+          "price": 465.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "796",
+          "listExciseStamp": [],
+          "ntin": "0200133428775",
+          "sectionCode": "1",
+          "name": "4870254130558 FLINT КЕПТІРІЛГЕН НАНДАР КРАБ 100ГР ФЛ/П",
+          "sum": 465.0,
+          "code": 0,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 64.14,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": {
+          "barcode": "",
+          "quantity": 1.274,
+          "price": 259.0,
+          "exciseStamp": "",
+          "physicalLabel": "",
+          "productId": "",
+          "measureUnitCode": "166",
+          "listExciseStamp": [],
+          "ntin": "",
+          "sectionCode": "1",
+          "name": "2127542012747 СҰЛЫ ҚАУЫЗДАР ГЕРКУЛЕСІ КГ",
+          "sum": 329.97,
+          "code": 0,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 45.51,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ]
+        },
+        "itemType": 1,
+        "discount": null,
+        "markup": null,
+        "modifiers": [],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      },
+      {
+        "commodity": null,
+        "itemType": 5,
+        "discount": {
+          "discount": true,
+          "name": "ROUND",
+          "sum": 0.83,
+          "taxes": [
+            {
+              "inTotalSum": true,
+              "sum": 0.11,
+              "layout": {
+                "rate": 0.16,
+                "taxCode": 100,
+                "taxName": ""
+              }
+            }
+          ],
+          "rate": null
+        },
+        "markup": null,
+        "modifiers": [
+          {
+            "discount": true,
+            "name": "ROUND",
+            "sum": 0.83,
+            "taxes": [
+              {
+                "inTotalSum": true,
+                "sum": 0.11,
+                "layout": {
+                  "rate": 0.16,
+                  "taxCode": 100,
+                  "taxName": ""
+                }
+              }
+            ],
+            "rate": null
+          }
+        ],
+        "options": {
+          "children": [],
+          "value": "",
+          "name": "empty"
+        }
+      }
+    ],
+    "takenSum": 0.0,
+    "changeSum": 0.0,
+    "discount": null,
+    "markup": null,
+    "operator": {
+      "name": "",
+      "code": 294
+    },
+    "payments": [
+      {
+        "paymentType": "CARD",
+        "sum": 2693.0
+      }
+    ],
+    "taxes": [],
+    "requestPayload": "<redacted>",
+    "payload": "<redacted>",
+    "responsePayload": "<redacted>"
+  },
+  "ticketDescription": "transaction.ticket.sell, transaction.ticket.payment.type.card",
+  "orgTitle": "ФИЛИАЛ ТОВАРИЩЕСТВА С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"MAGNUM CASH&CARRY\" № 4",
+  "orgId": "120741003950",
+  "retailPlaceAddress": "г. Алматы, р-н Медеуский,  г. Алматы, ул. Халиуллина д. 194",
+  "kkmSerialNumber": "500140529",
+  "kkmFnsId": "600900135922",
+  "foundDate": "2026-11-26T19:43:07.608",
+  "taxes": [
+    {
+      "rate": 0.16,
+      "name": "",
+      "sum": 371.46
+    }
+  ],
+  "totalDiscount": 0.83,
+  "totalMarkup": 0,
+  "measureUnits": {
+    "166": "кг",
+    "796": "шт "
+  }
+}
