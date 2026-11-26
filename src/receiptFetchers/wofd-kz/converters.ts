@@ -22,7 +22,7 @@ export function convertReceipt (source: unknown): Receipt {
   let roundingSign: string | undefined
   let taxSign: string | undefined
   for (const line of lines.slice(start + 1, end)) {
-    if (line === '' || /^NTIN:/.test(line)) continue
+    if (line === '' || line.startsWith('NTIN:') || /^GTIN:\s+\d+$/.test(line)) continue
     const quote = line.match(/^([\d,]+) \((.+?)\) x ([\d\s,]+)₸\s*= ([\d\s,]+)₸$/)
     if (quote !== null) {
       assert(names.length > 0 && roundingSign === undefined && taxSign === undefined, 'Missing WOFD item name')
@@ -69,13 +69,15 @@ export function convertReceipt (source: unknown): Receipt {
   assert(names.length === 0 && roundingSign === undefined && taxSign === undefined, 'Incomplete WOFD item')
   const addressStart = lines.findIndex((line, i) => i > end && line.startsWith('г.'))
   const addressEnd = lines.findIndex((line, i) => i > addressStart && line.startsWith('ФДО:'))
+  // Some tickets print the same complete address twice before the OFD details.
+  const address = addressStart < 0 ? undefined : lines.slice(addressStart, addressEnd).join(' ').replace(/^(г\..+) \1$/, '$1')
   const receipt: Receipt = {
     completeness: 'full',
     currency: 'KZT',
     operation: lines.includes('Сату/Продажа') ? 'sale' : 'unknown',
     issuedAt: { date: `${date[3]}-${date[2]}-${date[1]}`, time: date[4] },
     totalAmount: number(total),
-    merchant: { name: lines.slice(0, tinIndex).join(' '), identifiers: [{ value: lines[tinIndex].replace('БСН/БИН ', ''), countryCode: 'KZ', scheme: 'BIN' }], ...(addressStart < 0 ? {} : { address: lines.slice(addressStart, addressEnd).join(' ') }) },
+    merchant: { name: lines.slice(0, tinIndex).join(' '), identifiers: [{ value: lines[tinIndex].replace('БСН/БИН ', ''), countryCode: 'KZ', scheme: 'BIN' }], ...optional('address', address) },
     items,
     payments: lines.slice(end).filter(line => line.startsWith('Банк картасы/Банковская карта:')).map(line => ({ method: 'card', amount: number(line.split(':')[1]) }))
   }

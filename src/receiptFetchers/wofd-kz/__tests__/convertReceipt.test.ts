@@ -2,6 +2,66 @@ import { convertReceipt } from '../converters'
 import source1 from './convertReceipt-01.json'
 import source2 from './convertReceipt-02.json'
 import source3 from './convertReceipt-03.json'
+import source4 from './convertReceipt-04.json'
+
+// Complete public /api/tickets response 0 in report 233398, WOFD build 5.
+test('keeps item taxes after GTIN and NTIN rows and reads the repeated address once', () => {
+  expect(convertReceipt(source4)).toEqual({
+    completeness: 'full',
+    currency: 'KZT',
+    operation: 'sale',
+    issuedAt: { date: '2026-11-13', time: '08:53:20' },
+    totalAmount: '7073',
+    merchant: {
+      name: 'ТОО "ДАСТАРХАН"',
+      identifiers: [{ value: '971140001561', countryCode: 'KZ', scheme: 'BIN' }],
+      address: 'г.Алматы, Алмалинский район, пр. Абылай хана, д. 121'
+    },
+    items: [
+      {
+        name: '"Столичный" багеті дана / Багет "Столичный" шт',
+        quantity: '1',
+        unit: 'Дана/Штука',
+        unitPrice: '300',
+        totalAmount: '300',
+        adjustments: [{ kind: 'tax', name: 'ҚҚС/НДС', amount: '41.38' }]
+      },
+      {
+        name: 'Сырники из творога классические',
+        quantity: '0.452',
+        unit: 'Килограмм/Килограмм',
+        unitPrice: '4000',
+        totalAmount: '1808',
+        adjustments: [{ kind: 'tax', name: 'ҚҚС/НДС', amount: '249.38' }]
+      },
+      {
+        name: 'Рахат шоколады 80% какао 100г / Шоколад Рахат 80% какао 100г',
+        quantity: '1',
+        unit: 'Дана/Штука',
+        unitPrice: '1560',
+        totalAmount: '1560',
+        adjustments: [{ kind: 'tax', name: 'ҚҚС/НДС', amount: '215.17' }]
+      },
+      {
+        name: "Шоколад O'Sezim Kazakhstan Premium Chocolate B alapan 100г",
+        quantity: '1',
+        unit: 'Дана/Штука',
+        unitPrice: '2325',
+        totalAmount: '2325',
+        adjustments: [{ kind: 'tax', name: 'ҚҚС/НДС', amount: '320.69' }]
+      },
+      {
+        name: 'Зефир Конфетки Бараночки глазированный 180г',
+        quantity: '1',
+        unit: 'Дана/Штука',
+        unitPrice: '1080',
+        totalAmount: '1080',
+        adjustments: [{ kind: 'tax', name: 'ҚҚС/НДС', amount: '148.97' }]
+      }
+    ],
+    payments: [{ method: 'card', amount: '7073' }]
+  })
+})
 
 // Complete public /api/tickets response captured 2026-11-05; receipts.csv row 330.
 // Item totals and included tax incorporate only the explicitly attached rounding corrections.
