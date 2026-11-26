@@ -1,0 +1,38 @@
+{
+  "status": "success",
+  "data": {
+    "status": "success",
+    "message": {
+      "success": "A check is correct",
+      "doc_num": "42737",
+      "payment_amount": 77.23,
+      "cashbox_number": 119121244,
+      "skno_number": "AVQ24170163411",
+      "unp": "101454161",
+      "issued_at": "25/11/2026, 18:06:09",
+      "payment_type": 1,
+      "cashier": "[REDACTED]",
+      "currency": "BYN",
+      "margin": 0,
+      "total_amount": 77.23,
+      "another_amount": 0,
+      "clearing_amount": 77.23,
+      "cash_amount": 0,
+      "positions": "[{\"section_number\": \"0\", \"gtin_code\": \"22312100000001\", \"product_count\": \"0.534\", \"amount\": \"10.67\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"0\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u041f/\\u0424 \\u0424\\u0410\\u0420\\u0428 \\u0418\\u0417 \\u0424\\u0418\\u041b\\u0415 \\u0426\\u042b\\u041f.\\u0414\\u0418\\u0415\\u0422.\\u0424\\u0410\\u0421.1\\u041a\\u0413 \\u041f\\u0420.\\u0426\\u0415\\u0425\"}, {\"section_number\": \"0\", \"gtin_code\": \"22312100000001\", \"product_count\": \"0.528\", \"amount\": \"10.55\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"0\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u041f/\\u0424 \\u0424\\u0410\\u0420\\u0428 \\u0418\\u0417 \\u0424\\u0418\\u041b\\u0415 \\u0426\\u042b\\u041f.\\u0414\\u0418\\u0415\\u0422.\\u0424\\u0410\\u0421.1\\u041a\\u0413 \\u041f\\u0420.\\u0426\\u0415\\u0425\"}, {\"section_number\": \"0\", \"gtin_code\": \"22382200000001\", \"product_count\": \"1.344\", \"amount\": \"7.51\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"0\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u0412\\u0418\\u041d\\u041e\\u0413\\u0420\\u0410\\u0414 \\u0422\\u0410\\u0419\\u0424\\u0418 1\\u041a\\u0413\"}, {\"section_number\": \"0\", \"gtin_code\": \"22382200000001\", \"product_count\": \"0.692\", \"amount\": \"5.39\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"0\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u0412\\u0418\\u041d\\u041e\\u0413\\u0420\\u0410\\u0414 \\u0420\\u0415\\u0414 \\u0413\\u041b\\u041e\\u0411 1\\u041a\\u0413\"}, {\"section_number\": \"0\", \"gtin_code\": \"4605463002453\", \"product_count\": \"2.000\", \"amount\": \"7.70\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"1\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u041a\\u041e\\u041d\\u0421.\\u0420\\u042b\\u0411\\u041d.\\u0428\\u041f\\u0420\\u041e\\u0422\\u042b \\u0417\\u0410 \\u0420\\u041e\\u0414\\u0418\\u041d\\u0423 \\u0421 \\u041a\\u041b\\u042e\\u0427.160\\u0413\"}, {\"section_number\": \"0\", \"gtin_code\": \"4811269008807\", \"product_count\": \"1.000\", \"amount\": \"3.38\", \"discount_amount\": \"0.34\", \"surcharge_amount\": \"0.00\", \"tag\": \"1\", \"marking_code\": \"01048112690088072100000001\\u001d930000\", \"ukz_code\": \"None\", \"product_name\": \"\\u0421\\u041c\\u0415\\u0422\\u0410\\u041d\\u0410 \\u0417\\u0414\\u0420\\u0410\\u0412\\u0423\\u0428\\u041a\\u0410 19% \\u0421\\u0422.380\\u0413\"}, {\"section_number\": \"0\", \"gtin_code\": \"62726\", \"product_count\": \"0.238\", \"amount\": \"2.09\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"0\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u0413\\u0420\\u0418\\u0411\\u042b \\u0428\\u0410\\u041c\\u041f\\u0418\\u041d\\u042c\\u041e\\u041d\\u042b 1\\u041a\\u0413\"}, {\"section_number\": \"0\", \"gtin_code\": \"22312100000001\", \"product_count\": \"0.404\", \"amount\": \"7.67\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"0\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u041f/\\u0424 \\u0424\\u0410\\u0420\\u0428 \\u0414\\u041e\\u041c\\u0410\\u0428\\u041d\\u0418\\u0419 \\u041e\\u0425\\u041b.\\u0412\\u0415\\u0421.1\\u041a\\u0413 \\u041f\\u0420.\\u0426\\u0415\\u0425\"}, {\"section_number\": \"0\", \"gtin_code\": \"22312100000001\", \"product_count\": \"0.318\", \"amount\": \"6.36\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"0\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u041f/\\u0424 \\u0424\\u0410\\u0420\\u0428 \\u0418\\u0417 \\u0424\\u0418\\u041b\\u0415 \\u0426\\u042b\\u041f.\\u0414\\u0418\\u0415\\u0422.\\u0412\\u0415\\u0421.1\\u041a\\u0413 \\u041f\\u0420.\\u0426\\u0415\\u0425\"}, {\"section_number\": \"0\", \"gtin_code\": \"5998304241111\", \"product_count\": \"1.000\", \"amount\": \"4.79\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"1\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u041a\\u0423\\u041a\\u0423\\u0420\\u0423\\u0417\\u0410 \\u0413\\u041b\\u041e\\u0411\\u0423\\u0421 \\u0421\\u041b\\u0410\\u0414\\u041a\\u0410\\u042f 340\\u0413\"}, {\"section_number\": \"0\", \"gtin_code\": \"22383600000001\", \"product_count\": \"0.110\", \"amount\": \"0.77\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"0\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u041b\\u0418\\u041c\\u041e\\u041d 1\\u041a\\u0413\"}, {\"section_number\": \"0\", \"gtin_code\": \"4812454024275\", \"product_count\": \"0.320\", \"amount\": \"10.69\", \"discount_amount\": \"0.00\", \"surcharge_amount\": \"0.00\", \"tag\": \"1\", \"marking_code\": \"None\", \"ukz_code\": \"None\", \"product_name\": \"\\u041f\\u0420\\u041e\\u0414.\\u0421\\u0412.\\u0425\\u0410\\u041c\\u041e\\u041d \\u0411\\u0420\\u0410\\u0423\\u041d \\u0421/\\u0412 \\u041f\\u041e\\u0420\\u0426.\\u0412/\\u0423 1\\u041a\\u0413\"}]",
+      "ui": "TESTRECEIPTMNS0000000003",
+      "name_spd": "Общество с ограниченной ответственностью \"Либретик\"",
+      "kod_soato": "5000000000",
+      "oblast_soato": null,
+      "rayon_soato": null,
+      "selsovet_soato": null,
+      "type_np": "г.",
+      "name_np": "Минск",
+      "street_to": "ПР. ДЗЕРЖИНСКОГО",
+      "house_to": "19",
+      "name_to": "Магазин \"Соседи \"",
+      "STATUS": 1
+    },
+    "code": 200
+  },
+  "errors": []
+}

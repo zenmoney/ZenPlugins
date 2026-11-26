@@ -1,4 +1,4 @@
-import { decimal } from '../../common/decimal'
+import { decimal, subtract } from '../../common/decimal'
 import { assertReceipt, optional, text } from '../../common/receiptFetcher/receipt'
 import get from '../../types/get'
 import type { Receipt, ReceiptItem, ReceiptPayment } from '../../types/receiptFetcher'
@@ -7,14 +7,19 @@ function convertItem (source: unknown): ReceiptItem {
   const name = text(get(source, 'product_name')) ?? text(get(source, 'gtin_code'))
   assert(name !== undefined, 'Missing MNS receipt item name')
   const quantity = decimal(get(source, 'product_count'))
-  const totalAmount = decimal(get(source, 'amount'))
-  // The buyer form exposes the amounts separately; their stages for nonzero
-  // adjustments require a source example before they can be mapped.
-  for (const field of ['discount_amount', 'surcharge_amount']) {
-    const value = get(source, field)
-    assert(value == null || decimal(value) === '0', 'Unverified MNS receipt item adjustment')
+  const amount = decimal(get(source, 'amount'))
+  const discount = decimal(get(source, 'discount_amount') ?? '0')
+  const surcharge = decimal(get(source, 'surcharge_amount') ?? '0')
+  assert(surcharge === '0' && !discount.startsWith('-'), 'Unverified MNS receipt item adjustment')
+  if (discount === '0') return { name, quantity, totalAmount: amount }
+  // The buyer form reports the line amount before the separately listed discount.
+  return {
+    name,
+    quantity,
+    originalTotalAmount: amount,
+    totalAmount: subtract(amount, discount),
+    adjustments: [{ kind: 'discount', amount: subtract('0', discount) }]
   }
-  return { name, quantity, totalAmount }
 }
 
 export function convertReceipt (source: unknown): Receipt {
