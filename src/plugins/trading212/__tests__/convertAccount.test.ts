@@ -26,7 +26,7 @@ describe('convertAccount', () => {
           type: AccountType.investment,
           title: 'Trading212',
           instrument: 'EUR',
-          balance: 900.50,
+          balance: 950.50,
           syncIds: ['12345']
         },
         card: {
@@ -34,8 +34,45 @@ describe('convertAccount', () => {
           type: AccountType.ccard,
           title: 'Trading212 Card',
           instrument: 'EUR',
-          balance: 100.00,
+          balance: 50.00,
           syncIds: ['12345-card']
+        }
+      }
+    ],
+    [
+      // Observed GET /api/v0/equity/account/summary response (account id sanitized) with open buy limit orders in cash.reservedForOrders
+      {
+        id: 12345678,
+        currency: 'EUR',
+        totalValue: 66616.19,
+        cash: {
+          availableToTrade: 28182.36,
+          reservedForOrders: 17648.5,
+          inPies: 0
+        },
+        investments: {
+          currentValue: 20785.33,
+          totalCost: 26285.96,
+          realizedProfitLoss: 452.38,
+          unrealizedProfitLoss: -5500.63
+        }
+      },
+      {
+        account: {
+          id: '12345678',
+          type: AccountType.investment,
+          title: 'Trading212',
+          instrument: 'EUR',
+          balance: 66616.19,
+          syncIds: ['12345678']
+        },
+        card: {
+          id: '12345678-card',
+          type: AccountType.ccard,
+          title: 'Trading212 Card',
+          instrument: 'EUR',
+          balance: 0,
+          syncIds: ['12345678-card']
         }
       }
     ],
@@ -62,7 +99,7 @@ describe('convertAccount', () => {
           type: AccountType.investment,
           title: 'Trading212',
           instrument: 'USD',
-          balance: 4500.00,
+          balance: 5000.00,
           syncIds: ['99999']
         },
         card: {
@@ -70,7 +107,7 @@ describe('convertAccount', () => {
           type: AccountType.ccard,
           title: 'Trading212 Card',
           instrument: 'USD',
-          balance: 500.00,
+          balance: 0,
           syncIds: ['99999-card']
         }
       }
