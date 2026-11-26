@@ -69,7 +69,7 @@ export const scrape: ScrapeFunc<Preferences> = async ({ fromDate, isFirstRun, pr
   const cleaned = dropOffsettingSinglesSameAccount(withoutPlaceholders)
 
   let cashbacks
-  if (result.accounts.some(account => account.type === AccountType.ccard)) {
+  if (preferences.shouldScrapeCashbacks !== false && result.accounts.some(account => account.type === AccountType.ccard)) {
     const month = cashbackMonth(new Date())
     const saved = preferences.reconfigureCashbacks === true ? null : readCashbackSettings(ZenMoney.getData('cashbackSettings'))
     const settings = saved?.month === month

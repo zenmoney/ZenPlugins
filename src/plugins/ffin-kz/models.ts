@@ -7,6 +7,7 @@ export interface Auth {
 export interface Preferences {
   login: string
   password: string
+  shouldScrapeCashbacks?: boolean
   reconfigureCashbacks?: boolean
 }
 
