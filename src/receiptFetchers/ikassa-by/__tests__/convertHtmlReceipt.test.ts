@@ -2,6 +2,7 @@ import cloudReceipt from './convertHtmlReceipt-03.html'
 import papaDoner from './convertHtmlReceipt-01.html'
 import proStore from './convertHtmlReceipt-02.html'
 import sosediDiscount from './convertHtmlReceipt-04.html'
+import mayakCash from './convertHtmlReceipt-05.html'
 import { convertReceipt } from '../converters'
 
 // Complete sectioned HTML response captured on 2026-10-25.
@@ -149,6 +150,36 @@ test('applies the Sosedi item discount once and retains the printed receipt tota
       { name: 'КУКУРУЗА ГЛОБУС СЛАДКАЯ 340Г', quantity: '1', totalAmount: '4.79', unitPrice: '4.79' },
       { name: '22383600000001 ЛИМОН 1КГ', quantity: '0.11', totalAmount: '0.77', unitPrice: '6.99' },
       { name: 'ПРОД.СВ.ХАМОН БРАУН С/В ПОРЦ.В/ У 1КГ', quantity: '0.32', totalAmount: '10.69', unitPrice: '33.41' }
+    ]
+  })
+})
+
+// Complete HTML in report 234290, iKassa build 10, HTTP response 0.
+// The cashier name and analytics token are redacted.
+test('subtracts the printed change from cash tendered at Mayak', () => {
+  expect(convertReceipt(mayakCash)).toEqual({
+    completeness: 'full',
+    id: '1C0D35567FD45A0418F98ADB',
+    issuedAt: { date: '2026-11-17', time: '16:00:27' },
+    currency: 'BYN',
+    operation: 'unknown',
+    originalTotalAmount: '52.52',
+    totalAmount: '52.52',
+    merchant: {
+      name: 'Филиал "Гомель" Закрытого акционерного общества "Доброном" в г.Гомель Магазин "МАЯК" филиал "Гомель" ЗАО "Доброном", ул. Косарева, 1/1',
+      address: 'г. Гомель УЛ. КОСАРЕВА, 1/1',
+      identifiers: [{ value: '401162176', countryCode: 'BY', scheme: 'UNP' }]
+    },
+    payments: [{ method: 'cash', amount: '52.52' }],
+    items: [
+      { name: '554499 Чипсы "LAY S" (рифл. сметана и лук) 225г', quantity: '1', unitPrice: '5.99', totalAmount: '5.99' },
+      { name: '[M] 364998 Сыр"ДЖИЛ"(50%,к пиву,вес)1кг  0.14 кг', quantity: '1', unitPrice: '5.46', totalAmount: '5.46' },
+      { name: '1135212 Кальмар "НА АБОРДАЖ"(ф/кус,г/к,в/у)200г', quantity: '1', unitPrice: '10.99', totalAmount: '10.99' },
+      { name: '2303030 Ваф батончик "КРАШ"(карам,сол арах)40г', quantity: '4', unitPrice: '1.35', totalAmount: '5.4' },
+      { name: '2220109 Мармелад "BLOGGERS"(энерг,кисл-сл) 75г', quantity: '2', unitPrice: '1.79', totalAmount: '3.58' },
+      { name: '34557 Рыба"ЖЕЛТЫЙ ПОЛОСАТИК"(сол-суш)Флотск50г', quantity: '1', unitPrice: '4.69', totalAmount: '4.69' },
+      { name: '1141675 Пиво "BRAUBERG ORIGINAL"(свет,ж/б) 0.45л', quantity: '8', unitPrice: '1.99', totalAmount: '15.92' },
+      { name: '2220587 Пакет-майка 40x10x65"МАЯК/ НАШИ СМАКИ"', quantity: '1', unitPrice: '0.49', totalAmount: '0.49' }
     ]
   })
 })

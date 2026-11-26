@@ -126,7 +126,15 @@ function convertHtmlReceipt (html: string): Receipt {
       }
       const payment = line.match(/^(Банк\. пл\. картой|Наличными):\s+(-?\d+\.\d+)$/)
       assert(payment !== null, 'Unsupported receipt settlement line', { line: index })
-      payments.push({ method: payment[1] === 'Банк. пл. картой' ? 'card' : 'cash', amount: decimal(payment[2]) })
+      const method = payment[1] === 'Наличными' ? 'cash' : 'card'
+      let amount = decimal(payment[2])
+      const change = method === 'cash' ? rows[index + 1]?.match(/^Сдача:\s+(\d+\.\d+)$/) : undefined
+      if (change != null) {
+        amount = subtract(amount, change[1])
+        assert(!amount.startsWith('-'), 'Receipt change exceeds cash tendered', { line: index + 1 })
+        index++
+      }
+      payments.push({ method, amount })
       continue
     }
     assert(originalTotalAmount === undefined, 'Unexpected line between receipt subtotal and total', { line: index })
