@@ -11,6 +11,14 @@
         obligatory="true">
     </EditTextPreference>
     <CheckBoxPreference
+        key="shouldScrapeCashbacks"
+        obligatory="false"
+        title="Загружать категории кэшбэка"
+        checked="true"
+        summaryOn="Помогает выбрать карту с более выгодным кэшбэком перед оплатой"
+        summaryOff="Помогает выбрать карту с более выгодным кэшбэком перед оплатой"
+    />
+    <CheckBoxPreference
         key="reconfigureCashbacks"
         title="Повторно настроить кэшбеки"
         checked="false"

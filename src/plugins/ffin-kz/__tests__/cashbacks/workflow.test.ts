@@ -61,6 +61,17 @@ describe('[model] monthly cashback workflow', () => {
     expect(ui.readLine).not.toHaveBeenCalled()
   })
 
+  it('imports a card without configuring cashbacks when cashback loading is disabled', async () => {
+    // The saved switch takes precedence over a request to reconfigure cashbacks.
+    const result = await scrape({
+      ...args,
+      preferences: { login: '', password: '', shouldScrapeCashbacks: false, reconfigureCashbacks: true }
+    })
+    expect(result).toEqual({ accounts: [card], transactions: [] })
+    expect(ui.readLine).not.toHaveBeenCalled()
+    expect(state.cashbackSettings).toBeUndefined()
+  })
+
   it('requires new input next month and guards background UI', async () => {
     state.cashbackSettings = { version: 1, month: '2026-10', enabled: true, level: 'Gold', basePercent: '3', applePayPercent: '0', qrPercent: '2' }
     await expect(scrape({ ...args, isInBackground: true, preferences: { login: '', password: '' } })).rejects.toBeInstanceOf(UserInteractionError)
