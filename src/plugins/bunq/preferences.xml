@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="apiKey"
+        obligatory="true"
+        title="API Key"
+        dialogTitle="API Key"
+        dialogMessage="You can found your key  in the bunq app (Profile → Security &amp; Settings → Developers → API keys). Please Allow All IP-Addresses for regular synchronization. Zenmoney does not have access to your information and synchronisation runs only locally on your own device."
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|User API-key"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="From what date to load transactions"
+        defaultValue="2018-01-01T00:00:00.000Z"
+        dialogTitle="From what date to load transactions"
+        positiveButtonText="OK"
+        negativeButtonText="Cancel"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
