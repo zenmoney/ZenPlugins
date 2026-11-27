@@ -1,3 +1,4 @@
+import magnumReceipt from './convertReceipt-06.html'
 import fixture1 from './convertReceipt-01.html'
 import fixture2 from './convertReceipt-02.html'
 import fixture3 from './convertReceipt-03.html'
@@ -362,4 +363,34 @@ test('[model] rejects a malformed goods row after valid items', () => {
   const $ = cheerio.load(fixture1)
   $('.ticket_body > ol > li').last().find('.ready_ticket__item').empty()
   expect(() => convertReceipt($.html(), 'https://ofd1.kz/t/?i=1009359893420&f=010101710160&s=6579.0&t=20230509T153806')).toThrow('Invalid receipt item amounts')
+})
+
+// mail_inbound 237932, ofd1-kz build 9, complete receipt fragment with both CSRF tokens redacted.
+test('preserves every item around the bilingual rounding discount', () => {
+  expect(convertReceipt(magnumReceipt, 'https://ofd1.kz/t?i=548915464443&f=010101303229&s=4548.0&t=20261127T112155')).toEqual({
+    completeness: 'full',
+    currency: 'KZT',
+    operation: 'unknown',
+    totalAmount: '4548',
+    issuedAt: { date: '2026-11-27', time: '11:21:55' },
+    merchant: {
+      name: 'ФИЛИАЛ №53 ТОВАРИЩЕСТВА С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "MAGNUM CASH&CARRY" "РЕАЛИСТ" В ГОРОДЕ АЛМАТЫ',
+      identifiers: [{ value: '210441002425', countryCode: 'KZ', scheme: 'IIN/BIN' }]
+    },
+    items: [
+      { name: '2152911009448 ПОМЕЛО КГ', unitPrice: '799', quantity: '0.944', totalAmount: '754.26' },
+      { name: '4870247053260 MAGNUM ПАКЕТІ АҚЫЛЫ ЛОГО', unitPrice: '25', quantity: '2', totalAmount: '50' },
+      { name: '2129011044600 АҚ ҚЫРЫҚҚАБАТ (САЛМАҚ БОЙЫНША)', unitPrice: '160', quantity: '4.46', totalAmount: '713.6' },
+      { name: '2136153006786 АЛМА ГОЛДЕН ҚАЗАҚСТАН КГ', unitPrice: '599', quantity: '0.678', totalAmount: '406.12' },
+      { name: '2152903006905 АЛМҰРТ ОРМАН СҰЛУЫ КГ', unitPrice: '649', quantity: '0.69', totalAmount: '447.81' },
+      { name: '2111733004208 ПИЯЗ ҚАЗАҚСТАН (САЛМАҚ БОЙЫНША)', unitPrice: '122', quantity: '0.42', totalAmount: '51.24' },
+      { name: '2110455003261 АНАР ӨЗБЕКСТАН КГ', unitPrice: '1199', quantity: '0.326', totalAmount: '390.87' },
+      { name: '2110442008422 Жуылмаған  асханалық сәбіз Қазақстан (салмақ бойынша)', unitPrice: '205', quantity: '0.842', totalAmount: '172.61' },
+      { name: '2119248004461 МАНДАРИН БАЛДЫ ҚЫТАЙ КГ', unitPrice: '799', quantity: '0.446', totalAmount: '356.35' },
+      { name: '2149583011749 Картоп Қазақстан кг', unitPrice: '227', quantity: '1.174', totalAmount: '266.5' },
+      { name: '4870036001205 РАХАТ ҚАЗАҚСТАНДЫҚ ШОКОЛАДЫ 100ГР КНВРТ', unitPrice: '939', quantity: '1', totalAmount: '939' }
+    ],
+    adjustments: [{ kind: 'rounding', name: 'ROUND (Жеңілдік /скидка)', amount: '-0.36' }],
+    payments: [{ method: 'card', amount: '4548' }]
+  })
 })

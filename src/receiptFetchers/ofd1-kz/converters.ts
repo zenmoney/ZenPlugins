@@ -1,7 +1,7 @@
 import type { Receipt, ReceiptItem, ReceiptMerchant, ReceiptDateTime, ReceiptPayment, ReceiptAdjustment } from '../../types/receiptFetcher'
 import _ from 'lodash'
 import cheerio from 'cheerio'
-import { decimal } from '../../common/decimal'
+import { decimal, subtract } from '../../common/decimal'
 import { assertReceipt, fiscalDate, optional, text } from '../../common/receiptFetcher/receipt'
 
 export function convertReceipt (receiptHtml: unknown, code: string): Receipt {
@@ -42,9 +42,10 @@ export function convertReceipt (receiptHtml: unknown, code: string): Receipt {
   let payments: ReceiptPayment[] | undefined
   const itemsHtml = ticket.find('.ticket_body > ol').children()
   _.times(itemsHtml.length, (i) => {
-    const rounding = $(itemsHtml[i]).children('div').contents().first().text().trim().match(/^(Коррекция округления \(наценка\))\s+([\d\s.]+)$/)
+    const rounding = $(itemsHtml[i]).children('div').contents().first().text().trim().match(/^(Коррекция округления \(наценка\)|ROUND \(Жеңілдік \/скидка\))\s+([\d\s.]+)$/)
     if (rounding !== null) {
-      adjustments.push({ kind: 'rounding', name: rounding[1], amount: parseReceiptFloat(rounding[2]) })
+      const amount = parseReceiptFloat(rounding[2])
+      adjustments.push({ kind: 'rounding', name: rounding[1], amount: rounding[1].startsWith('ROUND') ? subtract('0', amount) : amount })
       return
     }
     const name = $(itemsHtml[i]).children().first().text().trim()
