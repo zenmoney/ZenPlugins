@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <provider>
     <id>papara-tr</id>
-    <company>0</company>
+    <company>15966</company>
     <codeRequired>false</codeRequired>
     <description>
         Papara hesabınızdaki TL ve döviz bakiyeleri ile işlem geçmişi senkronize edilir.
