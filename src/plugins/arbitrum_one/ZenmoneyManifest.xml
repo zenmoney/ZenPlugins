@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>arbitrum_one</id>
+    <company>0</company>
+    <description>
+        A plugin that retrieves balances and transactions on the Arbitrum One network using Arbiscan and Etherscan compatible API services.
+        Input your wallet's address  and API key from the API provider.
+    </description>
+    <version>1.0</version>
+    <build>1</build>
+    <modular>true</modular>
+    <files>
+        <js>index.js</js>
+        <preferences>preferences.xml</preferences>
+    </files>
+</provider>
