@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<provider>
+    <id>akbank-tr</id>
+    <company>15898</company>
+    <codeRequired>false</codeRequired>
+    <description>Akbank Mobil hesapları ve kredi kartları</description>
+</provider>
