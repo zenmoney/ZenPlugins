@@ -262,34 +262,15 @@ export function parseAccountTransactions (text: string): ParsedTransaction[] {
     const amountsRegex = new RegExp(amountOrDash + '(?:\\s+' + amountOrDash + ')?$')
 
     const amountsMatch = fullText.match(amountsRegex)
-
-    let amount = 0
-    let description = fullText
-
-    if (amountsMatch != null) {
-      const val1 = amountsMatch[1] // First capture
-      const val2 = amountsMatch[2] // Second capture (optional)
-
-      description = fullText.substring(0, fullText.length - amountsMatch[0].length).trim()
-
-      let receipt = 0
-      let expense = 0
-
-      if (val2 !== undefined) {
-        receipt = parseNumber(val1)
-        expense = parseNumber(val2)
-        amount = receipt - expense
-      } else {
-        // Only one value found at the end
-        // Case: "3600000,00-" glued. Means Receipt 3600000, Expense -.
-        if (/[0-9][\d\s.,]*-$/.test(val1)) {
-          // Ends with -, starts with digit (approx). Treat as positive receipt.
-          amount = parseNumber(val1.replace(/-$/, ''))
-        } else {
-          amount = parseNumber(val1)
-        }
-      }
+    if (amountsMatch == null || !/\d/.test(amountsMatch[0])) {
+      throw new Error(`Missing transaction amount in ForteBank statement for ${date}`)
     }
+    const [, firstAmount, secondAmount] = amountsMatch
+    let description = fullText.substring(0, fullText.length - amountsMatch[0].length).trim()
+    // A trailing dash stands for an empty expense column after a receipt.
+    const amount = secondAmount === undefined
+      ? parseNumber(firstAmount.replace(/-$/, ''))
+      : parseNumber(firstAmount) - parseNumber(secondAmount)
 
     if (description.startsWith(date)) {
       description = description.substring(date.length).trim()
