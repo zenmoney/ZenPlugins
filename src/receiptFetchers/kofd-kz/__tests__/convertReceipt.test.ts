@@ -1,3 +1,4 @@
+import basketMarket from './convertReceipt-04.json'
 import fixture1 from './convertReceipt-01.json'
 import fixture2 from './convertReceipt-02.json'
 import fixture3 from './convertReceipt-03.json'
@@ -48,7 +49,7 @@ test('converts source case 01', () => {
         totalAmount: '495'
       }
     ],
-    operation: 'unknown',
+    operation: 'sale',
     payments: [
       {
         method: 'card',
@@ -85,7 +86,7 @@ test('converts source case 02', () => {
         totalAmount: '948010'
       }
     ],
-    operation: 'unknown',
+    operation: 'refund',
     payments: [
       {
         method: 'card',
@@ -158,7 +159,7 @@ test('converts source case 03', () => {
         totalAmount: '0'
       }
     ],
-    operation: 'unknown',
+    operation: 'sale',
     payments: [
       {
         method: 'card',
@@ -170,4 +171,22 @@ test('converts source case 03', () => {
 
 test('malformed source remains a conversion failure', () => {
   expect(() => convertReceipt(null, 'https://cabinet.kofd.kz/consumer/?i=727064057371&f=010101779476&s=1484.00&t=20220920T101117')).toThrow()
+})
+
+// mail_inbound 237962, kofd-kz build 8, complete data.ticket from response 0.
+test('reads grouped tenge amounts and the name wrapped between product identifiers and price', () => {
+  expect(convertReceipt(basketMarket, 'http://consumer.kofd.kz?i=1449909157691&f=600904579778&s=1740.00&t=20261126T153617')).toEqual({
+    completeness: 'full',
+    currency: 'KZT',
+    operation: 'sale',
+    totalAmount: '1740',
+    issuedAt: { date: '2026-11-26', time: '15:36:17' },
+    merchant: { name: 'ИП Basket Market', identifiers: [{ value: '920622300251', countryCode: 'KZ', scheme: 'BIN' }] },
+    items: [
+      { name: 'бездрожжевой', quantity: '1', unitPrice: '560', totalAmount: '560' },
+      { name: 'хлеб бородинский рузи нан 400 гр п.п хлеб', quantity: '1', unitPrice: '240', totalAmount: '240' },
+      { name: 'ХЛЕБЦЫ ЗДОРОВО ВАФЕЛЬНЫЕ КУКУРУЗНЫЕ 70ГР ПЛЕНКА ХлебцыВафельныеКукурузны 2183 3476', quantity: '2', unitPrice: '470', totalAmount: '940' }
+    ],
+    payments: [{ method: 'card', amount: '1740' }]
+  })
 })

@@ -15,27 +15,33 @@ export function convertReceipt (data: unknown, code: string): Receipt {
   const sumLine = codeSum === null ? lines.find(line => sumRegExp.test(line)) : undefined
   const sum = codeSum !== null ? codeSum[1] : sumLine?.replace(/\s/g, '').match(sumRegExp)?.[1]
   function parseReceiptFloat (str: string): string {
-    return decimal(str.replace(',', '.').replace(/\s/g, ''))
+    return decimal(str.replace(/\s/g, '').replace(/₸$/, '').replace(',', '.'))
   }
   let cardSum: string | null = null
   let bin: string | null = null
   let payee = ''
   let emptyStrPassed = false
   const items: ReceiptItem[] = []
+  let nameStart: number | undefined
   for (const [i, text] of lines.entries()) {
-    const match = text.match(/(\d+[,.]?\d*) *\([^)]+\) x ([^= ]+)[^=]+= *(.+)/)
+    if (/^(?:\*+$|НДС\s|[GN]TIN:)/.test(text.trim())) nameStart = i + 1
+    const match = text.match(/(\d+[,.]?\d*) *\([^)]+\) x ([^=]+)= *(.+)/)
     if (match !== null) {
-      assert(i > 0, 'Missing receipt item name')
+      const nameLines = lines.slice(nameStart ?? i - 1, i)
+      assert(nameLines.length > 0, 'Missing receipt item name')
+      // In the fixed-width ticket a continued name fills the 46-column text field.
+      const name = nameLines.map((line, index) => index < nameLines.length - 1 && line.length === 48 ? line.slice(0, 46) : line).join('')
       items.push({
-        totalAmount: parseReceiptFloat(match[3].replace(/[^\d.,]/, '')),
-        name: lines[i - 1].replace('(шт)', '').trim(),
-        unitPrice: parseReceiptFloat(match[2].replace(/[^\d.,]/, '')),
+        totalAmount: parseReceiptFloat(match[3]),
+        name: name.replace('(шт)', '').trim(),
+        unitPrice: parseReceiptFloat(match[2]),
         quantity: parseReceiptFloat(match[1])
       })
+      nameStart = i + 1
     }
     if (cardSum == null) {
       const cardSumMatch = text.match(/Банковская карта:\s*(.+)/)
-      cardSum = cardSumMatch !== null ? parseReceiptFloat(cardSumMatch[1].replace(/[^\d.,]/, '')) : null
+      cardSum = cardSumMatch !== null ? parseReceiptFloat(cardSumMatch[1]) : null
     }
     if (bin == null) {
       const binMatch = text.match(/БИН *(\d+)/)
@@ -49,7 +55,7 @@ export function convertReceipt (data: unknown, code: string): Receipt {
   const receipt = {
     completeness: 'full',
     currency: 'KZT',
-    operation: 'unknown',
+    operation: lines.some(line => line.trim() === 'Продажа') ? 'sale' : lines.some(line => line.trim() === 'Возврат продажи') ? 'refund' : 'unknown',
     issuedAt: fiscalDate(code),
     totalAmount: (sum != null) ? parseReceiptFloat(sum) : undefined,
     items,
