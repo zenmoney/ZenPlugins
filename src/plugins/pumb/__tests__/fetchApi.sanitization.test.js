@@ -1,4 +1,5 @@
 import { fetchAccounts, fetchAuthenticationByPassword } from '../fetchApi'
+import { TemporaryUnavailableError } from '../../../errors'
 
 function makeResponse (body, headers = {}) {
   const headerEntries = Object.entries(headers)
@@ -22,16 +23,19 @@ function makeResponse (body, headers = {}) {
 
 describe('PUMB network log sanitization', () => {
   let debugSpy
+  let warnSpy
 
   beforeEach(() => {
     global.ZenMoney = {
       device: { model: 'Pixel 8', os: { version: '16' } }
     }
     debugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {})
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
     debugSpy.mockRestore()
+    warnSpy.mockRestore()
     delete global.fetch
   })
 
@@ -67,7 +71,12 @@ describe('PUMB network log sanitization', () => {
         data: null,
         errors: [{
           message: 'Customer 380501234567 request failed',
-          extensions: { code: 'DIAGNOSTIC_ERROR_CODE' }
+          extensions: {
+            classification: 'UnexpectedException',
+            code: 'DIAGNOSTIC_ERROR_CODE',
+            message: 'Phone 380501234567 is unavailable',
+            title: 'Authentication failed'
+          }
         }]
       }))
 
@@ -85,7 +94,7 @@ describe('PUMB network log sanitization', () => {
       sessionId: 'private-session-id',
       device: { deviceId: 'bank-device-id', hardwareID: 'hardware-id-secret' }
     })).rejects.toMatchObject({
-      message: 'Customer <phone> request failed',
+      message: '[HTTP 200, DIAGNOSTIC_ERROR_CODE; extensions=classification|code|message|title; classification=UnexpectedException; code=DIAGNOSTIC_ERROR_CODE] Customer <phone> request failed',
       code: 'DIAGNOSTIC_ERROR_CODE'
     })
 
@@ -120,5 +129,29 @@ describe('PUMB network log sanitization', () => {
     ]) {
       expect(log).toContain(diagnostic)
     }
+  })
+
+  it('turns a bank data-fetching failure into a retryable error without logging credentials', async () => {
+    global.fetch = jest.fn().mockResolvedValue(makeResponse({
+      data: null,
+      errors: [{
+        message: 'Bank backend failed',
+        extensions: { classification: 'DataFetchingException' }
+      }]
+    }))
+
+    await expect(fetchAuthenticationByPassword('380501234567', '1234', {
+      deviceId: 'bank-device-id',
+      hardwareID: 'hardware-id-secret'
+    })).rejects.toBeInstanceOf(TemporaryUnavailableError)
+
+    const log = JSON.stringify(warnSpy.mock.calls)
+    expect(log).toContain('AuthenticationByPasswordV2')
+    expect(log).toContain('DataFetchingException')
+    expect(log).not.toContain('380501234567')
+    expect(log).not.toContain('1234')
+    expect(log).not.toContain('bank-device-id')
+    expect(log).not.toContain('hardware-id-secret')
+    expect(log).not.toContain('Bank backend failed')
   })
 })
