@@ -1,3 +1,5 @@
+import detmir from './convertHtmlReceipt-06.html'
+import triCeny from './convertHtmlReceipt-07.html'
 import cloudReceipt from './convertHtmlReceipt-03.html'
 import papaDoner from './convertHtmlReceipt-01.html'
 import proStore from './convertHtmlReceipt-02.html'
@@ -210,5 +212,56 @@ test('converts the cloud-host document without changing its identity', () => {
     merchant: { name: 'Общество с ограниченной ответственностью "Либретик" магазин "Соседи"', address: 'г. Минск ПР. ДЗЕРЖИНСКОГО, 11', identifiers: [{ value: '101454161', countryCode: 'BY', scheme: 'UNP' }] },
     items: [{ name: 'СЫРОК ГЛ.МОЛОЧНАЯ СТРАНА 18% КАРТОШ.45Г', quantity: '1', unitPrice: '0.92', totalAmount: '0.92' }],
     payments: [{ method: 'card', amount: '0.92' }]
+  })
+})
+
+// mail_inbound 236915 and 238408, iKassa build 12. Complete HTML with cashier,
+// loyalty identifiers and telemetry keys masked. VAT is already included in the prices.
+test('reads a sale with per-item VAT at two rates and a cash-register heading', () => {
+  expect(convertReceipt(detmir)).toEqual({
+    completeness: 'full',
+    id: '18927394F2C7010007190A23',
+    issuedAt: { date: '2026-11-26', time: '18:24:45' },
+    currency: 'BYN',
+    operation: 'sale',
+    originalTotalAmount: '72.12',
+    totalAmount: '72.12',
+    merchant: {
+      name: 'Общество с ограниченной ответственностью "Детмир БЕЛ" ДМ Пинск MOD BY 4846',
+      address: 'Брестская обл., г. Пинск УЛ. ЦЕНТРАЛЬНАЯ, 60',
+      identifiers: [{ value: '193143448', countryCode: 'BY', scheme: 'UNP' }]
+    },
+    items: [
+      { name: 'Набор для экспериментов Attivio', quantity: '1', unitPrice: '66.2', totalAmount: '66.2', adjustments: [{ kind: 'tax', name: 'НДС', percent: '20', amount: '11.03' }] },
+      { name: 'Компот ФН яблоко-изюм-курага 0.', quantity: '1', unitPrice: '1.48', totalAmount: '1.48', adjustments: [{ kind: 'tax', name: 'НДС', percent: '10', amount: '0.13' }] },
+      { name: 'Компот ФН яблоко-изюм-курага 0.', quantity: '1', unitPrice: '1.48', totalAmount: '1.48', adjustments: [{ kind: 'tax', name: 'НДС', percent: '10', amount: '0.13' }] },
+      { name: 'Компот ФН яблоко-изюм-курага 0.', quantity: '1', unitPrice: '1.48', totalAmount: '1.48', adjustments: [{ kind: 'tax', name: 'НДС', percent: '10', amount: '0.13' }] },
+      { name: 'Компот ФН яблоко-изюм-курага 0.', quantity: '1', unitPrice: '1.48', totalAmount: '1.48', adjustments: [{ kind: 'tax', name: 'НДС', percent: '10', amount: '0.13' }] }
+    ],
+    payments: [{ method: 'card', amount: '72.12' }]
+  })
+})
+
+test('uses the fiscal merchant after the point-of-sale header and keeps VAT out of item names', () => {
+  expect(convertReceipt(triCeny)).toEqual({
+    completeness: 'full',
+    id: '116423B580B70E670718D86D',
+    issuedAt: { date: '2026-11-27', time: '15:25:29' },
+    currency: 'BYN',
+    operation: 'sale',
+    originalTotalAmount: '18.89',
+    totalAmount: '18.89',
+    merchant: {
+      name: 'Общество с ограниченной ответственностью "Плэй хард" Магазин "Три цены" г.Гомель, пр-т Октября, 22А',
+      address: 'г. Гомель ПР. ОКТЯБРЯ, 22А',
+      identifiers: [{ value: '193607576', countryCode: 'BY', scheme: 'UNP' }]
+    },
+    items: [
+      { name: 'USB-разветвитель, 3 порта, 1,15 м', quantity: '1', unitPrice: '4.9', totalAmount: '4.9', adjustments: [{ kind: 'tax', name: 'НДС', percent: '20', amount: '0.82' }] },
+      { name: 'USB-кабель HOCO X89 Type-C', quantity: '1', unitPrice: '6.5', totalAmount: '6.5', adjustments: [{ kind: 'tax', name: 'НДС', percent: '20', amount: '1.08' }] },
+      { name: 'USB-Кабель HOCO X89 iPh', quantity: '1', unitPrice: '6.5', totalAmount: '6.5', adjustments: [{ kind: 'tax', name: 'НДС', percent: '20', amount: '1.08' }] },
+      { name: 'Дисконтная карта "Дисконт"', quantity: '1', unitPrice: '0.99', totalAmount: '0.99', adjustments: [{ kind: 'tax', name: 'НДС', percent: '20', amount: '0.17' }] }
+    ],
+    payments: [{ method: 'card', amount: '18.89' }]
   })
 })

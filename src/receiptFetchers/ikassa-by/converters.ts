@@ -92,8 +92,9 @@ function convertHtmlReceipt (html: string): Receipt {
   assert(taxIndex > 0 && header[taxIndex + 1] === 'Платежный документ', 'Unsupported receipt document header')
   const unp = header[taxIndex].match(merchantRegistration)?.[1]
   assert(unp !== undefined, 'Missing source merchant UNP')
-  const merchantLines = header.slice(0, taxIndex)
-  const address = /^г\.\s/.test(merchantLines[merchantLines.length - 1]) ? merchantLines.pop() : undefined
+  const saleHeader = header.findIndex(line => /^-+ПРОДАЖА-+$/.test(line) || /^Касса:.*Чек продажи N=\d+$/.test(line))
+  const merchantLines = header.slice(saleHeader + 1, taxIndex)
+  const address = /^(?:г\.\s|[^,]+ обл\., г\.\s)/.test(merchantLines[merchantLines.length - 1]) ? merchantLines.pop() : undefined
   const idLines = footer.map(line => line.match(/^УИ ([A-Za-z0-9]{24})$/)).filter(match => match !== null)
   assert(idLines.length === 1 && idLines[0] !== null, 'Missing or ambiguous source receipt identifier')
   const dates = footer.map(line => line.match(/^Кассир:.*?(\d{2})\.(\d{2})\.(\d{4}) (\d{2}:\d{2}:\d{2})$/)).filter(match => match !== null)
@@ -106,6 +107,7 @@ function convertHtmlReceipt (html: string): Receipt {
   let name: string[] = []
   let originalTotalAmount: string | undefined
   let totalAmount: string | undefined
+  let hasItemVat = false
   let itemDiscountTotal: string | undefined
   const rows = bodyLines.slice(1)
   for (let index = 0; index < rows.length; index++) {
@@ -137,6 +139,8 @@ function convertHtmlReceipt (html: string): Receipt {
       payments.push({ method, amount })
       continue
     }
+    // Printed VAT summaries repeat the included tax shown below the individual items.
+    if (hasItemVat && originalTotalAmount !== undefined && /^(?:Итого НДС:|НДС \d+%)\s+\d+\.\d{2}$/.test(line)) continue
     assert(originalTotalAmount === undefined, 'Unexpected line between receipt subtotal and total', { line: index })
     const subtotal = line.match(/^ИТОГО\s+(-?\d+\.\d+)$/)
     if (subtotal !== null) {
@@ -167,14 +171,24 @@ function convertHtmlReceipt (html: string): Receipt {
       } else {
         items.push({ name: name.join(' '), unitPrice, quantity, totalAmount: lineAmount })
       }
+      const vat = flat ? rows[index + 1]?.match(/^В том числе НДС за 1 единицу:\s+(\d+\.\d{2}) НДС (\d+)%$/) : undefined
+      if (vat != null) {
+        hasItemVat = true
+        // The printed rounded unit tax establishes the line tax for a single unit.
+        if (quantity === '1') {
+          const item = items[items.length - 1]
+          item.adjustments = [...item.adjustments ?? [], { kind: 'tax', name: 'НДС', amount: decimal(vat[1]), percent: decimal(vat[2]) }]
+        }
+        index++
+      }
       name = []
     } else {
       // Do not merge unparsed price/adjustment rows into the next product's name.
       // Additional printed adjustment layouts need captured provider examples.
-      assert(!/^(?:Скидка|Надбавка|Наценка|НДС|Налог|ИТОГО)(?:\s|:|$)/i.test(line) && !/^[-+\d.,]+\s*[*×]/.test(line), 'Unsupported receipt item line', { line: index })
+      assert(!/^(?:Скидка|Надбавка|Наценка|НДС|В том числе НДС|Налог|ИТОГО)(?:\s|:|$)/i.test(line) && !/^[-+\d.,]+\s*[*×]/.test(line), 'Unsupported receipt item line', { line: index })
       const previous = name[name.length - 1]
       if (flat && name.length === 0) name.push(stripPrintedBarcode(line))
-      else if (flat && /\p{L}[-/]$/u.test(previous) && /^\p{Ll}/u.test(line)) name[name.length - 1] = previous + line
+      else if (flat && /[a-zа-яёіў][-/]$/i.test(previous) && /^[a-zа-яёіў]/.test(line)) name[name.length - 1] = previous + line
       else name.push(line)
     }
   }
@@ -188,7 +202,7 @@ function convertHtmlReceipt (html: string): Receipt {
     completeness: 'full',
     id: idLines[0][1],
     currency: 'BYN',
-    operation: 'unknown',
+    operation: saleHeader >= 0 ? 'sale' : 'unknown',
     issuedAt: { date: `${timestamp[3]}-${timestamp[2]}-${timestamp[1]}`, time: timestamp[4] },
     ...optional('originalTotalAmount', originalTotalAmount),
     totalAmount,

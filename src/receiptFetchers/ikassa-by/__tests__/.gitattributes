@@ -1,0 +1,2 @@
+# Preserve the provider's mixed line endings inside the printed receipt.
+convertHtmlReceipt-06.html -text !eol
