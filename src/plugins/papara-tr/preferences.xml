@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen>
+    <EditTextPreference
+        key="phone"
+        obligatory="true"
+        inputType="phone"
+        title="Telefon numarası"
+        dialogTitle="Telefon numarası"
+        dialogMessage="Papara hesabınıza kayıtlı telefon numarasını +90 ile girin"
+        positiveButtonText="Tamam"
+        negativeButtonText="İptal"
+        summary="|phone|{@s}"
+    />
+    <EditTextPreference
+        key="password"
+        obligatory="true"
+        inputType="textPassword"
+        title="Papara şifresi"
+        dialogTitle="Papara şifresi"
+        positiveButtonText="Tamam"
+        negativeButtonText="İptal"
+        summary="||***********"
+    />
+    <EditTextPreference
+        key="startDate"
+        obligatory="true"
+        inputType="date"
+        title="İşlem geçmişi başlangıç tarihi"
+        defaultValue="2024-01-01T00:00:00.000Z"
+        dialogTitle="Başlangıç tarihi"
+        dialogMessage="İşlemlerin yükleneceği başlangıç tarihini girin"
+        positiveButtonText="Tamam"
+        negativeButtonText="İptal"
+        summary="|startDate|{@s}"
+    />
+</PreferenceScreen>
