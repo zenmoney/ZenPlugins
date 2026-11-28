@@ -88,7 +88,9 @@ function setupBootloaderServer ({ app, pluginPaths, storageDirectory }) {
     res.json(session)
   })
 
-  app.post('/api/v2/sessions/:id/events', bodyParser.json({ limit: '2mb' }), (req, res) => {
+  // A full statement plus its console/result events can exceed 2 MiB.
+  // Keep a finite bound while accepting complete native synchronization batches.
+  app.post('/api/v2/sessions/:id/events', bodyParser.json({ limit: '16mb' }), (req, res) => {
     const events = Array.isArray(req.body) ? req.body : req.body && req.body.events
     if (!Array.isArray(events)) {
       return res.status(400).json({ error: { message: 'events must be an array' } })
